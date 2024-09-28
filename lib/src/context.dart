@@ -1,3 +1,4 @@
+import 'package:braid_ui/src/core/math.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:vector_math/vector_math.dart';
 
@@ -28,12 +29,12 @@ class RenderContext {
   }
 }
 
-// TODO global transform
 class DrawContext {
   final RenderContext renderContext;
-  final ImmediatePrimitiveRenderer primitives;
+  final PrimitiveRenderer primitives;
 
   final Matrix4 projection;
+  final Matrix4Stack transform = Matrix4Stack.identity();
 
   final TextRenderer textRenderer;
 

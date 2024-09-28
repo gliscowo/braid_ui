@@ -5,7 +5,7 @@ import 'package:vector_math/vector_math.dart';
 import 'context.dart';
 import 'vertex_descriptors.dart';
 
-class ImmediatePrimitiveRenderer {
+class PrimitiveRenderer {
   final RenderContext _context;
 
   final MeshBuffer<PosColorVertexFunction> _posColorBuffer;
@@ -17,7 +17,7 @@ class ImmediatePrimitiveRenderer {
 
   final GlFramebuffer _blurFramebuffer;
 
-  ImmediatePrimitiveRenderer(this._context)
+  PrimitiveRenderer(this._context)
       : _posColorBuffer = MeshBuffer(posColorVertexDescriptor, _context.findProgram('pos_color')),
         _gradientBuffer = MeshBuffer(posUvVertexDescriptor, _context.findProgram('gradient')),
         _circleBuffer = MeshBuffer(posColorVertexDescriptor, _context.findProgram('circle')),
@@ -26,14 +26,13 @@ class ImmediatePrimitiveRenderer {
         _roundedOutlineBuffer = MeshBuffer(posColorVertexDescriptor, _context.findProgram('rounded_rect_outline')),
         _blurFramebuffer = GlFramebuffer.trackingWindow(_context.window);
 
-  void roundedRect(double x, double y, double width, double height, double radius, Color color, Matrix4 projection,
+  void roundedRect(double width, double height, double radius, Color color, Matrix4 transform, Matrix4 projection,
       {double? outlineThickness}) {
     final buffer = outlineThickness == null ? _roundedBuffer : _roundedOutlineBuffer;
     buffer.program
-      ..uniformMat4('uTransform', Matrix4.identity())
+      ..uniformMat4('uTransform', transform)
       ..uniformMat4('uProjection', projection)
       ..uniform1f('uRadius', radius)
-      ..uniform2f('uLocation', x, _context.window.height - y - height)
       ..uniform2f('uSize', width, height)
       ..use();
 
@@ -42,30 +41,28 @@ class ImmediatePrimitiveRenderer {
     gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
 
     buffer.clear();
-    buildRect(buffer.vertex, x, y, width, height, color);
+    buildRect(buffer.vertex, 0, 0, width, height, color);
     buffer
       ..upload(dynamic: true)
       ..draw();
   }
 
-  void rect(double x, double y, double width, double height, Color color, Matrix4 projection) {
+  void rect(double width, double height, Color color, Matrix4 transform, Matrix4 projection) {
     _posColorBuffer.program
-      ..uniformMat4('uTransform', Matrix4.identity())
+      ..uniformMat4('uTransform', transform)
       ..uniformMat4('uProjection', projection)
       ..use();
 
     gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
 
     _posColorBuffer.clear();
-    buildRect(_posColorBuffer.vertex, x, y, width, height, color);
+    buildRect(_posColorBuffer.vertex, 0, 0, width, height, color);
     _posColorBuffer
       ..upload(dynamic: true)
       ..draw();
   }
 
   void gradientRect(
-    double x,
-    double y,
     double width,
     double height,
     Color startColor,
@@ -73,10 +70,11 @@ class ImmediatePrimitiveRenderer {
     double position,
     double size,
     double angle,
+    Matrix4 transform,
     Matrix4 projection,
   ) {
     _gradientBuffer.program
-      ..uniformMat4('uTransform', Matrix4.identity())
+      ..uniformMat4('uTransform', transform)
       ..uniformMat4('uProjection', projection)
       ..uniform4vf('uStartColor', startColor.asVector())
       ..uniform4vf('uEndColor', endColor.asVector())
@@ -88,19 +86,19 @@ class ImmediatePrimitiveRenderer {
     gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
 
     _gradientBuffer.clear();
-    buildGradientRect(_gradientBuffer.vertex, x, y, width, height);
+    buildGradientRect(_gradientBuffer.vertex, 0, 0, width, height);
     _gradientBuffer
       ..upload(dynamic: true)
       ..draw();
   }
 
-  void blur(double x, double y, double width, double height, Color color, Matrix4 projection) {
+  void blur(double width, double height, Color color, Matrix4 transform, Matrix4 projection) {
     _blurFramebuffer.clear(color: Color.black);
     gl.blitNamedFramebuffer(0, _blurFramebuffer.fbo, 0, 0, _context.window.width, _context.window.height, 0, 0,
         _blurFramebuffer.width, _blurFramebuffer.height, glColorBufferBit, glLinear);
 
     _blurBuffer.program
-      ..uniformMat4('uTransform', Matrix4.identity())
+      ..uniformMat4('uTransform', transform)
       ..uniformMat4('uProjection', projection)
       ..uniformSampler('uInput', _blurFramebuffer.colorAttachment, 0)
       ..use();
@@ -108,7 +106,7 @@ class ImmediatePrimitiveRenderer {
     gl.disable(glBlend);
 
     _posColorBuffer.clear();
-    buildRect(_posColorBuffer.vertex, x, y, width, height, color);
+    buildRect(_posColorBuffer.vertex, 0, 0, width, height, color);
     _posColorBuffer
       ..upload(dynamic: true)
       ..draw();

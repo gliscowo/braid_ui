@@ -63,7 +63,7 @@ Future<void> runBraidApp({String name = 'braid app', Logger? baseLogger}) async 
     'CascadiaCode': cascadia,
   });
 
-  final primitives = ImmediatePrimitiveRenderer(renderContext);
+  final primitives = PrimitiveRenderer(renderContext);
 
   final projection = makeOrthographicMatrix(0, window.width.toDouble(), window.height.toDouble(), 0, -10, 10);
   window.onResize.listen((event) {

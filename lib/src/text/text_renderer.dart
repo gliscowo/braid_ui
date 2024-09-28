@@ -120,7 +120,6 @@ class Font {
 
     gl.pixelStorei(glUnpackAlignment, 1);
     gl.textureSubImage2D(texture, 0, u, v, width, rows, glRgb, glUnsignedByte, pixelBuffer.cast());
-    gl.generateTextureMipmap(texture);
 
     malloc.free(pixelBuffer);
 
@@ -138,7 +137,7 @@ class Font {
   static (int, int, int) _allocateGlyphPosition(int width, int height) {
     if (_nextGlyphX + width >= 1024) {
       _nextGlyphX = 0;
-      _nextGlyphY += _currentRowHeight + 1;
+      _nextGlyphY += _currentRowHeight + 2;
     }
 
     if (_nextGlyphY + height >= 1024) {
@@ -150,7 +149,7 @@ class Font {
     final textureId = _glyphTextures.last;
     final location = (textureId, _nextGlyphX, _nextGlyphY);
 
-    _nextGlyphX += width + 1;
+    _nextGlyphX += width + 2;
     _currentRowHeight = max(_currentRowHeight, height);
 
     return location;
@@ -164,6 +163,16 @@ class Font {
 
     gl.pixelStorei(glUnpackAlignment, 1);
     gl.textureStorage2D(textureId, 8, glRgb8, 1024, 1024);
+
+    // turns out that zero-initializing the texture
+    // memory is actually very important to prevent
+    // cross-sampling artifacts. why does this not happen
+    // when running with renderdoc? who knows
+    //
+    // glisco, 28.09.2024
+    final emptyBuffer = calloc<Char>(1024 * 1024 * 3);
+    gl.textureSubImage2D(textureId, 0, 0, 0, 1024, 1024, glRgb, glUnsignedByte, emptyBuffer.cast());
+    calloc.free(emptyBuffer);
 
     gl.textureParameteri(textureId, glTextureWrapS, glClampToEdge);
     gl.textureParameteri(textureId, glTextureWrapT, glClampToEdge);
@@ -219,11 +228,12 @@ class TextRenderer {
     );
   }
 
-  void drawText(int x, int y, Text text, double size, Matrix4 projection, {Color? color}) {
+  void drawText(Text text, double size, Matrix4 transform, Matrix4 projection, {Color? color}) {
     if (!text.isShaped) text.shape(getFont);
 
     color ??= Color.white;
     _program
+      ..uniformMat4('uTransform', transform)
       ..uniformMat4('uProjection', projection)
       ..use();
 
@@ -240,8 +250,8 @@ class TextRenderer {
 
       final scale = size / shapedGlyph.font.size, glyphScale = shapedGlyph.style.scale;
 
-      final xPos = x + _hbToPixels(shapedGlyph.position.x) * scale + glyph.bearingX * scale;
-      final yPos = y + _hbToPixels(shapedGlyph.position.y) * scale + baseline - glyph.bearingY * scale * glyphScale;
+      final xPos = _hbToPixels(shapedGlyph.position.x) * scale + glyph.bearingX * scale;
+      final yPos = _hbToPixels(shapedGlyph.position.y) * scale + baseline - glyph.bearingY * scale * glyphScale;
 
       final width = glyph.width * scale * glyphScale;
       final height = glyph.height * scale * glyphScale;

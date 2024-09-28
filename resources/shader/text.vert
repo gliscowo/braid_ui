@@ -8,9 +8,10 @@ out vec2 texCoords;
 out vec4 textColor;
 
 uniform mat4 uProjection;
+uniform mat4 uTransform;
 
 void main() {
-    gl_Position = uProjection * vec4(aPos, 0.0, 1.0);
+    gl_Position = uProjection * uTransform * vec4(aPos, 0.0, 1.0);
 
     texCoords = aUv;
     textColor = aColor;
