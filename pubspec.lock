@@ -100,8 +100,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: afaff18
-      resolved-ref: afaff18b5ec2aeb6bfc9acd17da31a10f2afffb4
+      ref: d717870
+      resolved-ref: d71787012f7d77fbfaf6a1c17057ed16a1d7dd0c
       url: "https://github.com/gliscowo/diamond_gl.git"
     source: git
     version: "1.0.0"
@@ -202,7 +202,7 @@ packages:
     source: hosted
     version: "0.12.16+1"
   meta:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: meta
       sha256: e3641ec5d63ebf0d9b41bd43201a66e3fc79a65db5f61fc181f04cd27aab950c

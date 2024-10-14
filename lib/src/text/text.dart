@@ -7,10 +7,10 @@ import 'package:vector_math/vector_math_64.dart';
 import '../native/harfbuzz.dart';
 import 'text_renderer.dart';
 
-class StyledString {
+class TextSpan {
   final String content;
   final TextStyle style;
-  const StyledString(this.content, {this.style = const TextStyle()});
+  const TextSpan(this.content, {this.style = const TextStyle()});
 }
 
 class TextStyle {
@@ -25,11 +25,11 @@ class TextStyle {
 typedef FontLookup = FontFamily Function(String? fontFamily);
 
 class Text {
-  final List<StyledString> _segments;
+  final List<TextSpan> _segments;
   final List<ShapedGlyph> _shapedGlyphs = [];
   bool _isShaped = false;
 
-  Text.string(String value, {TextStyle style = const TextStyle()}) : this([StyledString(value, style: style)]);
+  Text.string(String value, {TextStyle style = const TextStyle()}) : this([TextSpan(value, style: style)]);
 
   Text(this._segments) {
     if (_segments.isEmpty) throw ArgumentError('Text must have at least one segment');

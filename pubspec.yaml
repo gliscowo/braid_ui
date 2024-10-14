@@ -20,10 +20,11 @@ dependencies:
   diamond_gl:
     git:
       url: https://github.com/gliscowo/diamond_gl.git
-      ref: afaff18
+      ref: d717870
   ffi: ^2.1.3
   logging: ^1.2.0
   vector_math: ^2.1.4
+  meta: ^1.16.0
 
 dev_dependencies:
   lints: ^5.0.0

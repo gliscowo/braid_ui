@@ -38,5 +38,18 @@ class DrawContext {
 
   final TextRenderer textRenderer;
 
-  DrawContext(this.renderContext, this.primitives, this.projection, this.textRenderer);
+  final bool drawBoundingBoxes;
+
+  DrawContext(
+    this.renderContext,
+    this.primitives,
+    this.projection,
+    this.textRenderer, {
+    this.drawBoundingBoxes = false,
+  });
+}
+
+class LayoutContext {
+  final TextRenderer textRenderer;
+  LayoutContext(this.textRenderer);
 }

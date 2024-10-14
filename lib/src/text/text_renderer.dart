@@ -228,6 +228,7 @@ class TextRenderer {
     );
   }
 
+  // TODO potentially include size in text style, actually do text layout :dies:
   void drawText(Text text, double size, Matrix4 transform, Matrix4 projection, {Color? color}) {
     if (!text.isShaped) text.shape(getFont);
 

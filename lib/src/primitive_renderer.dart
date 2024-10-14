@@ -14,6 +14,7 @@ class PrimitiveRenderer {
   final MeshBuffer<PosColorVertexFunction> _roundedOutlineBuffer;
   final MeshBuffer<PosColorVertexFunction> _circleBuffer;
   final MeshBuffer<PosColorVertexFunction> _blurBuffer;
+  MeshBuffer<BlitVertexFunction>? _blitBuffer;
 
   final GlFramebuffer _blurFramebuffer;
 
@@ -114,9 +115,9 @@ class PrimitiveRenderer {
     gl.enable(glBlend);
   }
 
-  void circle(double x, double y, double radius, Color color, Matrix4 projection) {
+  void circle(double x, double y, double radius, Color color, Matrix4 transform, Matrix4 projection) {
     _circleBuffer.program
-      ..uniformMat4('uTransform', Matrix4.identity())
+      ..uniformMat4('uTransform', transform)
       ..uniformMat4('uProjection', projection)
       ..uniform2f('uLocation', x, _context.window.height - y - radius * 2)
       ..uniform1f('uRadius', radius)
@@ -129,6 +130,30 @@ class PrimitiveRenderer {
     _circleBuffer
       ..upload(dynamic: true)
       ..draw();
+  }
+
+  void blitFramebuffer(GlFramebuffer framebuffer) {
+    final mesh = _blitBuffer ??= (() {
+      final buffer = MeshBuffer(blitVertexDescriptor, _context.findProgram('blit'));
+      buffer
+        ..vertex(Vector2.zero())
+        ..vertex(Vector2(1, 0))
+        ..vertex(Vector2(1, 1))
+        ..vertex(Vector2.zero())
+        ..vertex(Vector2(1, 1))
+        ..vertex(Vector2(0, 1));
+      return buffer..upload();
+    })();
+
+    gl.disable(glBlend);
+
+    mesh.program
+      ..uniformSampler('sFramebuffer', framebuffer.colorAttachment, 0)
+      ..use();
+
+    gl.enable(glBlend);
+
+    mesh.draw();
   }
 
   void buildRect(

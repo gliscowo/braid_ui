@@ -1,6 +1,16 @@
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:vector_math/vector_math.dart';
 
+typedef BlitVertexFunction = void Function(Vector2 pos);
+final VertexDescriptor<BlitVertexFunction> blitVertexDescriptor = VertexDescriptor(
+  (attribute) {
+    attribute('aPos', VertexElement.float, 2);
+  },
+  (buffer) => (pos) {
+    buffer.float2(pos.x, pos.y);
+  },
+);
+
 typedef PosUvVertexFunction = void Function(Vector3 pos, Vector2 uv);
 final VertexDescriptor<PosUvVertexFunction> posUvVertexDescriptor = VertexDescriptor(
   (attribute) {
