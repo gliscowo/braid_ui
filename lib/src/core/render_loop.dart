@@ -21,8 +21,8 @@ void drawFrame(DrawContext ctx, CursorController cursorController, Widget widget
     Color.ofRgb(0xD2E0FB),
     Color.ofRgb(0x8EACCD),
     0,
-    1,
-    DateTime.now().millisecondsSinceEpoch / 100 % 360,
+    .85,
+    DateTime.now().millisecondsSinceEpoch / 25 % 360,
     ctx.transform,
     ctx.projection,
   );
@@ -69,7 +69,10 @@ void drawFrame(DrawContext ctx, CursorController cursorController, Widget widget
     ),
     Padding(
       insets: Insets.all(10),
-      child: Label.string(text: 'hit ${state.lastHit.$1.runtimeType} at ${state.lastHit.$2}', fontSize: 18),
+      child: (() {
+        final coords = '${state.lastHit.$2.$1.toStringAsFixed(2)}, ${state.lastHit.$2.$2.toStringAsFixed(2)}';
+        return Label.string(text: 'hit ${state.lastHit.$1.runtimeType} at ($coords)', fontSize: 18);
+      })(),
     ),
   ])
     ..layout(

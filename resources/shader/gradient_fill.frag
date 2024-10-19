@@ -13,7 +13,7 @@ out vec4 fragColor;
 
 void main() {
     float pivot = uPosition + 0.5;
-    float size = uSize + .5;
+    float size = uSize;
 
     vec2 uv = vUv - pivot;
     float rotated = uv.x * cos(radians(uAngle)) - uv.y * sin(radians(uAngle));

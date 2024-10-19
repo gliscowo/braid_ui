@@ -23,16 +23,10 @@ final VertexDescriptor<PosUvVertexFunction> posUvVertexDescriptor = VertexDescri
   },
 );
 
-typedef PosColorVertexFunction = void Function(Vector3 pos, Color color);
-final VertexDescriptor<PosColorVertexFunction> posColorVertexDescriptor = VertexDescriptor(
-  (attribute) {
-    attribute('aPos', VertexElement.float, 3);
-    attribute('aColor', VertexElement.float, 4);
-  },
-  (buffer) => (pos, color) {
-    buffer.float3(pos.x, pos.y, pos.z);
-    buffer.float4(color.r, color.g, color.b, color.a);
-  },
+typedef PosVertexFunction = void Function(Vector3 pos);
+final VertexDescriptor<PosVertexFunction> posVertexDescriptor = VertexDescriptor(
+  (attribute) => attribute('aPos', VertexElement.float, 3),
+  (buffer) => (pos) => buffer.float3(pos.x, pos.y, pos.z),
 );
 
 typedef TextVertexFunction = void Function(double x, double y, double u, double v, Color color);

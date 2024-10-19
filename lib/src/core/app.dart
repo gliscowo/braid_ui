@@ -53,15 +53,15 @@ Future<void> runBraidApp({String name = 'braid app', Logger? baseLogger, require
   final renderContext = RenderContext(
     window,
     await Future.wait([
+      _vertFragProgram('blit', 'blit', 'blit'),
       _vertFragProgram('text', 'text', 'text'),
       _vertFragProgram('solid_fill', 'pos', 'solid_fill'),
-      _vertFragProgram('rounded_rect', 'position', 'rounded'),
-      _vertFragProgram('rounded_rect_outline', 'position', 'rounded_outline'),
-      _vertFragProgram('circle', 'position', 'circle'),
-      _vertFragProgram('blur', 'position', 'blur'),
-      _vertFragProgram('pos_uv_color', 'pos_uv_color', 'pos_uv_color'),
-      _vertFragProgram('gradient', 'gradient', 'gradient'),
-      _vertFragProgram('blit', 'blit', 'blit'),
+      _vertFragProgram('texture_fill', 'pos_uv', 'texture_fill'),
+      _vertFragProgram('rounded_rect_solid', 'pos', 'rounded_rect_solid'),
+      _vertFragProgram('rounded_rect_outline', 'pos', 'rounded_rect_outline'),
+      _vertFragProgram('circle_solid', 'pos', 'circle_solid'),
+      _vertFragProgram('gradient_fill', 'pos_uv', 'gradient_fill'),
+      // _vertFragProgram('blur', 'position', 'blur'),
     ]),
   );
 

@@ -8,31 +8,32 @@ import 'vertex_descriptors.dart';
 class PrimitiveRenderer {
   final RenderContext _context;
 
-  final MeshBuffer<PosColorVertexFunction> _posColorBuffer;
+  final MeshBuffer<PosVertexFunction> _solidBuffer;
   final MeshBuffer<PosUvVertexFunction> _gradientBuffer;
-  final MeshBuffer<PosColorVertexFunction> _roundedBuffer;
-  final MeshBuffer<PosColorVertexFunction> _roundedOutlineBuffer;
-  final MeshBuffer<PosColorVertexFunction> _circleBuffer;
-  final MeshBuffer<PosColorVertexFunction> _blurBuffer;
+  final MeshBuffer<PosVertexFunction> _roundedSolidBuffer;
+  final MeshBuffer<PosVertexFunction> _roundedOutlineBuffer;
+  final MeshBuffer<PosVertexFunction> _circleBuffer;
+  // final MeshBuffer<PosColorVertexFunction> _blurBuffer;
   MeshBuffer<BlitVertexFunction>? _blitBuffer;
 
   final GlFramebuffer _blurFramebuffer;
 
   PrimitiveRenderer(this._context)
-      : _posColorBuffer = MeshBuffer(posColorVertexDescriptor, _context.findProgram('pos_color')),
-        _gradientBuffer = MeshBuffer(posUvVertexDescriptor, _context.findProgram('gradient')),
-        _circleBuffer = MeshBuffer(posColorVertexDescriptor, _context.findProgram('circle')),
-        _blurBuffer = MeshBuffer(posColorVertexDescriptor, _context.findProgram('blur')),
-        _roundedBuffer = MeshBuffer(posColorVertexDescriptor, _context.findProgram('rounded_rect')),
-        _roundedOutlineBuffer = MeshBuffer(posColorVertexDescriptor, _context.findProgram('rounded_rect_outline')),
+      : _solidBuffer = MeshBuffer(posVertexDescriptor, _context.findProgram('solid_fill')),
+        _gradientBuffer = MeshBuffer(posUvVertexDescriptor, _context.findProgram('gradient_fill')),
+        _circleBuffer = MeshBuffer(posVertexDescriptor, _context.findProgram('circle_solid')),
+        // _blurBuffer = MeshBuffer(posColorVertexDescriptor, _context.findProgram('blur')),
+        _roundedSolidBuffer = MeshBuffer(posVertexDescriptor, _context.findProgram('rounded_rect_solid')),
+        _roundedOutlineBuffer = MeshBuffer(posVertexDescriptor, _context.findProgram('rounded_rect_outline')),
         _blurFramebuffer = GlFramebuffer.trackingWindow(_context.window);
 
   void roundedRect(double width, double height, double radius, Color color, Matrix4 transform, Matrix4 projection,
       {double? outlineThickness}) {
-    final buffer = outlineThickness == null ? _roundedBuffer : _roundedOutlineBuffer;
+    final buffer = outlineThickness == null ? _roundedSolidBuffer : _roundedOutlineBuffer;
     buffer.program
       ..uniformMat4('uTransform', transform)
       ..uniformMat4('uProjection', projection)
+      ..uniform4vf('uColor', color.asVector())
       ..uniform1f('uRadius', radius)
       ..uniform2f('uSize', width, height)
       ..use();
@@ -42,23 +43,24 @@ class PrimitiveRenderer {
     gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
 
     buffer.clear();
-    buildRect(buffer.vertex, 0, 0, width, height, color);
+    buildRect(buffer.vertex, 0, 0, width, height);
     buffer
       ..upload(dynamic: true)
       ..draw();
   }
 
   void rect(double width, double height, Color color, Matrix4 transform, Matrix4 projection) {
-    _posColorBuffer.program
+    _solidBuffer.program
       ..uniformMat4('uTransform', transform)
       ..uniformMat4('uProjection', projection)
+      ..uniform4vf('uColor', color.asVector())
       ..use();
 
     gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
 
-    _posColorBuffer.clear();
-    buildRect(_posColorBuffer.vertex, 0, 0, width, height, color);
-    _posColorBuffer
+    _solidBuffer.clear();
+    buildRect(_solidBuffer.vertex, 0, 0, width, height);
+    _solidBuffer
       ..upload(dynamic: true)
       ..draw();
   }
@@ -93,40 +95,40 @@ class PrimitiveRenderer {
       ..draw();
   }
 
-  void blur(double width, double height, Color color, Matrix4 transform, Matrix4 projection) {
-    _blurFramebuffer.clear(color: Color.black);
-    gl.blitNamedFramebuffer(0, _blurFramebuffer.fbo, 0, 0, _context.window.width, _context.window.height, 0, 0,
-        _blurFramebuffer.width, _blurFramebuffer.height, glColorBufferBit, glLinear);
+  // void blur(double width, double height, Color color, Matrix4 transform, Matrix4 projection) {
+  //   _blurFramebuffer.clear(color: Color.black);
+  //   gl.blitNamedFramebuffer(0, _blurFramebuffer.fbo, 0, 0, _context.window.width, _context.window.height, 0, 0,
+  //       _blurFramebuffer.width, _blurFramebuffer.height, glColorBufferBit, glLinear);
 
-    _blurBuffer.program
-      ..uniformMat4('uTransform', transform)
-      ..uniformMat4('uProjection', projection)
-      ..uniformSampler('uInput', _blurFramebuffer.colorAttachment, 0)
-      ..use();
+  //   _blurBuffer.program
+  //     ..uniformMat4('uTransform', transform)
+  //     ..uniformMat4('uProjection', projection)
+  //     ..uniformSampler('uInput', _blurFramebuffer.colorAttachment, 0)
+  //     ..use();
 
-    gl.disable(glBlend);
+  //   gl.disable(glBlend);
 
-    _posColorBuffer.clear();
-    buildRect(_posColorBuffer.vertex, 0, 0, width, height, color);
-    _posColorBuffer
-      ..upload(dynamic: true)
-      ..draw();
+  //   _solidBuffer.clear();
+  //   buildRect(_solidBuffer.vertex, 0, 0, width, height, color);
+  //   _solidBuffer
+  //     ..upload(dynamic: true)
+  //     ..draw();
 
-    gl.enable(glBlend);
-  }
+  //   gl.enable(glBlend);
+  // }
 
-  void circle(double x, double y, double radius, Color color, Matrix4 transform, Matrix4 projection) {
+  void circle(double radius, Color color, Matrix4 transform, Matrix4 projection) {
     _circleBuffer.program
       ..uniformMat4('uTransform', transform)
       ..uniformMat4('uProjection', projection)
-      ..uniform2f('uLocation', x, _context.window.height - y - radius * 2)
+      ..uniform4vf('uColor', color.asVector())
       ..uniform1f('uRadius', radius)
       ..use();
 
     gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
 
     _circleBuffer.clear();
-    buildRect(_circleBuffer.vertex, x, y, radius * 2, radius * 2, color);
+    buildRect(_circleBuffer.vertex, 0, 0, radius * 2, radius * 2);
     _circleBuffer
       ..upload(dynamic: true)
       ..draw();
@@ -157,19 +159,18 @@ class PrimitiveRenderer {
   }
 
   void buildRect(
-    PosColorVertexFunction vertex,
+    PosVertexFunction vertex,
     double x,
     double y,
     double width,
     double height,
-    Color color,
   ) {
-    vertex(Vector3(x, y, 0), color);
-    vertex(Vector3(x, y + height, 0), color);
-    vertex(Vector3(x + width, y + height, 0), color);
-    vertex(Vector3(x + width, y + height, 0), color);
-    vertex(Vector3(x + width, y, 0), color);
-    vertex(Vector3(x, y, 0), color);
+    vertex(Vector3(x, y, 0));
+    vertex(Vector3(x, y + height, 0));
+    vertex(Vector3(x + width, y + height, 0));
+    vertex(Vector3(x + width, y + height, 0));
+    vertex(Vector3(x + width, y, 0));
+    vertex(Vector3(x, y, 0));
   }
 
   void buildGradientRect(

@@ -2,6 +2,7 @@
 
 #version 330 core
 
+uniform vec4 uColor;
 uniform vec2 uSize;
 uniform float uRadius;
 uniform float uThickness;
@@ -23,5 +24,5 @@ void main() {
         : 1.0 - distance;
 
     if (smoothedAlpha < .001) discard;
-    fragColor = vec4(vColor.rgb, vColor.a * smoothedAlpha);
+    fragColor = vec4(uColor.rgb, uColor.a * smoothedAlpha);
 }
