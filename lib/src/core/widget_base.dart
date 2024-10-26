@@ -125,6 +125,16 @@ abstract class Widget {
     return null;
   }
 
+  T? ancestorOfType<T>() {
+    var nextAncestor = _parent;
+    while (nextAncestor != null) {
+      if (nextAncestor is T) return nextAncestor as T;
+      nextAncestor = nextAncestor._parent;
+    }
+
+    return null;
+  }
+
   void doLayout(LayoutContext ctx, Constraints constraints);
 
   void update() {

@@ -2,11 +2,6 @@ import 'dart:async';
 import 'dart:ffi' as ffi;
 import 'dart:io';
 
-import 'package:braid_ui/src/core/constraints.dart';
-import 'package:braid_ui/src/core/cursors.dart';
-import 'package:braid_ui/src/core/render_loop.dart';
-import 'package:braid_ui/src/core/widget_base.dart';
-import 'package:braid_ui/src/primitive_renderer.dart';
 import 'package:dart_glfw/dart_glfw.dart';
 import 'package:dart_opengl/dart_opengl.dart';
 import 'package:diamond_gl/diamond_gl.dart';
@@ -15,15 +10,25 @@ import 'package:logging/logging.dart';
 import 'package:vector_math/vector_math.dart';
 
 import '../context.dart';
+import '../primitive_renderer.dart';
 import '../text/text_renderer.dart';
+import 'constraints.dart';
+import 'cursors.dart';
 import 'math.dart';
-
-typedef WidgetBuilder = Widget Function();
+import 'render_loop.dart';
+import 'widget.dart';
+import 'widget_base.dart';
 
 final _frameEventsContoller = StreamController<()>.broadcast(sync: true);
 final frameEvents = _frameEventsContoller.stream;
 
-Future<void> runBraidApp({String name = 'braid app', Logger? baseLogger, required WidgetBuilder widget}) async {
+Future<void> runBraidApp({
+  String name = 'braid app',
+  int windowWidth = 1000,
+  int windowHeight = 750,
+  Logger? baseLogger,
+  required WidgetBuilder widget,
+}) async {
   loadOpenGL();
   loadGLFW('resources/lib/libglfw.so.3');
   initDiamondGL(logger: baseLogger);
@@ -47,7 +52,7 @@ Future<void> runBraidApp({String name = 'braid app', Logger? baseLogger, require
     glfw.setErrorCallback(ffi.Pointer.fromFunction(_onGlfwError));
   }
 
-  final window = Window(1000, 750, name);
+  final window = Window(windowWidth, windowHeight, name);
   glfw.makeContextCurrent(window.handle);
 
   final renderContext = RenderContext(
@@ -67,10 +72,12 @@ Future<void> runBraidApp({String name = 'braid app', Logger? baseLogger, require
 
   final cascadia = FontFamily('CascadiaCode', 30);
   final notoSans = FontFamily('NotoSans', 30);
+  final nunito = FontFamily('Nunito', 30);
   final materialSymbols = FontFamily('MaterialSymbols', 32);
   final textRenderer = TextRenderer(renderContext, notoSans, {
     'Noto Sans': notoSans,
     'CascadiaCode': cascadia,
+    'Nunito': nunito,
     'MaterialSymbols': materialSymbols,
   });
 
@@ -95,6 +102,13 @@ Future<void> runBraidApp({String name = 'braid app', Logger? baseLogger, require
       LayoutContext(textRenderer),
       Constraints.tight(Size(window.width.toDouble(), window.height.toDouble())),
     );
+
+  window.onResize.listen((event) {
+    builtWidget.layout(
+      LayoutContext(textRenderer),
+      Constraints.tight(Size(event.width.toDouble(), event.height.toDouble())),
+    );
+  });
 
   window.onMouseButton
       .where((event) => event.action == glfwPress && event.button == glfwMouseButtonLeft)

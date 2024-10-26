@@ -7,6 +7,8 @@ import 'package:braid_ui/src/core/widget_base.dart';
 import 'package:dart_opengl/dart_opengl.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 
+import 'flex.dart';
+
 var _hovered = <Widget>{};
 
 void drawFrame(DrawContext ctx, CursorController cursorController, Widget widget) {
@@ -62,24 +64,29 @@ void drawFrame(DrawContext ctx, CursorController cursorController, Widget widget
 
   _hovered = nowHovered;
 
-  Column(children: [
-    Padding(
-      insets: Insets.all(10),
-      child: Label.string(text: state.toString(), fontSize: 18),
-    ),
-    Padding(
-      insets: Insets.all(10),
-      child: (() {
-        final coords = '${state.lastHit.$2.$1.toStringAsFixed(2)}, ${state.lastHit.$2.$2.toStringAsFixed(2)}';
-        return Label.string(text: 'hit ${state.lastHit.$1.runtimeType} at ($coords)', fontSize: 18);
-      })(),
-    ),
-  ])
-    ..layout(
-      LayoutContext(ctx.textRenderer),
-      Constraints.loose(Size(window.width.toDouble(), window.height.toDouble())),
+  if (state.anyHit && false) {
+    Flex(
+      mainAxis: LayoutAxis.vertical,
+      children: [
+        Padding(
+          insets: Insets.all(10),
+          child: Label.string(text: state.toString(), fontSize: 18),
+        ),
+        Padding(
+          insets: Insets.all(10),
+          child: (() {
+            final coords = '${state.lastHit.$2.$1.toStringAsFixed(2)}, ${state.lastHit.$2.$2.toStringAsFixed(2)}';
+            return Label.string(text: 'hit ${state.lastHit.$1.runtimeType} at ($coords)', fontSize: 18);
+          })(),
+        ),
+      ],
     )
-    ..draw(ctx);
+      ..layout(
+        LayoutContext(ctx.textRenderer),
+        Constraints.loose(Size(window.width.toDouble(), window.height.toDouble())),
+      )
+      ..draw(ctx);
+  }
 
   if (ctx.drawBoundingBoxes) {
     final aabb = widget.transform.aabb;

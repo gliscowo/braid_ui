@@ -11,10 +11,21 @@ class Constraints {
   final double minWidth, minHeight;
   final double maxWidth, maxHeight;
 
-  Constraints(this.minWidth, this.minHeight, this.maxWidth, this.maxHeight);
+  const Constraints(this.minWidth, this.minHeight, this.maxWidth, this.maxHeight);
+  const Constraints.only({
+    double? minWidth,
+    double? minHeight,
+    double? maxWidth,
+    double? maxHeight,
+  }) : this(minWidth ?? 0, minHeight ?? 0, maxWidth ?? double.infinity, maxHeight ?? double.infinity);
 
-  Constraints.tight(Size size) : this(size.width, size.height, size.width, size.height);
-  Constraints.loose(Size size) : this(0, 0, size.width, size.height);
+  const Constraints.tightOnAxis({
+    double? horizontal,
+    double? vertical,
+  }) : this.only(minWidth: horizontal, minHeight: vertical, maxWidth: horizontal, maxHeight: vertical);
+
+  Constraints.tight(Size exactSize) : this(exactSize.width, exactSize.height, exactSize.width, exactSize.height);
+  Constraints.loose(Size maxSize) : this(0, 0, maxSize.width, maxSize.height);
 
   Constraints asLoose() => isLoose ? this : Constraints(0, 0, maxWidth, maxHeight);
 

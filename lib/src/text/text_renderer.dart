@@ -170,6 +170,8 @@ class Font {
     // when running with renderdoc? who knows
     //
     // glisco, 28.09.2024
+
+    // TODO add atlas size constant and store glyph UVs in normalized form
     final emptyBuffer = calloc<Char>(1024 * 1024 * 3);
     gl.textureSubImage2D(textureId, 0, 0, 0, 1024, 1024, glRgb, glUnsignedByte, emptyBuffer.cast());
     calloc.free(emptyBuffer);

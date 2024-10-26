@@ -1,25 +1,36 @@
+import 'dart:collection';
 import 'dart:math';
 
-import 'package:braid_ui/braid_ui.dart';
-import 'package:braid_ui/src/core/cursors.dart';
 import 'package:dart_opengl/dart_opengl.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math.dart';
 
+import '../../braid_ui.dart';
 import '../context.dart';
 import '../text/text.dart';
 import 'constraints.dart';
+import 'cursors.dart';
 import 'math.dart';
 import 'widget_base.dart';
 
-class Padding extends SingleChildWidget {
-  final Insets insets;
+typedef WidgetBuilder = Widget Function();
+
+class Padding extends OptionalChildWiget {
+  Insets _insets;
 
   Padding({
-    required super.child,
-    required this.insets,
-  });
+    required Insets insets,
+    super.child,
+  }) : _insets = insets;
+
+  Insets get insets => _insets;
+  set insets(Insets value) {
+    if (_insets == value) return;
+
+    _insets = value;
+    markNeedsLayout();
+  }
 
   @override
   void doLayout(LayoutContext ctx, Constraints constraints) {
@@ -30,11 +41,11 @@ class Padding extends SingleChildWidget {
       max(0, constraints.maxHeight - insets.vertical),
     );
 
-    final size = child.layout(ctx, childConstraints).withInsets(insets);
+    final size = (child?.layout(ctx, childConstraints) ?? Size.zero).withInsets(insets);
     transform.setSize(size);
 
-    child.transform.x = insets.left;
-    child.transform.y = insets.top;
+    child?.transform.x = insets.left;
+    child?.transform.y = insets.top;
   }
 }
 
@@ -60,6 +71,27 @@ abstract class SingleChildWidget extends Widget with SingleChildProvider, ChildR
   }
 }
 
+abstract class OptionalChildWiget extends Widget with ChildRenderer {
+  Widget? _child;
+
+  Widget? get child => _child;
+  set child(Widget? widget) => _child = widget?..parent = this;
+
+  OptionalChildWiget({Widget? child}) : _child = child {
+    _child?.parent = this;
+  }
+
+  @override
+  void draw(DrawContext ctx) {
+    if (_child case var child?) {
+      drawChild(ctx, child);
+    }
+  }
+
+  @override
+  Iterable<Widget> get children => [if (_child case var child?) child];
+}
+
 class Center extends SingleChildWidget {
   final double? widthFactor, heightFactor;
 
@@ -81,8 +113,9 @@ class Center extends SingleChildWidget {
                 : constraints.maxHeight)
         .constrained(constraints);
 
-    child.transform.x = (selfSize.width - childSize.width) / 2;
-    child.transform.y = (selfSize.height - childSize.height) / 2;
+    // TODO whether flooring here is smart or not is debatable
+    child.transform.x = ((selfSize.width - childSize.width) / 2).floorToDouble();
+    child.transform.y = ((selfSize.height - childSize.height) / 2).floorToDouble();
 
     transform.setSize(selfSize);
   }
@@ -90,96 +123,39 @@ class Center extends SingleChildWidget {
 
 class Panel extends SingleChildWidget with ShrinkWrapLayout {
   Color color;
+  double cornerRadius;
 
   Panel({
     required this.color,
+    this.cornerRadius = 10.0,
     required super.child,
   });
 
   @override
   void draw(DrawContext ctx) {
-    ctx.primitives.roundedRect(transform.width, transform.height, 10, color, ctx.transform, ctx.projection);
+    ctx.primitives.roundedRect(transform.width, transform.height, cornerRadius, color, ctx.transform, ctx.projection);
     super.draw(ctx);
-  }
-}
-
-class Column extends Widget with ChildRenderer, ChildListRenderer {
-  @override
-  final List<Widget> children;
-  final CrossAxisAlignment crossAxisAlignment;
-
-  Column({
-    this.crossAxisAlignment = CrossAxisAlignment.start,
-    required this.children,
-  }) {
-    for (final child in children) {
-      child.parent = this;
-    }
-  }
-
-  @override
-  void doLayout(LayoutContext ctx, Constraints constraints) {
-    final childConstraints = Constraints(
-      crossAxisAlignment == CrossAxisAlignment.stretch ? constraints.maxWidth : constraints.minWidth,
-      0,
-      constraints.maxWidth,
-      double.infinity,
-    );
-
-    final childSizes = children.map((e) => e.layout(ctx, childConstraints)).toList();
-
-    final size = childSizes
-        .fold(
-          Size.zero,
-          (previousValue, element) => Size(
-            max(previousValue.width, element.width),
-            previousValue.height + element.height,
-          ),
-        )
-        .constrained(constraints);
-
-    transform.width = size.width;
-    transform.height = size.height;
-
-    var yOffset = 0.0;
-    for (final child in children) {
-      child.transform.x = crossAxisAlignment._computeChildOffset(size.width - child.transform.width);
-      child.transform.y = yOffset;
-
-      yOffset += child.transform.height;
-    }
-  }
-}
-
-enum CrossAxisAlignment {
-  start,
-  end,
-  center,
-  stretch;
-
-  double _computeChildOffset(double freeSpace) {
-    return switch (this) {
-      CrossAxisAlignment.stretch => 0,
-      CrossAxisAlignment.start => 0,
-      CrossAxisAlignment.center => freeSpace / 2,
-      CrossAxisAlignment.end => freeSpace,
-    };
   }
 }
 
 class Label extends Widget {
   Text _text;
+  Color _textColor;
   final double fontSize;
 
   Label({
     required Text text,
+    Color? textColor,
     this.fontSize = 24,
-  }) : _text = text;
+  })  : _text = text,
+        _textColor = textColor ?? Color.black;
 
   Label.string({
     required String text,
+    Color? textColor,
     this.fontSize = 24,
-  }) : _text = Text.string(text);
+  })  : _text = Text.string(text),
+        _textColor = textColor ?? Color.black;
 
   @override
   void draw(DrawContext ctx) {
@@ -188,7 +164,7 @@ class Label extends Widget {
 
     ctx.transform.scope((mat4) {
       mat4.translate(xOffset, yOffset);
-      ctx.textRenderer.drawText(text, fontSize, mat4, ctx.projection);
+      ctx.textRenderer.drawText(text, fontSize, mat4, ctx.projection, color: textColor);
     });
   }
 
@@ -200,8 +176,16 @@ class Label extends Widget {
 
   Text get text => _text;
   set text(Text value) {
+    if (_text == value) return;
+
     _text = value;
     markNeedsLayout();
+  }
+
+  Color get textColor => _textColor;
+  set textColor(Color value) {
+    if (_textColor == value) return;
+    _textColor = value;
   }
 }
 
@@ -229,9 +213,30 @@ class MouseArea extends SingleChildWidget with ShrinkWrapLayout, MouseListener {
   void onMouseExit() => exitCallback?.call();
 }
 
+// TODO separate theme and widget, use theme directly in [Button]
+class ButtonTheme extends SingleChildWidget with ShrinkWrapLayout {
+  Color color;
+  Color hoveredColor;
+  Color textColor;
+  Insets padding;
+  double cornerRadius;
+
+  ButtonTheme({
+    required super.child,
+    Color? color,
+    Color? hoveredColor,
+    Color? textColor,
+    this.padding = const Insets.all(10.0),
+    this.cornerRadius = 10.0,
+  })  : color = color ?? Color.white,
+        hoveredColor = hoveredColor ?? Color.red,
+        textColor = textColor ?? Color.black;
+}
+
 class Button extends SingleChildWidget with ShrinkWrapLayout {
-  late Label _label;
   late Panel _panel;
+  late Padding _padding;
+  late Label _label;
 
   void Function(Button button) onClick;
   Color _color;
@@ -240,18 +245,25 @@ class Button extends SingleChildWidget with ShrinkWrapLayout {
   Button({
     required Text text,
     required this.onClick,
-    required Color color,
-    required Color hoveredColor,
+    Color? color,
+    Color? hoveredColor,
+    Color? textColor,
+    double cornerRadius = 10.0,
     Insets padding = const Insets.all(10),
-  })  : _hoveredColor = hoveredColor,
-        _color = color,
+  })  : _hoveredColor = hoveredColor ?? Color.red,
+        _color = color ?? Color.white,
         super.lateChild() {
     initChild(MouseArea(
       child: _panel = Panel(
-        color: color,
-        child: Padding(
+        cornerRadius: cornerRadius,
+        color: _color,
+        child: _padding = Padding(
           insets: padding,
-          child: _label = Label(text: text, fontSize: 20),
+          child: _label = Label(
+            text: text,
+            textColor: textColor,
+            fontSize: 20.0,
+          ),
         ),
       ),
       clickCallback: () => onClick(this),
@@ -263,9 +275,30 @@ class Button extends SingleChildWidget with ShrinkWrapLayout {
 
   set color(Color value) => _panel.color = _color = value;
   set hoveredColor(Color value) => _panel.color = _hoveredColor = value;
+  set textColor(Color value) => _label.textColor = value;
+
+  Insets get padding => _padding.insets;
+  set padding(Insets value) => _padding.insets = value;
+
+  double get cornerRadius => _panel.cornerRadius;
+  set cornerRadius(double value) => _panel.cornerRadius = value;
 
   Text get text => _label.text;
   set text(Text value) => _label.text = value;
+
+  @override
+  void doLayout(LayoutContext ctx, Constraints constraints) {
+    super.doLayout(ctx, constraints);
+
+    final theme = ancestorOfType<ButtonTheme>();
+    if (theme != null) {
+      color = theme.color;
+      hoveredColor = theme.hoveredColor;
+      textColor = theme.textColor;
+      padding = theme.padding;
+      cornerRadius = theme.cornerRadius;
+    }
+  }
 }
 
 class HappyWidget extends Widget {
@@ -298,7 +331,7 @@ class HappyWidget extends Widget {
     );
 
     ctx.transform.translate(5.0, 5.0);
-    ctx.textRenderer.drawText(Text.string('widget :)'), 16, ctx.transform, ctx.projection);
+    ctx.textRenderer.drawText(Text.string('hi chyz :)'), 16, ctx.transform, ctx.projection);
   }
 }
 
@@ -420,5 +453,33 @@ class StencilClip extends SingleChildWidget with ShrinkWrapLayout {
     if (stencilValue == 0) {
       ctx.primitives.blitFramebuffer(framebuffer);
     }
+  }
+}
+
+class Pages extends SingleChildWidget with ShrinkWrapLayout {
+  final bool _cache;
+  final List<WidgetBuilder> _builders;
+  final Map<int, Widget> _pages = HashMap();
+
+  int _page = 0;
+
+  Pages({
+    bool cache = true,
+    required List<WidgetBuilder> pageBuilders,
+  })  : _cache = cache,
+        _builders = pageBuilders,
+        super.lateChild() {
+    initChild(_builders.first());
+  }
+
+  int get page => _page;
+  set page(int value) {
+    if (_page == value) return;
+    _page = value;
+
+    final newChild = _cache ? _pages[_page] ??= _builders[_page]() : _builders[_page]();
+    child = newChild;
+
+    markNeedsLayout();
   }
 }
