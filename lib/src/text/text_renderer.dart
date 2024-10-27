@@ -58,9 +58,11 @@ class FontFamily {
 }
 
 class Font {
+  static const atlasSize = 1024;
+
   static FT_Library? _ftInstance;
   static final List<int> _glyphTextures = [];
-  static int _nextGlyphX = 1024, _nextGlyphY = 1024;
+  static int _nextGlyphX = atlasSize, _nextGlyphY = atlasSize;
   static int _currentRowHeight = 0;
 
   late final Pointer<hb_font> _hbFont;
@@ -135,12 +137,12 @@ class Font {
   }
 
   static (int, int, int) _allocateGlyphPosition(int width, int height) {
-    if (_nextGlyphX + width >= 1024) {
+    if (_nextGlyphX + width >= atlasSize) {
       _nextGlyphX = 0;
       _nextGlyphY += _currentRowHeight + 2;
     }
 
-    if (_nextGlyphY + height >= 1024) {
+    if (_nextGlyphY + height >= atlasSize) {
       _glyphTextures.add(_createGlyphAtlasTexture());
       _nextGlyphX = 0;
       _nextGlyphY = 0;
@@ -162,7 +164,7 @@ class Font {
     malloc.free(texture);
 
     gl.pixelStorei(glUnpackAlignment, 1);
-    gl.textureStorage2D(textureId, 8, glRgb8, 1024, 1024);
+    gl.textureStorage2D(textureId, 8, glRgb8, atlasSize, atlasSize);
 
     // turns out that zero-initializing the texture
     // memory is actually very important to prevent
@@ -171,9 +173,8 @@ class Font {
     //
     // glisco, 28.09.2024
 
-    // TODO add atlas size constant and store glyph UVs in normalized form
-    final emptyBuffer = calloc<Char>(1024 * 1024 * 3);
-    gl.textureSubImage2D(textureId, 0, 0, 0, 1024, 1024, glRgb, glUnsignedByte, emptyBuffer.cast());
+    final emptyBuffer = calloc<Char>(atlasSize * atlasSize * 3);
+    gl.textureSubImage2D(textureId, 0, 0, 0, atlasSize, atlasSize, glRgb, glUnsignedByte, emptyBuffer.cast());
     calloc.free(emptyBuffer);
 
     gl.textureParameteri(textureId, glTextureWrapS, glClampToEdge);
@@ -259,8 +260,8 @@ class TextRenderer {
       final width = glyph.width * scale * glyphScale;
       final height = glyph.height * scale * glyphScale;
 
-      final u0 = (glyph.u / 1024), u1 = u0 + (glyph.width / 1024);
-      final v0 = (glyph.v / 1024), v1 = v0 + (glyph.height / 1024);
+      final u0 = (glyph.u / Font.atlasSize), u1 = u0 + (glyph.width / Font.atlasSize);
+      final v0 = (glyph.v / Font.atlasSize), v1 = v0 + (glyph.height / Font.atlasSize);
 
       buffer(glyph.textureId)
         ..vertex(xPos, yPos, u0, v0, glyphColor)
