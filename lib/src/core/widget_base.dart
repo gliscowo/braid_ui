@@ -1,10 +1,9 @@
+import 'dart:collection';
+
+import 'package:braid_ui/braid_ui.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math.dart';
-
-import '../context.dart';
-import 'constraints.dart';
-import 'math.dart';
 
 extension type const Key(String value) {}
 
@@ -39,6 +38,10 @@ class WidgetTransform {
 
   void _setState(void Function() action) {
     action();
+    recompute();
+  }
+
+  void recompute() {
     _toParent = null;
     _toWidget = null;
     _aabb = null;
@@ -58,35 +61,41 @@ class CustomWidgetTransform extends WidgetTransform {
     ..translate(-_width / 2, -_height / 2);
 }
 
-typedef Hit = (Widget, (double, double));
+typedef Hit = ({Widget widget, ({double x, double y}) coordinates});
 
-// TODO proper hit test occlusion
 class HitTestState {
-  final _hitWidgets = <Hit>[];
+  final _hitWidgets = DoubleLinkedQueue<Hit>();
 
   bool get anyHit => _hitWidgets.isNotEmpty;
   Hit get lastHit => _hitWidgets.last;
 
-  Iterable<Hit> get trace => _hitWidgets.reversed;
+  Iterable<Hit> get trace => _hitWidgets;
+  Iterable<Hit> get occludedTrace => trace.takeWhile((value) => value.widget is! HitTestOccluder);
 
-  Hit? firstWhere(bool Function(Widget widget) predicate) => trace.cast<Hit?>().firstWhere(
-        (element) => predicate(element!.$1),
+  Hit? firstWhere(bool Function(Widget widget) predicate) => occludedTrace.cast<Hit?>().firstWhere(
+        (element) => predicate(element!.widget),
         orElse: () => null,
       );
 
   void addHit(Widget widget, double x, double y) {
-    _hitWidgets.add((widget, (x, y)));
+    _hitWidgets.addFirst((widget: widget, coordinates: (x: x, y: y)));
   }
 
   @override
-  String toString() => 'HitTestState [${_hitWidgets.map((e) => e.$1.runtimeType).join(', ')}]';
+  String toString() => 'HitTestState [${_hitWidgets.map((e) => e.widget.runtimeType).join(', ')}]';
 }
 
-mixin class MouseListener {
-  void onMouseDown() {}
+mixin MouseListener {
+  bool onMouseDown() => false;
   void onMouseEnter() {}
   void onMouseExit() {}
+  bool onMouseScroll(double horizontal, double vertical) => false;
 }
+
+typedef LayoutData = ({
+  LayoutContext ctx,
+  Constraints constraints,
+});
 
 abstract class Widget {
   late final WidgetTransform transform = createTransform();
@@ -94,20 +103,23 @@ abstract class Widget {
 
   Widget? _parent;
 
-  LayoutContext? _layoutContext;
-  Constraints? _constraints;
+  LayoutData? _layoutData;
   bool _needsLayout = false;
 
   @nonVirtual
   Size layout(LayoutContext ctx, Constraints constraints) {
-    if (!_needsLayout && constraints == _constraints) return transform.toSize();
+    // print('${'  ' * _depth} pre-layout on [$runtimeType, $hashCode] with ${children.length} children');
+    if (!_needsLayout && constraints == _layoutData?.constraints) {
+      // print('${'  ' * _depth} layout cancelled on [$runtimeType, $hashCode] with ${children.length} children');
+      return transform.toSize();
+    }
 
-    _layoutContext = ctx;
-    _constraints = constraints;
+    _layoutData = (ctx: ctx, constraints: constraints);
 
     doLayout(ctx, constraints);
     _needsLayout = false;
 
+    // print('${'  ' * _depth} layout complete on [$runtimeType, $hashCode] with ${children.length} children');
     return transform.toSize();
   }
 
@@ -137,19 +149,19 @@ abstract class Widget {
 
   void doLayout(LayoutContext ctx, Constraints constraints);
 
-  void update() {
+  void update(double delta) {
     for (final child in children) {
-      child.update();
+      child.update(delta);
     }
   }
 
-  void draw(DrawContext ctx);
+  void draw(DrawContext ctx, double delta);
 
   void notifyChildNeedsLayout() {
     _needsLayout = true;
 
     final prevSize = transform.toSize();
-    layout(_layoutContext!, _constraints!);
+    layout(_layoutData!.ctx, _layoutData!.constraints);
 
     if (prevSize != transform.toSize()) {
       _parent?.notifyChildNeedsLayout();
@@ -168,6 +180,9 @@ abstract class Widget {
   @protected
   WidgetTransform createTransform() => WidgetTransform();
 
+  @protected
+  LayoutData? get layoutData => _layoutData;
+
   Iterable<Widget> get children => const [];
 
   void hitTest(double x, double y, HitTestState state) {
@@ -182,6 +197,8 @@ abstract class Widget {
   @protected
   bool hitTestSelf(double x, double y) => x >= 0 && x <= transform.width && y >= 0 && y <= transform.height;
 
+  bool get hasParent => _parent != null;
+
   // bool hitTest(double screenX, double screenY, {Matrix4? transform}) {
   //   final (x, y) = _transformCoords(screenX, screenY, transform ?? this.transform.toWidget);
   //   return x >= 0 && x <= this.transform.width && y >= 0 && y <= this.transform.height;
@@ -194,10 +211,27 @@ abstract class Widget {
   }
 }
 
+// --- rendering/layout mixins
+
+mixin SingleChildProvider on Widget {
+  Widget get child;
+
+  @override
+  Iterable<Widget> get children => [child];
+}
+
+mixin OptionalChildProvider on Widget {
+  Widget? get child;
+
+  @override
+  Iterable<Widget> get children => [if (child case var child?) child];
+}
+
 mixin ChildRenderer on Widget {
-  void drawChild(DrawContext ctx, Widget child) {
+  @protected
+  void drawChild(DrawContext ctx, double delta, Widget child) {
     ctx.transform.scopeWith(child.transform.toParent, (mat4) {
-      child.draw(ctx);
+      child.draw(ctx, delta);
     });
 
     if (ctx.drawBoundingBoxes) {
@@ -212,28 +246,27 @@ mixin ChildRenderer on Widget {
   }
 }
 
-mixin SingleChildProvider on Widget {
-  Widget get child;
-
-  @override
-  Iterable<Widget> get children => [child];
-}
-
 mixin SingleChildRenderer on ChildRenderer, SingleChildProvider {
   @override
-  void draw(DrawContext ctx) {
-    drawChild(ctx, child);
+  void draw(DrawContext ctx, double delta) {
+    drawChild(ctx, delta, child);
+  }
+}
+
+mixin OptionalChildRenderer on ChildRenderer, OptionalChildProvider {
+  @override
+  void draw(DrawContext ctx, double delta) {
+    if (child case var child?) {
+      drawChild(ctx, delta, child);
+    }
   }
 }
 
 mixin ChildListRenderer on ChildRenderer {
   @override
-  List<Widget> get children;
-
-  @override
-  void draw(DrawContext ctx) {
+  void draw(DrawContext ctx, double delta) {
     for (final child in children) {
-      drawChild(ctx, child);
+      drawChild(ctx, delta, child);
     }
   }
 }
@@ -244,4 +277,27 @@ mixin ShrinkWrapLayout on Widget, SingleChildProvider {
     final size = child.layout(ctx, constraints);
     transform.setSize(size);
   }
+}
+
+mixin OptionalShrinkWrapLayout on Widget, OptionalChildProvider {
+  @override
+  void doLayout(LayoutContext ctx, Constraints constraints) {
+    final size = child?.layout(ctx, constraints) ?? constraints.minSize;
+    transform.setSize(size);
+  }
+}
+
+Widget dumpGraphviz(Widget widget) {
+  if (widget._parent != null) {
+    print('  ${_formatWidget(widget._parent!)} -> ${_formatWidget(widget)};');
+  }
+  for (var child in widget.children) {
+    dumpGraphviz(child);
+  }
+
+  return widget;
+}
+
+String _formatWidget(Widget widget) {
+  return '"${widget.runtimeType}\\n${widget.hashCode.toRadixString(16)}"';
 }

@@ -27,8 +27,15 @@ class PrimitiveRenderer {
         _roundedOutlineBuffer = MeshBuffer(posVertexDescriptor, _context.findProgram('rounded_rect_outline')),
         _blurFramebuffer = GlFramebuffer.trackingWindow(_context.window);
 
-  void roundedRect(double width, double height, double radius, Color color, Matrix4 transform, Matrix4 projection,
-      {double? outlineThickness}) {
+  void roundedRect(
+    double width,
+    double height,
+    double radius,
+    Color color,
+    Matrix4 transform,
+    Matrix4 projection, {
+    double? outlineThickness,
+  }) {
     final buffer = outlineThickness == null ? _roundedSolidBuffer : _roundedOutlineBuffer;
     buffer.program
       ..uniformMat4('uTransform', transform)

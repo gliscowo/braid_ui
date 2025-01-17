@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:vector_math/vector_math.dart';
@@ -8,6 +9,8 @@ class Size {
 
   final double width, height;
   const Size(this.width, this.height);
+
+  Size.max(Size a, Size b) : this(max(a.width, b.width), max(a.height, b.height));
 
   Size copy({double? width, double? height}) => Size(width ?? this.width, height ?? this.height);
 
@@ -58,8 +61,8 @@ class Insets {
 }
 
 extension Dimensions on Aabb3 {
-  double get width => (max.x - min.x).abs();
-  double get height => (max.y - min.y).abs();
+  double get width => (this.max.x - this.min.x).abs();
+  double get height => (this.max.y - this.min.y).abs();
 }
 
 class Matrix4Stack extends Matrix4 {
@@ -91,4 +94,11 @@ class Matrix4Stack extends Matrix4 {
   void pop() {
     storage.setAll(0, _stack.removeLast());
   }
+}
+
+double computeDelta(double current, double target, double delta) {
+  double diff = target - current;
+  delta = diff * delta;
+
+  return delta.abs() > diff.abs() ? diff : delta;
 }

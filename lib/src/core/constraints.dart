@@ -11,7 +11,11 @@ class Constraints {
   final double minWidth, minHeight;
   final double maxWidth, maxHeight;
 
-  const Constraints(this.minWidth, this.minHeight, this.maxWidth, this.maxHeight);
+  const Constraints(this.minWidth, this.minHeight, this.maxWidth,
+      this.maxHeight); /*{
+    assert(minWidth <= maxWidth, 'minWidth must be <= maxWidth');
+    assert(minHeight <= maxHeight, 'minHeight must be <= maxHeight');
+  }*/
   const Constraints.only({
     double? minWidth,
     double? minHeight,
@@ -44,6 +48,9 @@ class Constraints {
 
   bool get hasBoundedWidth => maxWidth < double.infinity;
   bool get hasBoundedHeight => maxHeight < double.infinity;
+
+  Size get maxSize => Size(maxWidth, maxHeight);
+  Size get minSize => Size(minWidth, minHeight);
 
   @override
   bool operator ==(Object other) =>

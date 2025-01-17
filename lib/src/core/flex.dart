@@ -105,6 +105,9 @@ class Flex extends Widget with ChildRenderer, ChildListRenderer {
     }
   }
 
+  // TODO: revisit whether available main axis space should always fill
+  // constraints for non-flex children
+
   @override
   void doLayout(LayoutContext ctx, Constraints constraints) {
     final crossAxis = mainAxis.opposite;
@@ -123,7 +126,7 @@ class Flex extends Widget with ChildRenderer, ChildListRenderer {
     final childSizes =
         children.where((element) => element is! FlexChild).map((e) => e.layout(ctx, childConstraints)).toList();
 
-    // now, compute the remanining space on the main axis
+    // now, compute the remaining space on the main axis
     final remainingSpace =
         constraints.maxOnAxis(mainAxis) - childSizes.fold(0.0, (acc, size) => acc + size.getAxisExtent(mainAxis));
 

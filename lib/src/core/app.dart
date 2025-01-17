@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:ffi' as ffi;
 import 'dart:io';
+import 'dart:math';
 
 import 'package:dart_glfw/dart_glfw.dart';
 import 'package:dart_opengl/dart_opengl.dart';
@@ -8,6 +10,8 @@ import 'package:diamond_gl/diamond_gl.dart';
 import 'package:ffi/ffi.dart' as ffi;
 import 'package:logging/logging.dart';
 import 'package:vector_math/vector_math.dart';
+import 'package:vm_service/vm_service.dart';
+import 'package:vm_service/vm_service_io.dart';
 
 import '../context.dart';
 import '../primitive_renderer.dart';
@@ -26,6 +30,8 @@ Future<void> runBraidApp({
   String name = 'braid app',
   int windowWidth = 1000,
   int windowHeight = 750,
+  int targetFps = 60,
+  bool experimentalReloadHook = false,
   Logger? baseLogger,
   required WidgetBuilder widget,
 }) async {
@@ -50,6 +56,16 @@ Future<void> runBraidApp({
 
     _glfwLogger = Logger('${baseLogger.name}.glfw');
     glfw.setErrorCallback(ffi.Pointer.fromFunction(_onGlfwError));
+  }
+
+  void Function()? reloadCallback;
+  void Function()? reloadHookCancel;
+
+  if (experimentalReloadHook) {
+    reloadHookCancel = await _setupReloadHook(() => reloadCallback?.call());
+    if (reloadHookCancel != null) {
+      baseLogger?.info('reload hook attached successfully');
+    }
   }
 
   final window = Window(windowWidth, windowHeight, name);
@@ -97,14 +113,23 @@ Future<void> runBraidApp({
   gl.enable(glBlend);
 
   final cursorController = CursorController.ofWindow(window);
-  final builtWidget = widget()
+  var rootWidget = AppScaffold(root: widget())
     ..layout(
       LayoutContext(textRenderer),
       Constraints.tight(Size(window.width.toDouble(), window.height.toDouble())),
     );
 
+  reloadCallback = () {
+    baseLogger?.info('hot reload detected, rebuilding root widget');
+    rootWidget = AppScaffold(root: widget())
+      ..layout(
+        LayoutContext(textRenderer),
+        Constraints.tight(Size(window.width.toDouble(), window.height.toDouble())),
+      );
+  };
+
   window.onResize.listen((event) {
-    builtWidget.layout(
+    rootWidget.layout(
       LayoutContext(textRenderer),
       Constraints.tight(Size(event.width.toDouble(), event.height.toDouble())),
     );
@@ -114,24 +139,62 @@ Future<void> runBraidApp({
       .where((event) => event.action == glfwPress && event.button == glfwMouseButtonLeft)
       .listen((event) {
     final state = HitTestState();
-    builtWidget.hitTest(window.cursorX, window.cursorY, state);
+    rootWidget.hitTest(window.cursorX, window.cursorY, state);
 
-    final hit = state.firstWhere((widget) => widget is MouseListener);
-    if (hit case (var receiver, _)) {
-      (receiver as MouseListener).onMouseDown();
-    }
+    state.firstWhere(
+      (widget) => widget is MouseListener && (widget as MouseListener).onMouseDown(),
+    );
   });
 
+  window.onMouseScroll.listen((event) {
+    final state = HitTestState();
+    rootWidget.hitTest(window.cursorX, window.cursorY, state);
+
+    state.firstWhere(
+      (widget) => widget is MouseListener && (widget as MouseListener).onMouseScroll(event.xOffset, event.yOffset),
+    );
+  });
+
+  final oneFrame = 1 / targetFps;
+  var lastFrameTimestamp = glfw.getTime();
+
+  glfw.swapInterval(0);
   while (glfw.windowShouldClose(window.handle) != glfwTrue) {
+    final measuredDelta = glfw.getTime() - lastFrameTimestamp;
+
+    await Future.delayed(Duration(
+      microseconds: max(((oneFrame - measuredDelta) * 1000000).toInt(), 0),
+    ));
+
+    final effectiveDelta = glfw.getTime() - lastFrameTimestamp;
+    lastFrameTimestamp = glfw.getTime();
+
     _frameEventsContoller.add(const ());
     drawFrame(
       DrawContext(renderContext, primitives, projection, textRenderer, drawBoundingBoxes: drawBoundingBoxes),
       cursorController,
-      builtWidget,
+      rootWidget,
+      effectiveDelta,
     );
   }
 
   glfw.terminate();
+  reloadHookCancel?.call();
+}
+
+Future<void Function()?> _setupReloadHook(void Function() callback) async {
+  final serviceUri = (await Service.getInfo()).serverWebSocketUri;
+  if (serviceUri == null) return null;
+
+  final service = await vmServiceConnectUri(serviceUri.toString());
+  await service.streamListen(EventStreams.kIsolate);
+
+  service.onIsolateEvent.listen((event) {
+    if (event.kind != 'IsolateReload') return;
+    callback();
+  });
+
+  return () => service.dispose();
 }
 
 Logger? _glfwLogger;

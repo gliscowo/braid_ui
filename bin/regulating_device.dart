@@ -1,10 +1,4 @@
 import 'package:braid_ui/braid_ui.dart';
-import 'package:braid_ui/src/core/flex.dart';
-import 'package:braid_ui/src/core/icons.dart';
-import 'package:braid_ui/src/core/math.dart';
-import 'package:braid_ui/src/core/widget.dart';
-import 'package:braid_ui/src/core/widget_base.dart';
-import 'package:braid_ui/src/text/text.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:logging/logging.dart';
 

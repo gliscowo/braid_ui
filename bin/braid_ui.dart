@@ -1,11 +1,4 @@
 import 'package:braid_ui/braid_ui.dart';
-import 'package:braid_ui/src/core/constraints.dart';
-import 'package:braid_ui/src/core/flex.dart';
-import 'package:braid_ui/src/core/icons.dart';
-import 'package:braid_ui/src/core/math.dart';
-import 'package:braid_ui/src/core/widget.dart';
-import 'package:braid_ui/src/core/widget_base.dart';
-import 'package:braid_ui/src/text/text.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:logging/logging.dart';
 import 'package:vector_math/vector_math.dart';
@@ -97,7 +90,7 @@ void main(List<String> arguments) {
                       ],
                     ),
                     Panel(
-                      color: Color.black,
+                      color: Color.green,
                       cornerRadius: 0,
                       child: pages = Pages(
                         cache: false,
@@ -131,7 +124,7 @@ class ItGoSpin extends SingleChildWidget with ShrinkWrapLayout {
   }
 
   @override
-  void update() {
+  void update(double delta) {
     _transform.matrix = Matrix4.rotationZ(DateTime.now().millisecondsSinceEpoch / 1000);
     // ..scale(sin(DateTime.now().millisecondsSinceEpoch / 250) + 1.5);
   }

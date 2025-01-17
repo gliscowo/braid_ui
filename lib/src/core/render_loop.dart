@@ -11,7 +11,7 @@ import 'flex.dart';
 
 var _hovered = <Widget>{};
 
-void drawFrame(DrawContext ctx, CursorController cursorController, Widget widget) {
+void drawFrame(DrawContext ctx, CursorController cursorController, Widget widget, double delta) {
   final window = ctx.renderContext.window;
 
   gl.clearColor(0, 0, 0, 1);
@@ -30,16 +30,15 @@ void drawFrame(DrawContext ctx, CursorController cursorController, Widget widget
   );
 
   ctx.transform.scopeWith(widget.transform.toParent, (_) {
-    widget.update();
-    widget.draw(ctx);
+    widget.update(delta);
+    widget.draw(ctx, delta);
   });
 
   final state = HitTestState();
   widget.hitTest(window.cursorX, window.cursorY, state);
 
-  // TODO proper hit test occlusion
   final nowHovered = <Widget>{};
-  for (final (widget, _) in state.trace) {
+  for (final (:widget, coordinates: _) in state.occludedTrace) {
     nowHovered.add(widget);
 
     if (_hovered.contains(widget)) {
@@ -52,7 +51,7 @@ void drawFrame(DrawContext ctx, CursorController cursorController, Widget widget
   }
 
   cursorController.style =
-      (state.firstWhere((widget) => widget is MouseArea && widget.cursorStyle != null)?.$1 as MouseArea?)
+      (state.firstWhere((widget) => widget is MouseArea && widget.cursorStyle != null)?.widget as MouseArea?)
               ?.cursorStyle ??
           CursorStyle.none;
 
@@ -75,8 +74,9 @@ void drawFrame(DrawContext ctx, CursorController cursorController, Widget widget
         Padding(
           insets: Insets.all(10),
           child: (() {
-            final coords = '${state.lastHit.$2.$1.toStringAsFixed(2)}, ${state.lastHit.$2.$2.toStringAsFixed(2)}';
-            return Label.string(text: 'hit ${state.lastHit.$1.runtimeType} at ($coords)', fontSize: 18);
+            final coords =
+                '${state.lastHit.coordinates.x.toStringAsFixed(2)}, ${state.lastHit.coordinates.y.toStringAsFixed(2)}';
+            return Label.string(text: 'hit ${state.lastHit.widget.runtimeType} at ($coords)', fontSize: 18);
           })(),
         ),
       ],
@@ -85,7 +85,7 @@ void drawFrame(DrawContext ctx, CursorController cursorController, Widget widget
         LayoutContext(ctx.textRenderer),
         Constraints.loose(Size(window.width.toDouble(), window.height.toDouble())),
       )
-      ..draw(ctx);
+      ..draw(ctx, delta);
   }
 
   if (ctx.drawBoundingBoxes) {
