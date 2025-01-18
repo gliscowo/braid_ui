@@ -51,5 +51,7 @@ class DrawContext {
 
 class LayoutContext {
   final TextRenderer textRenderer;
-  LayoutContext(this.textRenderer);
+  // TODO: this should probably not be neede?
+  final Window window;
+  LayoutContext(this.textRenderer, this.window);
 }

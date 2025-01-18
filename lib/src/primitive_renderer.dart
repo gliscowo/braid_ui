@@ -13,19 +13,14 @@ class PrimitiveRenderer {
   final MeshBuffer<PosVertexFunction> _roundedSolidBuffer;
   final MeshBuffer<PosVertexFunction> _roundedOutlineBuffer;
   final MeshBuffer<PosVertexFunction> _circleBuffer;
-  // final MeshBuffer<PosColorVertexFunction> _blurBuffer;
   MeshBuffer<BlitVertexFunction>? _blitBuffer;
-
-  final GlFramebuffer _blurFramebuffer;
 
   PrimitiveRenderer(this._context)
       : _solidBuffer = MeshBuffer(posVertexDescriptor, _context.findProgram('solid_fill')),
         _gradientBuffer = MeshBuffer(posUvVertexDescriptor, _context.findProgram('gradient_fill')),
         _circleBuffer = MeshBuffer(posVertexDescriptor, _context.findProgram('circle_solid')),
-        // _blurBuffer = MeshBuffer(posColorVertexDescriptor, _context.findProgram('blur')),
         _roundedSolidBuffer = MeshBuffer(posVertexDescriptor, _context.findProgram('rounded_rect_solid')),
-        _roundedOutlineBuffer = MeshBuffer(posVertexDescriptor, _context.findProgram('rounded_rect_outline')),
-        _blurFramebuffer = GlFramebuffer.trackingWindow(_context.window);
+        _roundedOutlineBuffer = MeshBuffer(posVertexDescriptor, _context.findProgram('rounded_rect_outline'));
 
   void roundedRect(
     double width,

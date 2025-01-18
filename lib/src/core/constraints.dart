@@ -1,6 +1,6 @@
 import 'package:braid_ui/src/core/math.dart';
 
-extension Constrained on Size {
+extension ConstrainedSize on Size {
   Size constrained(Constraints constraints) => Size(
         width.clamp(constraints.minWidth, constraints.maxWidth),
         height.clamp(constraints.minHeight, constraints.maxHeight),

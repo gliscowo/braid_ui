@@ -4,6 +4,14 @@ import 'dart:typed_data';
 
 import 'package:vector_math/vector_math.dart';
 
+extension DoubleLerp on double {
+  double lerp(double delta, double other) => this + delta * (other - this);
+}
+
+extension IntLerp on int {
+  int lerp(double delta, int other) => this + (delta * (other - this)).round();
+}
+
 class Size {
   static const Size zero = Size(0, 0);
 

@@ -92,6 +92,12 @@ mixin MouseListener {
   bool onMouseScroll(double horizontal, double vertical) => false;
 }
 
+mixin KeyboardListener {
+  void onKeyDown(int keyCode, int modifiers);
+  // void onKeyRelease();
+  void onChar(int charCode, int modifiers);
+}
+
 typedef LayoutData = ({
   LayoutContext ctx,
   Constraints constraints,
@@ -198,11 +204,6 @@ abstract class Widget {
   bool hitTestSelf(double x, double y) => x >= 0 && x <= transform.width && y >= 0 && y <= transform.height;
 
   bool get hasParent => _parent != null;
-
-  // bool hitTest(double screenX, double screenY, {Matrix4? transform}) {
-  //   final (x, y) = _transformCoords(screenX, screenY, transform ?? this.transform.toWidget);
-  //   return x >= 0 && x <= this.transform.width && y >= 0 && y <= this.transform.height;
-  // }
 
   (double, double) transformCoords(double x, double y, Matrix4 transform) {
     final vec = Vector3(x, y, 0);

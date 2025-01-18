@@ -13,7 +13,7 @@ void main(List<String> arguments) {
 
   Widget columnTestPage() {
     late Flex flex;
-    return ConstrainedBox(
+    return Constrained(
       constraints: const Constraints.only(minHeight: 250, maxHeight: 400),
       child: Panel(
         color: Color.white,
@@ -21,7 +21,7 @@ void main(List<String> arguments) {
           mainAxis: LayoutAxis.vertical,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            ConstrainedBox(
+            Constrained(
               constraints: const Constraints.only(minWidth: 100),
               child: Button(
                 text: Text.string("flip!"),
@@ -75,7 +75,7 @@ void main(List<String> arguments) {
                       mainAxis: LayoutAxis.horizontal,
                       children: [
                         for (final (idx, icon) in ['home', 'apps', 'settings'].indexed)
-                          ConstrainedBox(
+                          Constrained(
                             constraints: const Constraints.only(minWidth: 125),
                             child: Button(
                               text: Text([

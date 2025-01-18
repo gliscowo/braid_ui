@@ -223,6 +223,23 @@ class MouseArea extends SingleChildWidget with ShrinkWrapLayout, MouseListener {
   bool onMouseScroll(double horizontal, double vertical) => (scrollCallback?..call(horizontal, vertical)) != null;
 }
 
+class KeyboardInput extends SingleChildWidget with ShrinkWrapLayout, KeyboardListener {
+  void Function(int keyCode, int modifiers)? keyCallback;
+  void Function(int charCode, int modifiers)? charCallback;
+
+  KeyboardInput({
+    this.keyCallback,
+    this.charCallback,
+    required super.child,
+  });
+
+  @override
+  void onKeyDown(int keyCode, int modifiers) => keyCallback?.call(keyCode, modifiers);
+
+  @override
+  void onChar(int charCode, int modifiers) => charCallback?.call(charCode, modifiers);
+}
+
 // TODO separate theme and widget, use theme directly in [Button]
 class ButtonTheme extends SingleChildWidget with ShrinkWrapLayout {
   Color color;
@@ -379,10 +396,10 @@ class Gradient extends SingleChildWidget with ShrinkWrapLayout {
   }
 }
 
-class ConstrainedBox extends SingleChildWidget {
+class Constrained extends SingleChildWidget {
   final Constraints constraints;
 
-  ConstrainedBox({
+  Constrained({
     required this.constraints,
     required super.child,
   });
@@ -530,18 +547,21 @@ class Pages extends SingleChildWidget with ShrinkWrapLayout {
 }
 
 class Overlay extends SingleChildWidget with ShrinkWrapLayout {
+  late MouseArea _mouseArea;
+
   Overlay({
-    required Widget content,
+    bool barrierDismissable = false,
+    required Widget Function(Overlay overlay) contentBuilder,
   }) : super.lateChild() {
     initChild(HitTestOccluder(
-      child: MouseArea(
-        clickCallback: close,
+      child: _mouseArea = MouseArea(
+        clickCallback: barrierDismissable ? close : null,
         child: Panel(
           color: Color.black.copyWith(a: .75),
           cornerRadius: 0,
           child: Center(
             child: HitTestOccluder(
-              child: content,
+              child: contentBuilder(this),
             ),
           ),
         ),
@@ -549,18 +569,28 @@ class Overlay extends SingleChildWidget with ShrinkWrapLayout {
     ));
   }
 
-  static void open(Widget context, Widget content) {
+  static void open({
+    bool barrierDismissable = false,
+    required Widget context,
+    required Widget Function(Overlay overlay) contentBuilder,
+  }) {
     final scaffold = context.ancestorOfType<AppScaffold>();
     if (scaffold == null) {
       throw 'missing scaffold to mount overlay';
     }
 
     scaffold.addOverlay(Overlay(
-      content: content,
+      barrierDismissable: barrierDismissable,
+      contentBuilder: contentBuilder,
     ));
   }
 
   void close() => ancestorOfType<AppScaffold>()!.removeOverlay(this);
+
+  bool get barrierDismissable => _mouseArea.clickCallback != null;
+  set barrierDismissable(bool value) {
+    _mouseArea.clickCallback = value ? close : null;
+  }
 }
 
 class AppScaffold extends Widget with ChildRenderer, ChildListRenderer {

@@ -115,7 +115,7 @@ Future<void> runBraidApp({
   final cursorController = CursorController.ofWindow(window);
   var rootWidget = AppScaffold(root: widget())
     ..layout(
-      LayoutContext(textRenderer),
+      LayoutContext(textRenderer, window),
       Constraints.tight(Size(window.width.toDouble(), window.height.toDouble())),
     );
 
@@ -123,18 +123,19 @@ Future<void> runBraidApp({
     baseLogger?.info('hot reload detected, rebuilding root widget');
     rootWidget = AppScaffold(root: widget())
       ..layout(
-        LayoutContext(textRenderer),
+        LayoutContext(textRenderer, window),
         Constraints.tight(Size(window.width.toDouble(), window.height.toDouble())),
       );
   };
 
   window.onResize.listen((event) {
     rootWidget.layout(
-      LayoutContext(textRenderer),
+      LayoutContext(textRenderer, window),
       Constraints.tight(Size(event.width.toDouble(), event.height.toDouble())),
     );
   });
 
+  KeyboardListener? _focused;
   window.onMouseButton
       .where((event) => event.action == glfwPress && event.button == glfwMouseButtonLeft)
       .listen((event) {
@@ -144,6 +145,8 @@ Future<void> runBraidApp({
     state.firstWhere(
       (widget) => widget is MouseListener && (widget as MouseListener).onMouseDown(),
     );
+
+    _focused = state.firstWhere((widget) => widget is KeyboardListener)?.widget as KeyboardListener?;
   });
 
   window.onMouseScroll.listen((event) {
@@ -153,6 +156,14 @@ Future<void> runBraidApp({
     state.firstWhere(
       (widget) => widget is MouseListener && (widget as MouseListener).onMouseScroll(event.xOffset, event.yOffset),
     );
+  });
+
+  window.onKey.where((event) => event.action == glfwPress || event.action == glfwRepeat).listen((event) {
+    _focused?.onKeyDown(event.key, event.mods);
+  });
+
+  window.onChar.listen((event) {
+    _focused?.onChar(event, 0);
   });
 
   final oneFrame = 1 / targetFps;
