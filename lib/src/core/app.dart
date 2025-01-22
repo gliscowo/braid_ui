@@ -1,17 +1,15 @@
 import 'dart:async';
-import 'dart:developer';
 import 'dart:ffi' as ffi;
-import 'dart:io';
 import 'dart:math';
 
+import 'package:braid_ui/src/core/app_state.dart';
+import 'package:braid_ui/src/resources.dart';
 import 'package:dart_glfw/dart_glfw.dart';
 import 'package:dart_opengl/dart_opengl.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:ffi/ffi.dart' as ffi;
 import 'package:logging/logging.dart';
 import 'package:vector_math/vector_math.dart';
-import 'package:vm_service/vm_service.dart';
-import 'package:vm_service/vm_service_io.dart';
 
 import '../context.dart';
 import '../primitive_renderer.dart';
@@ -27,150 +25,35 @@ final _frameEventsContoller = StreamController<()>.broadcast(sync: true);
 final frameEvents = _frameEventsContoller.stream;
 
 Future<void> runBraidApp({
-  String name = 'braid app',
-  int windowWidth = 1000,
-  int windowHeight = 750,
+  required AppState app,
   int targetFps = 60,
   bool experimentalReloadHook = false,
-  Logger? baseLogger,
-  required WidgetBuilder widget,
 }) async {
-  loadOpenGL();
-  loadGLFW('resources/lib/libglfw.so.3');
-  initDiamondGL(logger: baseLogger);
+  // void Function()? reloadCallback;
+  // void Function()? reloadHookCancel;
 
-  if (glfw.init() != glfwTrue) {
-    glfw.terminate();
+  // if (experimentalReloadHook) {
+  //   reloadHookCancel = await _setupReloadHook(() => reloadCallback?.call());
+  //   if (reloadHookCancel != null) {
+  //     baseLogger?.info('reload hook attached successfully');
+  //   }
+  // }
 
-    final errorPointer = ffi.malloc<ffi.Pointer<ffi.Char>>();
-    glfw.getError(errorPointer);
-
-    final errorString = errorPointer.cast<ffi.Utf8>().toDartString();
-    ffi.malloc.free(errorPointer);
-
-    throw BraidInitializationException('GLFW initialization error: $errorString');
-  }
-
-  if (baseLogger != null) {
-    attachGlErrorCallback();
-
-    _glfwLogger = Logger('${baseLogger.name}.glfw');
-    glfw.setErrorCallback(ffi.Pointer.fromFunction(_onGlfwError));
-  }
-
-  void Function()? reloadCallback;
-  void Function()? reloadHookCancel;
-
-  if (experimentalReloadHook) {
-    reloadHookCancel = await _setupReloadHook(() => reloadCallback?.call());
-    if (reloadHookCancel != null) {
-      baseLogger?.info('reload hook attached successfully');
-    }
-  }
-
-  final window = Window(windowWidth, windowHeight, name);
-  glfw.makeContextCurrent(window.handle);
-
-  final renderContext = RenderContext(
-    window,
-    await Future.wait([
-      _vertFragProgram('blit', 'blit', 'blit'),
-      _vertFragProgram('text', 'text', 'text'),
-      _vertFragProgram('solid_fill', 'pos', 'solid_fill'),
-      _vertFragProgram('texture_fill', 'pos_uv', 'texture_fill'),
-      _vertFragProgram('rounded_rect_solid', 'pos', 'rounded_rect_solid'),
-      _vertFragProgram('rounded_rect_outline', 'pos', 'rounded_rect_outline'),
-      _vertFragProgram('circle_solid', 'pos', 'circle_solid'),
-      _vertFragProgram('gradient_fill', 'pos_uv', 'gradient_fill'),
-      // _vertFragProgram('blur', 'position', 'blur'),
-    ]),
-  );
-
-  final cascadia = FontFamily('CascadiaCode', 30);
-  final notoSans = FontFamily('NotoSans', 30);
-  final nunito = FontFamily('Nunito', 30);
-  final materialSymbols = FontFamily('MaterialSymbols', 32);
-  final textRenderer = TextRenderer(renderContext, notoSans, {
-    'Noto Sans': notoSans,
-    'CascadiaCode': cascadia,
-    'Nunito': nunito,
-    'MaterialSymbols': materialSymbols,
-  });
-
-  final primitives = PrimitiveRenderer(renderContext);
-
-  final projection = makeOrthographicMatrix(0, window.width.toDouble(), window.height.toDouble(), 0, -10, 10);
-  window.onResize.listen((event) {
-    gl.viewport(0, 0, event.width, event.height);
-    setOrthographicMatrix(projection, 0, event.width.toDouble(), event.height.toDouble(), 0, -10, 10);
-  });
-
-  var drawBoundingBoxes = false;
-  window.onKey.where((event) => event.action == glfwPress && event.key == glfwKeyLeftShift).listen((event) {
-    drawBoundingBoxes = !drawBoundingBoxes;
-  });
-
-  gl.enable(glBlend);
-
-  final cursorController = CursorController.ofWindow(window);
-  var rootWidget = AppScaffold(root: widget())
-    ..layout(
-      LayoutContext(textRenderer, window),
-      Constraints.tight(Size(window.width.toDouble(), window.height.toDouble())),
-    );
-
-  reloadCallback = () {
-    baseLogger?.info('hot reload detected, rebuilding root widget');
-    rootWidget = AppScaffold(root: widget())
-      ..layout(
-        LayoutContext(textRenderer, window),
-        Constraints.tight(Size(window.width.toDouble(), window.height.toDouble())),
-      );
-  };
-
-  window.onResize.listen((event) {
-    rootWidget.layout(
-      LayoutContext(textRenderer, window),
-      Constraints.tight(Size(event.width.toDouble(), event.height.toDouble())),
-    );
-  });
-
-  KeyboardListener? _focused;
-  window.onMouseButton
-      .where((event) => event.action == glfwPress && event.button == glfwMouseButtonLeft)
-      .listen((event) {
-    final state = HitTestState();
-    rootWidget.hitTest(window.cursorX, window.cursorY, state);
-
-    state.firstWhere(
-      (widget) => widget is MouseListener && (widget as MouseListener).onMouseDown(),
-    );
-
-    _focused = state.firstWhere((widget) => widget is KeyboardListener)?.widget as KeyboardListener?;
-  });
-
-  window.onMouseScroll.listen((event) {
-    final state = HitTestState();
-    rootWidget.hitTest(window.cursorX, window.cursorY, state);
-
-    state.firstWhere(
-      (widget) => widget is MouseListener && (widget as MouseListener).onMouseScroll(event.xOffset, event.yOffset),
-    );
-  });
-
-  window.onKey.where((event) => event.action == glfwPress || event.action == glfwRepeat).listen((event) {
-    _focused?.onKeyDown(event.key, event.mods);
-  });
-
-  window.onChar.listen((event) {
-    _focused?.onChar(event, 0);
-  });
+  // reloadCallback = () {
+  //   baseLogger?.info('hot reload detected, rebuilding root widget');
+  //   rootWidget = AppScaffold(root: widget())
+  //     ..layout(
+  //       LayoutContext(textRenderer, window),
+  //       Constraints.tight(Size(window.width.toDouble(), window.height.toDouble())),
+  //     );
+  // };
 
   final oneFrame = 1 / targetFps;
   var lastFrameTimestamp = glfw.getTime();
 
+  gl.enable(glBlend);
   glfw.swapInterval(0);
-  while (glfw.windowShouldClose(window.handle) != glfwTrue) {
+  while (glfw.windowShouldClose(app.window.handle) != glfwTrue) {
     final measuredDelta = glfw.getTime() - lastFrameTimestamp;
 
     await Future.delayed(Duration(
@@ -180,51 +63,199 @@ Future<void> runBraidApp({
     final effectiveDelta = glfw.getTime() - lastFrameTimestamp;
     lastFrameTimestamp = glfw.getTime();
 
+    // TODO: this must move somewhere else
     _frameEventsContoller.add(const ());
+
+    // TODO: this must become a contextless function on [AppState]
     drawFrame(
-      DrawContext(renderContext, primitives, projection, textRenderer, drawBoundingBoxes: drawBoundingBoxes),
-      cursorController,
-      rootWidget,
+      DrawContext(app.context, app.primitives, app.projection, app.textRenderer /*, drawBoundingBoxes: false*/),
+      app.cursorController,
+      app.scaffold,
       effectiveDelta,
     );
   }
 
   glfw.terminate();
-  reloadHookCancel?.call();
+  // reloadHookCancel?.call();
 }
 
-Future<void Function()?> _setupReloadHook(void Function() callback) async {
-  final serviceUri = (await Service.getInfo()).serverWebSocketUri;
-  if (serviceUri == null) return null;
+Future<AppState> createBraidApp({
+  required BraidResources resources,
+  String name = 'braid app',
+  Window? window,
+  int windowWidth = 1000,
+  int windowHeight = 750,
+  Logger? baseLogger,
+  required WidgetBuilder widget,
+}) async {
+  loadOpenGL();
+  loadGLFW(BraidNatives.activeLibraries.glfw);
 
-  final service = await vmServiceConnectUri(serviceUri.toString());
-  await service.streamListen(EventStreams.kIsolate);
+  if (!diamondGLInitialized) {
+    initDiamondGL(logger: baseLogger);
+  }
 
-  service.onIsolateEvent.listen((event) {
-    if (event.kind != 'IsolateReload') return;
-    callback();
+  Window braidWindow;
+  if (window == null) {
+    if (glfw.init() != glfwTrue) {
+      glfw.terminate();
+
+      final errorPointer = ffi.malloc<ffi.Pointer<ffi.Char>>();
+      glfw.getError(errorPointer);
+
+      final errorString = errorPointer.cast<ffi.Utf8>().toDartString();
+      ffi.malloc.free(errorPointer);
+
+      throw BraidInitializationException('GLFW initialization error: $errorString');
+    }
+
+    if (baseLogger != null) {
+      attachGlfwErrorCallback();
+    }
+
+    braidWindow = Window(windowWidth, windowHeight, name);
+  } else {
+    braidWindow = window;
+  }
+
+  braidWindow.activateContext();
+  if (baseLogger != null && window == null) {
+    attachGlErrorCallback();
+  }
+
+  final renderContext = RenderContext(
+    braidWindow,
+    await Future.wait([
+      _vertFragProgram(resources, 'blit', 'blit', 'blit'),
+      _vertFragProgram(resources, 'text', 'text', 'text'),
+      _vertFragProgram(resources, 'solid_fill', 'pos', 'solid_fill'),
+      _vertFragProgram(resources, 'texture_fill', 'pos_uv', 'texture_fill'),
+      _vertFragProgram(resources, 'rounded_rect_solid', 'pos', 'rounded_rect_solid'),
+      _vertFragProgram(resources, 'rounded_rect_outline', 'pos', 'rounded_rect_outline'),
+      _vertFragProgram(resources, 'circle_solid', 'pos', 'circle_solid'),
+      _vertFragProgram(resources, 'gradient_fill', 'pos_uv', 'gradient_fill'),
+      // _vertFragProgram(resources, 'blur', 'position', 'blur'),
+    ]),
+  );
+
+  final (cascadia, notoSans, nunito, materialSymbols) = await (
+    FontFamily.load(resources, 'CascadiaCode', 30),
+    FontFamily.load(resources, 'NotoSans', 30),
+    FontFamily.load(resources, 'Nunito', 30),
+    FontFamily.load(resources, 'MaterialSymbols', 32),
+  ).wait;
+
+  final textRenderer = TextRenderer(renderContext, notoSans, {
+    'Noto Sans': notoSans,
+    'CascadiaCode': cascadia,
+    'Nunito': nunito,
+    'MaterialSymbols': materialSymbols,
   });
 
-  return () => service.dispose();
+  final projection = makeOrthographicMatrix(0, braidWindow.width.toDouble(), braidWindow.height.toDouble(), 0, -10, 10);
+  braidWindow.onResize.listen((event) {
+    setOrthographicMatrix(projection, 0, event.width.toDouble(), event.height.toDouble(), 0, -10, 10);
+  });
+
+  final cursorController = CursorController.ofWindow(braidWindow);
+  final scaffold = AppScaffold(root: widget())
+    ..layout(
+      LayoutContext(textRenderer, braidWindow),
+      Constraints.tight(Size(braidWindow.width.toDouble(), braidWindow.height.toDouble())),
+    );
+
+  {
+    // TODO: all of this functionality should not really be in here,
+    // this function is just for setting things up
+    braidWindow.onResize.listen((event) {
+      scaffold.layout(
+        LayoutContext(textRenderer, braidWindow),
+        Constraints.tight(Size(event.width.toDouble(), event.height.toDouble())),
+      );
+    });
+
+    KeyboardListener? focused;
+    braidWindow.onMouseButton
+        .where((event) => event.action == glfwPress && event.button == glfwMouseButtonLeft)
+        .listen((event) {
+      final state = HitTestState();
+      scaffold.hitTest(braidWindow.cursorX, braidWindow.cursorY, state);
+
+      state.firstWhere(
+        (widget) => widget is MouseListener && (widget as MouseListener).onMouseDown(),
+      );
+
+      focused = state.firstWhere((widget) => widget is KeyboardListener)?.widget as KeyboardListener?;
+    });
+
+    braidWindow.onMouseScroll.listen((event) {
+      final state = HitTestState();
+      scaffold.hitTest(braidWindow.cursorX, braidWindow.cursorY, state);
+
+      state.firstWhere(
+        (widget) => widget is MouseListener && (widget as MouseListener).onMouseScroll(event.xOffset, event.yOffset),
+      );
+    });
+
+    braidWindow.onKey.where((event) => event.action == glfwPress || event.action == glfwRepeat).listen((event) {
+      focused?.onKeyDown(event.key, event.mods);
+    });
+
+    braidWindow.onChar.listen((event) {
+      focused?.onChar(event, 0);
+    });
+  }
+
+  return AppState(
+    braidWindow,
+    cursorController,
+    projection,
+    renderContext,
+    textRenderer,
+    PrimitiveRenderer(renderContext),
+    scaffold,
+  );
 }
 
-Logger? _glfwLogger;
-void _onGlfwError(int errorCode, ffi.Pointer<ffi.Char> description) =>
-    _glfwLogger?.severe('GLFW Error: ${description.cast<ffi.Utf8>().toDartString()} ($errorCode)');
+// Future<void Function()?> _setupReloadHook(void Function() callback) async {
+//   final serviceUri = (await Service.getInfo()).serverWebSocketUri;
+//   if (serviceUri == null) return null;
 
-Future<GlProgram> _vertFragProgram(String name, String vert, String frag) async {
-  final shaders = await Future.wait([
-    GlShader.fromFile(File('resources/shader/$vert.vert'), GlShaderType.vertex),
-    GlShader.fromFile(File('resources/shader/$frag.frag'), GlShaderType.fragment),
-  ]);
+//   final service = await vmServiceConnectUri(serviceUri.toString());
+//   await service.streamListen(EventStreams.kIsolate);
+
+//   service.onIsolateEvent.listen((event) {
+//     if (event.kind != 'IsolateReload') return;
+//     callback();
+//   });
+
+//   return () => service.dispose();
+// }
+
+Future<GlProgram> _vertFragProgram(BraidResources resources, String name, String vert, String frag) async {
+  final (vertSource, fragSource) = await (
+    resources.loadShader('$vert.vert'),
+    resources.loadShader('$frag.frag'),
+  ).wait;
+
+  final shaders = [
+    GlShader('$vert.vert', vertSource, GlShaderType.vertex),
+    GlShader('$frag.frag', fragSource, GlShaderType.fragment),
+  ];
 
   return GlProgram(name, shaders);
 }
 
-class BraidInitializationException implements Exception {
+final class BraidInitializationException implements Exception {
   final String message;
-  BraidInitializationException(this.message);
+  final Object? cause;
+  BraidInitializationException(this.message, {this.cause});
 
   @override
-  String toString() => 'error during braid initialization: $message';
+  String toString() => cause != null
+      ? '''
+error during braid initialization: $message
+cause: $cause
+'''
+      : 'error during braid initialization: $message';
 }

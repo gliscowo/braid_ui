@@ -1,11 +1,18 @@
 import 'package:braid_ui/braid_ui.dart';
+import 'package:dart_glfw/dart_glfw.dart';
+import 'package:dart_opengl/dart_opengl.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:logging/logging.dart';
 import 'package:vector_math/vector_math.dart';
 
 final _logger = Logger('braid');
 
-void main(List<String> arguments) {
+Future<void> main(List<String> arguments) async {
+  loadNatives('resources/lib');
+  loadOpenGL();
+  loadGLFW(BraidNatives.activeLibraries.glfw);
+  initDiamondGL(logger: _logger);
+
   Logger.root.level = Level.FINE;
   Logger.root.onRecord.listen((event) {
     print('[${event.loggerName}] (${event.level.toString().toLowerCase()}) ${event.message}');
@@ -45,9 +52,16 @@ void main(List<String> arguments) {
     );
   }
 
-  // TODO tabbled layout or smth
-  runBraidApp(
+  glfw.init();
+  final window = Window(500, 500, "ayo, that's a non-braid window??");
+
+  final app = await createBraidApp(
+    resources: BraidResources.filesystem(
+      fontDirectory: 'resources/font',
+      shaderDirectory: 'resources/shader',
+    ),
     baseLogger: _logger,
+    window: window,
     widget: () => Center(
       child: Panel(
         color: Color.ofRgb(0x0e1420),
@@ -110,6 +124,8 @@ void main(List<String> arguments) {
       ),
     ),
   );
+
+  runBraidApp(app: app);
 }
 
 class ItGoSpin extends SingleChildWidget with ShrinkWrapLayout {

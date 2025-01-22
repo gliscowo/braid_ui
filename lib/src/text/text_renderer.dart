@@ -1,11 +1,13 @@
 import 'dart:ffi' hide Size;
-import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
 
+import 'package:braid_ui/src/resources.dart';
 import 'package:dart_opengl/dart_opengl.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:ffi/ffi.dart';
 import 'package:logging/logging.dart';
+import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math.dart';
 
 import '../context.dart';
@@ -15,38 +17,37 @@ import '../native/harfbuzz.dart';
 import '../vertex_descriptors.dart';
 import 'text.dart';
 
-final freetype = FreetypeLibrary(DynamicLibrary.open('libfreetype.so'));
-final harfbuzz = HarfbuzzLibrary(DynamicLibrary.open('libharfbuzz.so.0'));
+final freetype = FreetypeLibrary(DynamicLibrary.open(BraidNatives.activeLibraries.freetype));
+final harfbuzz = HarfbuzzLibrary(DynamicLibrary.open(BraidNatives.activeLibraries.harfbuzz));
 
 final Logger _logger = Logger('cutesy.text_handler');
 
 class FontFamily {
-  final List<Font> _allFonts = [];
+  final Font defaultFont;
+  final Font boldFont, italicFont, boldItalicFont;
 
-  late final Font defaultFont;
-  late final Font boldFont, italicFont, boldItalicFont;
+  FontFamily(
+    this.defaultFont,
+    this.boldFont,
+    this.italicFont,
+    this.boldItalicFont,
+  );
 
-  FontFamily(String familyName, int size) {
-    final fontFiles = Directory('resources/font/$familyName')
-        .listSync()
-        .whereType<File>()
-        .where((file) => file.path.endsWith('.otf') || file.path.endsWith('.ttf'));
+  @factory
+  static Future<FontFamily> load(BraidResources resources, String familyName, int size) async {
+    final fonts = await resources.loadFontFamily(familyName).map((fontBytes) => Font(fontBytes, size)).toList();
 
-    for (final font in fontFiles) {
-      _allFonts.add(Font(font.absolute.path, size));
+    Font warn(String type, Font font) {
+      _logger.warning('Could not find a "$type" font in family $familyName');
+      return font;
     }
 
-    Font Function() defaultAndWarn(String type) {
-      return () {
-        _logger.warning('Could not find a "$type" font in family $familyName');
-        return defaultFont;
-      };
-    }
-
-    defaultFont = _allFonts.firstWhere((font) => !font.bold && !font.italic, orElse: () => _allFonts.first);
-    boldFont = _allFonts.firstWhere((font) => font.bold && !font.italic, orElse: defaultAndWarn('bold'));
-    italicFont = _allFonts.firstWhere((font) => !font.bold && font.italic, orElse: defaultAndWarn('italic'));
-    boldItalicFont = _allFonts.firstWhere((font) => font.bold && font.italic, orElse: defaultAndWarn('bold & italic'));
+    return FontFamily(
+      fonts.firstWhere((font) => !font.bold && !font.italic, orElse: () => fonts.first),
+      fonts.firstWhere((font) => font.bold && !font.italic, orElse: () => warn('bold', fonts.first)),
+      fonts.firstWhere((font) => !font.bold && font.italic, orElse: () => warn('italic', fonts.first)),
+      fonts.firstWhere((font) => font.bold && font.italic, orElse: () => warn('bold & italic', fonts.first)),
+    );
   }
 
   Font fontForStyle(TextStyle style) {
@@ -57,58 +58,78 @@ class FontFamily {
   }
 }
 
+typedef _NativeFontResources = ({
+  Pointer<hb_font> hbFont,
+  FT_Face ftFace,
+  Pointer<Uint8> fontMemory,
+});
+
 class Font {
   static const atlasSize = 1024;
+
+  static final _finalizer = Finalizer<_NativeFontResources>((resources) {
+    freetype.Done_Face(resources.ftFace);
+    malloc.free(resources.ftFace);
+    malloc.free(resources.fontMemory);
+  });
 
   static FT_Library? _ftInstance;
   static final List<int> _glyphTextures = [];
   static int _nextGlyphX = atlasSize, _nextGlyphY = atlasSize;
   static int _currentRowHeight = 0;
 
-  late final Pointer<hb_font> _hbFont;
-  late final FT_Face _ftFace;
+  late final _NativeFontResources _nativeResources;
 
   final Map<int, Glyph> _glyphs = {};
   final int size;
 
   late final bool bold, italic;
 
-  Font(String path, this.size) {
-    final nativePath = path.toNativeUtf8().cast<Char>();
+  Font(Uint8List fontBytes, this.size) {
+    final fontMemory = malloc<Uint8>(fontBytes.lengthInBytes);
+    fontMemory.asTypedList(fontBytes.lengthInBytes).setRange(0, fontBytes.lengthInBytes, fontBytes);
 
     final face = malloc<FT_Face>();
-    if (freetype.New_Face(_ftLibrary, nativePath, 0, face) != 0) {
-      throw ArgumentError.value(path, 'path', 'Could not load font');
+    if (freetype.New_Memory_Face(_ftLibrary, fontMemory.cast(), fontBytes.lengthInBytes, 0, face) != 0) {
+      throw ArgumentError('could not load font', 'fontBytes');
     }
 
     final faceStruct = face.value.ref;
     bold = faceStruct.style_flags & FT_STYLE_FLAG_BOLD != 0;
     italic = faceStruct.style_flags & FT_STYLE_FLAG_ITALIC != 0;
 
-    _ftFace = face.value;
-    freetype.Set_Pixel_Sizes(_ftFace, size, size);
+    final ftFace = face.value;
+    freetype.Set_Pixel_Sizes(ftFace, size, size);
 
-    _hbFont = harfbuzz.ft_font_create_referenced(_ftFace);
-    harfbuzz.ft_font_set_funcs(_hbFont);
-    harfbuzz.font_set_scale(_hbFont, 64, 64);
+    final hbFont = harfbuzz.ft_font_create_referenced(ftFace);
+    harfbuzz.ft_font_set_funcs(hbFont);
+    harfbuzz.font_set_scale(hbFont, 64, 64);
 
-    malloc.free(nativePath);
+    _nativeResources = (
+      hbFont: hbFont,
+      ftFace: ftFace,
+      fontMemory: fontMemory,
+    );
+
+    _finalizer.attach(this, _nativeResources);
   }
 
   Glyph operator [](int index) => _glyphs[index] ?? _loadGlyph(index);
 
   // TODO consider switching to SDF rendering
   Glyph _loadGlyph(int index) {
-    if (freetype.Load_Glyph(_ftFace, index, FT_LOAD_RENDER | FT_LOAD_TARGET_LCD | FT_LOAD_COLOR) != 0) {
+    final ftFace = _nativeResources.ftFace;
+
+    if (freetype.Load_Glyph(ftFace, index, FT_LOAD_RENDER | FT_LOAD_TARGET_LCD | FT_LOAD_COLOR) != 0) {
       throw Exception('Failed to load glyph ${String.fromCharCode(index)}');
     }
 
-    final width = _ftFace.ref.glyph.ref.bitmap.width ~/ 3;
-    final pitch = _ftFace.ref.glyph.ref.bitmap.pitch;
-    final rows = _ftFace.ref.glyph.ref.bitmap.rows;
+    final width = ftFace.ref.glyph.ref.bitmap.width ~/ 3;
+    final pitch = ftFace.ref.glyph.ref.bitmap.pitch;
+    final rows = ftFace.ref.glyph.ref.bitmap.rows;
     final (texture, u, v) = _allocateGlyphPosition(width, rows);
 
-    final glyphPixels = _ftFace.ref.glyph.ref.bitmap.buffer.cast<Uint8>().asTypedList(pitch * rows);
+    final glyphPixels = ftFace.ref.glyph.ref.bitmap.buffer.cast<Uint8>().asTypedList(pitch * rows);
     final pixelBuffer = malloc<Uint8>(width * rows * 3);
     final pixels = pixelBuffer.asTypedList(width * rows * 3);
 
@@ -131,8 +152,8 @@ class Font {
       v,
       width,
       rows,
-      _ftFace.ref.glyph.ref.bitmap_left,
-      _ftFace.ref.glyph.ref.bitmap_top,
+      ftFace.ref.glyph.ref.bitmap_left,
+      ftFace.ref.glyph.ref.bitmap_top,
     );
   }
 
@@ -185,7 +206,7 @@ class Font {
     return textureId;
   }
 
-  Pointer<hb_font> get hbFont => _hbFont;
+  Pointer<hb_font> get hbFont => _nativeResources.hbFont;
 
   static FT_Library get _ftLibrary {
     if (_ftInstance != null) return _ftInstance!;

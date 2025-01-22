@@ -105,8 +105,8 @@ class Flex extends Widget with ChildRenderer, ChildListRenderer {
     }
   }
 
-  // TODO: revisit whether available main axis space should always fill
-  // constraints for non-flex children
+  // TODO: revisit whether available main axis space should always
+  // saturate constraints for non-flex children
 
   @override
   void doLayout(LayoutContext ctx, Constraints constraints) {

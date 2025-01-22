@@ -20,12 +20,13 @@ dependencies:
   diamond_gl:
     git:
       url: https://github.com/gliscowo/diamond_gl.git
-      ref: 14ad478e1ff364b878fb1a1c292cdeb39937c7e9
+      ref: f342112
   ffi: ^2.1.3
   logging: ^1.2.0
   vector_math: ^2.1.4
   meta: ^1.16.0
   vm_service: ^15.0.0
+  path: ^1.9.1
 
 dev_dependencies:
   lints: ^5.0.0

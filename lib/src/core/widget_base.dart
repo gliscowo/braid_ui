@@ -67,7 +67,7 @@ class HitTestState {
   final _hitWidgets = DoubleLinkedQueue<Hit>();
 
   bool get anyHit => _hitWidgets.isNotEmpty;
-  Hit get lastHit => _hitWidgets.last;
+  Hit get firstHit => _hitWidgets.first;
 
   Iterable<Hit> get trace => _hitWidgets;
   Iterable<Hit> get occludedTrace => trace.takeWhile((value) => value.widget is! HitTestOccluder);
