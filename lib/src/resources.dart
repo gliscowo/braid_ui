@@ -21,7 +21,11 @@ void loadNatives(
   natives ??= BraidNatives.defaultForPlatform;
   natives.load(baseDirectory);
 
-  BraidNatives._activeLibraries = natives;
+  BraidNatives._activeLibraries = natives.copy(
+    glfw: basename(natives.glfw),
+    freetype: basename(natives.freetype),
+    harfbuzz: basename(natives.harfbuzz),
+  );
 }
 
 // ---
