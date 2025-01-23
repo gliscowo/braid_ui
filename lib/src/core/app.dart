@@ -14,12 +14,8 @@ import 'package:vector_math/vector_math.dart';
 import '../context.dart';
 import '../primitive_renderer.dart';
 import '../text/text_renderer.dart';
-import 'constraints.dart';
-import 'cursors.dart';
-import 'math.dart';
 import 'render_loop.dart';
 import 'widget.dart';
-import 'widget_base.dart';
 
 final _frameEventsContoller = StreamController<()>.broadcast(sync: true);
 final frameEvents = _frameEventsContoller.stream;
@@ -157,63 +153,13 @@ Future<AppState> createBraidApp({
     setOrthographicMatrix(projection, 0, event.width.toDouble(), event.height.toDouble(), 0, -10, 10);
   });
 
-  final cursorController = CursorController.ofWindow(braidWindow);
-  final scaffold = AppScaffold(root: widget())
-    ..layout(
-      LayoutContext(textRenderer, braidWindow),
-      Constraints.tight(Size(braidWindow.width.toDouble(), braidWindow.height.toDouble())),
-    );
-
-  {
-    // TODO: all of this functionality should not really be in here,
-    // this function is just for setting things up
-    braidWindow.onResize.listen((event) {
-      scaffold.layout(
-        LayoutContext(textRenderer, braidWindow),
-        Constraints.tight(Size(event.width.toDouble(), event.height.toDouble())),
-      );
-    });
-
-    KeyboardListener? focused;
-    braidWindow.onMouseButton
-        .where((event) => event.action == glfwPress && event.button == glfwMouseButtonLeft)
-        .listen((event) {
-      final state = HitTestState();
-      scaffold.hitTest(braidWindow.cursorX, braidWindow.cursorY, state);
-
-      state.firstWhere(
-        (widget) => widget is MouseListener && (widget as MouseListener).onMouseDown(),
-      );
-
-      focused = state.firstWhere((widget) => widget is KeyboardListener)?.widget as KeyboardListener?;
-    });
-
-    braidWindow.onMouseScroll.listen((event) {
-      final state = HitTestState();
-      scaffold.hitTest(braidWindow.cursorX, braidWindow.cursorY, state);
-
-      state.firstWhere(
-        (widget) => widget is MouseListener && (widget as MouseListener).onMouseScroll(event.xOffset, event.yOffset),
-      );
-    });
-
-    braidWindow.onKey.where((event) => event.action == glfwPress || event.action == glfwRepeat).listen((event) {
-      focused?.onKeyDown(event.key, event.mods);
-    });
-
-    braidWindow.onChar.listen((event) {
-      focused?.onChar(event, 0);
-    });
-  }
-
   return AppState(
     braidWindow,
-    cursorController,
     projection,
     renderContext,
     textRenderer,
     PrimitiveRenderer(renderContext),
-    scaffold,
+    widget,
   );
 }
 

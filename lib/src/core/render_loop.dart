@@ -58,30 +58,30 @@ void drawFrame(DrawContext ctx, CursorController cursorController, Widget widget
 
   _hovered = nowHovered;
 
-  if (state.anyHit) {
-    Flex(
-      mainAxis: LayoutAxis.vertical,
-      children: [
-        Padding(
-          insets: Insets.all(10),
-          child: Label.string(text: state.toString(), fontSize: 18),
-        ),
-        Padding(
-          insets: Insets.all(10),
-          child: (() {
-            final coords =
-                '${state.firstHit.coordinates.x.toStringAsFixed(2)}, ${state.firstHit.coordinates.y.toStringAsFixed(2)}';
-            return Label.string(text: 'hit ${state.firstHit.widget.runtimeType} at ($coords)', fontSize: 18);
-          })(),
-        ),
-      ],
-    )
-      ..layout(
-        LayoutContext(ctx.textRenderer, window),
-        Constraints.loose(Size(window.width.toDouble(), window.height.toDouble())),
-      )
-      ..draw(ctx, delta);
-  }
+  // if (state.anyHit) {
+  //   Flex(
+  //     mainAxis: LayoutAxis.vertical,
+  //     children: [
+  //       Padding(
+  //         insets: Insets.all(10),
+  //         child: Label.string(text: state.toString(), fontSize: 18),
+  //       ),
+  //       Padding(
+  //         insets: Insets.all(10),
+  //         child: (() {
+  //           final coords =
+  //               '${state.firstHit.coordinates.x.toStringAsFixed(2)}, ${state.firstHit.coordinates.y.toStringAsFixed(2)}';
+  //           return Label.string(text: 'hit ${state.firstHit.widget.runtimeType} at ($coords)', fontSize: 18);
+  //         })(),
+  //       ),
+  //     ],
+  //   )
+  //     ..layout(
+  //       LayoutContext(ctx.textRenderer, window),
+  //       Constraints.loose(Size(window.width.toDouble(), window.height.toDouble())),
+  //     )
+  //     ..draw(ctx, delta);
+  // }
 
   if (ctx.drawBoundingBoxes) {
     final aabb = widget.transform.aabb;
