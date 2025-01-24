@@ -142,36 +142,38 @@ class Panel extends OptionalChildWiget with OptionalShrinkWrapLayout {
 class Label extends Widget {
   Text _text;
   Color _textColor;
-  final double fontSize;
+  double _fontSize;
 
   Label({
     required Text text,
     Color? textColor,
-    this.fontSize = 24,
-  })  : _text = text,
+    double fontSize = 24,
+  })  : _fontSize = fontSize,
+        _text = text,
         _textColor = textColor ?? Color.black;
 
   Label.string({
     required String text,
     Color? textColor,
-    this.fontSize = 24,
-  })  : _text = Text.string(text),
+    double fontSize = 24,
+  })  : _fontSize = fontSize,
+        _text = Text.string(text),
         _textColor = textColor ?? Color.black;
 
   @override
   void draw(DrawContext ctx, double delta) {
-    final textSize = ctx.textRenderer.sizeOf(text, fontSize);
+    final textSize = ctx.textRenderer.sizeOf(text, _fontSize);
     final xOffset = (transform.width - textSize.width) / 2, yOffset = (transform.height - textSize.height) / 2;
 
     ctx.transform.scope((mat4) {
       mat4.translate(xOffset, yOffset);
-      ctx.textRenderer.drawText(text, fontSize, mat4, ctx.projection, color: textColor);
+      ctx.textRenderer.drawText(text, _fontSize, mat4, ctx.projection, color: textColor);
     });
   }
 
   @override
   void doLayout(LayoutContext ctx, Constraints constraints) {
-    final size = ctx.textRenderer.sizeOf(text, fontSize).constrained(constraints);
+    final size = ctx.textRenderer.sizeOf(text, _fontSize).constrained(constraints);
     transform.setSize(size);
   }
 
@@ -187,6 +189,14 @@ class Label extends Widget {
   set textColor(Color value) {
     if (_textColor == value) return;
     _textColor = value;
+  }
+
+  double get fontSize => _fontSize;
+  set fontSize(double value) {
+    if ((_fontSize - value).abs() < .5e-3) return;
+
+    _fontSize = value;
+    markNeedsLayout();
   }
 }
 

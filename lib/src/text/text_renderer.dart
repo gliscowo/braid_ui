@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:ffi' hide Size;
 import 'dart:math';
 import 'dart:typed_data';
@@ -21,6 +22,7 @@ final freetype = FreetypeLibrary(DynamicLibrary.open(BraidNatives.activeLibrarie
 final harfbuzz = HarfbuzzLibrary(DynamicLibrary.open(BraidNatives.activeLibraries.harfbuzz));
 
 final Logger _logger = Logger('cutesy.text_handler');
+const _hbScale = 64;
 
 class FontFamily {
   final Font defaultFont;
@@ -34,8 +36,8 @@ class FontFamily {
   );
 
   @factory
-  static Future<FontFamily> load(BraidResources resources, String familyName, int size) async {
-    final fonts = await resources.loadFontFamily(familyName).map((fontBytes) => Font(fontBytes, size)).toList();
+  static Future<FontFamily> load(BraidResources resources, String familyName) async {
+    final fonts = await resources.loadFontFamily(familyName).map((fontBytes) => Font(fontBytes)).toList();
 
     Font warn(String type, Font font) {
       _logger.warning('Could not find a "$type" font in family $familyName');
@@ -59,7 +61,7 @@ class FontFamily {
 }
 
 typedef _NativeFontResources = ({
-  Pointer<hb_font> hbFont,
+  Map<int, Pointer<hb_font>> hbFonts,
   FT_Face ftFace,
   Pointer<Uint8> fontMemory,
 });
@@ -71,6 +73,10 @@ class Font {
     freetype.Done_Face(resources.ftFace);
     malloc.free(resources.ftFace);
     malloc.free(resources.fontMemory);
+
+    for (final hbFont in resources.hbFonts.values) {
+      harfbuzz.font_destroy(hbFont);
+    }
   });
 
   static FT_Library? _ftInstance;
@@ -78,14 +84,15 @@ class Font {
   static int _nextGlyphX = atlasSize, _nextGlyphY = atlasSize;
   static int _currentRowHeight = 0;
 
+  // --- instance fields ---
+
   late final _NativeFontResources _nativeResources;
 
-  final Map<int, Glyph> _glyphs = {};
-  final int size;
+  final Map<(int, int), Glyph> _glyphs = {};
 
   late final bool bold, italic;
 
-  Font(Uint8List fontBytes, this.size) {
+  Font(Uint8List fontBytes) {
     final fontMemory = malloc<Uint8>(fontBytes.lengthInBytes);
     fontMemory.asTypedList(fontBytes.lengthInBytes).setRange(0, fontBytes.lengthInBytes, fontBytes);
 
@@ -98,28 +105,32 @@ class Font {
     bold = faceStruct.style_flags & FT_STYLE_FLAG_BOLD != 0;
     italic = faceStruct.style_flags & FT_STYLE_FLAG_ITALIC != 0;
 
-    final ftFace = face.value;
-    freetype.Set_Pixel_Sizes(ftFace, size, size);
-
-    final hbFont = harfbuzz.ft_font_create_referenced(ftFace);
-    harfbuzz.ft_font_set_funcs(hbFont);
-    harfbuzz.font_set_scale(hbFont, 64, 64);
-
     _nativeResources = (
-      hbFont: hbFont,
-      ftFace: ftFace,
+      hbFonts: {},
+      ftFace: face.value,
       fontMemory: fontMemory,
     );
 
     _finalizer.attach(this, _nativeResources);
   }
 
-  Glyph operator [](int index) => _glyphs[index] ?? _loadGlyph(index);
+  Glyph getGlyph(int index, double size) {
+    final pixelSize = toPixelSize(size);
+    return _glyphs[(index, pixelSize)] ?? _loadGlyph(index, pixelSize);
+  }
+
+  /// Retrieve a harfbuzz font instance configured for use
+  /// at [size].
+  Pointer<hb_font> getHbFont(double size) {
+    final pixelSize = toPixelSize(size);
+    return _nativeResources.hbFonts[pixelSize] ??= _createHbFont(pixelSize);
+  }
 
   // TODO consider switching to SDF rendering
-  Glyph _loadGlyph(int index) {
+  Glyph _loadGlyph(int index, int size) {
     final ftFace = _nativeResources.ftFace;
 
+    freetype.Set_Pixel_Sizes(ftFace, size, size);
     if (freetype.Load_Glyph(ftFace, index, FT_LOAD_RENDER | FT_LOAD_TARGET_LCD | FT_LOAD_COLOR) != 0) {
       throw Exception('Failed to load glyph ${String.fromCharCode(index)}');
     }
@@ -146,7 +157,7 @@ class Font {
 
     malloc.free(pixelBuffer);
 
-    return _glyphs[index] = Glyph(
+    return _glyphs[(index, size)] = Glyph(
       texture,
       u,
       v,
@@ -156,6 +167,15 @@ class Font {
       ftFace.ref.glyph.ref.bitmap_top,
     );
   }
+
+  /// Determine the pixel size at which glyphs for
+  /// rendering at [renderSize] are baked
+  ///
+  // this paramater might need some tweaking, and maybe
+  // it should actually be customizable
+  static int toPixelSize(double renderSize) => (renderSize ~/ 4 + 1) * 4;
+
+  static double compensateForGlyphSize(double renderSize) => renderSize / toPixelSize(renderSize);
 
   static (int, int, int) _allocateGlyphPosition(int width, int height) {
     if (_nextGlyphX + width >= atlasSize) {
@@ -206,7 +226,14 @@ class Font {
     return textureId;
   }
 
-  Pointer<hb_font> get hbFont => _nativeResources.hbFont;
+  Pointer<hb_font> _createHbFont(int pixelSize) {
+    freetype.Set_Pixel_Sizes(_nativeResources.ftFace, pixelSize, pixelSize);
+    final hbFont = harfbuzz.ft_font_create_referenced(_nativeResources.ftFace);
+    harfbuzz.ft_font_set_funcs(hbFont);
+    harfbuzz.font_set_scale(hbFont, _hbScale, _hbScale);
+
+    return hbFont;
+  }
 
   static FT_Library get _ftLibrary {
     if (_ftInstance != null) return _ftInstance!;
@@ -229,7 +256,7 @@ class Glyph {
 }
 
 class TextRenderer {
-  final _cachedBuffers = <int, MeshBuffer<TextVertexFunction>>{};
+  final _cachedBuffers = HashMap<int, MeshBuffer<TextVertexFunction>>();
   final GlProgram _program;
 
   final FontFamily _defaultFont;
@@ -239,22 +266,22 @@ class TextRenderer {
       : _program = context.findProgram('text'),
         _fontStorage = Map.unmodifiable(fontStorage);
 
-  FontFamily getFont(String? familyName) =>
+  FontFamily getFamily(String? familyName) =>
       familyName == null ? _defaultFont : _fontStorage[familyName] ?? _defaultFont;
 
   Size sizeOf(Text text, double size) {
-    if (!text.isShaped) text.shape(getFont);
-    if (text.glyphs.isEmpty) return Size.zero;
+    if (!text.isShapedAt(size)) text.shape(getFamily, size);
+    if (text.glyphs.isEmpty) return Size(0, size);
 
     return Size(
-      text.glyphs.map((e) => _hbToPixels(e.position.x + e.advance.x) * (size / e.font.size)).reduce(max),
+      text.glyphs.map((e) => _hbToPixels(e.position.x + e.advance.x) * Font.compensateForGlyphSize(size)).reduce(max),
       size,
     );
   }
 
   // TODO potentially include size in text style, actually do text layout :dies:
   void drawText(Text text, double size, Matrix4 transform, Matrix4 projection, {Color? color}) {
-    if (!text.isShaped) text.shape(getFont);
+    if (!text.isShapedAt(size)) text.shape(getFamily, size);
 
     color ??= Color.white;
     _program
@@ -270,10 +297,10 @@ class TextRenderer {
 
     final baseline = (size * .875).floor();
     for (final shapedGlyph in text.glyphs) {
-      final glyph = shapedGlyph.font[shapedGlyph.index];
+      final glyph = shapedGlyph.font.getGlyph(shapedGlyph.index, size);
       final glyphColor = shapedGlyph.style.color ?? color;
 
-      final scale = size / shapedGlyph.font.size, glyphScale = shapedGlyph.style.scale;
+      final scale = Font.compensateForGlyphSize(size), glyphScale = shapedGlyph.style.scale;
 
       final xPos = _hbToPixels(shapedGlyph.position.x) * scale + glyph.bearingX * scale;
       final yPos = _hbToPixels(shapedGlyph.position.y) * scale + baseline - glyph.bearingY * scale * glyphScale;
@@ -305,5 +332,5 @@ class TextRenderer {
     gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
   }
 
-  int _hbToPixels(double hbUnits) => (hbUnits / 64).round();
+  static int _hbToPixels(double hbUnits) => (hbUnits / _hbScale).round();
 }
