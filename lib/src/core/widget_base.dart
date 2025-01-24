@@ -114,9 +114,7 @@ abstract class Widget {
 
   @nonVirtual
   Size layout(LayoutContext ctx, Constraints constraints) {
-    // print('${'  ' * _depth} pre-layout on [$runtimeType, $hashCode] with ${children.length} children');
     if (!_needsLayout && constraints == _layoutData?.constraints) {
-      // print('${'  ' * _depth} layout cancelled on [$runtimeType, $hashCode] with ${children.length} children');
       return transform.toSize();
     }
 
@@ -125,7 +123,6 @@ abstract class Widget {
     doLayout(ctx, constraints);
     _needsLayout = false;
 
-    // print('${'  ' * _depth} layout complete on [$runtimeType, $hashCode] with ${children.length} children');
     return transform.toSize();
   }
 
@@ -171,6 +168,13 @@ abstract class Widget {
 
     if (prevSize != transform.toSize()) {
       _parent?.notifyChildNeedsLayout();
+    }
+  }
+
+  void clearLayoutCache() {
+    _needsLayout = true;
+    for (final child in children) {
+      child.clearLayoutCache();
     }
   }
 

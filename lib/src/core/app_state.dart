@@ -7,6 +7,8 @@ import 'package:diamond_gl/diamond_gl.dart';
 import 'package:vector_math/vector_math.dart';
 
 class AppState {
+  final BraidResources resources;
+
   final Window window;
   final CursorController cursorController;
   final Matrix4 projection;
@@ -22,6 +24,7 @@ class AppState {
   final List<StreamSubscription> _subscriptions = [];
 
   AppState(
+    this.resources,
     this.window,
     this.projection,
     this.context,
@@ -64,6 +67,15 @@ class AppState {
     ]);
   }
 
+  // TODO: there should be a separate function that doesn't go
+  // through the [BraidResources] abstraction
+  Future<void> loadFontFamily(String familyName, [String? identifier]) async {
+    final family = await FontFamily.load(resources, familyName);
+    textRenderer.addFamily(identifier ?? familyName, family);
+
+    _doScaffoldLayout(force: true);
+  }
+
   void dispose() {
     cursorController.dispose();
     for (final subscription in _subscriptions) {
@@ -80,8 +92,14 @@ class AppState {
     return state;
   }
 
-  void _doScaffoldLayout() => scaffold.layout(
-        LayoutContext(textRenderer, window),
-        Constraints.tight(Size(window.width.toDouble(), window.height.toDouble())),
-      );
+  void _doScaffoldLayout({bool force = false}) {
+    if (force) {
+      scaffold.clearLayoutCache();
+    }
+
+    scaffold.layout(
+      LayoutContext(textRenderer, window),
+      Constraints.tight(Size(window.width.toDouble(), window.height.toDouble())),
+    );
+  }
 }

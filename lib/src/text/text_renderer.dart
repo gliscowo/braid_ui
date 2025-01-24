@@ -257,20 +257,37 @@ class Glyph {
 
 class TextRenderer {
   final _cachedBuffers = HashMap<int, MeshBuffer<TextVertexFunction>>();
-  final GlProgram _program;
+  final GlProgram _textProgram;
 
-  final FontFamily _defaultFont;
   final Map<String, FontFamily> _fontStorage;
+  FontFamily _defaultFont;
+  int _fontStorageGeneration = 0;
 
   TextRenderer(RenderContext context, this._defaultFont, Map<String, FontFamily> fontStorage)
-      : _program = context.findProgram('text'),
-        _fontStorage = Map.unmodifiable(fontStorage);
+      : _textProgram = context.findProgram('text'),
+        _fontStorage = fontStorage;
 
   FontFamily getFamily(String? familyName) =>
       familyName == null ? _defaultFont : _fontStorage[familyName] ?? _defaultFont;
 
+  // TODO: not only shaping caches, also label and other widget layouts need
+  // to invalidate when this happens :dies:
+  void addFamily(String name, FontFamily family) {
+    if (_fontStorage.containsKey(name)) throw ArgumentError.value(name, 'name', 'duplicate font name');
+
+    _fontStorage[name] = family;
+    _fontStorageGeneration++;
+  }
+
+  set defaultFont(FontFamily family) {
+    _defaultFont = family;
+    _fontStorageGeneration++;
+  }
+
+  // ---
+
   Size sizeOf(Text text, double size) {
-    if (!text.isShapedAt(size)) text.shape(getFamily, size);
+    _ensureShaped(text, size);
     if (text.glyphs.isEmpty) return Size(0, size);
 
     return Size(
@@ -281,10 +298,10 @@ class TextRenderer {
 
   // TODO potentially include size in text style, actually do text layout :dies:
   void drawText(Text text, double size, Matrix4 transform, Matrix4 projection, {Color? color}) {
-    if (!text.isShapedAt(size)) text.shape(getFamily, size);
+    _ensureShaped(text, size);
 
     color ??= Color.white;
-    _program
+    _textProgram
       ..uniformMat4('uTransform', transform)
       ..uniformMat4('uProjection', projection)
       ..use();
@@ -292,7 +309,7 @@ class TextRenderer {
     final buffers = <int, MeshBuffer<TextVertexFunction>>{};
     MeshBuffer<TextVertexFunction> buffer(int texture) {
       return buffers[texture] ??= ((_cachedBuffers[texture]?..clear()) ??
-          (_cachedBuffers[texture] = MeshBuffer(textVertexDescriptor, _program)));
+          (_cachedBuffers[texture] = MeshBuffer(textVertexDescriptor, _textProgram)));
     }
 
     final baseline = (size * .875).floor();
@@ -331,6 +348,13 @@ class TextRenderer {
 
     gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
   }
+
+  void _ensureShaped(Text text, double size) {
+    if (text.isShapingCacheValid(size, _fontStorageGeneration)) return;
+    text.shape(getFamily, size, _fontStorageGeneration);
+  }
+
+  // ---
 
   static int _hbToPixels(double hbUnits) => (hbUnits / _hbScale).round();
 }

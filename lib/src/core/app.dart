@@ -134,17 +134,13 @@ Future<AppState> createBraidApp({
     ]),
   );
 
-  final (cascadia, notoSans, nunito, materialSymbols) = await (
-    FontFamily.load(resources, 'CascadiaCode'),
+  final (notoSans, materialSymbols) = await (
     FontFamily.load(resources, 'NotoSans'),
-    FontFamily.load(resources, 'Nunito'),
     FontFamily.load(resources, 'MaterialSymbols'),
   ).wait;
 
   final textRenderer = TextRenderer(renderContext, notoSans, {
     'Noto Sans': notoSans,
-    'CascadiaCode': cascadia,
-    'Nunito': nunito,
     'MaterialSymbols': materialSymbols,
   });
 
@@ -154,6 +150,7 @@ Future<AppState> createBraidApp({
   });
 
   return AppState(
+    resources,
     braidWindow,
     projection,
     renderContext,

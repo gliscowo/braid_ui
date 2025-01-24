@@ -45,13 +45,13 @@ Future<void> main(List<String> args) async {
                 Flex(
                   mainAxis: LayoutAxis.vertical,
                   children: [
-                    for (var size = 8.0; size < 52; size += 4) _testLabel(size, 'CascadiaCode'),
+                    for (var size = 8.0; size < 52; size += 4) _testLabel(size),
                   ],
                 ),
                 Flex(
                   mainAxis: LayoutAxis.vertical,
                   children: [
-                    for (var size = 8.0; size < 52; size += 4) _testLabel(size, 'CascadiaCode'),
+                    for (var size = 8.0; size < 52; size += 4) _testLabel(size, 'cascadia'),
                   ],
                 ),
               ],
@@ -62,13 +62,15 @@ Future<void> main(List<String> args) async {
     },
   );
 
+  await app.loadFontFamily('CascadiaCode', 'cascadia');
+
   runBraidApp(app: app);
 }
 
 Widget _testLabel(double size, [String fontFamily = 'Noto Sans']) => Padding(
       insets: Insets.all(10),
       child: Label(
-        text: Text.string('Run | Debug ${size}px', style: TextStyle(fontFamily: fontFamily)),
+        text: Text.string('bruhve ${size}px', style: TextStyle(fontFamily: fontFamily)),
         fontSize: size,
       ),
     );

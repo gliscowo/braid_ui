@@ -2,6 +2,7 @@ import 'dart:ffi';
 
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:ffi/ffi.dart';
+import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math_64.dart';
 
 import '../native/harfbuzz.dart';
@@ -27,19 +28,20 @@ typedef FontLookup = FontFamily Function(String? fontFamily);
 class Text {
   final List<TextSpan> _spans;
   final List<ShapedGlyph> _shapedGlyphs = [];
-  int? _sizeShapedAt;
+  (int, int)? _lastShapingKey;
 
   Text.string(String value, {TextStyle style = const TextStyle()}) : this([TextSpan(value, style: style)]);
 
   Text(this._spans) {
-    if (_spans.isEmpty) throw ArgumentError('Text must have at least one segment');
+    if (_spans.isEmpty) throw ArgumentError('Text must have at least one span');
   }
 
   List<ShapedGlyph> get glyphs => _shapedGlyphs;
 
-  bool isShapedAt(double size) => _sizeShapedAt == Font.toPixelSize(size);
+  bool isShapingCacheValid(double size, int generation) => (Font.toPixelSize(size), generation) == _lastShapingKey;
 
-  void shape(FontLookup fontLookup, double size) {
+  @internal
+  void shape(FontLookup fontLookup, double size, int generation) {
     _shapedGlyphs.clear();
     int cursorX = 0, cursorY = 0;
 
@@ -90,7 +92,7 @@ class Text {
     }
 
     malloc.free(features);
-    _sizeShapedAt = Font.toPixelSize(size);
+    _lastShapingKey = (Font.toPixelSize(size), generation);
   }
 }
 
