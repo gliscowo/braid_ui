@@ -8,7 +8,7 @@ enum CursorStyle {
   pointer(glfwArrowCursor),
   text(glfwIbeamCursor),
   hand(glfwHandCursor),
-  move(glfwCenterCursor);
+  move(glfwResizeAllCursor);
 
   final int glfw;
   const CursorStyle(this.glfw);

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:braid_ui/braid_ui.dart';
-import 'package:braid_ui/src/text/text_renderer.dart';
 import 'package:dart_glfw/dart_glfw.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:ffi/ffi.dart';
@@ -23,38 +22,31 @@ Future<void> main(List<String> args) async {
       shaderDirectory: 'resources/shader',
     ),
     widget: () {
-      late Label sizeLabel;
       return Center(
         child: Flex(
           mainAxis: LayoutAxis.vertical,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Constrained(
-              constraints: Constraints.tightOnAxis(horizontal: 200, vertical: 30),
-              child: TextField()
-                ..changeEvents.listen((event) {
-                  if (double.tryParse(event) case var size?) {
-                    sizeLabel.fontSize = size;
-                  }
-                }),
-            ),
-            sizeLabel = Label(text: Text.string('text moment')),
-            Flex(
-              mainAxis: LayoutAxis.horizontal,
-              children: [
-                Flex(
-                  mainAxis: LayoutAxis.vertical,
+            FlexChild(
+              child: VerticalScroll(
+                child: Flex(
+                  mainAxis: LayoutAxis.horizontal,
                   children: [
-                    for (var size = 8.0; size < 52; size += 4) _testLabel(size),
+                    Flex(
+                      mainAxis: LayoutAxis.vertical,
+                      children: [
+                        for (var size = 8.0; size < 52; size += 2) _testLabel(size),
+                      ],
+                    ),
+                    Flex(
+                      mainAxis: LayoutAxis.vertical,
+                      children: [
+                        for (var size = 8.0; size < 52; size += 2) _testLabel(size, 'cascadia'),
+                      ],
+                    ),
                   ],
                 ),
-                Flex(
-                  mainAxis: LayoutAxis.vertical,
-                  children: [
-                    for (var size = 8.0; size < 52; size += 4) _testLabel(size, 'cascadia'),
-                  ],
-                ),
-              ],
+              ),
             )
           ],
         ),

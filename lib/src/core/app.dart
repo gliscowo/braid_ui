@@ -11,6 +11,7 @@ import 'package:ffi/ffi.dart' as ffi;
 import 'package:logging/logging.dart';
 import 'package:vector_math/vector_math.dart';
 
+import '../baked_assets.g.dart' as assets;
 import '../context.dart';
 import '../primitive_renderer.dart';
 import '../text/text_renderer.dart';
@@ -85,7 +86,7 @@ Future<AppState> createBraidApp({
   required WidgetBuilder widget,
 }) async {
   loadOpenGL();
-  loadGLFW(BraidNatives.activeLibraries.glfw);
+  loadGLFW(BraidNatives.activeLibraries.spec.glfw);
 
   if (!diamondGLInitialized) {
     initDiamondGL(logger: baseLogger);
@@ -110,6 +111,7 @@ Future<AppState> createBraidApp({
     }
 
     braidWindow = Window(windowWidth, windowHeight, name);
+    braidWindow.setIcon(assets.braidIcon);
   } else {
     braidWindow = window;
   }
@@ -130,7 +132,6 @@ Future<AppState> createBraidApp({
       _vertFragProgram(resources, 'rounded_rect_outline', 'pos', 'rounded_rect_outline'),
       _vertFragProgram(resources, 'circle_solid', 'pos', 'circle_solid'),
       _vertFragProgram(resources, 'gradient_fill', 'pos_uv', 'gradient_fill'),
-      // _vertFragProgram(resources, 'blur', 'position', 'blur'),
     ]),
   );
 

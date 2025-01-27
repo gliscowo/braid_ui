@@ -11,3 +11,4 @@ export 'src/core/widget_base.dart';
 export 'src/primitive_renderer.dart';
 export 'src/resources.dart';
 export 'src/text/text.dart';
+export 'src/text/text_renderer.dart';

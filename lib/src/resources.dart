@@ -19,16 +19,17 @@ void loadNatives(
   BraidNatives? natives,
 }) {
   natives ??= BraidNatives.defaultForPlatform;
-  natives.load(baseDirectory);
-
-  BraidNatives._activeLibraries = natives.copy(
-    glfw: basename(natives.glfw),
-    freetype: basename(natives.freetype),
-    harfbuzz: basename(natives.harfbuzz),
-  );
+  BraidNatives._activeLibraries = natives._load(baseDirectory);
 }
 
 // ---
+
+typedef NativesBundle = ({
+  BraidNatives spec,
+  DynamicLibrary glfw,
+  DynamicLibrary freetype,
+  DynamicLibrary harfbuzz,
+});
 
 class BraidNatives {
   static const linux = BraidNatives(
@@ -45,42 +46,41 @@ class BraidNatives {
     subdirectory: 'windows',
   );
 
-  static BraidNatives? _activeLibraries;
+  static NativesBundle? _activeLibraries;
 
   final String glfw, freetype, harfbuzz;
-  final String subdirectory;
+  final String _subdirectory;
 
   const BraidNatives({
     required this.glfw,
     required this.freetype,
     required this.harfbuzz,
-    required this.subdirectory,
-  });
+    required String subdirectory,
+  }) : _subdirectory = subdirectory;
 
   BraidNatives copy({
     String? glfw,
     String? freetype,
     String? harfbuzz,
-    String? subdirectory,
   }) =>
       BraidNatives(
         glfw: glfw ?? this.glfw,
         freetype: freetype ?? this.freetype,
         harfbuzz: harfbuzz ?? this.harfbuzz,
-        subdirectory: subdirectory ?? this.subdirectory,
+        subdirectory: _subdirectory,
       );
 
-  /// Load the natives declared by this bundle,
-  /// using [baseDirectory] for locating ones which
-  /// are shipped with the application
-  void load(String baseDirectory) {
+  NativesBundle _load(String baseDirectory) {
     final prevDir = Directory.current;
     try {
-      Directory.current = absolute(join(baseDirectory, subdirectory));
+      Directory.current = absolute(join(baseDirectory, _subdirectory));
 
-      DynamicLibrary.open(glfw);
-      DynamicLibrary.open(freetype);
-      DynamicLibrary.open(harfbuzz);
+      return (
+        spec: this,
+        glfw: DynamicLibrary.open(glfw),
+        freetype: DynamicLibrary.open(freetype),
+        harfbuzz: DynamicLibrary.open(harfbuzz),
+      );
     } on ArgumentError catch (error) {
       throw BraidInitializationException('failed to load natives', cause: error);
     } on PathNotFoundException catch (error) {
@@ -100,7 +100,7 @@ class BraidNatives {
   }
 
   /// The active set of native libraries used by braid
-  static BraidNatives get activeLibraries {
+  static NativesBundle get activeLibraries {
     if (_activeLibraries case var activeLibraries?) {
       return activeLibraries;
     }
@@ -130,11 +130,11 @@ class FilesystemResources implements BraidResources {
     required this.shaderDirectory,
   }) {
     if (!FileSystemEntity.isDirectorySync(fontDirectory)) {
-      throw BraidInitializationException('shader directory $shaderDirectory does not exist');
+      throw BraidInitializationException('font directory $fontDirectory does not exist');
     }
 
     if (!FileSystemEntity.isDirectorySync(shaderDirectory)) {
-      throw BraidInitializationException('font directory $fontDirectory does not exist');
+      throw BraidInitializationException('shader directory $shaderDirectory does not exist');
     }
   }
 

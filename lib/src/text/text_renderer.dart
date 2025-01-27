@@ -18,8 +18,8 @@ import '../native/harfbuzz.dart';
 import '../vertex_descriptors.dart';
 import 'text.dart';
 
-final freetype = FreetypeLibrary(DynamicLibrary.open(BraidNatives.activeLibraries.freetype));
-final harfbuzz = HarfbuzzLibrary(DynamicLibrary.open(BraidNatives.activeLibraries.harfbuzz));
+final freetype = FreetypeLibrary(BraidNatives.activeLibraries.freetype);
+final harfbuzz = HarfbuzzLibrary(BraidNatives.activeLibraries.harfbuzz);
 
 final Logger _logger = Logger('cutesy.text_handler');
 const _hbScale = 64;
@@ -170,10 +170,11 @@ class Font {
 
   /// Determine the pixel size at which glyphs for
   /// rendering at [renderSize] are baked
-  ///
-  // this paramater might need some tweaking, and maybe
-  // it should actually be customizable
-  static int toPixelSize(double renderSize) => (renderSize ~/ 4 + 1) * 4;
+  static int toPixelSize(double renderSize) => renderSize <= 12
+      ? renderSize.ceil()
+      : renderSize <= 20
+          ? (renderSize / 2).ceil() * 2
+          : (renderSize / 4).ceil() * 4;
 
   static double compensateForGlyphSize(double renderSize) => renderSize / toPixelSize(renderSize);
 

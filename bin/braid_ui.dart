@@ -10,7 +10,7 @@ final _logger = Logger('braid');
 Future<void> main(List<String> arguments) async {
   loadNatives('resources/lib');
   loadOpenGL();
-  loadGLFW(BraidNatives.activeLibraries.glfw);
+  loadGLFW(BraidNatives.activeLibraries.spec.glfw);
   initDiamondGL(logger: _logger);
 
   Logger.root.level = Level.FINE;

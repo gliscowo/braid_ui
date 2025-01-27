@@ -62,4 +62,8 @@ class Constraints {
 
   @override
   int get hashCode => Object.hash(minWidth, minHeight, maxWidth, maxHeight);
+
+  @override
+  String toString() =>
+      'Constraints(minWidth=$minWidth, minHeight=$minHeight, maxWidth=$maxWidth, maxHeight=$maxHeight)';
 }
