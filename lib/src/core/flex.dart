@@ -44,6 +44,10 @@ extension TransformAxisOperations on WidgetTransform {
       switch (axis) { LayoutAxis.horizontal => x = value, LayoutAxis.vertical => y = value };
 }
 
+extension on (double, double) {
+  (double, double) floorToDouble() => ($1.floorToDouble(), $2.floorToDouble());
+}
+
 enum CrossAxisAlignment {
   start,
   end,
@@ -53,7 +57,7 @@ enum CrossAxisAlignment {
   double _computeChildOffset(double freeSpace) => switch (this) {
         CrossAxisAlignment.stretch => 0,
         CrossAxisAlignment.start => 0,
-        CrossAxisAlignment.center => freeSpace / 2,
+        CrossAxisAlignment.center => (freeSpace / 2).floorToDouble(),
         CrossAxisAlignment.end => freeSpace,
       };
 }
@@ -66,14 +70,15 @@ enum MainAxisAlignment {
   spaceAround,
   spaceEvenly;
 
-  (double leading, double between) _distributeSpace(double freeSpace, int childCount) => switch (this) {
-        MainAxisAlignment.start => (0, 0),
-        MainAxisAlignment.end => (freeSpace, 0),
-        MainAxisAlignment.center => (freeSpace / 2, 0),
-        MainAxisAlignment.spaceBetween => (0, freeSpace / (childCount - 1)),
+  (double leading, double between) _distributeSpace(double freeSpace, int childCount) => (switch (this) {
+        MainAxisAlignment.start => (0.0, 0.0),
+        MainAxisAlignment.end => (freeSpace, 0.0),
+        MainAxisAlignment.center => (freeSpace / 2, 0.0),
+        MainAxisAlignment.spaceBetween => (0.0, freeSpace / (childCount - 1)),
         MainAxisAlignment.spaceAround => (freeSpace / childCount / 2, freeSpace / childCount),
         MainAxisAlignment.spaceEvenly => (freeSpace / (childCount + 1), freeSpace / (childCount + 1))
-      };
+      })
+          .floorToDouble();
 }
 
 class FlexChild extends SingleChildWidget with ShrinkWrapLayout {
@@ -107,6 +112,8 @@ class Flex extends Widget with ChildRenderer, ChildListRenderer {
 
   // TODO: revisit whether available main axis space should always
   // saturate constraints for non-flex children
+
+  bool get isHorizontal => mainAxis == LayoutAxis.horizontal;
 
   @override
   void doLayout(LayoutContext ctx, Constraints constraints) {
@@ -212,49 +219,3 @@ class Flex extends Widget with ChildRenderer, ChildListRenderer {
     markNeedsLayout();
   }
 }
-
-// class Row extends Flex with ChildRenderer, ChildListRenderer {
-//   Row({
-//     super.mainAxisAlignment,
-//     super.crossAxisAlignment,
-//     required super.children,
-//   });
-
-//   @override
-//   void doLayout(LayoutContext ctx, Constraints constraints) {
-//     final childConstraints = Constraints(
-//       0,
-//       _crossAxisAlignment == CrossAxisAlignment.stretch ? constraints.maxHeight : constraints.minHeight,
-//       double.infinity,
-//       constraints.maxHeight,
-//     );
-
-//     final childSizes = children.map((e) => e.layout(ctx, childConstraints)).toList();
-
-//     final size = childSizes
-//         .fold(
-//           Size.zero,
-//           (previousValue, element) => Size(
-//             previousValue.width + element.width,
-//             max(previousValue.height, element.height),
-//           ),
-//         )
-//         .constrained(constraints);
-
-//     transform.width = size.width;
-//     transform.height = size.height;
-
-//     final (leadingSpace, betweenSpace) = _mainAxisAlignment._distributeSpace(
-//       size.width - childSizes.fold(0, (a, b) => a + b.width),
-//       childSizes.length,
-//     );
-
-//     var xOffset = leadingSpace;
-//     for (final child in children) {
-//       child.transform.x = xOffset;
-//       child.transform.y = _crossAxisAlignment._computeChildOffset(size.height - child.transform.height);
-
-//       xOffset += child.transform.width + betweenSpace;
-//     }
-//   }
-// }

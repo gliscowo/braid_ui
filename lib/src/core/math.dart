@@ -27,6 +27,9 @@ class Size {
         height + insets.vertical,
       );
 
+  Size ceil() => Size(width.ceilToDouble(), height.ceilToDouble());
+  Size floor() => Size(width.floorToDouble(), height.floorToDouble());
+
   @override
   int get hashCode => Object.hash(width, height);
 

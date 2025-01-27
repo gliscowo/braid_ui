@@ -109,7 +109,6 @@ class Center extends SingleChildWidget {
                 : constraints.maxHeight)
         .constrained(constraints);
 
-    // TODO whether flooring here is smart or not is debatable
     child.transform.x = ((selfSize.width - childSize.width) / 2).floorToDouble();
     child.transform.y = ((selfSize.height - childSize.height) / 2).floorToDouble();
 
@@ -163,10 +162,10 @@ class Label extends Widget {
   @override
   void draw(DrawContext ctx, double delta) {
     final textSize = ctx.textRenderer.sizeOf(text, _fontSize);
-    final xOffset = (transform.width - textSize.width) / 2, yOffset = (transform.height - textSize.height) / 2;
+    final xOffset = (transform.width - textSize.width) ~/ 2, yOffset = (transform.height - textSize.height) ~/ 2;
 
     ctx.transform.scope((mat4) {
-      mat4.translate(xOffset, yOffset);
+      mat4.translate(xOffset.toDouble(), yOffset.toDouble());
       ctx.textRenderer.drawText(text, _fontSize, mat4, ctx.projection, color: textColor);
     });
   }
@@ -174,7 +173,7 @@ class Label extends Widget {
   @override
   void doLayout(LayoutContext ctx, Constraints constraints) {
     final size = ctx.textRenderer.sizeOf(text, _fontSize).constrained(constraints);
-    transform.setSize(size);
+    transform.setSize(size.ceil());
   }
 
   Text get text => _text;
