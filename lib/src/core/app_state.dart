@@ -1,7 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:braid_ui/braid_ui.dart';
-import 'package:braid_ui/src/text/text_renderer.dart';
 import 'package:dart_glfw/dart_glfw.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:vector_math/vector_math.dart';
@@ -58,6 +58,20 @@ class AppState {
       }),
       // ---
       window.onKey.where((event) => event.action == glfwPress || event.action == glfwRepeat).listen((event) {
+        if (event.key == glfwKeyD && (event.mods & glfwModAlt) != 0) {
+          final treeFile = File('widget_tree.dot');
+          final out = treeFile.openWrite();
+          out.writeln('digraph {');
+          dumpGraphviz(scaffold, out);
+          out
+            ..writeln('}')
+            ..flush().then((value) {
+              Process.start('dot', ['-Tsvg', '-owidget_tree.svg', 'widget_tree.dot'],
+                      mode: ProcessStartMode.inheritStdio)
+                  .then((proc) => proc.exitCode.then((_) => treeFile.delete()));
+            });
+        }
+
         _focused?.onKeyDown(event.key, event.mods);
       }),
       // ---

@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'dart:io';
 
 import 'package:braid_ui/braid_ui.dart';
 import 'package:diamond_gl/diamond_gl.dart';
@@ -292,17 +293,19 @@ mixin OptionalShrinkWrapLayout on Widget, OptionalChildProvider {
   }
 }
 
-Widget dumpGraphviz(Widget widget) {
+Widget dumpGraphviz(Widget widget, [IOSink? out]) {
+  out ??= stdout;
+
   if (widget._parent != null) {
-    print('  ${_formatWidget(widget._parent!)} -> ${_formatWidget(widget)};');
+    out.writeln('  ${_formatWidget(widget._parent!)} -> ${_formatWidget(widget)};');
   }
   for (var child in widget.children) {
-    dumpGraphviz(child);
+    dumpGraphviz(child, out);
   }
 
   return widget;
 }
 
 String _formatWidget(Widget widget) {
-  return '"${widget.runtimeType}\\n${widget.hashCode.toRadixString(16)}"';
+  return '"${widget.runtimeType}\\n${widget.hashCode.toRadixString(16)}\\n${widget.transform.x}, ${widget.transform.y}"';
 }
