@@ -67,7 +67,7 @@ typedef _NativeFontResources = ({
 });
 
 class Font {
-  static const atlasSize = 1024;
+  static const atlasSize = 2048;
 
   static final _finalizer = Finalizer<_NativeFontResources>((resources) {
     freetype.Done_Face(resources.ftFace);
@@ -170,11 +170,15 @@ class Font {
 
   /// Determine the pixel size at which glyphs for
   /// rendering at [renderSize] are baked
-  static int toPixelSize(double renderSize) => renderSize <= 12
-      ? renderSize.ceil()
-      : renderSize <= 20
-          ? (renderSize / 2).ceil() * 2
-          : (renderSize / 4).ceil() * 4;
+  // old impl for sadness:
+  // ```dart
+  // renderSize <= 12
+  // ? renderSize.ceil()
+  // : renderSize <= 20
+  //     ? (renderSize / 2).ceil() * 2
+  //     : (renderSize / 4).ceil() * 4
+  // ```
+  static int toPixelSize(double renderSize) => renderSize.ceil();
 
   static double compensateForGlyphSize(double renderSize) => renderSize / toPixelSize(renderSize);
 
@@ -206,7 +210,7 @@ class Font {
     malloc.free(texture);
 
     gl.pixelStorei(glUnpackAlignment, 1);
-    gl.textureStorage2D(textureId, 8, glRgb8, atlasSize, atlasSize);
+    gl.textureStorage2D(textureId, 1, glRgb8, atlasSize, atlasSize);
 
     // turns out that zero-initializing the texture
     // memory is actually very important to prevent
