@@ -71,7 +71,6 @@ class Font {
 
   static final _finalizer = Finalizer<_NativeFontResources>((resources) {
     freetype.Done_Face(resources.ftFace);
-    malloc.free(resources.ftFace);
     malloc.free(resources.fontMemory);
 
     for (final hbFont in resources.hbFonts.values) {
