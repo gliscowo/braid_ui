@@ -23,7 +23,7 @@ packages:
     source: hosted
     version: "7.1.0"
   archive:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: archive
       sha256: "6199c74e3db4fbfbd04f66d739e72fe11c8a8957d5f219f1f4482dbde6420b5a"
@@ -97,20 +97,18 @@ packages:
   dart_glfw:
     dependency: "direct main"
     description:
-      path: "."
-      ref: "73982bd"
-      resolved-ref: "73982bd07c8fc2a17e1db1800799f8bdae7f059a"
-      url: "https://github.com/gliscowo/dart_glfw.git"
-    source: git
+      name: dart_glfw
+      sha256: c93d40da964e06aa0e5a50d2cf45ad5e8206242d8313dd6b802638469f709b84
+      url: "https://pub.wispforest.io"
+    source: hosted
     version: "0.1.1"
   dart_opengl:
     dependency: "direct main"
     description:
-      path: "."
-      ref: "443eeb7"
-      resolved-ref: "443eeb76e665b609547204285abb638d59d36ab3"
-      url: "https://github.com/gliscowo/dart_opengl.git"
-    source: git
+      name: dart_opengl
+      sha256: "9f28dbf19ce9a85526a0730bdc320e37667621bfc8f5706e942c2559a2c87aea"
+      url: "https://pub.wispforest.io"
+    source: hosted
     version: "0.1.1"
   dart_style:
     dependency: transitive
@@ -123,12 +121,11 @@ packages:
   diamond_gl:
     dependency: "direct main"
     description:
-      path: "."
-      ref: a1f797e
-      resolved-ref: a1f797e532a139bb3ce45f5ea06e0a3ecc2c18d6
-      url: "https://github.com/gliscowo/diamond_gl.git"
-    source: git
-    version: "1.0.0"
+      name: diamond_gl
+      sha256: cc70a7f6289dee5dc1d37f09e2e73a81eeb9820122a276cce56447ede85c148c
+      url: "https://pub.wispforest.io"
+    source: hosted
+    version: "0.1.0"
   ffi:
     dependency: "direct main"
     description:

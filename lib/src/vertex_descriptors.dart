@@ -7,7 +7,7 @@ final VertexDescriptor<BlitVertexFunction> blitVertexDescriptor = VertexDescript
     attribute('aPos', VertexElement.float, 2);
   },
   (buffer) => (pos) {
-    buffer.float2(pos.x, pos.y);
+    buffer.f32x2(pos.x, pos.y);
   },
 );
 
@@ -18,15 +18,15 @@ final VertexDescriptor<PosUvVertexFunction> posUvVertexDescriptor = VertexDescri
     attribute('aUv', VertexElement.float, 2);
   },
   (buffer) => (pos, uv) {
-    buffer.float3(pos.x, pos.y, pos.z);
-    buffer.float2(uv.x, uv.y);
+    buffer.f32x3(pos.x, pos.y, pos.z);
+    buffer.f32x2(uv.x, uv.y);
   },
 );
 
 typedef PosVertexFunction = void Function(Vector3 pos);
 final VertexDescriptor<PosVertexFunction> posVertexDescriptor = VertexDescriptor(
   (attribute) => attribute('aPos', VertexElement.float, 3),
-  (buffer) => (pos) => buffer.float3(pos.x, pos.y, pos.z),
+  (buffer) => (pos) => buffer.f32x3(pos.x, pos.y, pos.z),
 );
 
 typedef TextVertexFunction = void Function(double x, double y, double u, double v, Color color);
@@ -37,8 +37,8 @@ final VertexDescriptor<TextVertexFunction> textVertexDescriptor = VertexDescript
     attribute('aColor', VertexElement.float, 4);
   },
   (buffer) => (x, y, u, v, color) {
-    buffer.float2(x, y);
-    buffer.float2(u, v);
-    buffer.float4(color.r, color.g, color.b, color.a);
+    buffer.f32x2(x, y);
+    buffer.f32x2(u, v);
+    buffer.f32x4(color.r, color.g, color.b, color.a);
   },
 );
