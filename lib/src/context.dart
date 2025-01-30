@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:braid_ui/src/core/math.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:vector_math/vector_math.dart';
@@ -10,15 +12,21 @@ typedef ProgramLookup = GlProgram Function(String);
 class RenderContext {
   final Window window;
   final Map<String, GlProgram> _programStore = {};
+  final StreamController<()> _frameEventsContoller = StreamController<()>.broadcast(sync: true);
 
-  RenderContext(this.window, List<GlProgram> programs) {
-    for (final program in programs) {
-      if (_programStore[program.name] != null) {
-        throw ArgumentError('Duplicate program name ${program.name}', 'programs');
-      }
+  RenderContext(this.window);
 
-      _programStore[program.name] = program;
+  void addProgram(GlProgram program) {
+    if (_programStore.containsKey(program.name)) {
+      throw ArgumentError('Duplicate program name ${program.name}', 'programs');
     }
+
+    _programStore[program.name] = program;
+  }
+
+  void nextFrame() {
+    window.nextFrame();
+    _frameEventsContoller.add(const ());
   }
 
   GlProgram findProgram(String name) {
@@ -27,6 +35,8 @@ class RenderContext {
 
     return program;
   }
+
+  Stream<()> get frameEvents => _frameEventsContoller.stream;
 }
 
 class DrawContext {

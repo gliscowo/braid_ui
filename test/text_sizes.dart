@@ -22,33 +22,37 @@ Future<void> main(List<String> args) async {
       shaderDirectory: 'resources/shader',
     ),
     widget: () {
-      return Center(
-        child: Flex(
-          mainAxis: LayoutAxis.vertical,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            FlexChild(
-              child: VerticalScroll(
-                child: Flex(
-                  mainAxis: LayoutAxis.horizontal,
-                  children: [
-                    Flex(
-                      mainAxis: LayoutAxis.vertical,
-                      children: [
-                        for (var size = 8.0; size < 52; size += 2) _testLabel(size),
-                      ],
-                    ),
-                    Flex(
-                      mainAxis: LayoutAxis.vertical,
-                      children: [
-                        for (var size = 8.0; size < 52; size += 2) _testLabel(size, 'cascadia'),
-                      ],
-                    ),
-                  ],
+      return Panel(
+        color: Color.white,
+        cornerRadius: 0.0,
+        child: Center(
+          child: Flex(
+            mainAxis: LayoutAxis.vertical,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              FlexChild(
+                child: VerticalScroll(
+                  child: Flex(
+                    mainAxis: LayoutAxis.horizontal,
+                    children: [
+                      Flex(
+                        mainAxis: LayoutAxis.vertical,
+                        children: [
+                          for (var size = 8.0; size < 52; size += 2) _testLabel(size),
+                        ],
+                      ),
+                      Flex(
+                        mainAxis: LayoutAxis.vertical,
+                        children: [
+                          for (var size = 8.0; size < 52; size += 2) _testLabel(size, 'cascadia'),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            )
-          ],
+              )
+            ],
+          ),
         ),
       );
     },
@@ -56,7 +60,10 @@ Future<void> main(List<String> args) async {
 
   await app.loadFontFamily('CascadiaCode', 'cascadia');
 
-  runBraidApp(app: app);
+  runBraidApp(
+    app: app,
+    experimentalReloadHook: true,
+  );
 }
 
 Widget _testLabel(double size, [String fontFamily = 'Noto Sans']) => Padding(
@@ -85,8 +92,8 @@ class TextField extends SingleChildWidget with ShrinkWrapLayout {
   }
 
   @override
-  void draw(DrawContext ctx, double delta) {
-    super.draw(ctx, delta);
+  void draw(DrawContext ctx) {
+    super.draw(ctx);
 
     // final focused = focusHandler?.focused == this;
     final focused = true;

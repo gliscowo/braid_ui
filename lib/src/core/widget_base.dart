@@ -159,7 +159,7 @@ abstract class Widget {
     }
   }
 
-  void draw(DrawContext ctx, double delta);
+  void draw(DrawContext ctx);
 
   void notifyChildNeedsLayout() {
     _needsLayout = true;
@@ -235,9 +235,9 @@ mixin OptionalChildProvider on Widget {
 
 mixin ChildRenderer on Widget {
   @protected
-  void drawChild(DrawContext ctx, double delta, Widget child) {
+  void drawChild(DrawContext ctx, Widget child) {
     ctx.transform.scopeWith(child.transform.toParent, (mat4) {
-      child.draw(ctx, delta);
+      child.draw(ctx);
     });
 
     if (ctx.drawBoundingBoxes) {
@@ -254,25 +254,25 @@ mixin ChildRenderer on Widget {
 
 mixin SingleChildRenderer on ChildRenderer, SingleChildProvider {
   @override
-  void draw(DrawContext ctx, double delta) {
-    drawChild(ctx, delta, child);
+  void draw(DrawContext ctx) {
+    drawChild(ctx, child);
   }
 }
 
 mixin OptionalChildRenderer on ChildRenderer, OptionalChildProvider {
   @override
-  void draw(DrawContext ctx, double delta) {
+  void draw(DrawContext ctx) {
     if (child case var child?) {
-      drawChild(ctx, delta, child);
+      drawChild(ctx, child);
     }
   }
 }
 
 mixin ChildListRenderer on ChildRenderer {
   @override
-  void draw(DrawContext ctx, double delta) {
+  void draw(DrawContext ctx) {
     for (final child in children) {
-      drawChild(ctx, delta, child);
+      drawChild(ctx, child);
     }
   }
 }

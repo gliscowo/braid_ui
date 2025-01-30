@@ -1,49 +1,45 @@
 import 'dart:async';
 import 'dart:ffi' as ffi;
+import 'dart:io';
 import 'dart:math';
 
-import 'package:braid_ui/src/core/app_state.dart';
 import 'package:braid_ui/src/resources.dart';
 import 'package:dart_glfw/dart_glfw.dart';
 import 'package:dart_opengl/dart_opengl.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:ffi/ffi.dart' as ffi;
 import 'package:logging/logging.dart';
+import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math.dart';
 
 import '../baked_assets.g.dart' as assets;
 import '../context.dart';
 import '../primitive_renderer.dart';
 import '../text/text_renderer.dart';
-import 'render_loop.dart';
+import 'constraints.dart';
+import 'cursors.dart';
+import 'math.dart';
+import 'reload_hook.dart';
 import 'widget.dart';
-
-final _frameEventsContoller = StreamController<()>.broadcast(sync: true);
-final frameEvents = _frameEventsContoller.stream;
+import 'widget_base.dart';
 
 Future<void> runBraidApp({
   required AppState app,
   int targetFps = 60,
   bool experimentalReloadHook = false,
 }) async {
-  // void Function()? reloadCallback;
-  // void Function()? reloadHookCancel;
+  void Function()? reloadCancelCallback;
 
-  // if (experimentalReloadHook) {
-  //   reloadHookCancel = await _setupReloadHook(() => reloadCallback?.call());
-  //   if (reloadHookCancel != null) {
-  //     baseLogger?.info('reload hook attached successfully');
-  //   }
-  // }
+  if (experimentalReloadHook) {
+    reloadCancelCallback = await setupReloadHook(() {
+      app.logger?.info('hot reload detected, rebuilding root widget');
+      app.dangerouslyRebuildRoot();
+    });
 
-  // reloadCallback = () {
-  //   baseLogger?.info('hot reload detected, rebuilding root widget');
-  //   rootWidget = AppScaffold(root: widget())
-  //     ..layout(
-  //       LayoutContext(textRenderer, window),
-  //       Constraints.tight(Size(window.width.toDouble(), window.height.toDouble())),
-  //     );
-  // };
+    if (reloadCancelCallback != null) {
+      app.logger?.info('reload hook attached successfully');
+    }
+  }
 
   final oneFrame = 1 / targetFps;
   var lastFrameTimestamp = glfw.getTime();
@@ -60,20 +56,17 @@ Future<void> runBraidApp({
     final effectiveDelta = glfw.getTime() - lastFrameTimestamp;
     lastFrameTimestamp = glfw.getTime();
 
-    // TODO: this must move somewhere else
-    _frameEventsContoller.add(const ());
+    gl.viewport(0, 0, app.context.window.width, app.context.window.height);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(glColorBufferBit);
 
-    // TODO: this must become a contextless function on [AppState]
-    drawFrame(
-      DrawContext(app.context, app.primitives, app.projection, app.textRenderer /*, drawBoundingBoxes: false*/),
-      app.cursorController,
-      app.scaffold,
-      effectiveDelta,
-    );
+    app.updateWidgetsAndInteractions(effectiveDelta);
+    app.draw();
+
+    app.context.nextFrame();
   }
 
-  glfw.terminate();
-  // reloadHookCancel?.call();
+  reloadCancelCallback?.call();
 }
 
 Future<AppState> createBraidApp({
@@ -121,19 +114,21 @@ Future<AppState> createBraidApp({
     attachGlErrorCallback();
   }
 
-  final renderContext = RenderContext(
-    braidWindow,
-    await Future.wait([
-      _vertFragProgram(resources, 'blit', 'blit', 'blit'),
-      _vertFragProgram(resources, 'text', 'text', 'text'),
-      _vertFragProgram(resources, 'solid_fill', 'pos', 'solid_fill'),
-      _vertFragProgram(resources, 'texture_fill', 'pos_uv', 'texture_fill'),
-      _vertFragProgram(resources, 'rounded_rect_solid', 'pos', 'rounded_rect_solid'),
-      _vertFragProgram(resources, 'rounded_rect_outline', 'pos', 'rounded_rect_outline'),
-      _vertFragProgram(resources, 'circle_solid', 'pos', 'circle_solid'),
-      _vertFragProgram(resources, 'gradient_fill', 'pos_uv', 'gradient_fill'),
-    ]),
-  );
+  final renderContext = RenderContext(braidWindow);
+  final programs = Stream.fromFutures([
+    _vertFragProgram(resources, 'blit', 'blit', 'blit'),
+    _vertFragProgram(resources, 'text', 'text', 'text'),
+    _vertFragProgram(resources, 'solid_fill', 'pos', 'solid_fill'),
+    _vertFragProgram(resources, 'texture_fill', 'pos_uv', 'texture_fill'),
+    _vertFragProgram(resources, 'rounded_rect_solid', 'pos', 'rounded_rect_solid'),
+    _vertFragProgram(resources, 'rounded_rect_outline', 'pos', 'rounded_rect_outline'),
+    _vertFragProgram(resources, 'circle_solid', 'pos', 'circle_solid'),
+    _vertFragProgram(resources, 'gradient_fill', 'pos_uv', 'gradient_fill'),
+  ]);
+
+  await for (final program in programs) {
+    renderContext.addProgram(program);
+  }
 
   final (notoSans, materialSymbols) = await (
     FontFamily.load(resources, 'NotoSans'),
@@ -158,23 +153,9 @@ Future<AppState> createBraidApp({
     textRenderer,
     PrimitiveRenderer(renderContext),
     widget,
+    logger: baseLogger,
   );
 }
-
-// Future<void Function()?> _setupReloadHook(void Function() callback) async {
-//   final serviceUri = (await Service.getInfo()).serverWebSocketUri;
-//   if (serviceUri == null) return null;
-
-//   final service = await vmServiceConnectUri(serviceUri.toString());
-//   await service.streamListen(EventStreams.kIsolate);
-
-//   service.onIsolateEvent.listen((event) {
-//     if (event.kind != 'IsolateReload') return;
-//     callback();
-//   });
-
-//   return () => service.dispose();
-// }
 
 Future<GlProgram> _vertFragProgram(BraidResources resources, String name, String vert, String frag) async {
   final (vertSource, fragSource) = await (
@@ -202,4 +183,176 @@ error during braid initialization: $message
 cause: $cause
 '''
       : 'error during braid initialization: $message';
+}
+
+// ---
+
+class AppState {
+  final BraidResources resources;
+  final Logger? logger;
+
+  final Window window;
+  final CursorController cursorController;
+  final Matrix4 projection;
+
+  final RenderContext context;
+  final TextRenderer textRenderer;
+  final PrimitiveRenderer primitives;
+
+  final WidgetBuilder _widgetBuilder;
+  AppScaffold _scaffold;
+
+  Set<MouseListener> _hovered = {};
+  KeyboardListener? _focused;
+
+  final List<StreamSubscription> _subscriptions = [];
+
+  AppState(
+    this.resources,
+    this.window,
+    this.projection,
+    this.context,
+    this.textRenderer,
+    this.primitives,
+    this._widgetBuilder, {
+    this.logger,
+  })  : cursorController = CursorController.ofWindow(window),
+        _scaffold = AppScaffold(root: _widgetBuilder()) {
+    _doScaffoldLayout();
+    _subscriptions.add(window.onResize.listen((event) => _doScaffoldLayout()));
+
+    // ---
+
+    _subscriptions.addAll([
+      window.onMouseButton
+          .where((event) => event.action == glfwPress && event.button == glfwMouseButtonLeft)
+          .listen((event) {
+        final state = _hitTest();
+
+        state.firstWhere(
+          (widget) => widget is MouseListener && (widget as MouseListener).onMouseDown(),
+        );
+
+        _focused = state.firstWhere((widget) => widget is KeyboardListener)?.widget as KeyboardListener?;
+      }),
+      // ---
+      window.onMouseScroll.listen((event) {
+        _hitTest().firstWhere(
+          (widget) => widget is MouseListener && (widget as MouseListener).onMouseScroll(event.xOffset, event.yOffset),
+        );
+      }),
+      // ---
+      window.onKey.where((event) => event.action == glfwPress || event.action == glfwRepeat).listen((event) {
+        if (event.key == glfwKeyD && (event.mods & glfwModAlt) != 0) {
+          final treeFile = File('widget_tree.dot');
+          final out = treeFile.openWrite();
+          out.writeln('digraph {');
+          dumpGraphviz(scaffold, out);
+          out
+            ..writeln('}')
+            ..flush().then((value) {
+              Process.start('dot', ['-Tsvg', '-owidget_tree.svg', 'widget_tree.dot'],
+                      mode: ProcessStartMode.inheritStdio)
+                  .then((proc) => proc.exitCode.then((_) => treeFile.delete()));
+            });
+        }
+
+        _focused?.onKeyDown(event.key, event.mods);
+      }),
+      // ---
+      window.onChar.listen((event) {
+        _focused?.onChar(event, 0);
+      }),
+    ]);
+  }
+
+  void draw() {
+    final ctx = DrawContext(context, primitives, projection, textRenderer);
+    ctx.transform.scopeWith(
+      scaffold.transform.toParent,
+      (_) => scaffold.draw(ctx),
+    );
+  }
+
+  void updateWidgetsAndInteractions(double delta) {
+    scaffold.update(delta);
+
+    // ---
+
+    final state = _hitTest();
+
+    final nowHovered = <MouseListener>{};
+    for (final listener in state.occludedTrace.map((e) => e.widget).whereType<MouseListener>()) {
+      nowHovered.add(listener);
+
+      if (_hovered.contains(listener)) {
+        _hovered.remove(listener);
+      } else {
+        listener.onMouseEnter();
+      }
+    }
+
+    for (final noLongerHovered in _hovered) {
+      noLongerHovered.onMouseExit();
+    }
+
+    _hovered = nowHovered;
+
+    // ---
+
+    final cursorStyleSource = state.firstWhere((widget) => widget is MouseArea && widget.cursorStyle != null);
+    if (cursorStyleSource case (widget: MouseArea(cursorStyle: var cursorStyle?), coordinates: _)) {
+      cursorController.style = cursorStyle;
+    } else {
+      cursorController.style = CursorStyle.none;
+    }
+  }
+
+  @experimental
+  void dangerouslyRebuildRoot() {
+    _scaffold = AppScaffold(root: _widgetBuilder());
+    _doScaffoldLayout(force: true);
+  }
+
+  // TODO: there should be a separate function that doesn't go
+  // through the [BraidResources] abstraction
+  Future<void> loadFontFamily(String familyName, [String? identifier]) async {
+    final family = await FontFamily.load(resources, familyName);
+    textRenderer.addFamily(identifier ?? familyName, family);
+
+    _doScaffoldLayout(force: true);
+  }
+
+  void dispose() {
+    cursorController.dispose();
+    for (final subscription in _subscriptions) {
+      subscription.cancel();
+    }
+  }
+
+  // ---
+
+  AppScaffold get scaffold => _scaffold;
+
+  // ---
+
+  HitTestState _hitTest([(double x, double y)? coordinates]) {
+    final (x, y) = coordinates ?? (window.cursorX, window.cursorY);
+
+    final state = HitTestState();
+    scaffold.hitTest(x, y, state);
+
+    return state;
+  }
+
+  void _doScaffoldLayout({bool force = false}) {
+    if (force) {
+      scaffold.clearLayoutCache();
+    }
+
+    scaffold.layout(
+      LayoutContext(textRenderer, window),
+      Constraints.tight(Size(window.width.toDouble(), window.height.toDouble())),
+    );
+  }
 }

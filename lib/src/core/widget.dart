@@ -127,14 +127,14 @@ class Panel extends OptionalChildWiget with OptionalShrinkWrapLayout {
   });
 
   @override
-  void draw(DrawContext ctx, double delta) {
+  void draw(DrawContext ctx) {
     if (cornerRadius <= 1) {
       ctx.primitives.rect(transform.width, transform.height, color, ctx.transform, ctx.projection);
     } else {
       ctx.primitives.roundedRect(transform.width, transform.height, cornerRadius, color, ctx.transform, ctx.projection);
     }
 
-    super.draw(ctx, delta);
+    super.draw(ctx);
   }
 }
 
@@ -160,7 +160,7 @@ class Label extends Widget {
         _textColor = textColor ?? Color.black;
 
   @override
-  void draw(DrawContext ctx, double delta) {
+  void draw(DrawContext ctx) {
     final textSize = ctx.textRenderer.sizeOf(text, _fontSize);
     final xOffset = (transform.width - textSize.width) ~/ 2, yOffset = (transform.height - textSize.height) ~/ 2;
 
@@ -349,7 +349,7 @@ class HappyWidget extends Widget {
   }
 
   @override
-  void draw(DrawContext ctx, double delta) {
+  void draw(DrawContext ctx) {
     final (hitTestX, hitTestY) = transformCoords(
       ctx.renderContext.window.cursorX,
       ctx.renderContext.window.cursorY,
@@ -388,7 +388,7 @@ class Gradient extends SingleChildWidget with ShrinkWrapLayout {
   });
 
   @override
-  void draw(DrawContext ctx, double delta) {
+  void draw(DrawContext ctx) {
     ctx.primitives.gradientRect(
       transform.width,
       transform.height,
@@ -401,7 +401,7 @@ class Gradient extends SingleChildWidget with ShrinkWrapLayout {
       ctx.projection,
     );
 
-    super.draw(ctx, delta);
+    super.draw(ctx);
   }
 }
 
@@ -471,7 +471,7 @@ class Clip extends SingleChildWidget with ShrinkWrapLayout {
   });
 
   @override
-  void draw(DrawContext ctx, double delta) {
+  void draw(DrawContext ctx) {
     final scissorBox = Aabb3.copy(transform.aabb)..transform(ctx.transform);
     gl.scissor(
       scissorBox.min.x.toInt(),
@@ -481,7 +481,7 @@ class Clip extends SingleChildWidget with ShrinkWrapLayout {
     );
 
     gl.enable(glScissorTest);
-    super.draw(ctx, delta);
+    super.draw(ctx);
     gl.disable(glScissorTest);
   }
 }
@@ -495,13 +495,13 @@ class StencilClip extends SingleChildWidget with ShrinkWrapLayout {
   });
 
   @override
-  void draw(DrawContext ctx, double delta) {
+  void draw(DrawContext ctx) {
     stencilValue++;
 
     final window = ctx.renderContext.window;
     final framebuffer = _framebufferByWindow[window] ??= (() {
       final buffer = GlFramebuffer.trackingWindow(window, stencil: true);
-      frameEvents.listen((_) => buffer.clear(color: Color.ofArgb(0), depth: 0, stencil: 0));
+      ctx.renderContext.frameEvents.listen((_) => buffer.clear(color: Color.ofArgb(0), depth: 0, stencil: 0));
       return buffer;
     })();
 
@@ -515,7 +515,7 @@ class StencilClip extends SingleChildWidget with ShrinkWrapLayout {
     gl.stencilFunc(glEqual, stencilValue, 0xFF);
     gl.stencilOp(glKeep, glKeep, glKeep);
 
-    super.draw(ctx, delta);
+    super.draw(ctx);
 
     gl.disable(glStencilTest);
     framebuffer.unbind();
