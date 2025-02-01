@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:braid_ui/src/core/math.dart';
+import 'core/math.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:vector_math/vector_math.dart';
 

@@ -6,7 +6,12 @@ import 'package:diamond_gl/diamond_gl.dart';
 import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math.dart';
 
-import '../../braid_ui.dart';
+import '../context.dart';
+import '../text/text.dart';
+import 'constraints.dart';
+import 'cursors.dart';
+import 'math.dart';
+import 'widget_base.dart';
 
 typedef WidgetBuilder = Widget Function();
 
@@ -210,6 +215,8 @@ class MouseArea extends SingleChildWidget with ShrinkWrapLayout, MouseListener {
   void Function(double horizontal, double vertical)? scrollCallback;
   CursorStyle? cursorStyle;
 
+  bool _hovered = false;
+
   MouseArea({
     this.clickCallback,
     this.enterCallback,
@@ -223,36 +230,73 @@ class MouseArea extends SingleChildWidget with ShrinkWrapLayout, MouseListener {
   bool onMouseDown() => (clickCallback?..call()) != null;
 
   @override
-  void onMouseEnter() => enterCallback?..call();
+  void onMouseEnter() {
+    _hovered = true;
+    enterCallback?.call();
+  }
 
   @override
-  void onMouseExit() => exitCallback?..call();
+  void onMouseExit() {
+    _hovered = false;
+    exitCallback?.call();
+  }
 
   @override
   bool onMouseScroll(double horizontal, double vertical) => (scrollCallback?..call(horizontal, vertical)) != null;
+
+  bool get hovered => _hovered;
 }
 
 class KeyboardInput extends SingleChildWidget with ShrinkWrapLayout, KeyboardListener {
-  void Function(int keyCode, int modifiers)? keyCallback;
+  void Function(int keyCode, int modifiers)? keyDownCallback;
+  void Function(int keyCode, int modifiers)? keyUpCallback;
   void Function(int charCode, int modifiers)? charCallback;
+  void Function()? focusGainedCallback;
+  void Function()? focusLostCallback;
+
+  bool _focused = false;
 
   KeyboardInput({
-    this.keyCallback,
+    this.keyDownCallback,
+    this.keyUpCallback,
     this.charCallback,
+    this.focusGainedCallback,
+    this.focusLostCallback,
     required super.child,
   });
 
   @override
-  void onKeyDown(int keyCode, int modifiers) => keyCallback?.call(keyCode, modifiers);
+  void onKeyDown(int keyCode, int modifiers) => keyDownCallback?.call(keyCode, modifiers);
+
+  @override
+  void onKeyUp(int keyCode, int modifiers) => keyUpCallback?.call(keyCode, modifiers);
 
   @override
   void onChar(int charCode, int modifiers) => charCallback?.call(charCode, modifiers);
+
+  @override
+  void onFocusGained() {
+    _focused = true;
+    focusGainedCallback?.call();
+  }
+
+  @override
+  void onFocusLost() {
+    _focused = false;
+    focusLostCallback?.call();
+  }
+
+  bool get focused => _focused;
 }
 
-// TODO separate theme and widget, use theme directly in [Button]
+// TODO: separate theme and widget, use theme directly in [Button]
+// TODO: descendant->ancestor layout dependencies
+
+// TODO: automatic color derivation
 class ButtonTheme extends SingleChildWidget with ShrinkWrapLayout {
   Color color;
   Color hoveredColor;
+  Color disabledColor;
   Color textColor;
   Insets padding;
   double cornerRadius;
@@ -261,11 +305,13 @@ class ButtonTheme extends SingleChildWidget with ShrinkWrapLayout {
     required super.child,
     Color? color,
     Color? hoveredColor,
+    Color? disabledColor,
     Color? textColor,
     this.padding = const Insets.all(10.0),
     this.cornerRadius = 10.0,
   })  : color = color ?? Color.white,
         hoveredColor = hoveredColor ?? Color.red,
+        disabledColor = disabledColor ?? Color.black,
         textColor = textColor ?? Color.black;
 }
 
@@ -273,10 +319,14 @@ class Button extends SingleChildWidget with ShrinkWrapLayout {
   late Panel _panel;
   late Padding _padding;
   late Label _label;
+  late MouseArea _mouseArea;
 
   void Function(Button button) onClick;
   Color _color;
   Color _hoveredColor;
+  Color _disabledColor;
+
+  bool _enabled;
 
   Button({
     required Text text,
@@ -284,12 +334,16 @@ class Button extends SingleChildWidget with ShrinkWrapLayout {
     Color? color,
     Color? hoveredColor,
     Color? textColor,
+    Color? disabledColor,
     double cornerRadius = 10.0,
     Insets padding = const Insets.all(10),
-  })  : _hoveredColor = hoveredColor ?? Color.red,
-        _color = color ?? Color.white,
+    bool enabled = true,
+  })  : _color = color ?? Color.white,
+        _hoveredColor = hoveredColor ?? Color.red,
+        _disabledColor = disabledColor ?? Color.black,
+        _enabled = enabled,
         super.lateChild() {
-    initChild(MouseArea(
+    initChild(_mouseArea = MouseArea(
       child: _panel = Panel(
         cornerRadius: cornerRadius,
         color: _color,
@@ -302,16 +356,41 @@ class Button extends SingleChildWidget with ShrinkWrapLayout {
           ),
         ),
       ),
-      clickCallback: () => onClick(this),
-      enterCallback: () => _panel.color = _hoveredColor,
-      exitCallback: () => _panel.color = _color,
+      clickCallback: () {
+        if (_enabled) onClick(this);
+      },
+      enterCallback: () {
+        if (_enabled) _panel.color = _hoveredColor;
+      },
+      exitCallback: () {
+        if (_enabled) _panel.color = _color;
+      },
       cursorStyle: CursorStyle.hand,
     ));
   }
 
-  set color(Color value) => _panel.color = _color = value;
-  set hoveredColor(Color value) => _panel.color = _hoveredColor = value;
+  set color(Color value) {
+    _color = value;
+    if (!_mouseArea.hovered && _enabled) _panel.color = value;
+  }
+
+  set hoveredColor(Color value) {
+    _hoveredColor = value;
+    if (_mouseArea.hovered && _enabled) _panel.color = value;
+  }
+
+  set disabledColor(Color value) {
+    _disabledColor = value;
+    if (!_enabled) _panel.color = value;
+  }
+
   set textColor(Color value) => _label.textColor = value;
+
+  bool get enabled => _enabled;
+  set enabled(bool value) {
+    _enabled = value;
+    if (!enabled) _panel.color = _disabledColor;
+  }
 
   Insets get padding => _padding.insets;
   set padding(Insets value) => _padding.insets = value;
@@ -322,6 +401,7 @@ class Button extends SingleChildWidget with ShrinkWrapLayout {
   Text get text => _label.text;
   set text(Text value) => _label.text = value;
 
+  // TODO: move theming before layout
   @override
   void doLayout(LayoutContext ctx, Constraints constraints) {
     super.doLayout(ctx, constraints);
@@ -649,6 +729,9 @@ class AppScaffold extends Widget with ChildRenderer, ChildListRenderer {
   }
 }
 
+// TODO: whether this has a good justification for existing is
+// questionable, in fact it should likely be merged with or
+// subsumed by FlexChild
 class Expanded extends OptionalChildWiget with ChildRenderer {
   bool _horizontal, _vertical;
 

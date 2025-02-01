@@ -1,4 +1,4 @@
-import 'package:braid_ui/src/core/math.dart';
+import 'math.dart';
 
 extension ConstrainedSize on Size {
   Size constrained(Constraints constraints) => Size(

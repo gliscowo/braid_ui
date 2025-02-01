@@ -3,7 +3,6 @@ import 'dart:ffi' hide Size;
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:braid_ui/src/resources.dart';
 import 'package:dart_opengl/dart_opengl.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:ffi/ffi.dart';
@@ -15,6 +14,7 @@ import '../context.dart';
 import '../core/math.dart';
 import '../native/freetype.dart';
 import '../native/harfbuzz.dart';
+import '../resources.dart';
 import '../vertex_descriptors.dart';
 import 'text.dart';
 

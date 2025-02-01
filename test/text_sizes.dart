@@ -83,7 +83,7 @@ class TextField extends SingleChildWidget with ShrinkWrapLayout {
   TextField() : super.lateChild() {
     initChild(KeyboardInput(
       charCallback: (charCode, modifiers) => onCharTyped(String.fromCharCode(charCode), modifiers),
-      keyCallback: (keyCode, modifiers) => onKeyPress(keyCode, modifiers),
+      keyDownCallback: (keyCode, modifiers) => onKeyPress(keyCode, modifiers),
       child: Panel(
         color: Color.black,
         cornerRadius: 5.0,

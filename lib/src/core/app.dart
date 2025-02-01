@@ -3,7 +3,7 @@ import 'dart:ffi' as ffi;
 import 'dart:io';
 import 'dart:math';
 
-import 'package:braid_ui/src/resources.dart';
+import '../resources.dart';
 import 'package:dart_glfw/dart_glfw.dart';
 import 'package:dart_opengl/dart_opengl.dart';
 import 'package:diamond_gl/diamond_gl.dart';
@@ -233,7 +233,9 @@ class AppState {
           (widget) => widget is MouseListener && (widget as MouseListener).onMouseDown(),
         );
 
+        _focused?.onFocusLost();
         _focused = state.firstWhere((widget) => widget is KeyboardListener)?.widget as KeyboardListener?;
+        _focused?.onFocusGained();
       }),
       // ---
       window.onMouseScroll.listen((event) {
@@ -242,11 +244,15 @@ class AppState {
         );
       }),
       // ---
-      window.onKey.where((event) => event.action == glfwPress || event.action == glfwRepeat).listen((event) {
+      window.onKey.listen((event) {
         if (event.key == glfwKeyD && (event.mods & glfwModAlt) != 0) {
           final treeFile = File('widget_tree.dot');
           final out = treeFile.openWrite();
-          out.writeln('digraph {');
+          out.writeln('''
+digraph {
+splines=false;
+node [shape="box"];
+''');
           dumpGraphviz(scaffold, out);
           out
             ..writeln('}')
@@ -257,7 +263,11 @@ class AppState {
             });
         }
 
-        _focused?.onKeyDown(event.key, event.mods);
+        if (event.action == glfwPress || event.action == glfwRepeat) {
+          _focused?.onKeyDown(event.key, event.mods);
+        } else if (event.action == glfwRelease) {
+          _focused?.onKeyUp(event.key, event.mods);
+        }
       }),
       // ---
       window.onChar.listen((event) {

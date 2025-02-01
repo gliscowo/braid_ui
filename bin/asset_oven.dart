@@ -127,8 +127,33 @@ class BakedAssetResources implements BraidResources {
 ''');
 
     return (
-      imports: const <String>['dart:typed_data', 'package:braid_ui/src/resources.dart'],
+      imports: const <String>['dart:typed_data', 'resources.dart'],
       code: codeOut.toString(),
+    );
+  },
+  () async {
+    final lines = await openAsset('icon_mappings.codepoints').readAsLines();
+    final result = StringBuffer()..writeln('const _iconMappings = {');
+    final mappedIconNames = <String>{};
+
+    for (final line in lines) {
+      final [name, codepoint, ...] = line.split(' ');
+
+      if (mappedIconNames.contains(name)) continue;
+      mappedIconNames.add(name);
+
+      result.writeln('${name.quoted}: 0x$codepoint,');
+    }
+
+    result.write('''
+};
+
+String lookupIcon(String iconName) => String.fromCharCode(_iconMappings[iconName] ?? 0);
+''');
+
+    return (
+      imports: const <String>[],
+      code: result.toString(),
     );
   }
 ];

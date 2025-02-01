@@ -1,8 +1,11 @@
 import 'dart:math';
 
+import '../context.dart';
+import 'constraints.dart';
+import 'math.dart';
+import 'widget.dart';
+import 'widget_base.dart';
 import 'package:vector_math/vector_math.dart';
-
-import '../../braid_ui.dart';
 
 class InfiniteVerticalSpace extends SingleChildWidget {
   double _verticalOverflow = 0.0;

@@ -1,10 +1,14 @@
 import 'dart:collection';
 import 'dart:io';
 
-import 'package:braid_ui/braid_ui.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math.dart';
+
+import '../context.dart';
+import 'constraints.dart';
+import 'math.dart';
+import 'widget.dart';
 
 extension type const Key(String value) {}
 
@@ -95,8 +99,11 @@ mixin MouseListener {
 
 mixin KeyboardListener {
   void onKeyDown(int keyCode, int modifiers);
-  // void onKeyRelease();
+  void onKeyUp(int keyCode, int modifiers);
   void onChar(int charCode, int modifiers);
+
+  void onFocusGained();
+  void onFocusLost();
 }
 
 typedef LayoutData = ({

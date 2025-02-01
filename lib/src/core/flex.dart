@@ -1,11 +1,30 @@
 import 'dart:math';
 
-import 'package:braid_ui/src/core/widget.dart';
-
 import '../context.dart';
 import 'constraints.dart';
 import 'math.dart';
+import 'widget.dart';
 import 'widget_base.dart';
+
+/// A vertical array of widgets
+class Column extends Flex {
+  Column({
+    super.mainAxisAlignment,
+    super.crossAxisAlignment,
+    required super.children,
+  }) : super(mainAxis: LayoutAxis.vertical);
+}
+
+/// A horizontal array of widgets
+class Row extends Flex {
+  Row({
+    super.mainAxisAlignment,
+    super.crossAxisAlignment,
+    required super.children,
+  }) : super(mainAxis: LayoutAxis.horizontal);
+}
+
+// ---
 
 enum LayoutAxis {
   horizontal,
@@ -112,8 +131,6 @@ class Flex extends Widget with ChildRenderer, ChildListRenderer {
 
   // TODO: revisit whether available main axis space should always
   // saturate constraints for non-flex children
-
-  bool get isHorizontal => mainAxis == LayoutAxis.horizontal;
 
   @override
   void doLayout(LayoutContext ctx, Constraints constraints) {

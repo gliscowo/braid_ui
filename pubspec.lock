@@ -343,7 +343,7 @@ packages:
     source: hosted
     version: "2.0.0"
   source_helper:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       name: source_helper
       sha256: "86d247119aedce8e63f4751bd9626fc9613255935558447569ad42f9f5b48b3c"

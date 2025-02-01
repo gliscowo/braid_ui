@@ -53,7 +53,8 @@ class Text {
 
       final buffer = harfbuzz.buffer_create();
 
-      final bufferContent = /*String.fromCharCodes(logicalToVisual(*/ span.content /*))*/ .toNativeUtf16();
+      final bufferContent = /*String.fromCharCodes(logicalToVisual(*/
+          span.content /*))*/ .toNativeUtf16();
       harfbuzz.buffer_add_utf16(buffer, bufferContent.cast(), -1, 0, -1);
       malloc.free(bufferContent);
 
