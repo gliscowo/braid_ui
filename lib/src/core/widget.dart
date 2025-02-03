@@ -294,27 +294,61 @@ class KeyboardInput extends SingleChildWidget with ShrinkWrapLayout, KeyboardLis
 
 // TODO: automatic color derivation
 class ButtonTheme extends SingleChildWidget with ShrinkWrapLayout {
-  Color color;
-  Color hoveredColor;
-  Color disabledColor;
-  Color textColor;
-  Insets padding;
-  double cornerRadius;
+  ButtonStyle style;
 
   ButtonTheme({
     required super.child,
+    required this.style,
+  });
+}
+
+class ButtonStyle {
+  static const empty = ButtonStyle();
+
+  final Color? color;
+  final Color? hoveredColor;
+  final Color? disabledColor;
+  final Color? textColor;
+  final Insets? padding;
+  final double? cornerRadius;
+
+  const ButtonStyle({
+    this.color,
+    this.hoveredColor,
+    this.disabledColor,
+    this.textColor,
+    this.padding,
+    this.cornerRadius,
+  });
+
+  ButtonStyle copy({
     Color? color,
     Color? hoveredColor,
     Color? disabledColor,
     Color? textColor,
-    this.padding = const Insets.all(10.0),
-    this.cornerRadius = 10.0,
-  })  : color = color ?? Color.white,
-        hoveredColor = hoveredColor ?? Color.red,
-        disabledColor = disabledColor ?? Color.black,
-        textColor = textColor ?? Color.black;
+    Insets? padding,
+    double? cornerRadius,
+  }) =>
+      ButtonStyle(
+        color: color ?? this.color,
+        hoveredColor: hoveredColor ?? this.hoveredColor,
+        disabledColor: disabledColor ?? this.disabledColor,
+        textColor: textColor ?? this.textColor,
+        padding: padding ?? this.padding,
+        cornerRadius: cornerRadius ?? this.cornerRadius,
+      );
+
+  ButtonStyle overriding(ButtonStyle other) => ButtonStyle(
+        color: color ?? other.color,
+        hoveredColor: hoveredColor ?? other.hoveredColor,
+        disabledColor: disabledColor ?? other.disabledColor,
+        textColor: textColor ?? other.textColor,
+        padding: padding ?? other.padding,
+        cornerRadius: cornerRadius ?? other.cornerRadius,
+      );
 }
 
+// TODO: actually usable default style
 class Button extends SingleChildWidget with ShrinkWrapLayout {
   late Panel _panel;
   late Padding _padding;
@@ -322,36 +356,29 @@ class Button extends SingleChildWidget with ShrinkWrapLayout {
   late MouseArea _mouseArea;
 
   void Function(Button button) onClick;
-  Color _color;
-  Color _hoveredColor;
-  Color _disabledColor;
+  ButtonStyle? _style;
+  ButtonStyle _computedStyle;
 
   bool _enabled;
 
   Button({
     required Text text,
     required this.onClick,
-    Color? color,
-    Color? hoveredColor,
-    Color? textColor,
-    Color? disabledColor,
-    double cornerRadius = 10.0,
-    Insets padding = const Insets.all(10),
     bool enabled = true,
-  })  : _color = color ?? Color.white,
-        _hoveredColor = hoveredColor ?? Color.red,
-        _disabledColor = disabledColor ?? Color.black,
+    ButtonStyle? style,
+  })  : _style = style,
+        _computedStyle = style ?? ButtonStyle.empty,
         _enabled = enabled,
         super.lateChild() {
     initChild(_mouseArea = MouseArea(
       child: _panel = Panel(
-        cornerRadius: cornerRadius,
-        color: _color,
+        cornerRadius: 3,
+        color: _computedStyle.color ?? Color.white,
         child: _padding = Padding(
-          insets: padding,
+          insets: _computedStyle.padding ?? Insets.all(2),
           child: _label = Label(
             text: text,
-            textColor: textColor,
+            textColor: _computedStyle.textColor ?? Color.black,
             fontSize: 20.0,
           ),
         ),
@@ -360,60 +387,36 @@ class Button extends SingleChildWidget with ShrinkWrapLayout {
         if (_enabled) onClick(this);
       },
       enterCallback: () {
-        if (_enabled) _panel.color = _hoveredColor;
+        if (_enabled) _panel.color = _computedStyle.hoveredColor ?? Color.white;
       },
       exitCallback: () {
-        if (_enabled) _panel.color = _color;
+        if (_enabled) _panel.color = _computedStyle.color ?? Color.white;
       },
       cursorStyle: CursorStyle.hand,
     ));
   }
 
-  set color(Color value) {
-    _color = value;
-    if (!_mouseArea.hovered && _enabled) _panel.color = value;
-  }
-
-  set hoveredColor(Color value) {
-    _hoveredColor = value;
-    if (_mouseArea.hovered && _enabled) _panel.color = value;
-  }
-
-  set disabledColor(Color value) {
-    _disabledColor = value;
-    if (!_enabled) _panel.color = value;
-  }
-
-  set textColor(Color value) => _label.textColor = value;
-
   bool get enabled => _enabled;
   set enabled(bool value) {
     _enabled = value;
-    if (!enabled) _panel.color = _disabledColor;
+    if (!enabled) _panel.color = _computedStyle.disabledColor ?? Color.white;
   }
 
-  Insets get padding => _padding.insets;
+  // Insets get padding => _padding.insets;
   set padding(Insets value) => _padding.insets = value;
 
-  double get cornerRadius => _panel.cornerRadius;
+  // double get cornerRadius => _panel.cornerRadius;
   set cornerRadius(double value) => _panel.cornerRadius = value;
 
-  Text get text => _label.text;
+  // Text get text => _label.text;
   set text(Text value) => _label.text = value;
 
   // TODO: move theming before layout
   @override
   void doLayout(LayoutContext ctx, Constraints constraints) {
-    super.doLayout(ctx, constraints);
-
     final theme = ancestorOfType<ButtonTheme>();
-    if (theme != null) {
-      color = theme.color;
-      hoveredColor = theme.hoveredColor;
-      textColor = theme.textColor;
-      padding = theme.padding;
-      cornerRadius = theme.cornerRadius;
-    }
+
+    super.doLayout(ctx, constraints);
   }
 }
 
