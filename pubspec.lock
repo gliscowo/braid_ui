@@ -122,10 +122,10 @@ packages:
     dependency: "direct main"
     description:
       name: diamond_gl
-      sha256: cc70a7f6289dee5dc1d37f09e2e73a81eeb9820122a276cce56447ede85c148c
+      sha256: "1f9da6b250fe432d41a2ee9e2e9185f1e84e13a97d0956361c662c97e05cab7f"
       url: "https://pub.wispforest.io"
     source: hosted
-    version: "0.1.0"
+    version: "0.1.1"
   ffi:
     dependency: "direct main"
     description:

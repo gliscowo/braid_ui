@@ -3,7 +3,6 @@ import 'dart:ffi';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:ffi/ffi.dart';
 import 'package:meta/meta.dart';
-import 'package:vector_math/vector_math_64.dart';
 
 import '../native/harfbuzz.dart';
 import 'text_renderer.dart';
@@ -38,6 +37,7 @@ class Text {
 
   List<ShapedGlyph> get glyphs => _shapedGlyphs;
 
+  @internal
   bool isShapingCacheValid(double size, int generation) => (Font.toPixelSize(size), generation) == _lastShapingKey;
 
   @internal
@@ -53,8 +53,7 @@ class Text {
 
       final buffer = harfbuzz.buffer_create();
 
-      final bufferContent = /*String.fromCharCodes(logicalToVisual(*/
-          span.content /*))*/ .toNativeUtf16();
+      final bufferContent = /*String.fromCharCodes(logicalToVisual(*/ span.content /*))*/ .toNativeUtf16();
       harfbuzz.buffer_add_utf16(buffer, bufferContent.cast(), -1, 0, -1);
       malloc.free(bufferContent);
 
@@ -73,13 +72,13 @@ class Text {
         _shapedGlyphs.add(ShapedGlyph._(
           spanFont.fontForStyle(span.style),
           glyphInfo[i].codepoint,
-          Vector2(
-            cursorX + glyphPos[i].x_offset.toDouble() * span.style.scale,
-            cursorY + glyphPos[i].y_offset.toDouble() * span.style.scale,
+          (
+            x: cursorX + glyphPos[i].x_offset.toDouble() * span.style.scale,
+            y: cursorY + glyphPos[i].y_offset.toDouble() * span.style.scale,
           ),
-          Vector2(
-            glyphPos[i].x_advance.toDouble(),
-            glyphPos[i].y_advance.toDouble(),
+          (
+            x: glyphPos[i].x_advance.toDouble(),
+            y: glyphPos[i].y_advance.toDouble(),
           ),
           span.style,
           glyphInfo[i].cluster,
@@ -100,8 +99,8 @@ class Text {
 class ShapedGlyph {
   final Font font;
   final int index;
-  final Vector2 position;
-  final Vector2 advance;
+  final ({double x, double y}) position;
+  final ({double x, double y}) advance;
   final TextStyle style;
   final int cluster;
   ShapedGlyph._(this.font, this.index, this.position, this.advance, this.style, this.cluster);

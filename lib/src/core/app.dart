@@ -3,7 +3,6 @@ import 'dart:ffi' as ffi;
 import 'dart:io';
 import 'dart:math';
 
-import '../resources.dart';
 import 'package:dart_glfw/dart_glfw.dart';
 import 'package:dart_opengl/dart_opengl.dart';
 import 'package:diamond_gl/diamond_gl.dart';
@@ -15,6 +14,7 @@ import 'package:vector_math/vector_math.dart';
 import '../baked_assets.g.dart' as assets;
 import '../context.dart';
 import '../primitive_renderer.dart';
+import '../resources.dart';
 import '../text/text_renderer.dart';
 import 'constraints.dart';
 import 'cursors.dart';

@@ -145,39 +145,42 @@ class Panel extends OptionalChildWiget with OptionalShrinkWrapLayout {
 
 class Label extends Widget {
   Text _text;
-  Color _textColor;
+  Color textColor;
   double _fontSize;
+  double? _lineHeight;
 
   Label({
     required Text text,
     Color? textColor,
     double fontSize = 24,
-  })  : _fontSize = fontSize,
-        _text = text,
-        _textColor = textColor ?? Color.black;
-
-  Label.string({
-    required String text,
-    Color? textColor,
-    double fontSize = 24,
-  })  : _fontSize = fontSize,
-        _text = Text.string(text),
-        _textColor = textColor ?? Color.black;
+    double? lineHeight,
+  })  : _text = text,
+        textColor = textColor ?? Color.black,
+        _fontSize = fontSize,
+        _lineHeight = lineHeight;
 
   @override
   void draw(DrawContext ctx) {
-    final textSize = ctx.textRenderer.sizeOf(text, _fontSize);
+    final textSize = ctx.textRenderer.sizeOf(text, _fontSize, lineHeightOverride: _lineHeight);
     final xOffset = (transform.width - textSize.width) ~/ 2, yOffset = (transform.height - textSize.height) ~/ 2;
 
     ctx.transform.scope((mat4) {
       mat4.translate(xOffset.toDouble(), yOffset.toDouble());
-      ctx.textRenderer.drawText(text, _fontSize, mat4, ctx.projection, color: textColor);
+      ctx.textRenderer.drawText(
+        text,
+        _fontSize,
+        mat4,
+        ctx.projection,
+        color: textColor,
+        lineHeightOverride: _lineHeight,
+        // debugCtx: ctx,
+      );
     });
   }
 
   @override
   void doLayout(LayoutContext ctx, Constraints constraints) {
-    final size = ctx.textRenderer.sizeOf(text, _fontSize).constrained(constraints);
+    final size = ctx.textRenderer.sizeOf(text, _fontSize, lineHeightOverride: _lineHeight).constrained(constraints);
     transform.setSize(size.ceil());
   }
 
@@ -189,17 +192,19 @@ class Label extends Widget {
     markNeedsLayout();
   }
 
-  Color get textColor => _textColor;
-  set textColor(Color value) {
-    if (_textColor == value) return;
-    _textColor = value;
-  }
-
   double get fontSize => _fontSize;
   set fontSize(double value) {
     if ((_fontSize - value).abs() < .5e-3) return;
 
     _fontSize = value;
+    markNeedsLayout();
+  }
+
+  double? get lineHeight => _lineHeight;
+  set lineHeight(double? value) {
+    if (_lineHeight == value) return;
+
+    _lineHeight = value;
     markNeedsLayout();
   }
 }
@@ -287,137 +292,6 @@ class KeyboardInput extends SingleChildWidget with ShrinkWrapLayout, KeyboardLis
   }
 
   bool get focused => _focused;
-}
-
-// TODO: separate theme and widget, use theme directly in [Button]
-// TODO: descendant->ancestor layout dependencies
-
-// TODO: automatic color derivation
-class ButtonTheme extends SingleChildWidget with ShrinkWrapLayout {
-  ButtonStyle style;
-
-  ButtonTheme({
-    required super.child,
-    required this.style,
-  });
-}
-
-class ButtonStyle {
-  static const empty = ButtonStyle();
-
-  final Color? color;
-  final Color? hoveredColor;
-  final Color? disabledColor;
-  final Color? textColor;
-  final Insets? padding;
-  final double? cornerRadius;
-
-  const ButtonStyle({
-    this.color,
-    this.hoveredColor,
-    this.disabledColor,
-    this.textColor,
-    this.padding,
-    this.cornerRadius,
-  });
-
-  ButtonStyle copy({
-    Color? color,
-    Color? hoveredColor,
-    Color? disabledColor,
-    Color? textColor,
-    Insets? padding,
-    double? cornerRadius,
-  }) =>
-      ButtonStyle(
-        color: color ?? this.color,
-        hoveredColor: hoveredColor ?? this.hoveredColor,
-        disabledColor: disabledColor ?? this.disabledColor,
-        textColor: textColor ?? this.textColor,
-        padding: padding ?? this.padding,
-        cornerRadius: cornerRadius ?? this.cornerRadius,
-      );
-
-  ButtonStyle overriding(ButtonStyle other) => ButtonStyle(
-        color: color ?? other.color,
-        hoveredColor: hoveredColor ?? other.hoveredColor,
-        disabledColor: disabledColor ?? other.disabledColor,
-        textColor: textColor ?? other.textColor,
-        padding: padding ?? other.padding,
-        cornerRadius: cornerRadius ?? other.cornerRadius,
-      );
-}
-
-// TODO: actually usable default style
-class Button extends SingleChildWidget with ShrinkWrapLayout {
-  late Panel _panel;
-  late Padding _padding;
-  late Label _label;
-  late MouseArea _mouseArea;
-
-  void Function(Button button) onClick;
-  ButtonStyle? _style;
-  ButtonStyle _computedStyle;
-
-  bool _enabled;
-
-  Button({
-    required Text text,
-    required this.onClick,
-    bool enabled = true,
-    ButtonStyle? style,
-  })  : _style = style,
-        _computedStyle = style ?? ButtonStyle.empty,
-        _enabled = enabled,
-        super.lateChild() {
-    initChild(_mouseArea = MouseArea(
-      child: _panel = Panel(
-        cornerRadius: 3,
-        color: _computedStyle.color ?? Color.white,
-        child: _padding = Padding(
-          insets: _computedStyle.padding ?? Insets.all(2),
-          child: _label = Label(
-            text: text,
-            textColor: _computedStyle.textColor ?? Color.black,
-            fontSize: 20.0,
-          ),
-        ),
-      ),
-      clickCallback: () {
-        if (_enabled) onClick(this);
-      },
-      enterCallback: () {
-        if (_enabled) _panel.color = _computedStyle.hoveredColor ?? Color.white;
-      },
-      exitCallback: () {
-        if (_enabled) _panel.color = _computedStyle.color ?? Color.white;
-      },
-      cursorStyle: CursorStyle.hand,
-    ));
-  }
-
-  bool get enabled => _enabled;
-  set enabled(bool value) {
-    _enabled = value;
-    if (!enabled) _panel.color = _computedStyle.disabledColor ?? Color.white;
-  }
-
-  // Insets get padding => _padding.insets;
-  set padding(Insets value) => _padding.insets = value;
-
-  // double get cornerRadius => _panel.cornerRadius;
-  set cornerRadius(double value) => _panel.cornerRadius = value;
-
-  // Text get text => _label.text;
-  set text(Text value) => _label.text = value;
-
-  // TODO: move theming before layout
-  @override
-  void doLayout(LayoutContext ctx, Constraints constraints) {
-    final theme = ancestorOfType<ButtonTheme>();
-
-    super.doLayout(ctx, constraints);
-  }
 }
 
 class HappyWidget extends Widget {

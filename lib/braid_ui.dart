@@ -1,6 +1,7 @@
 export 'src/baked_assets.g.dart' show BakedAssetResources;
 export 'src/context.dart';
 export 'src/core/app.dart';
+export 'src/core/button.dart';
 export 'src/core/constraints.dart';
 export 'src/core/cursors.dart';
 export 'src/core/flex.dart';

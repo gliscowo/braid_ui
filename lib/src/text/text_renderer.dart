@@ -113,13 +113,15 @@ class Font {
     _finalizer.attach(this, _nativeResources);
   }
 
+  double get lineHeight => _nativeResources.ftFace.ref.height / _nativeResources.ftFace.ref.units_per_EM;
+
   Glyph getGlyph(int index, double size) {
     final pixelSize = toPixelSize(size);
     return _glyphs[(index, pixelSize)] ?? _loadGlyph(index, pixelSize);
   }
 
-  /// Retrieve a harfbuzz font instance configured for use
-  /// at [size].
+  /// Retrieve a harfbuzz font instance configured
+  /// for use at [size]
   Pointer<hb_font> getHbFont(double size) {
     final pixelSize = toPixelSize(size);
     return _nativeResources.hbFonts[pixelSize] ??= _createHbFont(pixelSize);
@@ -166,6 +168,8 @@ class Font {
       ftFace.ref.glyph.ref.bitmap_top,
     );
   }
+
+  // ---
 
   /// Determine the pixel size at which glyphs for
   /// rendering at [renderSize] are baked
@@ -290,19 +294,50 @@ class TextRenderer {
 
   // ---
 
-  Size sizeOf(Text text, double size) {
+  Size sizeOf(Text text, double size, {double? lineHeightOverride}) {
     _ensureShaped(text, size);
     if (text.glyphs.isEmpty) return Size(0, size);
 
+    final lineHeight = lineHeightOverride ?? text.glyphs.fold<double>(0.0, (acc, e) => max(acc, e.font.lineHeight));
+
     return Size(
       text.glyphs.map((e) => _hbToPixels(e.position.x + e.advance.x) * Font.compensateForGlyphSize(size)).reduce(max),
-      size,
+      size * lineHeight,
     );
   }
 
   // TODO potentially include size in text style, actually do text layout :dies:
-  void drawText(Text text, double size, Matrix4 transform, Matrix4 projection, {Color? color}) {
+  void drawText(
+    Text text,
+    double size,
+    Matrix4 transform,
+    Matrix4 projection, {
+    Color? color,
+    double? lineHeightOverride,
+    DrawContext? debugCtx,
+  }) {
     _ensureShaped(text, size);
+
+    int baselineY;
+    if (lineHeightOverride != null) {
+      // TODO: this might benefit from some caching. then again, once actual paragraph
+      // layout and rendering is implemented, the relevant datastructures are likely
+      // gonna change anyways soooo
+      final intrinsicHeight = text.glyphs.fold(0.0, (acc, glyph) => max(acc, glyph.font.lineHeight));
+      baselineY = ((1 + (lineHeightOverride - intrinsicHeight) * .5) * size).floor();
+    } else {
+      baselineY = size.floor();
+    }
+
+    if (debugCtx != null) {
+      final textSize = sizeOf(text, size);
+      debugCtx.primitives.rect(textSize.width, textSize.height, Color.black.copyWith(a: .25), transform, projection);
+
+      debugCtx.transform.scope((mat4) {
+        mat4.translate(0.0, baselineY.toDouble());
+        debugCtx.primitives.rect(textSize.width, 1, Color.red, mat4, projection);
+      });
+    }
 
     color ??= Color.white;
     _textProgram
@@ -316,7 +351,6 @@ class TextRenderer {
           (_cachedBuffers[texture] = MeshBuffer(textVertexDescriptor, _textProgram)));
     }
 
-    final baseline = (size * .875).floor();
     for (final shapedGlyph in text.glyphs) {
       final glyph = shapedGlyph.font.getGlyph(shapedGlyph.index, size);
       final glyphColor = shapedGlyph.style.color ?? color;
@@ -324,7 +358,7 @@ class TextRenderer {
       final scale = Font.compensateForGlyphSize(size), glyphScale = shapedGlyph.style.scale;
 
       final xPos = _hbToPixels(shapedGlyph.position.x) * scale + glyph.bearingX * scale;
-      final yPos = _hbToPixels(shapedGlyph.position.y) * scale + baseline - glyph.bearingY * scale * glyphScale;
+      final yPos = _hbToPixels(shapedGlyph.position.y) * scale + baselineY - glyph.bearingY * scale * glyphScale;
 
       final width = glyph.width * scale * glyphScale;
       final height = glyph.height * scale * glyphScale;
