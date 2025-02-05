@@ -88,6 +88,11 @@ class Matrix4Stack extends Matrix4 {
         action(mat4);
       });
 
+  void scopedTransform(void Function(Matrix4) transformer, void Function(Matrix4 mat4) action) => scope((mat4) {
+        transformer(mat4);
+        action(mat4);
+      });
+
   void scope(void Function(Matrix4 mat4) action) {
     push();
     action(this);

@@ -41,6 +41,12 @@ class WidgetTransform {
   Matrix4 get toWidget => _toWidget ??= Matrix4.inverted(toParent);
   Aabb3 get aabb => _aabb ??= Aabb3.minMax(Vector3.zero(), Vector3(_width, _height, 0))..transform(toParent);
 
+  void transformToParent(Matrix4 mat) => mat.translate(_x, _y, 0);
+  void transformToWidget(Matrix4 mat) => mat.translate(-_x, -_y, 0);
+
+  void toParentCoordinates(Vector3 vec) => vec.add(Vector3(_x, _y, 0));
+  void toWidgetCoordinates(Vector3 vec) => vec.sub(Vector3(_x, _y, 0));
+
   void _setState(void Function() action) {
     action();
     recompute();
@@ -64,6 +70,18 @@ class CustomWidgetTransform extends WidgetTransform {
     ..setTranslationRaw(_x + _width / 2, _y + _height / 2, 0)
     ..multiply(_matrix)
     ..translate(-_width / 2, -_height / 2);
+
+  @override
+  void transformToParent(Matrix4 mat) => mat.multiply(toParent);
+
+  @override
+  void transformToWidget(Matrix4 mat) => mat.multiply(toWidget);
+
+  @override
+  void toParentCoordinates(Vector3 vec) => toParent.transform3(vec);
+
+  @override
+  void toWidgetCoordinates(Vector3 vec) => toWidget.transform3(vec);
 }
 
 typedef Hit = ({Widget widget, ({double x, double y}) coordinates});
@@ -206,9 +224,16 @@ abstract class Widget {
   void hitTest(double x, double y, HitTestState state) {
     if (hitTestSelf(x, y)) state.addHit(this, x, y);
 
+    final coordinates = Vector3.zero();
     for (final child in children) {
-      final (childX, childY) = transformCoords(x, y, child.transform.toWidget);
-      child.hitTest(childX, childY, state);
+      coordinates.setValues(x, y, 0);
+      child.transform.toWidgetCoordinates(coordinates);
+
+      child.hitTest(
+        coordinates.x,
+        coordinates.y,
+        state,
+      );
     }
   }
 
@@ -243,7 +268,7 @@ mixin OptionalChildProvider on Widget {
 mixin ChildRenderer on Widget {
   @protected
   void drawChild(DrawContext ctx, Widget child) {
-    ctx.transform.scopeWith(child.transform.toParent, (mat4) {
+    ctx.transform.scopedTransform(child.transform.transformToParent, (mat4) {
       child.draw(ctx);
     });
 

@@ -278,8 +278,8 @@ node [shape="box"];
 
   void draw() {
     final ctx = DrawContext(context, primitives, projection, textRenderer);
-    ctx.transform.scopeWith(
-      scaffold.transform.toParent,
+    ctx.transform.scopedTransform(
+      scaffold.transform.transformToParent,
       (_) => scaffold.draw(ctx),
     );
   }
