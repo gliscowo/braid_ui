@@ -143,72 +143,6 @@ class Panel extends OptionalChildWiget with OptionalShrinkWrapLayout {
   }
 }
 
-class Label extends Widget {
-  Text _text;
-  Color textColor;
-  double _fontSize;
-  double? _lineHeight;
-
-  Label({
-    required Text text,
-    Color? textColor,
-    double fontSize = 24,
-    double? lineHeight,
-  })  : _text = text,
-        textColor = textColor ?? Color.black,
-        _fontSize = fontSize,
-        _lineHeight = lineHeight;
-
-  @override
-  void draw(DrawContext ctx) {
-    final textSize = ctx.textRenderer.sizeOf(text, _fontSize, lineHeightOverride: _lineHeight);
-    final xOffset = (transform.width - textSize.width) ~/ 2, yOffset = (transform.height - textSize.height) ~/ 2;
-
-    ctx.transform.scope((mat4) {
-      mat4.translate(xOffset.toDouble(), yOffset.toDouble());
-      ctx.textRenderer.drawText(
-        text,
-        _fontSize,
-        mat4,
-        ctx.projection,
-        color: textColor,
-        lineHeightOverride: _lineHeight,
-        // debugCtx: ctx,
-      );
-    });
-  }
-
-  @override
-  void doLayout(LayoutContext ctx, Constraints constraints) {
-    final size = ctx.textRenderer.sizeOf(text, _fontSize, lineHeightOverride: _lineHeight).constrained(constraints);
-    transform.setSize(size.ceil());
-  }
-
-  Text get text => _text;
-  set text(Text value) {
-    if (_text == value) return;
-
-    _text = value;
-    markNeedsLayout();
-  }
-
-  double get fontSize => _fontSize;
-  set fontSize(double value) {
-    if ((_fontSize - value).abs() < .5e-3) return;
-
-    _fontSize = value;
-    markNeedsLayout();
-  }
-
-  double? get lineHeight => _lineHeight;
-  set lineHeight(double? value) {
-    if (_lineHeight == value) return;
-
-    _lineHeight = value;
-    markNeedsLayout();
-  }
-}
-
 class HitTestOccluder extends SingleChildWidget with ShrinkWrapLayout {
   HitTestOccluder({required super.child});
 }
@@ -324,7 +258,7 @@ class HappyWidget extends Widget {
     );
 
     ctx.transform.translate(5.0, 5.0);
-    ctx.textRenderer.drawText(Text.string('hi chyz :)'), 16, ctx.transform, ctx.projection);
+    ctx.textRenderer.drawText(Text.string('hi chyz :)'), 16, Color.white, ctx.transform, ctx.projection);
   }
 }
 

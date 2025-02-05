@@ -53,9 +53,11 @@ class FontFamily {
   }
 
   Font fontForStyle(TextStyle style) {
-    if (style.bold && !style.italic) return boldFont;
-    if (!style.bold && style.italic) return italicFont;
-    if (style.bold && style.italic) return boldItalicFont;
+    final (bold, italic) = (style.bold ?? false, style.italic ?? false);
+
+    if (bold && !italic) return boldFont;
+    if (!bold && italic) return italicFont;
+    if (bold && italic) return boldItalicFont;
     return defaultFont;
   }
 }
@@ -310,9 +312,9 @@ class TextRenderer {
   void drawText(
     Text text,
     double size,
+    Color color,
     Matrix4 transform,
     Matrix4 projection, {
-    Color? color,
     double? lineHeightOverride,
     DrawContext? debugCtx,
   }) {
@@ -339,7 +341,6 @@ class TextRenderer {
       });
     }
 
-    color ??= Color.white;
     _textProgram
       ..uniformMat4('uTransform', transform)
       ..uniformMat4('uProjection', projection)
@@ -355,7 +356,7 @@ class TextRenderer {
       final glyph = shapedGlyph.font.getGlyph(shapedGlyph.index, size);
       final glyphColor = shapedGlyph.style.color ?? color;
 
-      final scale = Font.compensateForGlyphSize(size), glyphScale = shapedGlyph.style.scale;
+      final scale = Font.compensateForGlyphSize(size), glyphScale = shapedGlyph.style.scale ?? 1;
 
       final xPos = _hbToPixels(shapedGlyph.position.x) * scale + glyph.bearingX * scale;
       final yPos = _hbToPixels(shapedGlyph.position.y) * scale + baselineY - glyph.bearingY * scale * glyphScale;

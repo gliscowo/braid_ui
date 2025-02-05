@@ -94,7 +94,7 @@ Future<void> main(List<String> arguments) async {
                             child: Button(
                               text: Text([
                                 Icon(icon),
-                                TextSpan(' ${icon[0].toUpperCase()}${icon.substring(1)}'),
+                                Span(' ${icon[0].toUpperCase()}${icon.substring(1)}'),
                               ]),
                               onClick: (button) => pages.page = idx,
                               color: Color.ofRgb(0x2f2f35),

@@ -3,7 +3,7 @@ import 'package:diamond_gl/diamond_gl.dart';
 import '../baked_assets.g.dart';
 import '../text/text.dart';
 
-class Icon extends TextSpan {
+class Icon extends Span {
   Icon(String name, {Color? color})
       : super(
           lookupIcon(name),

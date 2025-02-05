@@ -1,7 +1,6 @@
 export 'src/baked_assets.g.dart' show BakedAssetResources;
 export 'src/context.dart';
 export 'src/core/app.dart';
-export 'src/core/button.dart';
 export 'src/core/constraints.dart';
 export 'src/core/cursors.dart';
 export 'src/core/flex.dart';
@@ -14,3 +13,5 @@ export 'src/primitive_renderer.dart';
 export 'src/resources.dart';
 export 'src/text/text.dart';
 export 'src/text/text_renderer.dart';
+export 'src/widgets/button.dart';
+export 'src/widgets/label.dart';
