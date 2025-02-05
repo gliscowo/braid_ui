@@ -120,6 +120,14 @@ class Button extends SingleChildWidget with ShrinkWrapLayout {
   }
 
   @override
+  set child(Widget widget) {
+    _padding.child = widget;
+  }
+
+  @override
+  Widget get child => _padding.child!;
+
+  @override
   void doLayout(LayoutContext ctx, Constraints constraints) {
     super.doLayout(ctx, constraints);
 
