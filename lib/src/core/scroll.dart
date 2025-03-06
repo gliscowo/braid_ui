@@ -1,11 +1,12 @@
 import 'dart:math';
 
+import 'package:vector_math/vector_math.dart';
+
 import '../context.dart';
 import 'constraints.dart';
 import 'math.dart';
 import 'widget.dart';
 import 'widget_base.dart';
-import 'package:vector_math/vector_math.dart';
 
 class InfiniteVerticalSpace extends SingleChildWidget {
   double _verticalOverflow = 0.0;
@@ -33,6 +34,7 @@ class InfiniteVerticalSpace extends SingleChildWidget {
   double get verticalOverflow => _verticalOverflow;
 }
 
+// TODO: correct child setter
 class VerticalScroll extends SingleChildWidget with ShrinkWrapLayout {
   late final Transform _transform;
   late final InfiniteVerticalSpace _container;

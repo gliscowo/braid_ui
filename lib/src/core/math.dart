@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math.dart';
 
 extension DoubleLerp on double {
@@ -16,6 +17,8 @@ class Size {
   static const Size zero = Size(0, 0);
 
   final double width, height;
+
+  @literal
   const Size(this.width, this.height);
 
   Size.max(Size a, Size b) : this(max(a.width, b.width), max(a.height, b.height));
@@ -42,8 +45,11 @@ class Insets {
 
   final double top, bottom, left, right;
 
+  @literal
   const Insets({this.top = 0, this.bottom = 0, this.left = 0, this.right = 0});
+  @literal
   const Insets.all(double all) : this.axis(vertical: all, horizontal: all);
+  @literal
   const Insets.axis({double vertical = 0, double horizontal = 0})
       : top = vertical,
         bottom = vertical,
@@ -117,4 +123,12 @@ double computeDelta(double current, double target, double delta) {
   delta = diff * delta;
 
   return delta.abs() > diff.abs() ? diff : delta;
+}
+
+extension Transform2 on Matrix4 {
+  (double, double) transform2(double x, double y) {
+    final vec = Vector3(x, y, 0);
+    transform3(vec);
+    return (vec.x, vec.y);
+  }
 }

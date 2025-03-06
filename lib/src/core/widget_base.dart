@@ -241,12 +241,6 @@ abstract class Widget {
   bool hitTestSelf(double x, double y) => x >= 0 && x <= transform.width && y >= 0 && y <= transform.height;
 
   bool get hasParent => _parent != null;
-
-  (double, double) transformCoords(double x, double y, Matrix4 transform) {
-    final vec = Vector3(x, y, 0);
-    transform.transform3(vec);
-    return (vec.x, vec.y);
-  }
 }
 
 // --- rendering/layout mixins

@@ -241,10 +241,9 @@ class HappyWidget extends Widget {
 
   @override
   void draw(DrawContext ctx) {
-    final (hitTestX, hitTestY) = transformCoords(
+    final (hitTestX, hitTestY) = Matrix4.inverted(ctx.transform).transform2(
       ctx.renderContext.window.cursorX,
       ctx.renderContext.window.cursorY,
-      Matrix4.inverted(ctx.transform),
     );
 
     final hovered = hitTestSelf(hitTestX, hitTestY);
