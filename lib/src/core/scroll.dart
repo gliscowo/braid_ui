@@ -1,14 +1,8 @@
-import 'dart:math';
-
-import 'package:vector_math/vector_math.dart';
-
 import '../context.dart';
 import 'constraints.dart';
-import 'math.dart';
 import 'widget.dart';
-import 'widget_base.dart';
 
-class InfiniteVerticalSpace extends SingleChildWidget {
+class InfiniteVerticalSpace extends SingleChildWidgetInstance {
   double _verticalOverflow = 0.0;
 
   InfiniteVerticalSpace({
@@ -35,58 +29,58 @@ class InfiniteVerticalSpace extends SingleChildWidget {
 }
 
 // TODO: correct child setter
-class VerticalScroll extends SingleChildWidget with ShrinkWrapLayout {
-  late final Transform _transform;
-  late final InfiniteVerticalSpace _container;
-  final Matrix4 _matrix = Matrix4.identity();
+// class VerticalScroll extends SingleChildWidgetInstance with ShrinkWrapLayout {
+//   late final Transform _transform;
+//   late final InfiniteVerticalSpace _container;
+//   final Matrix4 _matrix = Matrix4.identity();
 
-  double scrollSpeed;
-  double scrollSmoothness;
+//   double scrollSpeed;
+//   double scrollSmoothness;
 
-  double _offset = 0;
-  double _displayOffset = 0;
+//   double _offset = 0;
+//   double _displayOffset = 0;
 
-  VerticalScroll({
-    required Widget child,
-    this.scrollSpeed = 1,
-    this.scrollSmoothness = 1,
-  }) : super.lateChild() {
-    initChild(MouseArea(
-      scrollCallback: (horizontal, vertical) => offset += vertical * -50.0 * scrollSpeed,
-      child: Clip(
-        child: _transform = Transform(
-          matrix: _matrix,
-          child: _container = InfiniteVerticalSpace(
-            child: child,
-          ),
-        ),
-      ),
-    ));
-  }
+//   VerticalScroll({
+//     required WidgetInstance child,
+//     this.scrollSpeed = 1,
+//     this.scrollSmoothness = 1,
+//   }) : super.lateChild() {
+//     initChild(MouseAreaInstance(
+//       scrollCallback: (horizontal, vertical) => offset += vertical * -50.0 * scrollSpeed,
+//       child: Clip(
+//         child: _transform = Transform(
+//           matrix: _matrix,
+//           child: _container = InfiniteVerticalSpace(
+//             child: child,
+//           ),
+//         ),
+//       ),
+//     ));
+//   }
 
-  @override
-  void update(double delta) {
-    super.update(delta);
+//   @override
+//   void update(double delta) {
+//     super.update(delta);
 
-    if (scrollSmoothness != 0) {
-      final smoothness = scrollSmoothness < 1 ? sqrt(scrollSmoothness) : scrollSmoothness;
-      _displayOffset += computeDelta(_displayOffset, offset, delta * (15 / smoothness));
-    } else {
-      _displayOffset = offset;
-    }
+//     if (scrollSmoothness != 0) {
+//       final smoothness = scrollSmoothness < 1 ? sqrt(scrollSmoothness) : scrollSmoothness;
+//       _displayOffset += computeDelta(_displayOffset, offset, delta * (15 / smoothness));
+//     } else {
+//       _displayOffset = offset;
+//     }
 
-    _matrix.setTranslationRaw(0.0, -_displayOffset, 0.0);
-    _transform.transform.recompute();
-  }
+//     _matrix.setTranslationRaw(0.0, -_displayOffset, 0.0);
+//     _transform.transform.recompute();
+//   }
 
-  @override
-  void doLayout(LayoutContext ctx, Constraints constraints) {
-    super.doLayout(ctx, constraints);
-    offset = offset;
-  }
+//   @override
+//   void doLayout(LayoutContext ctx, Constraints constraints) {
+//     super.doLayout(ctx, constraints);
+//     offset = offset;
+//   }
 
-  double get offset => _offset;
-  set offset(double value) {
-    _offset = value.clamp(0, _container._verticalOverflow);
-  }
-}
+//   double get offset => _offset;
+//   set offset(double value) {
+//     _offset = value.clamp(0, _container._verticalOverflow);
+//   }
+// }

@@ -4,7 +4,7 @@ import 'package:diamond_gl/diamond_gl.dart';
 
 import '../../braid_ui.dart';
 
-class ButtonStyleHost extends SingleChildWidget with ShrinkWrapLayout {
+class ButtonStyleHost extends SingleChildWidgetInstance with ShrinkWrapLayout {
   ButtonStyle style;
 
   ButtonStyleHost({
@@ -66,113 +66,113 @@ class ButtonStyle {
       other.cornerRadius == cornerRadius;
 }
 
-class Button extends SingleChildWidget with ShrinkWrapLayout {
-  late Panel _panel;
-  late Padding _padding;
-  late MouseArea _mouseArea;
+// class Button extends SingleChildWidgetInstance with ShrinkWrapLayout {
+//   late PanelInstance _panel;
+//   late PaddingInstance _padding;
+//   late MouseArea _mouseArea;
 
-  void Function(Button button) onClick;
-  ButtonStyle _style;
-  ButtonStyle? _contextStyle;
+//   void Function(Button button) onClick;
+//   ButtonStyle _style;
+//   ButtonStyle? _contextStyle;
 
-  bool _enabled;
+//   bool _enabled;
 
-  Button.text({
-    bool enabled = true,
-    ButtonStyle style = ButtonStyle.empty,
-    required String text,
-    required void Function(Button button) onClick,
-  }) : this(
-          enabled: enabled,
-          style: style,
-          child: Label(text: text),
-          onClick: onClick,
-        );
+//   Button.text({
+//     bool enabled = true,
+//     ButtonStyle style = ButtonStyle.empty,
+//     required String text,
+//     required void Function(Button button) onClick,
+//   }) : this(
+//           enabled: enabled,
+//           style: style,
+//           child: LabelInstance(text: text),
+//           onClick: onClick,
+//         );
 
-  Button({
-    bool enabled = true,
-    ButtonStyle style = ButtonStyle.empty,
-    required Widget child,
-    required this.onClick,
-  })  : _style = style,
-        _enabled = enabled,
-        super.lateChild() {
-    initChild(_mouseArea = MouseArea(
-      child: _panel = Panel(
-        cornerRadius: _computedStyle.cornerRadius ?? _defaultCornerRadius,
-        color: _computedStyle.color ?? _defaultColor,
-        child: _padding = Padding(
-          insets: _computedStyle.padding ?? _defaultPadding,
-          child: child,
-        ),
-      ),
-      clickCallback: () {
-        if (_enabled) onClick(this);
-      },
-      enterCallback: () {
-        if (_enabled) _panel.color = _computedStyle.hoveredColor ?? _defaultHoveredColor;
-      },
-      exitCallback: () {
-        if (_enabled) _panel.color = _computedStyle.color ?? _defaultColor;
-      },
-      cursorStyle: CursorStyle.hand,
-    ));
-  }
+//   Button({
+//     bool enabled = true,
+//     ButtonStyle style = ButtonStyle.empty,
+//     required WidgetInstance child,
+//     required this.onClick,
+//   })  : _style = style,
+//         _enabled = enabled,
+//         super.lateChild() {
+//     initChild(_mouseArea = MouseArea(
+//       child: _panel = PanelInstance(
+//         cornerRadius: _computedStyle.cornerRadius ?? _defaultCornerRadius,
+//         color: _computedStyle.color ?? _defaultColor,
+//         child: _padding = PaddingInstance(
+//           insets: _computedStyle.padding ?? _defaultPadding,
+//           child: child,
+//         ),
+//       ),
+//       clickCallback: () {
+//         if (_enabled) onClick(this);
+//       },
+//       enterCallback: () {
+//         if (_enabled) _panel.color = _computedStyle.hoveredColor ?? _defaultHoveredColor;
+//       },
+//       exitCallback: () {
+//         if (_enabled) _panel.color = _computedStyle.color ?? _defaultColor;
+//       },
+//       cursorStyle: CursorStyle.hand,
+//     ));
+//   }
 
-  @override
-  set child(Widget widget) {
-    _padding.child = widget;
-  }
+//   @override
+//   set child(WidgetInstance widget) {
+//     _padding.child = widget;
+//   }
 
-  @override
-  void doLayout(LayoutContext ctx, Constraints constraints) {
-    super.doLayout(ctx, constraints);
+//   @override
+//   void doLayout(LayoutContext ctx, Constraints constraints) {
+//     super.doLayout(ctx, constraints);
 
-    final theme = ancestorOfType<ButtonStyleHost>();
-    if (theme != null) {
-      _contextStyle = theme.style;
-      _applyComputedStyle();
-    }
-  }
+//     final theme = ancestorOfType<ButtonStyleHost>();
+//     if (theme != null) {
+//       _contextStyle = theme.style;
+//       _applyComputedStyle();
+//     }
+//   }
 
-  ButtonStyle get _computedStyle => _contextStyle != null ? _style.overriding(_contextStyle!) : _style;
+//   ButtonStyle get _computedStyle => _contextStyle != null ? _style.overriding(_contextStyle!) : _style;
 
-  void _applyComputedStyle() {
-    final computedStyle = _computedStyle;
-    _padding.insets = computedStyle.padding ?? _defaultPadding;
-    _panel.cornerRadius = computedStyle.cornerRadius ?? _defaultCornerRadius;
-    _applyPanelColor(computedStyle);
-  }
+//   void _applyComputedStyle() {
+//     final computedStyle = _computedStyle;
+//     _padding.insets = computedStyle.padding ?? _defaultPadding;
+//     _panel.cornerRadius = computedStyle.cornerRadius ?? _defaultCornerRadius;
+//     _applyPanelColor(computedStyle);
+//   }
 
-  void _applyPanelColor(ButtonStyle style) {
-    _panel.color = _enabled
-        ? _mouseArea.hovered
-            ? (style.hoveredColor ?? _defaultHoveredColor)
-            : (style.color ?? _defaultColor)
-        : (style.disabledColor ?? _defaultDisabledColor);
-  }
+//   void _applyPanelColor(ButtonStyle style) {
+//     _panel.color = _enabled
+//         ? _mouseArea.hovered
+//             ? (style.hoveredColor ?? _defaultHoveredColor)
+//             : (style.color ?? _defaultColor)
+//         : (style.disabledColor ?? _defaultDisabledColor);
+//   }
 
-  ButtonStyle get style => _style;
-  set style(ButtonStyle value) {
-    if (_style == value) return;
+//   ButtonStyle get style => _style;
+//   set style(ButtonStyle value) {
+//     if (_style == value) return;
 
-    _style = value;
-    _applyComputedStyle();
-  }
+//     _style = value;
+//     _applyComputedStyle();
+//   }
 
-  bool get enabled => _enabled;
-  set enabled(bool value) {
-    if (_enabled == value) return;
+//   bool get enabled => _enabled;
+//   set enabled(bool value) {
+//     if (_enabled == value) return;
 
-    _enabled = value;
-    _applyPanelColor(_computedStyle);
-  }
+//     _enabled = value;
+//     _applyPanelColor(_computedStyle);
+//   }
 
-  // ---
+//   // ---
 
-  static final _defaultColor = Color.ofRgb(0x3867d6);
-  static final _defaultHoveredColor = Color.ofRgb(0x4b7bec);
-  static final _defaultDisabledColor = Color.ofRgb(0x4b6584);
-  static final _defaultPadding = Insets.all(3.0);
-  static final _defaultCornerRadius = 3.0;
-}
+//   static final _defaultColor = Color.ofRgb(0x3867d6);
+//   static final _defaultHoveredColor = Color.ofRgb(0x4b7bec);
+//   static final _defaultDisabledColor = Color.ofRgb(0x4b6584);
+//   static final _defaultPadding = Insets.all(3.0);
+//   static final _defaultCornerRadius = 3.0;
+// }

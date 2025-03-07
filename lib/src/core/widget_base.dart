@@ -6,6 +6,7 @@ import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math.dart';
 
 import '../context.dart';
+import '../immediate/foundation.dart';
 import 'constraints.dart';
 import 'math.dart';
 import 'widget.dart';
@@ -84,7 +85,7 @@ class CustomWidgetTransform extends WidgetTransform {
   void toWidgetCoordinates(Vector3 vec) => toWidget.transform3(vec);
 }
 
-typedef Hit = ({Widget widget, ({double x, double y}) coordinates});
+typedef Hit = ({WidgetInstance widget, ({double x, double y}) coordinates});
 
 class HitTestState {
   final _hitWidgets = DoubleLinkedQueue<Hit>();
@@ -95,12 +96,12 @@ class HitTestState {
   Iterable<Hit> get trace => _hitWidgets;
   Iterable<Hit> get occludedTrace => trace.takeWhile((value) => value.widget is! HitTestOccluder);
 
-  Hit? firstWhere(bool Function(Widget widget) predicate) => occludedTrace.cast<Hit?>().firstWhere(
+  Hit? firstWhere(bool Function(WidgetInstance widget) predicate) => occludedTrace.cast<Hit?>().firstWhere(
         (element) => predicate(element!.widget),
         orElse: () => null,
       );
 
-  void addHit(Widget widget, double x, double y) {
+  void addHit(WidgetInstance widget, double x, double y) {
     _hitWidgets.addFirst((widget: widget, coordinates: (x: x, y: y)));
   }
 
@@ -129,11 +130,11 @@ typedef LayoutData = ({
   Constraints constraints,
 });
 
-abstract class Widget {
+abstract class WidgetInstance {
   late final WidgetTransform transform = createTransform();
   Key? key;
 
-  Widget? _parent;
+  WidgetInstance? _parent;
 
   LayoutData? _layoutData;
   bool _needsLayout = false;
@@ -152,7 +153,7 @@ abstract class Widget {
     return transform.toSize();
   }
 
-  Widget? descendantFromKey(Key key) {
+  WidgetInstance? descendantFromKey(Key key) {
     for (final child in children) {
       if (child.key == key) {
         return child;
@@ -187,6 +188,7 @@ abstract class Widget {
   void draw(DrawContext ctx);
 
   void notifyChildNeedsLayout() {
+    print('$this notified by child');
     _needsLayout = true;
 
     final prevSize = transform.toSize();
@@ -206,12 +208,21 @@ abstract class Widget {
 
   @protected
   void markNeedsLayout() {
+    print('$this marked dirty');
+
     _needsLayout = true;
     _parent?.notifyChildNeedsLayout();
   }
 
+  @mustCallSuper
+  void dispose() {
+    for (final child in children) {
+      child.dispose();
+    }
+  }
+
   @protected
-  set parent(Widget value) => _parent = value;
+  set parent(WidgetInstance value) => _parent = value;
 
   @protected
   WidgetTransform createTransform() => WidgetTransform();
@@ -219,7 +230,10 @@ abstract class Widget {
   @protected
   LayoutData? get layoutData => _layoutData;
 
-  Iterable<Widget> get children => const [];
+  DirectWidget get widget => null!;
+  set widget(covariant DirectWidget widget) => throw UnimplementedError();
+
+  Iterable<WidgetInstance> get children => const [];
 
   void hitTest(double x, double y, HitTestState state) {
     if (hitTestSelf(x, y)) state.addHit(this, x, y);
@@ -241,27 +255,30 @@ abstract class Widget {
   bool hitTestSelf(double x, double y) => x >= 0 && x <= transform.width && y >= 0 && y <= transform.height;
 
   bool get hasParent => _parent != null;
+
+  @override
+  String toString() => '$runtimeType@${hashCode.toRadixString(16)}';
 }
 
 // --- rendering/layout mixins
 
-mixin SingleChildProvider on Widget {
-  Widget get child;
+mixin SingleChildProvider on WidgetInstance {
+  WidgetInstance get child;
 
   @override
-  Iterable<Widget> get children => [child];
+  Iterable<WidgetInstance> get children => [child];
 }
 
-mixin OptionalChildProvider on Widget {
-  Widget? get child;
+mixin OptionalChildProvider on WidgetInstance {
+  WidgetInstance? get child;
 
   @override
-  Iterable<Widget> get children => [if (child case var child?) child];
+  Iterable<WidgetInstance> get children => [if (child case var child?) child];
 }
 
-mixin ChildRenderer on Widget {
+mixin ChildRenderer on WidgetInstance {
   @protected
-  void drawChild(DrawContext ctx, Widget child) {
+  void drawChild(DrawContext ctx, WidgetInstance child) {
     ctx.transform.scopedTransform(child.transform.transformToParent, (mat4) {
       child.draw(ctx);
     });
@@ -303,7 +320,7 @@ mixin ChildListRenderer on ChildRenderer {
   }
 }
 
-mixin ShrinkWrapLayout on Widget, SingleChildProvider {
+mixin ShrinkWrapLayout on WidgetInstance, SingleChildProvider {
   @override
   void doLayout(LayoutContext ctx, Constraints constraints) {
     final size = child.layout(ctx, constraints);
@@ -311,7 +328,7 @@ mixin ShrinkWrapLayout on Widget, SingleChildProvider {
   }
 }
 
-mixin OptionalShrinkWrapLayout on Widget, OptionalChildProvider {
+mixin OptionalShrinkWrapLayout on WidgetInstance, OptionalChildProvider {
   @override
   void doLayout(LayoutContext ctx, Constraints constraints) {
     final size = child?.layout(ctx, constraints) ?? constraints.minSize;
@@ -319,7 +336,7 @@ mixin OptionalShrinkWrapLayout on Widget, OptionalChildProvider {
   }
 }
 
-Widget dumpGraphviz(Widget widget, [IOSink? out]) {
+WidgetInstance dumpGraphviz(WidgetInstance widget, [IOSink? out]) {
   out ??= stdout;
 
   if (widget._parent != null) {
@@ -332,6 +349,6 @@ Widget dumpGraphviz(Widget widget, [IOSink? out]) {
   return widget;
 }
 
-String _formatWidget(Widget widget) {
+String _formatWidget(WidgetInstance widget) {
   return '"${widget.runtimeType}\\n${widget.hashCode.toRadixString(16)}\\n${widget.transform.x}, ${widget.transform.y}"';
 }

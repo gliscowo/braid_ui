@@ -100,7 +100,7 @@ enum MainAxisAlignment {
           .floorToDouble();
 }
 
-class FlexChild extends SingleChildWidget with ShrinkWrapLayout {
+class FlexChild extends SingleChildWidgetInstance with ShrinkWrapLayout {
   final double flexFactor;
   FlexChild({
     this.flexFactor = 1.0,
@@ -108,9 +108,9 @@ class FlexChild extends SingleChildWidget with ShrinkWrapLayout {
   });
 }
 
-class Flex extends Widget with ChildRenderer, ChildListRenderer {
+class Flex extends WidgetInstance with ChildRenderer, ChildListRenderer {
   @override
-  final List<Widget> children;
+  final List<WidgetInstance> children;
 
   LayoutAxis _mainAxis;
   MainAxisAlignment _mainAxisAlignment;

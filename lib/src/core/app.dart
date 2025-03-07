@@ -13,6 +13,7 @@ import 'package:vector_math/vector_math.dart';
 
 import '../baked_assets.g.dart' as assets;
 import '../context.dart';
+import '../immediate/foundation.dart';
 import '../primitive_renderer.dart';
 import '../resources.dart';
 import '../text/text_renderer.dart';
@@ -66,6 +67,8 @@ Future<void> runBraidApp({
     app.context.nextFrame();
   }
 
+  app.dispose();
+
   reloadCancelCallback?.call();
 }
 
@@ -76,7 +79,7 @@ Future<AppState> createBraidApp({
   int windowWidth = 1000,
   int windowHeight = 750,
   Logger? baseLogger,
-  required WidgetBuilder widget,
+  required Widget widget,
 }) async {
   loadOpenGL();
   loadGLFW(BraidNatives.activeLibraries.spec.glfw);
@@ -199,8 +202,8 @@ class AppState {
   final TextRenderer textRenderer;
   final PrimitiveRenderer primitives;
 
-  final WidgetBuilder _widgetBuilder;
-  AppScaffold _scaffold;
+  late Widget _root;
+  late AppScaffold _scaffold;
 
   Set<MouseListener> _hovered = {};
   KeyboardListener? _focused;
@@ -214,10 +217,11 @@ class AppState {
     this.context,
     this.textRenderer,
     this.primitives,
-    this._widgetBuilder, {
+    this._root, {
     this.logger,
-  })  : cursorController = CursorController.ofWindow(window),
-        _scaffold = AppScaffold(root: _widgetBuilder()) {
+  }) : cursorController = CursorController.ofWindow(window) {
+    _scaffold = AppScaffold(root: _root.assemble().instantiate());
+
     _doScaffoldLayout();
     _subscriptions.add(window.onResize.listen((event) => _doScaffoldLayout()));
 
@@ -310,8 +314,10 @@ node [shape="box"];
 
     // ---
 
-    final cursorStyleSource = state.firstWhere((widget) => widget is MouseArea && widget.cursorStyle != null);
-    if (cursorStyleSource case (widget: MouseArea(cursorStyle: var cursorStyle?), coordinates: _)) {
+    final cursorStyleSource = state.firstWhere(
+        (widgetInstance) => widgetInstance is MouseAreaInstance && widgetInstance.widget.cursorStyle != null);
+    if (cursorStyleSource
+        case (widget: MouseAreaInstance(widget: MouseArea(cursorStyle: var cursorStyle?)), coordinates: _)) {
       cursorController.style = cursorStyle;
     } else {
       cursorController.style = CursorStyle.none;
@@ -320,7 +326,13 @@ node [shape="box"];
 
   @experimental
   void dangerouslyRebuildRoot() {
-    _scaffold = AppScaffold(root: _widgetBuilder());
+    final newRoot = _root.assemble();
+    if (Widget.canUpdate(_scaffold.root.widget, newRoot)) {
+      newRoot.updateInstance(_scaffold.root);
+    } else {
+      _scaffold.root = newRoot.instantiate();
+    }
+
     _doScaffoldLayout(force: true);
   }
 
@@ -338,6 +350,8 @@ node [shape="box"];
     for (final subscription in _subscriptions) {
       subscription.cancel();
     }
+
+    _scaffold.dispose();
   }
 
   // ---

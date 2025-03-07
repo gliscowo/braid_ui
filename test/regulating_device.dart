@@ -59,17 +59,17 @@ void main(List<String> args) {
   // );
 }
 
-Widget buttonPanel(Icon icon, String name, List<Widget> buttons) {
-  return Padding(
-    insets: Insets(bottom: 10.0),
+WidgetInstance buttonPanel(Icon icon, String name, List<WidgetInstance> buttons) {
+  return PaddingInstance(
+    insets: const Insets(bottom: 10.0),
     child: Flex(
       mainAxis: LayoutAxis.horizontal,
       children: [
         FlexChild(
-          child: Panel(
+          child: PanelInstance(
             color: Color.ofRgb(0x1b1b21),
-            child: Padding(
-              insets: Insets.all(20.0),
+            child: PaddingInstance(
+              insets: const Insets.all(20.0),
               child: Flex(
                 mainAxis: LayoutAxis.vertical,
                 children: [
@@ -77,16 +77,16 @@ Widget buttonPanel(Icon icon, String name, List<Widget> buttons) {
                     mainAxis: LayoutAxis.horizontal,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Label(text: Text([icon])),
-                      Padding(insets: Insets.all(10.0)),
-                      Label(
+                      LabelInstance.text(text: Text([icon])),
+                      PaddingInstance(insets: const Insets.all(10.0)),
+                      LabelInstance.text(
                         text: Text.string(name),
-                        fontSize: 18.0,
+                        style: LabelStyle(fontSize: 18.0),
                       ),
                     ],
                   ),
-                  Padding(
-                    insets: Insets(top: 20.0),
+                  PaddingInstance(
+                    insets: const Insets(top: 20.0),
                     child: Flex(
                       mainAxis: LayoutAxis.horizontal,
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,

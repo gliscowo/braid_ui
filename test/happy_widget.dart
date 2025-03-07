@@ -18,11 +18,11 @@ Future<void> main(List<String> arguments) async {
     print('[${event.loggerName}] (${event.level.toString().toLowerCase()}) ${event.message}');
   });
 
-  Widget columnTestPage() {
+  WidgetInstance columnTestPage() {
     late Flex flex;
     return Constrained(
       constraints: const Constraints.only(minHeight: 250, maxHeight: 400),
-      child: Panel(
+      child: PanelInstance(
         color: Color.white,
         child: flex = Flex(
           mainAxis: LayoutAxis.vertical,
@@ -30,11 +30,13 @@ Future<void> main(List<String> arguments) async {
           children: [
             Constrained(
               constraints: const Constraints.only(minWidth: 100),
-              child: Button(
-                text: Text.string("flip!"),
+              child: Button.text(
+                text: "flip!",
                 onClick: (button) => flex.mainAxis = flex.mainAxis.opposite,
-                color: Color.black,
-                hoveredColor: Color.red,
+                style: ButtonStyle(
+                  color: Color.black,
+                  hoveredColor: Color.red,
+                ),
               ),
             ),
             HappyWidget(const Size(100, 50)),
@@ -62,10 +64,10 @@ Future<void> main(List<String> arguments) async {
     ),
     baseLogger: _logger,
     window: window,
-    widget: () => Center(
-      child: Panel(
+    widget: () => CenterInstance(
+      child: PanelInstance(
         color: Color.ofRgb(0x0e1420),
-        child: Padding(
+        child: PaddingInstance(
           insets: const Insets.axis(vertical: 25, horizontal: 100),
           child: Flex(
             mainAxis: LayoutAxis.vertical,
@@ -92,26 +94,30 @@ Future<void> main(List<String> arguments) async {
                           Constrained(
                             constraints: const Constraints.only(minWidth: 125),
                             child: Button(
-                              text: Text([
-                                Icon(icon),
-                                Span(' ${icon[0].toUpperCase()}${icon.substring(1)}'),
-                              ]),
+                              child: LabelInstance.text(
+                                text: Text([
+                                  Icon(icon),
+                                  Span(' ${icon[0].toUpperCase()}${icon.substring(1)}'),
+                                ]),
+                              ),
                               onClick: (button) => pages.page = idx,
-                              color: Color.ofRgb(0x2f2f35),
-                              hoveredColor: Color.ofRgb(0x35353b),
+                              style: ButtonStyle(
+                                color: Color.ofRgb(0x2f2f35),
+                                hoveredColor: Color.ofRgb(0x35353b),
+                              ),
                             ),
                           ),
                       ],
                     ),
-                    Panel(
+                    PanelInstance(
                       color: Color.green,
                       cornerRadius: 0,
                       child: pages = Pages(
                         cache: false,
                         pageBuilders: [
-                          () => Label(text: Text.string("page 1")),
+                          () => LabelInstance(text: "page 1"),
                           columnTestPage,
-                          () => Label(text: Text.string("page 3")),
+                          () => LabelInstance(text: "page 3"),
                         ],
                       ),
                     )
@@ -128,13 +134,13 @@ Future<void> main(List<String> arguments) async {
   runBraidApp(app: app);
 }
 
-class ItGoSpin extends SingleChildWidget with ShrinkWrapLayout {
+class ItGoSpin extends SingleChildWidgetInstance with ShrinkWrapLayout {
   late final Transform _transform;
   ItGoSpin() : super.lateChild() {
     initChild(
       _transform = Transform(
         matrix: Matrix4.identity(),
-        child: HappyWidget(Size(200, 75)),
+        child: HappyWidget(const Size(200, 75)),
       ),
     );
   }

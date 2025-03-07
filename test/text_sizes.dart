@@ -22,10 +22,10 @@ Future<void> main(List<String> args) async {
       shaderDirectory: 'resources/shader',
     ),
     widget: () {
-      return Panel(
+      return PanelInstance(
         color: Color.white,
         cornerRadius: 0.0,
-        child: Center(
+        child: CenterInstance(
           child: Flex(
             mainAxis: LayoutAxis.vertical,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -66,15 +66,15 @@ Future<void> main(List<String> args) async {
   );
 }
 
-Widget _testLabel(double size, [String fontFamily = 'Noto Sans']) => Padding(
-      insets: Insets.all(10),
-      child: Label(
+WidgetInstance _testLabel(double size, [String fontFamily = 'Noto Sans']) => PaddingInstance(
+      insets: const Insets.all(10),
+      child: LabelInstance.text(
         text: Text.string('bruhve ${size}px', style: TextStyle(fontFamily: fontFamily)),
-        fontSize: size,
+        style: LabelStyle(fontSize: size, textColor: Color.black),
       ),
     );
 
-class TextField extends SingleChildWidget with ShrinkWrapLayout {
+class TextField extends SingleChildWidgetInstance with ShrinkWrapLayout {
   String _content = "";
   int _cursorPosition = 0;
 
@@ -84,7 +84,7 @@ class TextField extends SingleChildWidget with ShrinkWrapLayout {
     initChild(KeyboardInput(
       charCallback: (charCode, modifiers) => onCharTyped(String.fromCharCode(charCode), modifiers),
       keyDownCallback: (keyCode, modifiers) => onKeyPress(keyCode, modifiers),
-      child: Panel(
+      child: PanelInstance(
         color: Color.black,
         cornerRadius: 5.0,
       ),
@@ -129,6 +129,7 @@ class TextField extends SingleChildWidget with ShrinkWrapLayout {
       ctx.textRenderer.drawText(
         renderText,
         15,
+        Color.white,
         mat4,
         ctx.projection,
       );

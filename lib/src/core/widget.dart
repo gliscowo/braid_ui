@@ -1,4 +1,3 @@
-import 'dart:collection';
 import 'dart:math';
 
 import 'package:dart_opengl/dart_opengl.dart';
@@ -7,32 +6,34 @@ import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math.dart';
 
 import '../context.dart';
+import '../immediate/foundation.dart';
 import '../text/text.dart';
 import 'constraints.dart';
-import 'cursors.dart';
 import 'math.dart';
 import 'widget_base.dart';
 
 typedef WidgetBuilder = Widget Function();
 
-class Padding extends OptionalChildWiget {
-  Insets _insets;
+class PaddingInstance extends OptionalChildWidgetInstance {
+  Padding _widget;
 
-  Padding({
-    required Insets insets,
+  PaddingInstance({
+    required Padding widget,
     super.child,
-  }) : _insets = insets;
+  }) : _widget = widget;
 
-  Insets get insets => _insets;
-  set insets(Insets value) {
-    if (_insets == value) return;
+  @override
+  Padding get widget => _widget;
+  set widget(Padding value) {
+    if (_widget.insets == value.insets) return;
 
-    _insets = value;
+    _widget = value;
     markNeedsLayout();
   }
 
   @override
   void doLayout(LayoutContext ctx, Constraints constraints) {
+    final insets = _widget.insets;
     final childConstraints = Constraints(
       max(0, constraints.minWidth - insets.horizontal),
       max(0, constraints.minHeight - insets.vertical),
@@ -48,62 +49,78 @@ class Padding extends OptionalChildWiget {
   }
 }
 
-abstract class SingleChildWidget extends Widget with SingleChildProvider, ChildRenderer, SingleChildRenderer {
-  late Widget _child;
+abstract class SingleChildWidgetInstance extends WidgetInstance
+    with SingleChildProvider, ChildRenderer, SingleChildRenderer {
+  late WidgetInstance _child;
 
   @override
-  Widget get child => _child;
-  set child(Widget widget) {
-    if (widget == child) return;
+  WidgetInstance get child => _child;
+  set child(WidgetInstance widget) {
+    if (widget == _child) return;
 
+    _child.dispose();
     _child = widget..parent = this;
     markNeedsLayout();
   }
 
-  SingleChildWidget({
-    required Widget child,
+  SingleChildWidgetInstance({
+    required WidgetInstance child,
   }) : _child = child {
     child.parent = this;
   }
 
-  SingleChildWidget.lateChild();
+  SingleChildWidgetInstance.lateChild();
 
   @nonVirtual
   @protected
-  void initChild(Widget widget) {
+  void initChild(WidgetInstance widget) {
     _child = widget..parent = this;
   }
 }
 
-abstract class OptionalChildWiget extends Widget with OptionalChildProvider, ChildRenderer, OptionalChildRenderer {
-  Widget? _child;
+abstract class OptionalChildWidgetInstance extends WidgetInstance
+    with OptionalChildProvider, ChildRenderer, OptionalChildRenderer {
+  WidgetInstance? _child;
 
   @override
-  Widget? get child => _child;
-  set child(Widget? widget) {
-    if (widget == child) return;
+  WidgetInstance? get child => _child;
+  set child(WidgetInstance? widget) {
+    if (widget == _child) return;
 
-    //TODO should probably unset parent on the old child
+    if (_child != null) {
+      _child!.dispose();
+    }
+
     _child = widget?..parent = this;
     markNeedsLayout();
   }
 
-  OptionalChildWiget({Widget? child}) : _child = child {
+  OptionalChildWidgetInstance({WidgetInstance? child}) : _child = child {
     _child?.parent = this;
   }
 }
 
-class Center extends SingleChildWidget {
-  final double? widthFactor, heightFactor;
+class CenterInstance extends SingleChildWidgetInstance {
+  Center _widget;
 
-  Center({
-    this.widthFactor,
-    this.heightFactor,
+  CenterInstance({
+    required Center widget,
     required super.child,
-  });
+  }) : _widget = widget;
+
+  @override
+  Center get widget => _widget;
+  set widget(Center value) {
+    if (_widget.widthFactor == value.widthFactor && _widget.heightFactor == value.heightFactor) return;
+
+    _widget = value;
+    markNeedsLayout();
+  }
 
   @override
   void doLayout(LayoutContext ctx, Constraints constraints) {
+    final widthFactor = _widget.widthFactor, heightFactor = _widget.heightFactor;
+
     final childSize = child.layout(ctx, constraints.asLoose());
     final selfSize = Size(
             widthFactor != null || !constraints.hasBoundedWidth
@@ -121,72 +138,78 @@ class Center extends SingleChildWidget {
   }
 }
 
-class Panel extends OptionalChildWiget with OptionalShrinkWrapLayout {
-  Color color;
-  double cornerRadius;
+class PanelInstance extends OptionalChildWidgetInstance with OptionalShrinkWrapLayout {
+  Panel _widget;
 
-  Panel({
-    required this.color,
-    this.cornerRadius = 10.0,
+  PanelInstance({
+    required Panel widget,
     super.child,
-  });
+  }) : _widget = widget;
+
+  @override
+  Panel get widget => _widget;
+  set widget(Panel value) {
+    if (_widget.color == value.color && _widget.cornerRadius == value.cornerRadius) return;
+
+    _widget = value;
+    markNeedsLayout();
+  }
 
   @override
   void draw(DrawContext ctx) {
+    final cornerRadius = _widget.cornerRadius;
     if (cornerRadius <= 1) {
-      ctx.primitives.rect(transform.width, transform.height, color, ctx.transform, ctx.projection);
+      ctx.primitives.rect(transform.width, transform.height, _widget.color, ctx.transform, ctx.projection);
     } else {
-      ctx.primitives.roundedRect(transform.width, transform.height, cornerRadius, color, ctx.transform, ctx.projection);
+      ctx.primitives
+          .roundedRect(transform.width, transform.height, cornerRadius, _widget.color, ctx.transform, ctx.projection);
     }
 
     super.draw(ctx);
   }
 }
 
-class HitTestOccluder extends SingleChildWidget with ShrinkWrapLayout {
+class HitTestOccluder extends SingleChildWidgetInstance with ShrinkWrapLayout {
   HitTestOccluder({required super.child});
 }
 
-class MouseArea extends SingleChildWidget with ShrinkWrapLayout, MouseListener {
-  void Function()? clickCallback;
-  void Function()? enterCallback;
-  void Function()? exitCallback;
-  void Function(double horizontal, double vertical)? scrollCallback;
-  CursorStyle? cursorStyle;
-
+class MouseAreaInstance extends SingleChildWidgetInstance with ShrinkWrapLayout, MouseListener {
+  MouseArea _widget;
   bool _hovered = false;
 
-  MouseArea({
-    this.clickCallback,
-    this.enterCallback,
-    this.exitCallback,
-    this.scrollCallback,
-    this.cursorStyle,
+  MouseAreaInstance({
+    required MouseArea widget,
     required super.child,
-  });
+  }) : _widget = widget;
 
   @override
-  bool onMouseDown() => (clickCallback?..call()) != null;
+  MouseArea get widget => _widget;
+  @override
+  set widget(MouseArea area) => _widget = area;
+
+  @override
+  bool onMouseDown() => (_widget.clickCallback?..call()) != null;
 
   @override
   void onMouseEnter() {
     _hovered = true;
-    enterCallback?.call();
+    _widget.enterCallback?.call();
   }
 
   @override
   void onMouseExit() {
     _hovered = false;
-    exitCallback?.call();
+    _widget.exitCallback?.call();
   }
 
   @override
-  bool onMouseScroll(double horizontal, double vertical) => (scrollCallback?..call(horizontal, vertical)) != null;
+  bool onMouseScroll(double horizontal, double vertical) =>
+      (_widget.scrollCallback?..call(horizontal, vertical)) != null;
 
   bool get hovered => _hovered;
 }
 
-class KeyboardInput extends SingleChildWidget with ShrinkWrapLayout, KeyboardListener {
+class KeyboardInput extends SingleChildWidgetInstance with ShrinkWrapLayout, KeyboardListener {
   void Function(int keyCode, int modifiers)? keyDownCallback;
   void Function(int keyCode, int modifiers)? keyUpCallback;
   void Function(int charCode, int modifiers)? charCallback;
@@ -228,7 +251,7 @@ class KeyboardInput extends SingleChildWidget with ShrinkWrapLayout, KeyboardLis
   bool get focused => _focused;
 }
 
-class HappyWidget extends Widget {
+class HappyWidget extends WidgetInstance {
   final Size size;
   final double cornerRadius;
   HappyWidget(this.size, {this.cornerRadius = 10});
@@ -261,7 +284,7 @@ class HappyWidget extends Widget {
   }
 }
 
-class Gradient extends SingleChildWidget with ShrinkWrapLayout {
+class Gradient extends SingleChildWidgetInstance with ShrinkWrapLayout {
   Color startColor;
   Color endColor;
   double position;
@@ -295,7 +318,7 @@ class Gradient extends SingleChildWidget with ShrinkWrapLayout {
   }
 }
 
-class Constrained extends SingleChildWidget {
+class Constrained extends SingleChildWidgetInstance {
   final Constraints constraints;
 
   Constrained({
@@ -311,7 +334,7 @@ class Constrained extends SingleChildWidget {
   }
 }
 
-class Transform extends SingleChildWidget with ShrinkWrapLayout {
+class Transform extends SingleChildWidgetInstance with ShrinkWrapLayout {
   Transform({
     required Matrix4 matrix,
     required super.child,
@@ -329,7 +352,7 @@ class Transform extends SingleChildWidget with ShrinkWrapLayout {
   CustomWidgetTransform createTransform() => CustomWidgetTransform();
 }
 
-class LayoutAfterTransform extends SingleChildWidget {
+class LayoutAfterTransform extends SingleChildWidgetInstance {
   LayoutAfterTransform({
     required super.child,
   });
@@ -355,7 +378,7 @@ class LayoutAfterTransform extends SingleChildWidget {
 }
 
 //TODO support nested clips
-class Clip extends SingleChildWidget with ShrinkWrapLayout {
+class Clip extends SingleChildWidgetInstance with ShrinkWrapLayout {
   Clip({
     required super.child,
   });
@@ -376,7 +399,7 @@ class Clip extends SingleChildWidget with ShrinkWrapLayout {
   }
 }
 
-class StencilClip extends SingleChildWidget with ShrinkWrapLayout {
+class StencilClip extends SingleChildWidgetInstance with ShrinkWrapLayout {
   static final _framebufferByWindow = <Window, GlFramebuffer>{};
   static var stencilValue = 0;
 
@@ -417,89 +440,105 @@ class StencilClip extends SingleChildWidget with ShrinkWrapLayout {
   }
 }
 
-class Pages extends SingleChildWidget with ShrinkWrapLayout {
-  final bool _cache;
-  final List<WidgetBuilder> _builders;
-  final Map<int, Widget> _pages = HashMap();
+// class Pages extends SingleChildWidgetInstance with ShrinkWrapLayout {
+//   final bool _cache;
+//   final List<WidgetBuilder> _builders;
+//   final Map<int, WidgetInstance> _pages = HashMap();
 
-  int _page = 0;
+//   int _page = 0;
 
-  Pages({
-    bool cache = true,
-    required List<WidgetBuilder> pageBuilders,
-  })  : _cache = cache,
-        _builders = pageBuilders,
-        super.lateChild() {
-    initChild(_builders.first());
-  }
+//   Pages({
+//     bool cache = true,
+//     required List<WidgetBuilder> pageBuilders,
+//   })  : _cache = cache,
+//         _builders = pageBuilders,
+//         super.lateChild() {
+//     initChild(_builders.first());
+//   }
 
-  int get page => _page;
-  set page(int value) {
-    if (_page == value) return;
-    _page = value;
+//   int get page => _page;
+//   set page(int value) {
+//     if (_page == value) return;
+//     _page = value;
 
-    final newChild = _cache ? _pages[_page] ??= _builders[_page]() : _builders[_page]();
-    child = newChild;
+//     final newChild = _cache ? _pages[_page] ??= _builders[_page]() : _builders[_page]();
+//     child = newChild;
 
-    markNeedsLayout();
-  }
+//     markNeedsLayout();
+//   }
+// }
+
+class Overlay extends WidgetInstance {
+  @override
+  void doLayout(LayoutContext ctx, Constraints constraints) => transform.setSize(constraints.minSize);
+
+  @override
+  void draw(DrawContext ctx) {}
 }
 
-class Overlay extends SingleChildWidget with ShrinkWrapLayout {
-  late MouseArea _mouseArea;
+// class Overlay extends SingleChildWidgetInstance with ShrinkWrapLayout {
+//   late MouseArea _mouseArea;
 
-  Overlay({
-    bool barrierDismissable = false,
-    required Widget Function(Overlay overlay) contentBuilder,
-  }) : super.lateChild() {
-    initChild(HitTestOccluder(
-      child: _mouseArea = MouseArea(
-        clickCallback: barrierDismissable ? close : null,
-        child: Panel(
-          color: Color.black.copyWith(a: .75),
-          cornerRadius: 0,
-          child: Center(
-            child: HitTestOccluder(
-              child: contentBuilder(this),
-            ),
-          ),
-        ),
-      ),
-    ));
-  }
+//   Overlay({
+//     bool barrierDismissable = false,
+//     required WidgetInstance Function(Overlay overlay) contentBuilder,
+//   }) : super.lateChild() {
+//     initChild(HitTestOccluder(
+//       child: _mouseArea = MouseArea(
+//         clickCallback: barrierDismissable ? close : null,
+//         child: PanelInstance(
+//           color: Color.black.copyWith(a: .75),
+//           cornerRadius: 0,
+//           child: CenterInstance(
+//             child: HitTestOccluder(
+//               child: contentBuilder(this),
+//             ),
+//           ),
+//         ),
+//       ),
+//     ));
+//   }
 
-  static void open({
-    bool barrierDismissable = false,
-    required Widget context,
-    required Widget Function(Overlay overlay) contentBuilder,
-  }) {
-    final scaffold = context.ancestorOfType<AppScaffold>();
-    if (scaffold == null) {
-      throw 'missing scaffold to mount overlay';
-    }
+//   static void open({
+//     bool barrierDismissable = false,
+//     required WidgetInstance context,
+//     required WidgetInstance Function(Overlay overlay) contentBuilder,
+//   }) {
+//     final scaffold = context.ancestorOfType<AppScaffold>();
+//     if (scaffold == null) {
+//       throw 'missing scaffold to mount overlay';
+//     }
 
-    scaffold.addOverlay(Overlay(
-      barrierDismissable: barrierDismissable,
-      contentBuilder: contentBuilder,
-    ));
-  }
+//     scaffold.addOverlay(Overlay(
+//       barrierDismissable: barrierDismissable,
+//       contentBuilder: contentBuilder,
+//     ));
+//   }
 
-  void close() => ancestorOfType<AppScaffold>()!.removeOverlay(this);
+//   void close() => ancestorOfType<AppScaffold>()!.removeOverlay(this);
 
-  bool get barrierDismissable => _mouseArea.clickCallback != null;
-  set barrierDismissable(bool value) {
-    _mouseArea.clickCallback = value ? close : null;
-  }
-}
+//   bool get barrierDismissable => _mouseArea.clickCallback != null;
+//   set barrierDismissable(bool value) {
+//     _mouseArea.clickCallback = value ? close : null;
+//   }
+// }
 
-class AppScaffold extends Widget with ChildRenderer, ChildListRenderer {
-  final Widget _root;
+class AppScaffold extends WidgetInstance with ChildRenderer, ChildListRenderer {
+  WidgetInstance _root;
   final List<Overlay> _overlays = [];
 
   AppScaffold({
-    required Widget root,
+    required WidgetInstance root,
   }) : _root = root {
     _root.parent = this;
+  }
+
+  WidgetInstance get root => _root;
+  set root(WidgetInstance value) {
+    if (_root == value) return;
+
+    _root.dispose();
+    _root = value;
   }
 
   @override
@@ -513,7 +552,7 @@ class AppScaffold extends Widget with ChildRenderer, ChildListRenderer {
   }
 
   @override
-  Iterable<Widget> get children sync* {
+  Iterable<WidgetInstance> get children sync* {
     yield _root;
     yield* _overlays;
   }
@@ -525,6 +564,7 @@ class AppScaffold extends Widget with ChildRenderer, ChildListRenderer {
 
   void removeOverlay(Overlay overlay) {
     _overlays.remove(overlay);
+    overlay.dispose();
     markNeedsLayout();
   }
 
@@ -542,7 +582,7 @@ class AppScaffold extends Widget with ChildRenderer, ChildListRenderer {
 // TODO: whether this has a good justification for existing is
 // questionable, in fact it should likely be merged with or
 // subsumed by FlexChild
-class Expanded extends OptionalChildWiget with ChildRenderer {
+class Expanded extends OptionalChildWidgetInstance with ChildRenderer {
   bool _horizontal, _vertical;
 
   Expanded({
@@ -552,9 +592,9 @@ class Expanded extends OptionalChildWiget with ChildRenderer {
   })  : _vertical = vertical,
         _horizontal = horizontal;
 
-  Expanded.horizontal({Widget? child}) : this(horizontal: true, child: child);
-  Expanded.vertical({Widget? child}) : this(vertical: true, child: child);
-  Expanded.both({Widget? child}) : this(horizontal: true, vertical: true, child: child);
+  Expanded.horizontal({WidgetInstance? child}) : this(horizontal: true, child: child);
+  Expanded.vertical({WidgetInstance? child}) : this(vertical: true, child: child);
+  Expanded.both({WidgetInstance? child}) : this(horizontal: true, vertical: true, child: child);
 
   @override
   void doLayout(LayoutContext ctx, Constraints constraints) {
@@ -583,61 +623,61 @@ class Expanded extends OptionalChildWiget with ChildRenderer {
   }
 }
 
-class Divider extends SingleChildWidget with ShrinkWrapLayout {
-  late Panel _panel;
+// class Divider extends SingleChildWidgetInstance with ShrinkWrapLayout {
+//   late PanelInstance _panel;
 
-  final bool _vertical;
-  double _thickness;
+//   final bool _vertical;
+//   double _thickness;
 
-  Divider.vertical({
-    double thickness = 1,
-    double cornerRadius = 0,
-    Color? color,
-  })  : _vertical = true,
-        _thickness = thickness,
-        super.lateChild() {
-    initChild(Expanded.vertical(
-      child: _panel = Panel(
-        color: color ?? Color.white,
-        cornerRadius: cornerRadius,
-      ),
-    ));
-  }
+//   Divider.vertical({
+//     double thickness = 1,
+//     double cornerRadius = 0,
+//     Color? color,
+//   })  : _vertical = true,
+//         _thickness = thickness,
+//         super.lateChild() {
+//     initChild(Expanded.vertical(
+//       child: _panel = PanelInstance(
+//         color: color ?? Color.white,
+//         cornerRadius: cornerRadius,
+//       ),
+//     ));
+//   }
 
-  Divider.horizontal({
-    double thickness = 1,
-    double cornerRadius = 0,
-    Color? color,
-  })  : _vertical = false,
-        _thickness = thickness,
-        super.lateChild() {
-    initChild(Expanded.horizontal(
-      child: _panel = Panel(
-        color: color ?? Color.white,
-        cornerRadius: cornerRadius,
-      ),
-    ));
-  }
+//   Divider.horizontal({
+//     double thickness = 1,
+//     double cornerRadius = 0,
+//     Color? color,
+//   })  : _vertical = false,
+//         _thickness = thickness,
+//         super.lateChild() {
+//     initChild(Expanded.horizontal(
+//       child: _panel = PanelInstance(
+//         color: color ?? Color.white,
+//         cornerRadius: cornerRadius,
+//       ),
+//     ));
+//   }
 
-  @override
-  void doLayout(LayoutContext ctx, Constraints constraints) {
-    final innerConstraints = Constraints.tightOnAxis(
-      vertical: !_vertical ? _thickness : null,
-      horizontal: _vertical ? _thickness : null,
-    ).respecting(constraints);
+//   @override
+//   void doLayout(LayoutContext ctx, Constraints constraints) {
+//     final innerConstraints = Constraints.tightOnAxis(
+//       vertical: !_vertical ? _thickness : null,
+//       horizontal: _vertical ? _thickness : null,
+//     ).respecting(constraints);
 
-    super.doLayout(ctx, innerConstraints);
-  }
+//     super.doLayout(ctx, innerConstraints);
+//   }
 
-  Color get color => _panel.color;
-  set color(Color value) => _panel.color = value;
+//   Color get color => _panel.color;
+//   set color(Color value) => _panel.color = value;
 
-  double get cornerRadius => _panel.cornerRadius;
-  set cornerRadius(double value) => _panel.cornerRadius = value;
+//   double get cornerRadius => _panel.cornerRadius;
+//   set cornerRadius(double value) => _panel.cornerRadius = value;
 
-  double get thickness => _thickness;
-  set thickness(double value) {
-    _thickness = value;
-    markNeedsLayout();
-  }
-}
+//   double get thickness => _thickness;
+//   set thickness(double value) {
+//     _thickness = value;
+//     markNeedsLayout();
+//   }
+// }

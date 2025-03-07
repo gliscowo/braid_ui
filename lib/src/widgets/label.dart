@@ -1,6 +1,7 @@
 import 'package:diamond_gl/diamond_gl.dart';
 
 import '../../braid_ui.dart';
+import '../immediate/foundation.dart';
 
 class LabelStyle {
   static const empty = LabelStyle();
@@ -59,7 +60,7 @@ class LabelStyle {
   bool operator ==(Object other) => other is LabelStyle && other._props == _props;
 }
 
-class LabelStyleHost extends SingleChildWidget with ShrinkWrapLayout {
+class LabelStyleHost extends SingleChildWidgetInstance with ShrinkWrapLayout {
   LabelStyle style;
 
   LabelStyleHost({
@@ -68,26 +69,15 @@ class LabelStyleHost extends SingleChildWidget with ShrinkWrapLayout {
   });
 }
 
-class Label extends Widget {
-  Text _text;
-  late Text _styledText;
+class LabelInstance extends WidgetInstance {
+  Label _widget;
 
-  LabelStyle _style;
+  late Text _styledText;
   LabelStyle? _contextStyle;
 
-  Label({
-    required String text,
-    LabelStyle style = LabelStyle.empty,
-  })  : _text = Text.string(text),
-        _style = style {
-    _computeStyledText();
-  }
-
-  Label.text({
-    required Text text,
-    LabelStyle style = LabelStyle.empty,
-  })  : _text = text,
-        _style = style {
+  LabelInstance({
+    required Label widget,
+  }) : _widget = widget {
     _computeStyledText();
   }
 
@@ -133,44 +123,56 @@ class Label extends Widget {
     transform.setSize(size.ceil());
   }
 
-  LabelStyle get _computedStyle => _contextStyle != null ? _style.overriding(_contextStyle!) : _style;
+  LabelStyle get _computedStyle => _contextStyle != null ? _widget.style.overriding(_contextStyle!) : _widget.style;
 
   void _computeStyledText() {
     final style = _computedStyle;
-    _styledText = _text.copy(
+    _styledText = _widget.text.copy(
       style: TextStyle(
         fontFamily: style.fontFamily,
         color: style.textColor,
         bold: style.bold,
         italic: style.italic,
-      ).overriding(_text.style),
+      ).overriding(_widget.text.style),
     );
   }
 
-  LabelStyle get style => _style;
-  set style(LabelStyle value) {
-    if (_style == value) return;
+  @override
+  Label get widget => _widget;
+  @override
+  set widget(Label value) {
+    if (_widget.text == value.text && _widget.style == value.style) return;
 
-    _style = value;
+    _widget = value;
     _computeStyledText();
+
     markNeedsLayout();
   }
 
-  Text get text => _text;
-  set text(Text value) {
-    if (_text == value) return;
+  // LabelStyle get style => _style;
+  // set style(LabelStyle value) {
+  //   if (_style == value) return;
 
-    _text = value;
-    _computeStyledText();
-    markNeedsLayout();
-  }
+  //   _style = value;
+  //   _computeStyledText();
+  //   markNeedsLayout();
+  // }
 
-  set string(String value) {
-    _text = Text.string(value);
+  // Text get text => _text;
+  // set text(Text value) {
+  //   if (_text == value) return;
 
-    _computeStyledText();
-    markNeedsLayout();
-  }
+  //   _text = value;
+  //   _computeStyledText();
+  //   markNeedsLayout();
+  // }
+
+  // set string(String value) {
+  //   _text = Text.string(value);
+
+  //   _computeStyledText();
+  //   markNeedsLayout();
+  // }
 
   // ---
 
