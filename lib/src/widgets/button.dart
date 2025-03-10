@@ -5,14 +5,14 @@ import 'package:diamond_gl/diamond_gl.dart';
 import '../../braid_ui.dart';
 import '../immediate/foundation.dart';
 
-class ButtonStyleHost extends SingleChildWidgetInstance with ShrinkWrapLayout {
-  ButtonStyle style;
+// class ButtonStyleHost extends SingleChildWidgetInstance with ShrinkWrapLayout {
+//   ButtonStyle style;
 
-  ButtonStyleHost({
-    required this.style,
-    required super.child,
-  });
-}
+//   ButtonStyleHost({
+//     required this.style,
+//     required super.child,
+//   });
+// }
 
 class ButtonStyle {
   static const empty = ButtonStyle();

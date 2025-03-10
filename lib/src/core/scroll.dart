@@ -1,32 +1,28 @@
-import '../context.dart';
-import 'constraints.dart';
-import 'widget.dart';
+// class InfiniteVerticalSpace extends SingleChildWidgetInstance<InstanceWidget> {
+//   double _verticalOverflow = 0.0;
 
-class InfiniteVerticalSpace extends SingleChildWidgetInstance {
-  double _verticalOverflow = 0.0;
+//   InfiniteVerticalSpace({
+//     required super.child,
+//   });
 
-  InfiniteVerticalSpace({
-    required super.child,
-  });
+//   @override
+//   void doLayout(LayoutContext ctx, Constraints constraints) {
+//     final size = child.layout(
+//       ctx,
+//       Constraints(
+//         constraints.minWidth,
+//         constraints.minHeight,
+//         constraints.maxWidth,
+//         double.infinity,
+//       ),
+//     );
 
-  @override
-  void doLayout(LayoutContext ctx, Constraints constraints) {
-    final size = child.layout(
-      ctx,
-      Constraints(
-        constraints.minWidth,
-        constraints.minHeight,
-        constraints.maxWidth,
-        double.infinity,
-      ),
-    );
+//     transform.setSize(size.constrained(constraints));
+//     _verticalOverflow = size.height - transform.height;
+//   }
 
-    transform.setSize(size.constrained(constraints));
-    _verticalOverflow = size.height - transform.height;
-  }
-
-  double get verticalOverflow => _verticalOverflow;
-}
+//   double get verticalOverflow => _verticalOverflow;
+// }
 
 // TODO: correct child setter
 // class VerticalScroll extends SingleChildWidgetInstance with ShrinkWrapLayout {

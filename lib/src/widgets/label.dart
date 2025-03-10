@@ -60,24 +60,22 @@ class LabelStyle {
   bool operator ==(Object other) => other is LabelStyle && other._props == _props;
 }
 
-class LabelStyleHost extends SingleChildWidgetInstance with ShrinkWrapLayout {
-  LabelStyle style;
+// class LabelStyleHost extends SingleChildWidgetInstance with ShrinkWrapLayout {
+//   LabelStyle style;
 
-  LabelStyleHost({
-    required super.child,
-    required this.style,
-  });
-}
+//   LabelStyleHost({
+//     required super.child,
+//     required this.style,
+//   });
+// }
 
-class LabelInstance extends WidgetInstance {
-  Label _widget;
-
+class LabelInstance extends WidgetInstance<Label> {
   late Text _styledText;
   LabelStyle? _contextStyle;
 
   LabelInstance({
-    required Label widget,
-  }) : _widget = widget {
+    required super.widget,
+  }) {
     _computeStyledText();
   }
 
@@ -110,10 +108,10 @@ class LabelInstance extends WidgetInstance {
 
   @override
   void doLayout(LayoutContext ctx, Constraints constraints) {
-    if (ancestorOfType<LabelStyleHost>() case var styleHost?) {
-      _contextStyle = styleHost.style;
-      _computeStyledText();
-    }
+    // if (ancestorOfType<LabelStyleHost>() case var styleHost?) {
+    //   _contextStyle = styleHost.style;
+    //   _computeStyledText();
+    // }
 
     final style = _computedStyle;
     final size = ctx.textRenderer
@@ -123,27 +121,25 @@ class LabelInstance extends WidgetInstance {
     transform.setSize(size.ceil());
   }
 
-  LabelStyle get _computedStyle => _contextStyle != null ? _widget.style.overriding(_contextStyle!) : _widget.style;
+  LabelStyle get _computedStyle => _contextStyle != null ? widget.style.overriding(_contextStyle!) : widget.style;
 
   void _computeStyledText() {
     final style = _computedStyle;
-    _styledText = _widget.text.copy(
+    _styledText = widget.text.copy(
       style: TextStyle(
         fontFamily: style.fontFamily,
         color: style.textColor,
         bold: style.bold,
         italic: style.italic,
-      ).overriding(_widget.text.style),
+      ).overriding(widget.text.style),
     );
   }
 
   @override
-  Label get widget => _widget;
-  @override
   set widget(Label value) {
-    if (_widget.text == value.text && _widget.style == value.style) return;
+    if (widget.text == value.text && widget.style == value.style) return;
 
-    _widget = value;
+    super.widget = value;
     _computeStyledText();
 
     markNeedsLayout();

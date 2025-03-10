@@ -73,10 +73,10 @@ Future<void> main(List<String> arguments) async {
             mainAxis: LayoutAxis.vertical,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              LayoutAfterTransform(
-                child: Transform(
+              LayoutAfterTransformInstance(
+                child: TransformInstance(
                   matrix: Matrix4.rotationZ(45 * degrees2Radians),
-                  child: StencilClip(
+                  child: StencilClipInstance(
                     child: ItGoSpin(),
                   ),
                 ),
@@ -135,10 +135,10 @@ Future<void> main(List<String> arguments) async {
 }
 
 class ItGoSpin extends SingleChildWidgetInstance with ShrinkWrapLayout {
-  late final Transform _transform;
+  late final TransformInstance _transform;
   ItGoSpin() : super.lateChild() {
     initChild(
-      _transform = Transform(
+      _transform = TransformInstance(
         matrix: Matrix4.identity(),
         child: HappyWidget(const Size(200, 75)),
       ),

@@ -106,16 +106,13 @@ class FlexParentData {
   FlexParentData(this.flexFactor);
 }
 
-class FlexInstance extends WidgetInstance with ChildRenderer, ChildListRenderer {
+class FlexInstance extends WidgetInstance<Flex> with ChildRenderer<Flex>, ChildListRenderer<Flex> {
   List<WidgetInstance> _children;
 
-  Flex _widget;
-
   FlexInstance({
-    required Flex widget,
+    required super.widget,
     required List<WidgetInstance> children,
-  })  : _widget = widget,
-        _children = children {
+  }) : _children = children {
     for (final child in children) {
       child.parent = this;
     }
@@ -129,10 +126,10 @@ class FlexInstance extends WidgetInstance with ChildRenderer, ChildListRenderer 
 
   @override
   void doLayout(LayoutContext ctx, Constraints constraints) {
-    final mainAxis = _widget.mainAxis;
+    final mainAxis = widget.mainAxis;
     final crossAxis = mainAxis.opposite;
 
-    final crossAxisMinimum = _widget.crossAxisAlignment == CrossAxisAlignment.stretch
+    final crossAxisMinimum = widget.crossAxisAlignment == CrossAxisAlignment.stretch
         ? constraints.maxOnAxis(crossAxis)
         : constraints.minOnAxis(crossAxis);
 
@@ -188,7 +185,7 @@ class FlexInstance extends WidgetInstance with ChildRenderer, ChildListRenderer 
     transform.setSize(size);
 
     // distribute remaining space on the main axis
-    final (leadingSpace, betweenSpace) = _widget.mainAxisAlignment._distributeSpace(
+    final (leadingSpace, betweenSpace) = widget.mainAxisAlignment._distributeSpace(
       size.getAxisExtent(mainAxis) - childSizes.fold(0, (acc, size) => acc + size.getAxisExtent(mainAxis)),
       childSizes.length,
     );
@@ -203,7 +200,7 @@ class FlexInstance extends WidgetInstance with ChildRenderer, ChildListRenderer 
 
       child.transform.setAxisCoordinate(
         crossAxis,
-        _widget.crossAxisAlignment._computeChildOffset(
+        widget.crossAxisAlignment._computeChildOffset(
           size.getAxisExtent(crossAxis) - child.transform.getAxisExtent(crossAxis),
         ),
       );
@@ -213,16 +210,14 @@ class FlexInstance extends WidgetInstance with ChildRenderer, ChildListRenderer 
   }
 
   @override
-  Flex get widget => _widget;
-  @override
   set widget(Flex value) {
-    if (_widget.mainAxis == value.mainAxis &&
-        _widget.mainAxisAlignment == value.mainAxisAlignment &&
-        _widget.crossAxisAlignment == value.crossAxisAlignment) {
+    if (widget.mainAxis == value.mainAxis &&
+        widget.mainAxisAlignment == value.mainAxisAlignment &&
+        widget.crossAxisAlignment == value.crossAxisAlignment) {
       return;
     }
 
-    _widget = value;
+    super.widget = value;
     markNeedsLayout();
   }
 }
@@ -300,7 +295,7 @@ class Flex extends InstanceWidget {
       keyedOldChildren = HashMap();
       while (oldChildrenTop <= oldChildrenBottom) {
         final oldChild = instance._children[oldChildrenTop];
-        final key = oldChild.key;
+        final key = oldChild.widget.key;
 
         if (key != null) {
           keyedOldChildren[key!] = oldChild;

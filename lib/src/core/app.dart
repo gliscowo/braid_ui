@@ -201,8 +201,8 @@ class AppState {
   final TextRenderer textRenderer;
   final PrimitiveRenderer primitives;
 
-  late Widget _root;
-  late AppScaffold _scaffold;
+  late final Widget _root;
+  late AppScaffoldInstance _scaffold;
 
   Set<MouseListener> _hovered = {};
   KeyboardListener? _focused;
@@ -219,7 +219,7 @@ class AppState {
     this._root, {
     this.logger,
   }) : cursorController = CursorController.ofWindow(window) {
-    _scaffold = AppScaffold(root: _root.assemble().instantiate());
+    _scaffold = AppScaffold(app: _root).instantiate();
 
     _doScaffoldLayout();
     _subscriptions.add(window.onResize.listen((event) => _doScaffoldLayout()));
@@ -233,11 +233,11 @@ class AppState {
         final state = _hitTest();
 
         state.firstWhere(
-          (widget) => widget is MouseListener && (widget as MouseListener).onMouseDown(),
+          (instance) => instance is MouseListener && (instance as MouseListener).onMouseDown(),
         );
 
         _focused?.onFocusLost();
-        _focused = state.firstWhere((widget) => widget is KeyboardListener)?.widget as KeyboardListener?;
+        _focused = state.firstWhere((instance) => instance is KeyboardListener)?.instance as KeyboardListener?;
         _focused?.onFocusGained();
       }),
       // ---
@@ -295,7 +295,7 @@ node [shape="box"];
     final state = _hitTest();
 
     final nowHovered = <MouseListener>{};
-    for (final listener in state.occludedTrace.map((e) => e.widget).whereType<MouseListener>()) {
+    for (final listener in state.occludedTrace.map((e) => e.instance).whereType<MouseListener>()) {
       nowHovered.add(listener);
 
       if (_hovered.contains(listener)) {
@@ -359,7 +359,7 @@ node [shape="box"];
 
   // ---
 
-  AppScaffold get scaffold => _scaffold;
+  AppScaffoldInstance get scaffold => _scaffold;
 
   // ---
 

@@ -9,7 +9,6 @@ import '../context.dart';
 import '../immediate/foundation.dart';
 import 'constraints.dart';
 import 'math.dart';
-import 'widget.dart';
 
 extension type const Key(String value) {}
 
@@ -85,7 +84,7 @@ class CustomWidgetTransform extends WidgetTransform {
   void toWidgetCoordinates(Vector3 vec) => toWidget.transform3(vec);
 }
 
-typedef Hit = ({WidgetInstance widget, ({double x, double y}) coordinates});
+typedef Hit = ({WidgetInstance instance, ({double x, double y}) coordinates});
 
 class HitTestState {
   final _hitWidgets = DoubleLinkedQueue<Hit>();
@@ -94,19 +93,19 @@ class HitTestState {
   Hit get firstHit => _hitWidgets.first;
 
   Iterable<Hit> get trace => _hitWidgets;
-  Iterable<Hit> get occludedTrace => trace.takeWhile((value) => value.widget is! HitTestOccluder);
+  Iterable<Hit> get occludedTrace => trace.takeWhile((value) => value.instance.flags & InstanceFlags.hitTestBoundary);
 
-  Hit? firstWhere(bool Function(WidgetInstance widget) predicate) => occludedTrace.cast<Hit?>().firstWhere(
-        (element) => predicate(element!.widget),
+  Hit? firstWhere(bool Function(WidgetInstance instance) predicate) => occludedTrace.cast<Hit?>().firstWhere(
+        (element) => predicate(element!.instance),
         orElse: () => null,
       );
 
-  void addHit(WidgetInstance widget, double x, double y) {
-    _hitWidgets.addFirst((widget: widget, coordinates: (x: x, y: y)));
+  void addHit(WidgetInstance instance, double x, double y) {
+    _hitWidgets.addFirst((instance: instance, coordinates: (x: x, y: y)));
   }
 
   @override
-  String toString() => 'HitTestState [${_hitWidgets.map((e) => e.widget.runtimeType).join(', ')}]';
+  String toString() => 'HitTestState [${_hitWidgets.map((e) => e.instance.runtimeType).join(', ')}]';
 }
 
 mixin MouseListener {
@@ -130,12 +129,29 @@ typedef LayoutData = ({
   Constraints constraints,
 });
 
-abstract class WidgetInstance {
+extension type const InstanceFlags._(int _value) {
+  static const none = InstanceFlags._(0);
+  static const hitTestBoundary = InstanceFlags._(1);
+
+  InstanceFlags operator |(InstanceFlags other) => InstanceFlags._(_value | other._value);
+  bool operator &(InstanceFlags other) => (_value & other._value) != 0;
+}
+
+abstract class WidgetInstance<T extends InstanceWidget> {
   late final WidgetTransform transform = createTransform();
-  Key? key;
+
   Object? parentData;
+  InstanceFlags flags = InstanceFlags.none;
 
   WidgetInstance? _parent;
+
+  T widget;
+
+  // ---
+
+  WidgetInstance({
+    required this.widget,
+  });
 
   LayoutData? _layoutData;
   bool _needsLayout = false;
@@ -154,9 +170,13 @@ abstract class WidgetInstance {
     return transform.toSize();
   }
 
+  void doLayout(LayoutContext ctx, Constraints constraints);
+
+  // ---
+
   WidgetInstance? descendantFromKey(Key key) {
     for (final child in children) {
-      if (child.key == key) {
+      if (child.widget.key == key) {
         return child;
       }
 
@@ -168,6 +188,8 @@ abstract class WidgetInstance {
     return null;
   }
 
+  // TODO: not all instances should be queryable here, and
+  // the ones which are should be cached
   T? ancestorOfType<T>() {
     var nextAncestor = _parent;
     while (nextAncestor != null) {
@@ -177,8 +199,6 @@ abstract class WidgetInstance {
 
     return null;
   }
-
-  void doLayout(LayoutContext ctx, Constraints constraints);
 
   void update(double delta) {
     for (final child in children) {
@@ -231,9 +251,6 @@ abstract class WidgetInstance {
   @protected
   LayoutData? get layoutData => _layoutData;
 
-  InstanceWidget get widget => null!;
-  set widget(covariant InstanceWidget widget) => throw UnimplementedError();
-
   Iterable<WidgetInstance> get children => const [];
 
   void hitTest(double x, double y, HitTestState state) {
@@ -263,21 +280,21 @@ abstract class WidgetInstance {
 
 // --- rendering/layout mixins
 
-mixin SingleChildProvider on WidgetInstance {
+mixin SingleChildProvider<T extends InstanceWidget> on WidgetInstance<T> {
   WidgetInstance get child;
 
   @override
   Iterable<WidgetInstance> get children => [child];
 }
 
-mixin OptionalChildProvider on WidgetInstance {
+mixin OptionalChildProvider<T extends InstanceWidget> on WidgetInstance<T> {
   WidgetInstance? get child;
 
   @override
   Iterable<WidgetInstance> get children => [if (child case var child?) child];
 }
 
-mixin ChildRenderer on WidgetInstance {
+mixin ChildRenderer<T extends InstanceWidget> on WidgetInstance<T> {
   @protected
   void drawChild(DrawContext ctx, WidgetInstance child) {
     ctx.transform.scopedTransform(child.transform.transformToParent, (mat4) {
@@ -296,14 +313,14 @@ mixin ChildRenderer on WidgetInstance {
   }
 }
 
-mixin SingleChildRenderer on ChildRenderer, SingleChildProvider {
+mixin SingleChildRenderer<T extends InstanceWidget> on ChildRenderer<T>, SingleChildProvider<T> {
   @override
   void draw(DrawContext ctx) {
     drawChild(ctx, child);
   }
 }
 
-mixin OptionalChildRenderer on ChildRenderer, OptionalChildProvider {
+mixin OptionalChildRenderer<T extends InstanceWidget> on ChildRenderer<T>, OptionalChildProvider<T> {
   @override
   void draw(DrawContext ctx) {
     if (child case var child?) {
@@ -312,7 +329,7 @@ mixin OptionalChildRenderer on ChildRenderer, OptionalChildProvider {
   }
 }
 
-mixin ChildListRenderer on ChildRenderer {
+mixin ChildListRenderer<T extends InstanceWidget> on ChildRenderer<T> {
   @override
   void draw(DrawContext ctx) {
     for (final child in children) {
@@ -321,7 +338,7 @@ mixin ChildListRenderer on ChildRenderer {
   }
 }
 
-mixin ShrinkWrapLayout on WidgetInstance, SingleChildProvider {
+mixin ShrinkWrapLayout<T extends InstanceWidget> on WidgetInstance<T>, SingleChildProvider<T> {
   @override
   void doLayout(LayoutContext ctx, Constraints constraints) {
     final size = child.layout(ctx, constraints);
@@ -329,7 +346,7 @@ mixin ShrinkWrapLayout on WidgetInstance, SingleChildProvider {
   }
 }
 
-mixin OptionalShrinkWrapLayout on WidgetInstance, OptionalChildProvider {
+mixin OptionalShrinkWrapLayout<T extends InstanceWidget> on WidgetInstance<T>, OptionalChildProvider<T> {
   @override
   void doLayout(LayoutContext ctx, Constraints constraints) {
     final size = child?.layout(ctx, constraints) ?? constraints.minSize;

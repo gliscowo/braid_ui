@@ -7,7 +7,6 @@ import '../../braid_ui.dart';
 abstract class Widget {
   final Key? key;
 
-  @literal
   const Widget({
     this.key,
   });
@@ -44,8 +43,8 @@ class Flexible extends Widget {
 
   const Flexible({
     super.key,
-    required this.child,
     this.flexFactor = 1.0,
+    required this.child,
   });
 
   @override
@@ -149,15 +148,14 @@ class Padding extends OptionalChildWidget {
   @override
   final Widget? child;
 
-  @literal
   const Padding({
+    super.key,
     required this.insets,
     this.child,
-    super.key,
   });
 
   @override
-  WidgetInstance instantiate() => PaddingInstance(
+  PaddingInstance instantiate() => PaddingInstance(
         widget: this,
         child: child?.assemble().instantiate(),
       );
@@ -175,7 +173,7 @@ class Constrained extends SingleChildWidget {
   });
 
   @override
-  WidgetInstance instantiate() => ConstrainedInstance(
+  ConstrainedInstance instantiate() => ConstrainedInstance(
         widget: this,
         child: child.assemble().instantiate(),
       );
@@ -186,16 +184,15 @@ class Center extends SingleChildWidget {
   @override
   final Widget child;
 
-  @literal
   const Center({
+    super.key,
     this.widthFactor,
     this.heightFactor,
     required this.child,
-    super.key,
   });
 
   @override
-  WidgetInstance instantiate() => CenterInstance(
+  CenterInstance instantiate() => CenterInstance(
         widget: this,
         child: child.assemble().instantiate(),
       );
@@ -208,14 +205,14 @@ class Panel extends OptionalChildWidget {
   final Widget? child;
 
   Panel({
+    super.key,
     required this.color,
     this.cornerRadius = 10.0,
     this.child,
-    super.key,
   });
 
   @override
-  WidgetInstance instantiate() => PanelInstance(
+  PanelInstance instantiate() => PanelInstance(
         widget: this,
         child: child?.assemble().instantiate(),
       );
@@ -226,18 +223,19 @@ class Label extends InstanceWidget {
   final LabelStyle style;
 
   Label({
+    super.key,
     required String text,
     this.style = LabelStyle.empty,
   }) : text = Text.string(text);
 
   Label.text({
+    super.key,
     required this.text,
     this.style = LabelStyle.empty,
-    super.key,
   });
 
   @override
-  WidgetInstance instantiate() => LabelInstance(widget: this);
+  LabelInstance instantiate() => LabelInstance(widget: this);
 }
 
 class MouseArea extends SingleChildWidget {
@@ -250,7 +248,8 @@ class MouseArea extends SingleChildWidget {
   @override
   final Widget child;
 
-  MouseArea({
+  const MouseArea({
+    super.key,
     this.clickCallback,
     this.enterCallback,
     this.exitCallback,
@@ -260,10 +259,55 @@ class MouseArea extends SingleChildWidget {
   });
 
   @override
-  WidgetInstance instantiate() => MouseAreaInstance(
+  MouseAreaInstance instantiate() => MouseAreaInstance(
         widget: this,
         child: child.assemble().instantiate(),
       );
+}
+
+class KeyboardInput extends SingleChildWidget {
+  final void Function(int keyCode, int modifiers)? keyDownCallback;
+  final void Function(int keyCode, int modifiers)? keyUpCallback;
+  final void Function(int charCode, int modifiers)? charCallback;
+  final void Function()? focusGainedCallback;
+  final void Function()? focusLostCallback;
+
+  @override
+  final Widget child;
+
+  const KeyboardInput({
+    super.key,
+    this.keyDownCallback,
+    this.keyUpCallback,
+    this.charCallback,
+    this.focusGainedCallback,
+    this.focusLostCallback,
+    required this.child,
+  });
+
+  @override
+  KeyboardInputInstance instantiate() => KeyboardInputInstance(
+        widget: this,
+        child: child.assemble().instantiate(),
+      );
+}
+
+class HitTestOccluder extends Widget {
+  final Widget child;
+
+  const HitTestOccluder({
+    super.key,
+    required this.child,
+  });
+
+  @override
+  InstanceWidget assemble() {
+    return _VisitorWidget(
+      key: key,
+      instanceWidget: child.assemble(),
+      visitor: (instance) => instance.flags |= InstanceFlags.hitTestBoundary,
+    );
+  }
 }
 
 // ---
@@ -289,7 +333,7 @@ abstract class StatefulWidget extends InstanceWidget {
   // ---
 
   @override
-  WidgetInstance instantiate() => StatefulWidgetInstance(widget: this);
+  StatefulWidgetInstance instantiate() => StatefulWidgetInstance(widget: this);
 }
 
 abstract class WidgetState<T extends StatefulWidget> {
@@ -323,15 +367,12 @@ abstract class WidgetState<T extends StatefulWidget> {
   }
 }
 
-class StatefulWidgetInstance<T extends StatefulWidget> extends SingleChildWidgetInstance with ShrinkWrapLayout {
-  T _widget;
-
+class StatefulWidgetInstance<T extends StatefulWidget> extends SingleChildWidgetInstance<T> with ShrinkWrapLayout {
   late WidgetState _state;
 
   StatefulWidgetInstance({
-    required T widget,
-  })  : _widget = widget,
-        super.lateChild() {
+    required super.widget,
+  }) : super.lateChild() {
     _state = widget.createState()
       .._widget = widget
       .._owner = this
@@ -341,11 +382,9 @@ class StatefulWidgetInstance<T extends StatefulWidget> extends SingleChildWidget
   }
 
   @override
-  T get widget => _widget;
-  @override
   set widget(T value) {
-    final oldWidget = _widget;
-    _widget = value;
+    final oldWidget = widget;
+    super.widget = value;
 
     _state._widget = value;
     _state.didUpdateWidget(oldWidget);
