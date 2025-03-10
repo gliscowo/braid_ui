@@ -19,16 +19,16 @@ Future<void> main(List<String> arguments) async {
   });
 
   WidgetInstance columnTestPage() {
-    late Flex flex;
-    return Constrained(
+    late FlexInstance flex;
+    return ConstrainedInstance(
       constraints: const Constraints.only(minHeight: 250, maxHeight: 400),
       child: PanelInstance(
         color: Color.white,
-        child: flex = Flex(
+        child: flex = FlexInstance(
           mainAxis: LayoutAxis.vertical,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Constrained(
+            ConstrainedInstance(
               constraints: const Constraints.only(minWidth: 100),
               child: Button.text(
                 text: "flip!",
@@ -41,10 +41,10 @@ Future<void> main(List<String> arguments) async {
             ),
             HappyWidget(const Size(100, 50)),
             HappyWidget(const Size(100, 50)),
-            FlexChild(
+            FlexChildInstance(
               child: HappyWidget(const Size(100, 50)),
             ),
-            FlexChild(
+            FlexChildInstance(
               flexFactor: 2,
               child: HappyWidget(const Size(100, 50)),
             ),
@@ -69,7 +69,7 @@ Future<void> main(List<String> arguments) async {
         color: Color.ofRgb(0x0e1420),
         child: PaddingInstance(
           insets: const Insets.axis(vertical: 25, horizontal: 100),
-          child: Flex(
+          child: FlexInstance(
             mainAxis: LayoutAxis.vertical,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -83,15 +83,15 @@ Future<void> main(List<String> arguments) async {
               ),
               () {
                 late final Pages pages;
-                return Flex(
+                return FlexInstance(
                   mainAxis: LayoutAxis.vertical,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Flex(
+                    FlexInstance(
                       mainAxis: LayoutAxis.horizontal,
                       children: [
                         for (final (idx, icon) in ['home', 'apps', 'settings'].indexed)
-                          Constrained(
+                          ConstrainedInstance(
                             constraints: const Constraints.only(minWidth: 125),
                             child: Button(
                               child: LabelInstance.text(

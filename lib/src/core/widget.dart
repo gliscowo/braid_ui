@@ -24,6 +24,7 @@ class PaddingInstance extends OptionalChildWidgetInstance {
 
   @override
   Padding get widget => _widget;
+  @override
   set widget(Padding value) {
     if (_widget.insets == value.insets) return;
 
@@ -110,6 +111,7 @@ class CenterInstance extends SingleChildWidgetInstance {
 
   @override
   Center get widget => _widget;
+  @override
   set widget(Center value) {
     if (_widget.widthFactor == value.widthFactor && _widget.heightFactor == value.heightFactor) return;
 
@@ -148,12 +150,8 @@ class PanelInstance extends OptionalChildWidgetInstance with OptionalShrinkWrapL
 
   @override
   Panel get widget => _widget;
-  set widget(Panel value) {
-    if (_widget.color == value.color && _widget.cornerRadius == value.cornerRadius) return;
-
-    _widget = value;
-    markNeedsLayout();
-  }
+  @override
+  set widget(Panel value) => _widget = value;
 
   @override
   void draw(DrawContext ctx) {
@@ -318,17 +316,27 @@ class Gradient extends SingleChildWidgetInstance with ShrinkWrapLayout {
   }
 }
 
-class Constrained extends SingleChildWidgetInstance {
-  final Constraints constraints;
+class ConstrainedInstance extends SingleChildWidgetInstance {
+  Constrained _widget;
 
-  Constrained({
-    required this.constraints,
+  ConstrainedInstance({
+    required Constrained widget,
     required super.child,
-  });
+  }) : _widget = widget;
+
+  @override
+  Constrained get widget => _widget;
+  @override
+  set widget(Constrained value) {
+    if (_widget.constraints == value.constraints) return;
+
+    _widget = value;
+    markNeedsLayout();
+  }
 
   @override
   void doLayout(LayoutContext ctx, Constraints constraints) {
-    final size = child.layout(ctx, this.constraints.respecting(constraints));
+    final size = child.layout(ctx, _widget.constraints.respecting(constraints));
     transform.width = size.width;
     transform.height = size.height;
   }

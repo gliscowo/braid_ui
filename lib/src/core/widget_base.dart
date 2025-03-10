@@ -133,6 +133,7 @@ typedef LayoutData = ({
 abstract class WidgetInstance {
   late final WidgetTransform transform = createTransform();
   Key? key;
+  Object? parentData;
 
   WidgetInstance? _parent;
 
@@ -230,8 +231,8 @@ abstract class WidgetInstance {
   @protected
   LayoutData? get layoutData => _layoutData;
 
-  DirectWidget get widget => null!;
-  set widget(covariant DirectWidget widget) => throw UnimplementedError();
+  InstanceWidget get widget => null!;
+  set widget(covariant InstanceWidget widget) => throw UnimplementedError();
 
   Iterable<WidgetInstance> get children => const [];
 

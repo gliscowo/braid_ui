@@ -3,6 +3,7 @@
 import 'package:diamond_gl/diamond_gl.dart';
 
 import '../../braid_ui.dart';
+import '../immediate/foundation.dart';
 
 class ButtonStyleHost extends SingleChildWidgetInstance with ShrinkWrapLayout {
   ButtonStyle style;
@@ -64,6 +65,64 @@ class ButtonStyle {
       other.disabledColor == disabledColor &&
       other.padding == padding &&
       other.cornerRadius == cornerRadius;
+}
+
+class Button extends StatefulWidget {
+  final void Function() onClick;
+  final ButtonStyle style;
+  final bool enabled;
+  final Widget child;
+
+  const Button({
+    super.key,
+    this.style = ButtonStyle.empty,
+    this.enabled = true,
+    required this.onClick,
+    required this.child,
+  });
+
+  Button.text({
+    Key? key,
+    ButtonStyle style = ButtonStyle.empty,
+    bool enabled = true,
+    required void Function() onClick,
+    required String text,
+  }) : this(key: key, style: style, enabled: enabled, onClick: onClick, child: Label(text: text));
+
+  @override
+  WidgetState createState() => ButtonState();
+}
+
+class ButtonState extends WidgetState<Button> {
+  bool _hovered = false;
+
+  @override
+  Widget build() {
+    return MouseArea(
+      cursorStyle: CursorStyle.hand,
+      clickCallback: widget.onClick,
+      enterCallback: () => setState(() => _hovered = true),
+      exitCallback: () => setState(() => _hovered = false),
+      child: Panel(
+        cornerRadius: widget.style.cornerRadius ?? _defaultCornerRadius,
+        color: widget.enabled
+            ? _hovered
+                ? widget.style.hoveredColor ?? _defaultHoveredColor
+                : _defaultColor
+            : _defaultDisabledColor,
+        child: Padding(
+          insets: widget.style.padding ?? _defaultPadding,
+          child: widget.child,
+        ),
+      ),
+    );
+  }
+
+  static final _defaultColor = Color.ofRgb(0x3867d6);
+  static final _defaultHoveredColor = Color.ofRgb(0x4b7bec);
+  static final _defaultDisabledColor = Color.ofRgb(0x4b6584);
+  static final _defaultPadding = const Insets.all(3.0);
+  static final _defaultCornerRadius = 3.0;
 }
 
 // class Button extends SingleChildWidgetInstance with ShrinkWrapLayout {

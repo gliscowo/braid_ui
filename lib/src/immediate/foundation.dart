@@ -1,12 +1,7 @@
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:meta/meta.dart';
 
-import '../core/cursors.dart';
-import '../core/math.dart';
-import '../core/widget.dart';
-import '../core/widget_base.dart';
-import '../text/text.dart';
-import '../widgets/label.dart';
+import '../../braid_ui.dart';
 
 @immutable
 abstract class Widget {
@@ -17,19 +12,13 @@ abstract class Widget {
     this.key,
   });
 
-  DirectWidget assemble();
-
-  // ---
-
-  static bool canUpdate(DirectWidget oldWidget, DirectWidget newWidget) {
-    return (oldWidget.runtimeType == newWidget.runtimeType) && oldWidget.key == newWidget.key;
-  }
+  InstanceWidget assemble();
 }
 
 // ---
 
-abstract class DirectWidget extends Widget {
-  const DirectWidget({
+abstract class InstanceWidget extends Widget {
+  const InstanceWidget({
     super.key,
   });
 
@@ -39,13 +28,77 @@ abstract class DirectWidget extends Widget {
   @mustCallSuper
   void updateInstance(covariant WidgetInstance instance) => instance.widget = this;
 
+  bool canUpdate(InstanceWidget oldWidget) {
+    return (oldWidget.runtimeType == runtimeType) && oldWidget.key == key;
+  }
+
   // ---
 
   @override
-  DirectWidget assemble() => this;
+  InstanceWidget assemble() => this;
 }
 
-abstract class SingleChildWidget extends DirectWidget {
+class Flexible extends Widget {
+  final Widget child;
+  final double flexFactor;
+
+  const Flexible({
+    super.key,
+    required this.child,
+    this.flexFactor = 1.0,
+  });
+
+  @override
+  InstanceWidget assemble() {
+    return _VisitorWidget(
+      key: key,
+      instanceWidget: child.assemble(),
+      visitor: (instance) {
+        if (instance.parentData case FlexParentData data) {
+          data.flexFactor = flexFactor;
+        } else {
+          instance.parentData = FlexParentData(flexFactor);
+        }
+      },
+    );
+  }
+}
+
+typedef _InstanceVisitor = void Function(WidgetInstance instance);
+
+class _VisitorWidget extends InstanceWidget {
+  final InstanceWidget _instanceWidget;
+  final _InstanceVisitor _visitor;
+
+  _VisitorWidget({
+    required super.key,
+    required InstanceWidget instanceWidget,
+    required _InstanceVisitor visitor,
+  })  : _instanceWidget = instanceWidget,
+        _visitor = visitor;
+
+  @override
+  WidgetInstance instantiate() {
+    final instance = _instanceWidget.instantiate();
+    _visitor(instance);
+
+    return instance;
+  }
+
+  @override
+  // ignore: must_call_super
+  void updateInstance(covariant WidgetInstance instance) {
+    _instanceWidget.updateInstance(instance);
+    _visitor(instance);
+  }
+
+  @override
+  bool canUpdate(InstanceWidget oldWidget) {
+    return (oldWidget.runtimeType == _instanceWidget.runtimeType) && oldWidget.key == key;
+  }
+}
+
+abstract class SingleChildWidget extends InstanceWidget {
   const SingleChildWidget({
     super.key,
   });
@@ -58,7 +111,7 @@ abstract class SingleChildWidget extends DirectWidget {
     super.updateInstance(instance);
 
     final newWidget = child.assemble();
-    if (Widget.canUpdate(instance.child.widget, newWidget)) {
+    if (newWidget.canUpdate(instance.child.widget)) {
       newWidget.updateInstance(instance.child);
     } else {
       instance.child = newWidget.instantiate();
@@ -66,7 +119,7 @@ abstract class SingleChildWidget extends DirectWidget {
   }
 }
 
-abstract class OptionalChildWidget extends DirectWidget {
+abstract class OptionalChildWidget extends InstanceWidget {
   const OptionalChildWidget({
     super.key,
   });
@@ -80,7 +133,7 @@ abstract class OptionalChildWidget extends DirectWidget {
 
     final newWidget = child?.assemble();
     if (newWidget != null) {
-      if (instance.child != null && Widget.canUpdate(instance.child!.widget, newWidget)) {
+      if (instance.child != null && newWidget.canUpdate(instance.child!.widget)) {
         newWidget.updateInstance(instance.child!);
       } else {
         instance.child = newWidget.instantiate();
@@ -107,6 +160,24 @@ class Padding extends OptionalChildWidget {
   WidgetInstance instantiate() => PaddingInstance(
         widget: this,
         child: child?.assemble().instantiate(),
+      );
+}
+
+class Constrained extends SingleChildWidget {
+  final Constraints constraints;
+  @override
+  final Widget child;
+
+  Constrained({
+    super.key,
+    required this.constraints,
+    required this.child,
+  });
+
+  @override
+  WidgetInstance instantiate() => ConstrainedInstance(
+        widget: this,
+        child: child.assemble().instantiate(),
       );
 }
 
@@ -150,7 +221,7 @@ class Panel extends OptionalChildWidget {
       );
 }
 
-class Label extends DirectWidget {
+class Label extends InstanceWidget {
   final Text text;
   final LabelStyle style;
 
@@ -205,12 +276,12 @@ abstract class StatelessWidget extends Widget {
   // ---
 
   @override
-  DirectWidget assemble() => build().assemble();
+  InstanceWidget assemble() => build().assemble();
 }
 
 // ---
 
-abstract class StatefulWidget extends DirectWidget {
+abstract class StatefulWidget extends InstanceWidget {
   const StatefulWidget({super.key});
 
   WidgetState createState();
@@ -219,16 +290,13 @@ abstract class StatefulWidget extends DirectWidget {
 
   @override
   WidgetInstance instantiate() => StatefulWidgetInstance(widget: this);
-
-  @override
-  void updateInstance(StatefulWidgetInstance instance) {
-    super.updateInstance(instance);
-    return instance._state!.rebuild();
-  }
 }
 
-abstract class WidgetState {
+abstract class WidgetState<T extends StatefulWidget> {
   Widget build();
+
+  T? _widget;
+  T get widget => _widget!;
 
   void init() {}
   void dispose() {}
@@ -242,10 +310,12 @@ abstract class WidgetState {
     rebuild();
   }
 
+  void didUpdateWidget(covariant T oldWidget) {}
+
   @internal
   void rebuild() {
     final newWidget = build().assemble();
-    if (Widget.canUpdate(_owner!.child.widget, newWidget)) {
+    if (newWidget.canUpdate(_owner!.child.widget)) {
       newWidget.updateInstance(_owner!.child);
     } else {
       _owner!.child = newWidget.instantiate();
@@ -253,25 +323,39 @@ abstract class WidgetState {
   }
 }
 
-class StatefulWidgetInstance extends SingleChildWidgetInstance with ShrinkWrapLayout {
-  @override
-  final StatefulWidget widget;
+class StatefulWidgetInstance<T extends StatefulWidget> extends SingleChildWidgetInstance with ShrinkWrapLayout {
+  T _widget;
 
-  WidgetState? _state;
+  late WidgetState _state;
 
   StatefulWidgetInstance({
-    required this.widget,
-  }) : super.lateChild() {
+    required T widget,
+  })  : _widget = widget,
+        super.lateChild() {
     _state = widget.createState()
+      .._widget = widget
       .._owner = this
       ..init();
 
-    initChild(_state!.build().assemble().instantiate());
+    initChild(_state.build().assemble().instantiate());
+  }
+
+  @override
+  T get widget => _widget;
+  @override
+  set widget(T value) {
+    final oldWidget = _widget;
+    _widget = value;
+
+    _state._widget = value;
+    _state.didUpdateWidget(oldWidget);
+
+    _state.rebuild();
   }
 
   @override
   void dispose() {
     super.dispose();
-    _state!.dispose();
+    _state.dispose();
   }
 }

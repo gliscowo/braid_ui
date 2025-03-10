@@ -26,22 +26,22 @@ Future<void> main(List<String> args) async {
         color: Color.white,
         cornerRadius: 0.0,
         child: CenterInstance(
-          child: Flex(
+          child: FlexInstance(
             mainAxis: LayoutAxis.vertical,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              FlexChild(
+              FlexChildInstance(
                 child: VerticalScroll(
-                  child: Flex(
+                  child: FlexInstance(
                     mainAxis: LayoutAxis.horizontal,
                     children: [
-                      Flex(
+                      FlexInstance(
                         mainAxis: LayoutAxis.vertical,
                         children: [
                           for (var size = 8.0; size < 52; size += 2) _testLabel(size),
                         ],
                       ),
-                      Flex(
+                      FlexInstance(
                         mainAxis: LayoutAxis.vertical,
                         children: [
                           for (var size = 8.0; size < 52; size += 2) _testLabel(size, 'cascadia'),

@@ -8,7 +8,6 @@ import 'package:dart_opengl/dart_opengl.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:ffi/ffi.dart' as ffi;
 import 'package:logging/logging.dart';
-import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math.dart';
 
 import '../baked_assets.g.dart' as assets;
@@ -34,7 +33,7 @@ Future<void> runBraidApp({
   if (experimentalReloadHook) {
     reloadCancelCallback = await setupReloadHook(() {
       app.logger?.info('hot reload detected, rebuilding root widget');
-      app.dangerouslyRebuildRoot();
+      app.rebuildRoot();
     });
 
     if (reloadCancelCallback != null) {
@@ -324,16 +323,20 @@ node [shape="box"];
     }
   }
 
-  @experimental
-  void dangerouslyRebuildRoot() {
+  void rebuildRoot() {
+    final watch = Stopwatch()..start();
+
     final newRoot = _root.assemble();
-    if (Widget.canUpdate(_scaffold.root.widget, newRoot)) {
+    if (newRoot.canUpdate(_scaffold.root.widget)) {
       newRoot.updateInstance(_scaffold.root);
     } else {
       _scaffold.root = newRoot.instantiate();
     }
 
     _doScaffoldLayout(force: true);
+
+    final elapesd = watch.elapsedMicroseconds;
+    logger?.fine('completed full app rebuild in ${elapesd}us');
   }
 
   // TODO: there should be a separate function that doesn't go

@@ -1,5 +1,6 @@
 import 'dart:ffi';
 
+import 'package:collection/collection.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:ffi/ffi.dart';
 import 'package:meta/meta.dart';
@@ -66,6 +67,12 @@ class Span {
   final String content;
   final TextStyle style;
   const Span(this.content, {this.style = const TextStyle()});
+
+  @override
+  int get hashCode => Object.hash(content, style);
+
+  @override
+  bool operator ==(Object other) => other is Span && other.content == content && other.style == style;
 }
 
 class Text {
@@ -144,6 +151,13 @@ class Text {
     malloc.free(features);
     _lastShapingKey = (Font.toPixelSize(size), generation);
   }
+
+  @override
+  int get hashCode => Object.hash(style.hashCode, const ListEquality().hash(_spans));
+
+  @override
+  bool operator ==(Object other) =>
+      other is Text && other.style == style && (const ListEquality().equals(other._spans, _spans));
 }
 
 class ShapedGlyph {
