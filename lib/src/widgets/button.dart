@@ -97,7 +97,7 @@ class ButtonState extends WidgetState<Button> {
   bool _hovered = false;
 
   @override
-  Widget build() {
+  Widget build(BuildContext context) {
     return MouseArea(
       cursorStyle: CursorStyle.hand,
       clickCallback: widget.onClick,

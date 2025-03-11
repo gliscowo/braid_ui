@@ -38,7 +38,7 @@ class ClockApp extends StatelessWidget {
   const ClockApp();
 
   @override
-  Widget build() {
+  Widget build(BuildContext context) {
     return Column(children: [
       Flexible(
         child: Panel(
@@ -94,7 +94,7 @@ class TimeTextState extends WidgetState<TimeText> {
   }
 
   @override
-  Widget build() {
+  Widget build(BuildContext context) {
     return Label(
       text: DateFormat('Hms').format(_time),
       style: LabelStyle(fontSize: 80.0, bold: true, textColor: Color.black),

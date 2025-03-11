@@ -316,7 +316,7 @@ node [shape="box"];
     final cursorStyleSource = state.firstWhere(
         (widgetInstance) => widgetInstance is MouseAreaInstance && widgetInstance.widget.cursorStyle != null);
     if (cursorStyleSource
-        case (widget: MouseAreaInstance(widget: MouseArea(cursorStyle: var cursorStyle?)), coordinates: _)) {
+        case (instance: MouseAreaInstance(widget: MouseArea(cursorStyle: var cursorStyle?)), coordinates: _)) {
       cursorController.style = cursorStyle;
     } else {
       cursorController.style = CursorStyle.none;
@@ -326,7 +326,7 @@ node [shape="box"];
   void rebuildRoot() {
     final watch = Stopwatch()..start();
 
-    final newRoot = _root.assemble();
+    final newRoot = _root.assemble(const RootBuildContext());
     if (newRoot.canUpdate(_scaffold.root.widget)) {
       newRoot.updateInstance(_scaffold.root);
     } else {

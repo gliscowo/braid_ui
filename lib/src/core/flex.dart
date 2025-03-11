@@ -107,14 +107,14 @@ class FlexParentData {
 }
 
 class FlexInstance extends WidgetInstance<Flex> with ChildRenderer<Flex>, ChildListRenderer<Flex> {
-  List<WidgetInstance> _children;
+  List<WidgetInstance> _children = [];
 
   FlexInstance({
     required super.widget,
-    required List<WidgetInstance> children,
-  }) : _children = children {
-    for (final child in children) {
-      child.parent = this;
+    required List<Widget> childWidgets,
+  }) {
+    for (final childWidget in childWidgets) {
+      _children.add(childWidget.assemble(this).instantiate()..parent = this);
     }
   }
 
@@ -241,14 +241,14 @@ class Flex extends InstanceWidget {
   @override
   WidgetInstance instantiate() => FlexInstance(
         widget: this,
-        children: children.map((e) => e.assemble().instantiate()).toList(),
+        childWidgets: children,
       );
 
   @override
   void updateInstance(FlexInstance instance) {
     super.updateInstance(instance);
 
-    final newWidgets = children.map((e) => e.assemble()).toList();
+    final newWidgets = children.map((e) => e.assemble(instance)).toList();
 
     var newChildrenTop = 0;
     var oldChildrenTop = 0;

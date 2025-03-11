@@ -3,6 +3,12 @@ import 'package:meta/meta.dart';
 
 import '../../braid_ui.dart';
 
+abstract interface class BuildContext {}
+
+final class RootBuildContext implements BuildContext {
+  const RootBuildContext();
+}
+
 @immutable
 abstract class Widget {
   final Key? key;
@@ -11,7 +17,7 @@ abstract class Widget {
     this.key,
   });
 
-  InstanceWidget assemble();
+  InstanceWidget assemble(BuildContext context);
 }
 
 // ---
@@ -34,7 +40,7 @@ abstract class InstanceWidget extends Widget {
   // ---
 
   @override
-  InstanceWidget assemble() => this;
+  InstanceWidget assemble(BuildContext context) => this;
 }
 
 class Flexible extends Widget {
@@ -48,10 +54,10 @@ class Flexible extends Widget {
   });
 
   @override
-  InstanceWidget assemble() {
+  InstanceWidget assemble(BuildContext context) {
     return _VisitorWidget(
       key: key,
-      instanceWidget: child.assemble(),
+      instanceWidget: child.assemble(context),
       visitor: (instance) {
         if (instance.parentData case FlexParentData data) {
           data.flexFactor = flexFactor;
@@ -109,7 +115,7 @@ abstract class SingleChildWidget extends InstanceWidget {
   void updateInstance(covariant SingleChildWidgetInstance instance) {
     super.updateInstance(instance);
 
-    final newWidget = child.assemble();
+    final newWidget = child.assemble(instance);
     if (newWidget.canUpdate(instance.child.widget)) {
       newWidget.updateInstance(instance.child);
     } else {
@@ -130,7 +136,7 @@ abstract class OptionalChildWidget extends InstanceWidget {
   void updateInstance(covariant OptionalChildWidgetInstance instance) {
     super.updateInstance(instance);
 
-    final newWidget = child?.assemble();
+    final newWidget = child?.assemble(instance);
     if (newWidget != null) {
       if (instance.child != null && newWidget.canUpdate(instance.child!.widget)) {
         newWidget.updateInstance(instance.child!);
@@ -157,7 +163,7 @@ class Padding extends OptionalChildWidget {
   @override
   PaddingInstance instantiate() => PaddingInstance(
         widget: this,
-        child: child?.assemble().instantiate(),
+        childWidget: child,
       );
 }
 
@@ -175,7 +181,7 @@ class Constrained extends SingleChildWidget {
   @override
   ConstrainedInstance instantiate() => ConstrainedInstance(
         widget: this,
-        child: child.assemble().instantiate(),
+        childWidget: child,
       );
 }
 
@@ -194,7 +200,7 @@ class Center extends SingleChildWidget {
   @override
   CenterInstance instantiate() => CenterInstance(
         widget: this,
-        child: child.assemble().instantiate(),
+        childWidget: child,
       );
 }
 
@@ -214,7 +220,7 @@ class Panel extends OptionalChildWidget {
   @override
   PanelInstance instantiate() => PanelInstance(
         widget: this,
-        child: child?.assemble().instantiate(),
+        childWidget: child,
       );
 }
 
@@ -261,7 +267,7 @@ class MouseArea extends SingleChildWidget {
   @override
   MouseAreaInstance instantiate() => MouseAreaInstance(
         widget: this,
-        child: child.assemble().instantiate(),
+        childWidget: child,
       );
 }
 
@@ -288,7 +294,7 @@ class KeyboardInput extends SingleChildWidget {
   @override
   KeyboardInputInstance instantiate() => KeyboardInputInstance(
         widget: this,
-        child: child.assemble().instantiate(),
+        childWidget: child,
       );
 }
 
@@ -301,10 +307,10 @@ class HitTestOccluder extends Widget {
   });
 
   @override
-  InstanceWidget assemble() {
+  InstanceWidget assemble(BuildContext context) {
     return _VisitorWidget(
       key: key,
-      instanceWidget: child.assemble(),
+      instanceWidget: child.assemble(context),
       visitor: (instance) => instance.flags |= InstanceFlags.hitTestBoundary,
     );
   }
@@ -315,12 +321,12 @@ class HitTestOccluder extends Widget {
 abstract class StatelessWidget extends Widget {
   const StatelessWidget({super.key});
 
-  Widget build();
+  Widget build(BuildContext context);
 
   // ---
 
   @override
-  InstanceWidget assemble() => build().assemble();
+  InstanceWidget assemble(BuildContext context) => build(context).assemble(context);
 }
 
 // ---
@@ -337,7 +343,7 @@ abstract class StatefulWidget extends InstanceWidget {
 }
 
 abstract class WidgetState<T extends StatefulWidget> {
-  Widget build();
+  Widget build(BuildContext context);
 
   T? _widget;
   T get widget => _widget!;
@@ -358,7 +364,7 @@ abstract class WidgetState<T extends StatefulWidget> {
 
   @internal
   void rebuild() {
-    final newWidget = build().assemble();
+    final newWidget = build(_owner!).assemble(_owner!);
     if (newWidget.canUpdate(_owner!.child.widget)) {
       newWidget.updateInstance(_owner!.child);
     } else {
@@ -372,13 +378,13 @@ class StatefulWidgetInstance<T extends StatefulWidget> extends SingleChildWidget
 
   StatefulWidgetInstance({
     required super.widget,
-  }) : super.lateChild() {
+  }) {
     _state = widget.createState()
       .._widget = widget
       .._owner = this
       ..init();
 
-    initChild(_state.build().assemble().instantiate());
+    child = _state.build(this).assemble(this).instantiate();
   }
 
   @override

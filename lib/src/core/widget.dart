@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:dart_opengl/dart_opengl.dart';
 import 'package:diamond_gl/diamond_gl.dart';
-import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math.dart';
 
 import '../context.dart';
@@ -16,7 +15,7 @@ typedef WidgetBuilder = Widget Function();
 class PaddingInstance extends OptionalChildWidgetInstance<Padding> {
   PaddingInstance({
     required super.widget,
-    super.child,
+    required super.childWidget,
   });
 
   @override
@@ -47,39 +46,42 @@ class PaddingInstance extends OptionalChildWidgetInstance<Padding> {
 
 abstract class SingleChildWidgetInstance<T extends InstanceWidget> extends WidgetInstance<T>
     with SingleChildProvider, ChildRenderer, SingleChildRenderer {
-  late WidgetInstance _child;
-
-  @override
-  WidgetInstance get child => _child;
-  set child(WidgetInstance widget) {
-    if (widget == _child) return;
-
-    _child.dispose();
-    _child = widget..parent = this;
-    markNeedsLayout();
-  }
+  WidgetInstance? _child;
 
   SingleChildWidgetInstance({
     required super.widget,
-    required WidgetInstance child,
-  }) : _child = child {
-    child.parent = this;
+    Widget? childWidget,
+  }) {
+    if (childWidget != null) {
+      _child = childWidget.assemble(this).instantiate()..parent = this;
+    }
   }
 
-  SingleChildWidgetInstance.lateChild({
-    required super.widget,
-  });
+  @override
+  WidgetInstance get child {
+    assert(_child != null, 'tried to retrieve child of SingleChildWidgetInstance before it was set');
+    return _child!;
+  }
 
-  @nonVirtual
-  @protected
-  void initChild(WidgetInstance widget) {
-    _child = widget..parent = this;
+  set child(WidgetInstance value) {
+    if (value == _child) return;
+
+    _child?.dispose();
+    _child = value..parent = this;
+    markNeedsLayout();
   }
 }
 
 abstract class OptionalChildWidgetInstance<T extends InstanceWidget> extends WidgetInstance<T>
     with OptionalChildProvider, ChildRenderer, OptionalChildRenderer {
   WidgetInstance? _child;
+
+  OptionalChildWidgetInstance({
+    required super.widget,
+    required Widget? childWidget,
+  }) {
+    _child = childWidget?.assemble(this).instantiate()?..parent = this;
+  }
 
   @override
   WidgetInstance? get child => _child;
@@ -93,19 +95,12 @@ abstract class OptionalChildWidgetInstance<T extends InstanceWidget> extends Wid
     _child = value?..parent = this;
     markNeedsLayout();
   }
-
-  OptionalChildWidgetInstance({
-    required super.widget,
-    WidgetInstance? child,
-  }) : _child = child {
-    _child?.parent = this;
-  }
 }
 
 class CenterInstance extends SingleChildWidgetInstance<Center> {
   CenterInstance({
     required super.widget,
-    required super.child,
+    required super.childWidget,
   });
 
   @override
@@ -140,7 +135,7 @@ class CenterInstance extends SingleChildWidgetInstance<Center> {
 class PanelInstance extends OptionalChildWidgetInstance<Panel> with OptionalShrinkWrapLayout {
   PanelInstance({
     required super.widget,
-    super.child,
+    required super.childWidget,
   });
 
   @override
@@ -162,7 +157,7 @@ class MouseAreaInstance extends SingleChildWidgetInstance<MouseArea> with Shrink
 
   MouseAreaInstance({
     required super.widget,
-    required super.child,
+    required super.childWidget,
   });
 
   @override
@@ -192,7 +187,7 @@ class KeyboardInputInstance extends SingleChildWidgetInstance<KeyboardInput> wit
 
   KeyboardInputInstance({
     required super.widget,
-    required super.child,
+    required super.childWidget,
   });
 
   @override
@@ -275,14 +270,14 @@ class Gradient extends OptionalChildWidget {
   @override
   GradientInstance instantiate() => GradientInstance(
         widget: this,
-        child: child?.assemble().instantiate(),
+        childWidget: child,
       );
 }
 
 class GradientInstance extends OptionalChildWidgetInstance<Gradient> with OptionalShrinkWrapLayout {
   GradientInstance({
     required super.widget,
-    required super.child,
+    required super.childWidget,
   });
 
   @override
@@ -306,7 +301,7 @@ class GradientInstance extends OptionalChildWidgetInstance<Gradient> with Option
 class ConstrainedInstance extends SingleChildWidgetInstance<Constrained> {
   ConstrainedInstance({
     required super.widget,
-    required super.child,
+    required super.childWidget,
   });
 
   @override
@@ -339,14 +334,14 @@ class Transform extends SingleChildWidget {
   @override
   TransformInstance instantiate() => TransformInstance(
         widget: this,
-        child: child.assemble().instantiate(),
+        childWidget: child,
       );
 }
 
 class TransformInstance extends SingleChildWidgetInstance<Transform> with ShrinkWrapLayout {
   TransformInstance({
     required super.widget,
-    required super.child,
+    required super.childWidget,
   }) {
     (transform as CustomWidgetTransform).matrix = widget.matrix;
   }
@@ -375,14 +370,14 @@ class LayoutAfterTransform extends SingleChildWidget {
   @override
   LayoutAfterTransformInstance instantiate() => LayoutAfterTransformInstance(
         widget: this,
-        child: child.assemble().instantiate(),
+        childWidget: child,
       );
 }
 
 class LayoutAfterTransformInstance<LayoutAfterTransform> extends SingleChildWidgetInstance {
   LayoutAfterTransformInstance({
     required super.widget,
-    required super.child,
+    required super.childWidget,
   });
 
   @override
@@ -417,7 +412,7 @@ class Clip extends SingleChildWidget {
   @override
   ClipInstance instantiate() => ClipInstance(
         widget: this,
-        child: child.assemble().instantiate(),
+        childWidget: child,
       );
 }
 
@@ -425,7 +420,7 @@ class Clip extends SingleChildWidget {
 class ClipInstance extends SingleChildWidgetInstance<Clip> with ShrinkWrapLayout {
   ClipInstance({
     required super.widget,
-    required super.child,
+    required super.childWidget,
   });
 
   @override
@@ -456,7 +451,7 @@ class StencipClip extends SingleChildWidget {
   @override
   StencilClipInstance instantiate() => StencilClipInstance(
         widget: this,
-        child: child.assemble().instantiate(),
+        childWidget: child,
       );
 }
 
@@ -466,7 +461,7 @@ class StencilClipInstance extends SingleChildWidgetInstance with ShrinkWrapLayou
 
   StencilClipInstance({
     required super.widget,
-    required super.child,
+    required super.childWidget,
   });
 
   @override
@@ -598,19 +593,19 @@ class AppScaffold extends SingleChildWidget {
   @override
   AppScaffoldInstance instantiate() => AppScaffoldInstance(
         widget: this,
-        root: app.assemble().instantiate(),
+        root: app,
       );
 }
 
 class AppScaffoldInstance extends WidgetInstance with ChildRenderer, ChildListRenderer {
-  WidgetInstance _root;
+  late WidgetInstance _root;
   // final List<Overlay> _overlays = [];
 
   AppScaffoldInstance({
     required super.widget,
-    required WidgetInstance root,
-  }) : _root = root {
-    _root.parent = this;
+    required Widget root,
+  }) {
+    _root = root.assemble(this).instantiate()..parent = this;
   }
 
   WidgetInstance get root => _root;

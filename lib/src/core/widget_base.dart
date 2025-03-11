@@ -137,7 +137,7 @@ extension type const InstanceFlags._(int _value) {
   bool operator &(InstanceFlags other) => (_value & other._value) != 0;
 }
 
-abstract class WidgetInstance<T extends InstanceWidget> {
+abstract class WidgetInstance<T extends InstanceWidget> implements BuildContext {
   late final WidgetTransform transform = createTransform();
 
   Object? parentData;
@@ -190,10 +190,10 @@ abstract class WidgetInstance<T extends InstanceWidget> {
 
   // TODO: not all instances should be queryable here, and
   // the ones which are should be cached
-  T? ancestorOfType<T>() {
+  A? ancestorOfType<A>() {
     var nextAncestor = _parent;
     while (nextAncestor != null) {
-      if (nextAncestor is T) return nextAncestor as T;
+      if (nextAncestor is A) return nextAncestor as A;
       nextAncestor = nextAncestor._parent;
     }
 
