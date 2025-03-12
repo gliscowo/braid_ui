@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'core/math.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:vector_math/vector_math.dart';
 
+import 'core/math.dart';
 import 'primitive_renderer.dart';
 import 'text/text_renderer.dart';
 
@@ -57,11 +57,4 @@ class DrawContext {
     this.textRenderer, {
     this.drawBoundingBoxes = false,
   });
-}
-
-class LayoutContext {
-  final TextRenderer textRenderer;
-  // TODO: this should probably not be neede?
-  final Window window;
-  LayoutContext(this.textRenderer, this.window);
 }

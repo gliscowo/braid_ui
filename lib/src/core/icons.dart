@@ -10,7 +10,7 @@ class Icon extends Span {
           style: TextStyle(
             fontFamily: 'MaterialSymbols',
             scale: .75,
-            color: color ?? Color.ofRgb(0xe8eaed),
+            color: color ?? const Color.rgb(0xe8eaed),
           ),
         );
 }

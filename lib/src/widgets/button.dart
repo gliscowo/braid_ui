@@ -118,11 +118,11 @@ class ButtonState extends WidgetState<Button> {
     );
   }
 
-  static final _defaultColor = Color.ofRgb(0x3867d6);
-  static final _defaultHoveredColor = Color.ofRgb(0x4b7bec);
-  static final _defaultDisabledColor = Color.ofRgb(0x4b6584);
-  static final _defaultPadding = const Insets.all(3.0);
-  static final _defaultCornerRadius = 3.0;
+  static const _defaultColor = Color.rgb(0x3867d6);
+  static const _defaultHoveredColor = Color.rgb(0x4b7bec);
+  static const _defaultDisabledColor = Color.rgb(0x4b6584);
+  static const _defaultPadding = Insets.all(3.0);
+  static const _defaultCornerRadius = 3.0;
 }
 
 // class Button extends SingleChildWidgetInstance with ShrinkWrapLayout {
@@ -184,7 +184,7 @@ class ButtonState extends WidgetState<Button> {
 //   }
 
 //   @override
-//   void doLayout(LayoutContext ctx, Constraints constraints) {
+//   void doLayout(Constraints constraints) {
 //     super.doLayout(ctx, constraints);
 
 //     final theme = ancestorOfType<ButtonStyleHost>();

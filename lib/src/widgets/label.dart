@@ -107,14 +107,14 @@ class LabelInstance extends WidgetInstance<Label> {
   }
 
   @override
-  void doLayout(LayoutContext ctx, Constraints constraints) {
+  void doLayout(Constraints constraints) {
     // if (ancestorOfType<LabelStyleHost>() case var styleHost?) {
     //   _contextStyle = styleHost.style;
     //   _computeStyledText();
     // }
 
     final style = _computedStyle;
-    final size = ctx.textRenderer
+    final size = host!.textRenderer
         .sizeOf(_styledText, style.fontSize ?? _defaultFontSize, lineHeightOverride: style.lineHeight)
         .constrained(constraints);
 

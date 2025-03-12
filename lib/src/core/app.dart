@@ -189,7 +189,7 @@ cause: $cause
 
 // ---
 
-class AppState {
+class AppState implements InstanceHost {
   final BraidResources resources;
   final Logger? logger;
 
@@ -198,6 +198,7 @@ class AppState {
   final Matrix4 projection;
 
   final RenderContext context;
+  @override
   final TextRenderer textRenderer;
   final PrimitiveRenderer primitives;
 
@@ -219,10 +220,11 @@ class AppState {
     this._root, {
     this.logger,
   }) : cursorController = CursorController.ofWindow(window) {
-    _scaffold = AppScaffold(app: _root).instantiate();
+    _scaffold = AppScaffold(app: _root).instantiate()..depth = 0;
+    _scaffold.attachHost(this);
 
-    _doScaffoldLayout();
-    _subscriptions.add(window.onResize.listen((event) => _doScaffoldLayout()));
+    _scheduleScaffoldLayout(force: true);
+    _subscriptions.add(window.onResize.listen((event) => _scheduleScaffoldLayout()));
 
     // ---
 
@@ -288,7 +290,10 @@ node [shape="box"];
   }
 
   void updateWidgetsAndInteractions(double delta) {
-    scaffold.update(delta);
+    // TODO: schedule things properly
+    // scaffold.update(delta);
+
+    flushLayoutQueue();
 
     // ---
 
@@ -330,10 +335,11 @@ node [shape="box"];
     if (newRoot.canUpdate(_scaffold.root.widget)) {
       newRoot.updateInstance(_scaffold.root);
     } else {
-      _scaffold.root = newRoot.instantiate();
+      _scaffold.root = newRoot.instantiate()..depth = 0;
     }
 
-    _doScaffoldLayout(force: true);
+    // TODO: this is probably not needed
+    // _doScaffoldLayout(force: true);
 
     final elapesd = watch.elapsedMicroseconds;
     logger?.fine('completed full app rebuild in ${elapesd}us');
@@ -345,7 +351,9 @@ node [shape="box"];
     final family = await FontFamily.load(resources, familyName);
     textRenderer.addFamily(identifier ?? familyName, family);
 
-    _doScaffoldLayout(force: true);
+    scaffold.clearLayoutCache();
+    scheduleLayout(scaffold);
+    // _doScaffoldLayout(force: true);
   }
 
   void dispose() {
@@ -372,14 +380,51 @@ node [shape="box"];
     return state;
   }
 
-  void _doScaffoldLayout({bool force = false}) {
+  void _scheduleScaffoldLayout({bool force = false}) {
     if (force) {
       scaffold.clearLayoutCache();
     }
 
-    scaffold.layout(
-      LayoutContext(textRenderer, window),
-      Constraints.tight(Size(window.width.toDouble(), window.height.toDouble())),
-    );
+    scheduleLayout(scaffold);
   }
+
+  // ---
+
+  List<WidgetInstance> _layoutQueue = [];
+  bool _mergeToLayoutQueue = false;
+
+  void flushLayoutQueue() {
+    while (_layoutQueue.isNotEmpty) {
+      final queue = _layoutQueue;
+      _layoutQueue = <WidgetInstance>[];
+
+      queue.sort();
+      for (final (idx, instance) in queue.indexed) {
+        if (_mergeToLayoutQueue) {
+          _mergeToLayoutQueue = false;
+
+          if (_layoutQueue.isNotEmpty) {
+            _layoutQueue.addAll(queue.getRange(idx, queue.length));
+            break;
+          }
+        }
+
+        if (instance.needsLayout) {
+          instance.layout(
+            instance.hasParent
+                ? instance.constraints!
+                : Constraints.tight(Size(window.width.toDouble(), window.height.toDouble())),
+          );
+        }
+      }
+
+      _mergeToLayoutQueue = false;
+    }
+  }
+
+  @override
+  void scheduleLayout(WidgetInstance<InstanceWidget> instance) => _layoutQueue.add(instance);
+
+  @override
+  void notifyContinuousLayout() => _mergeToLayoutQueue = true;
 }

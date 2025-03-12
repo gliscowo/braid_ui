@@ -1,7 +1,6 @@
 import 'dart:collection';
 import 'dart:math';
 
-import '../context.dart';
 import '../immediate/foundation.dart';
 import 'constraints.dart';
 import 'math.dart';
@@ -114,7 +113,7 @@ class FlexInstance extends WidgetInstance<Flex> with ChildRenderer<Flex>, ChildL
     required List<Widget> childWidgets,
   }) {
     for (final childWidget in childWidgets) {
-      _children.add(childWidget.assemble(this).instantiate()..parent = this);
+      _children.add(adopt(childWidget.assemble(this).instantiate()));
     }
   }
 
@@ -125,7 +124,19 @@ class FlexInstance extends WidgetInstance<Flex> with ChildRenderer<Flex>, ChildL
   Iterable<WidgetInstance> get children => _children;
 
   @override
-  void doLayout(LayoutContext ctx, Constraints constraints) {
+  set widget(Flex value) {
+    if (widget.mainAxis == value.mainAxis &&
+        widget.mainAxisAlignment == value.mainAxisAlignment &&
+        widget.crossAxisAlignment == value.crossAxisAlignment) {
+      return;
+    }
+
+    super.widget = value;
+    markNeedsLayout();
+  }
+
+  @override
+  void doLayout(Constraints constraints) {
     final mainAxis = widget.mainAxis;
     final crossAxis = mainAxis.opposite;
 
@@ -143,7 +154,7 @@ class FlexInstance extends WidgetInstance<Flex> with ChildRenderer<Flex>, ChildL
     // first, lay out all non-flex children and store their sizes
     final childSizes = children
         .where((element) => element.parentData is! FlexParentData)
-        .map((e) => e.layout(ctx, childConstraints))
+        .map((e) => e.layout(childConstraints))
         .toList();
 
     // now, compute the remaining space on the main axis
@@ -161,7 +172,6 @@ class FlexInstance extends WidgetInstance<Flex> with ChildRenderer<Flex>, ChildL
     for (final child in flexChildren) {
       final space = remainingSpace * ((child.parentData as FlexParentData).flexFactor / totalFlexFactor);
       childSizes.add(child.layout(
-        ctx,
         childConstraints.respecting(
           Constraints.tightOnAxis(
             horizontal: mainAxis == LayoutAxis.horizontal ? space : null,
@@ -209,57 +219,19 @@ class FlexInstance extends WidgetInstance<Flex> with ChildRenderer<Flex>, ChildL
     }
   }
 
-  @override
-  set widget(Flex value) {
-    if (widget.mainAxis == value.mainAxis &&
-        widget.mainAxisAlignment == value.mainAxisAlignment &&
-        widget.crossAxisAlignment == value.crossAxisAlignment) {
-      return;
-    }
-
-    super.widget = value;
-    markNeedsLayout();
-  }
-}
-
-// ---
-
-class Flex extends InstanceWidget {
-  final LayoutAxis mainAxis;
-  final MainAxisAlignment mainAxisAlignment;
-  final CrossAxisAlignment crossAxisAlignment;
-  final List<Widget> children;
-
-  Flex({
-    super.key,
-    this.mainAxisAlignment = MainAxisAlignment.start,
-    this.crossAxisAlignment = CrossAxisAlignment.start,
-    required this.mainAxis,
-    required this.children,
-  });
-
-  @override
-  WidgetInstance instantiate() => FlexInstance(
-        widget: this,
-        childWidgets: children,
-      );
-
-  @override
-  void updateInstance(FlexInstance instance) {
-    super.updateInstance(instance);
-
-    final newWidgets = children.map((e) => e.assemble(instance)).toList();
+  void _updateChildren(List<Widget> children) {
+    final newWidgets = children.map((e) => e.assemble(this)).toList();
 
     var newChildrenTop = 0;
     var oldChildrenTop = 0;
     var newChildrenBottom = newWidgets.length - 1;
-    var oldChildrenBottom = instance._children.length - 1;
+    var oldChildrenBottom = _children.length - 1;
 
     final newChildren = List<WidgetInstance?>.filled(children.length, null);
 
     // sync from the top
     while ((oldChildrenTop <= oldChildrenBottom) && (newChildrenTop <= newChildrenBottom)) {
-      final oldChild = instance._children[oldChildrenTop];
+      final oldChild = _children[oldChildrenTop];
       final newWidget = newWidgets[newChildrenTop];
 
       if (!newWidget.canUpdate(oldChild.widget)) {
@@ -275,7 +247,7 @@ class Flex extends InstanceWidget {
 
     // scan from the bottom
     while ((oldChildrenTop <= oldChildrenBottom) && (newChildrenTop <= newChildrenBottom)) {
-      final oldChild = instance._children[oldChildrenTop];
+      final oldChild = _children[oldChildrenTop];
       final newWidget = newWidgets[newChildrenTop];
 
       if (!newWidget.canUpdate(oldChild.widget)) {
@@ -294,7 +266,7 @@ class Flex extends InstanceWidget {
     if (hasOldChildren) {
       keyedOldChildren = HashMap();
       while (oldChildrenTop <= oldChildrenBottom) {
-        final oldChild = instance._children[oldChildrenTop];
+        final oldChild = _children[oldChildrenTop];
         final key = oldChild.widget.key;
 
         if (key != null) {
@@ -331,17 +303,17 @@ class Flex extends InstanceWidget {
         newWidget.updateInstance(oldChild);
         newChildren[newChildrenTop] = oldChild;
       } else {
-        newChildren[newChildrenTop] = newWidget.instantiate();
+        newChildren[newChildrenTop] = adopt(newWidget.instantiate());
       }
 
       newChildrenTop++;
     }
 
     newChildrenBottom = newWidgets.length - 1;
-    oldChildrenBottom = instance._children.length - 1;
+    oldChildrenBottom = _children.length - 1;
 
     while ((oldChildrenTop <= oldChildrenBottom) && (newChildrenTop <= newChildrenBottom)) {
-      final oldChild = instance._children[oldChildrenTop];
+      final oldChild = _children[oldChildrenTop];
       final newWidget = newWidgets[newChildrenTop];
 
       newWidget.updateInstance(oldChild);
@@ -359,9 +331,38 @@ class Flex extends InstanceWidget {
     }
 
     // finally, install new instances
-    instance._children = newChildren.cast();
+    _children = newChildren.cast();
 
-    // TODO this must not always actually be called
-    instance.markNeedsLayout();
+    // TODO: this must not always actually be called
+    markNeedsLayout();
+  }
+}
+
+// ---
+
+class Flex extends InstanceWidget {
+  final LayoutAxis mainAxis;
+  final MainAxisAlignment mainAxisAlignment;
+  final CrossAxisAlignment crossAxisAlignment;
+  final List<Widget> children;
+
+  Flex({
+    super.key,
+    this.mainAxisAlignment = MainAxisAlignment.start,
+    this.crossAxisAlignment = CrossAxisAlignment.start,
+    required this.mainAxis,
+    required this.children,
+  });
+
+  @override
+  WidgetInstance instantiate() => FlexInstance(
+        widget: this,
+        childWidgets: children,
+      );
+
+  @override
+  void updateInstance(FlexInstance instance) {
+    super.updateInstance(instance);
+    instance._updateChildren(children);
   }
 }

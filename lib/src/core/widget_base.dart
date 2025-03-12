@@ -5,10 +5,8 @@ import 'package:diamond_gl/diamond_gl.dart';
 import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math.dart';
 
-import '../context.dart';
+import '../../braid_ui.dart';
 import '../immediate/foundation.dart';
-import 'constraints.dart';
-import 'math.dart';
 
 extension type const Key(String value) {}
 
@@ -124,11 +122,6 @@ mixin KeyboardListener {
   void onFocusLost();
 }
 
-typedef LayoutData = ({
-  LayoutContext ctx,
-  Constraints constraints,
-});
-
 extension type const InstanceFlags._(int _value) {
   static const none = InstanceFlags._(0);
   static const hitTestBoundary = InstanceFlags._(1);
@@ -137,11 +130,22 @@ extension type const InstanceFlags._(int _value) {
   bool operator &(InstanceFlags other) => (_value & other._value) != 0;
 }
 
-abstract class WidgetInstance<T extends InstanceWidget> implements BuildContext {
+abstract interface class InstanceHost {
+  TextRenderer get textRenderer;
+
+  void scheduleLayout(WidgetInstance instance);
+  // TODO: this needs a better name
+  void notifyContinuousLayout();
+}
+
+abstract class WidgetInstance<T extends InstanceWidget> implements BuildContext, Comparable<WidgetInstance> {
   late final WidgetTransform transform = createTransform();
 
   Object? parentData;
   InstanceFlags flags = InstanceFlags.none;
+
+  InstanceHost? _host;
+  InstanceHost? get host => _host;
 
   WidgetInstance? _parent;
 
@@ -153,72 +157,71 @@ abstract class WidgetInstance<T extends InstanceWidget> implements BuildContext 
     required this.widget,
   });
 
-  LayoutData? _layoutData;
+  Constraints? _constraints;
+
   bool _needsLayout = false;
+  bool get needsLayout => _needsLayout;
+
+  int _depth = -1;
+  int get depth => _depth;
+  set depth(int value) {
+    if (_depth == value) return;
+
+    _depth = value;
+    for (final child in children) {
+      child.depth = _depth + 1;
+    }
+  }
+
+  WidgetInstance? _relayoutBoundary;
+  bool get isRelayoutBoundary => _relayoutBoundary == this;
 
   @nonVirtual
-  Size layout(LayoutContext ctx, Constraints constraints) {
-    if (!_needsLayout && constraints == _layoutData?.constraints) {
+  Size layout(Constraints constraints) {
+    print('${'  ' * depth}﹂layout $this ${constraints.isTight ? 'TIGHT' : ''}');
+    if (!_needsLayout && constraints == _constraints) {
+      print('${'  ' * depth}﹂skipped');
       return transform.toSize();
     }
 
-    _layoutData = (ctx: ctx, constraints: constraints);
+    _constraints = constraints;
+    _relayoutBoundary = constraints.isTight || _parent == null ? this : _parent!._relayoutBoundary!;
 
-    doLayout(ctx, constraints);
+    doLayout(constraints);
     _needsLayout = false;
 
     return transform.toSize();
   }
 
-  void doLayout(LayoutContext ctx, Constraints constraints);
+  void doLayout(Constraints constraints);
 
   // ---
 
-  WidgetInstance? descendantFromKey(Key key) {
-    for (final child in children) {
-      if (child.widget.key == key) {
-        return child;
-      }
-
-      if (child.descendantFromKey(key) case var result?) {
-        return result;
-      }
-    }
-
-    return null;
-  }
-
-  // TODO: not all instances should be queryable here, and
-  // the ones which are should be cached
-  A? ancestorOfType<A>() {
-    var nextAncestor = _parent;
-    while (nextAncestor != null) {
-      if (nextAncestor is A) return nextAncestor as A;
-      nextAncestor = nextAncestor._parent;
-    }
-
-    return null;
-  }
-
-  void update(double delta) {
-    for (final child in children) {
-      child.update(delta);
-    }
-  }
-
   void draw(DrawContext ctx);
 
-  void notifyChildNeedsLayout() {
-    print('$this notified by child');
-    _needsLayout = true;
+  // ---
 
-    final prevSize = transform.toSize();
-    layout(_layoutData!.ctx, _layoutData!.constraints);
-
-    if (prevSize != transform.toSize()) {
-      _parent?.notifyChildNeedsLayout();
+  void attachHost(InstanceHost host) {
+    _host = host;
+    for (final child in children) {
+      child.attachHost(host);
     }
   }
+
+  @protected
+  W adopt<W extends WidgetInstance?>(W child) {
+    if (child == null) return child;
+
+    child.depth = _depth + 1;
+    child._parent = this;
+    if (host != null) {
+      child.attachHost(host!);
+    }
+
+    return child;
+  }
+
+  // ---
 
   void clearLayoutCache() {
     _needsLayout = true;
@@ -229,10 +232,13 @@ abstract class WidgetInstance<T extends InstanceWidget> implements BuildContext 
 
   @protected
   void markNeedsLayout() {
-    print('$this marked dirty');
-
     _needsLayout = true;
-    _parent?.notifyChildNeedsLayout();
+
+    if (isRelayoutBoundary) {
+      host?.scheduleLayout(this);
+    } else {
+      _parent?.markNeedsLayout();
+    }
   }
 
   @mustCallSuper
@@ -243,13 +249,9 @@ abstract class WidgetInstance<T extends InstanceWidget> implements BuildContext 
   }
 
   @protected
-  set parent(WidgetInstance value) => _parent = value;
-
-  @protected
   WidgetTransform createTransform() => WidgetTransform();
 
-  @protected
-  LayoutData? get layoutData => _layoutData;
+  Constraints? get constraints => _constraints;
 
   Iterable<WidgetInstance> get children => const [];
 
@@ -274,8 +276,20 @@ abstract class WidgetInstance<T extends InstanceWidget> implements BuildContext 
 
   bool get hasParent => _parent != null;
 
+  // ---
+
+  // void dump() {
+  //   print('${'  ' * depth}﹂$this');
+  //   for (final child in children) {
+  //     child.dump();
+  //   }
+  // }
+
   @override
-  String toString() => '$runtimeType@${hashCode.toRadixString(16)}';
+  int compareTo(WidgetInstance<InstanceWidget> other) => depth.compareTo(other.depth);
+
+  @override
+  String toString() => '${isRelayoutBoundary ? 'BOUNDARY@' : ''}$runtimeType@${hashCode.toRadixString(16)}';
 }
 
 // --- rendering/layout mixins
@@ -340,16 +354,16 @@ mixin ChildListRenderer<T extends InstanceWidget> on ChildRenderer<T> {
 
 mixin ShrinkWrapLayout<T extends InstanceWidget> on WidgetInstance<T>, SingleChildProvider<T> {
   @override
-  void doLayout(LayoutContext ctx, Constraints constraints) {
-    final size = child.layout(ctx, constraints);
+  void doLayout(Constraints constraints) {
+    final size = child.layout(constraints);
     transform.setSize(size);
   }
 }
 
 mixin OptionalShrinkWrapLayout<T extends InstanceWidget> on WidgetInstance<T>, OptionalChildProvider<T> {
   @override
-  void doLayout(LayoutContext ctx, Constraints constraints) {
-    final size = child?.layout(ctx, constraints) ?? constraints.minSize;
+  void doLayout(Constraints constraints) {
+    final size = child?.layout(constraints) ?? constraints.minSize;
     transform.setSize(size);
   }
 }

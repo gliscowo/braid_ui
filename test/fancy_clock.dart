@@ -51,7 +51,7 @@ class ClockApp extends StatelessWidget {
       ),
       Flexible(
         child: Panel(
-          color: Color.green,
+          color: Color.blue,
           cornerRadius: 0.0,
         ),
         flexFactor: .5,
@@ -82,7 +82,7 @@ class TimeTextState extends WidgetState<TimeText> {
   void init() {
     super.init();
     _timer = Timer.periodic(
-      Duration(seconds: 5),
+      Duration(seconds: 1),
       (timer) => setState(() => _time = DateTime.now()),
     );
   }
@@ -97,7 +97,7 @@ class TimeTextState extends WidgetState<TimeText> {
   Widget build(BuildContext context) {
     return Label(
       text: DateFormat('Hms').format(_time),
-      style: LabelStyle(fontSize: 80.0, bold: true, textColor: Color.black),
+      style: LabelStyle(fontSize: 80.0, bold: true, textColor: Color.ofHsv(_time.second / 60.0, 1.0, 1.0)),
     );
   }
 }

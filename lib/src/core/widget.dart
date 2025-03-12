@@ -27,7 +27,7 @@ class PaddingInstance extends OptionalChildWidgetInstance<Padding> {
   }
 
   @override
-  void doLayout(LayoutContext ctx, Constraints constraints) {
+  void doLayout(Constraints constraints) {
     final insets = widget.insets;
     final childConstraints = Constraints(
       max(0, constraints.minWidth - insets.horizontal),
@@ -36,7 +36,7 @@ class PaddingInstance extends OptionalChildWidgetInstance<Padding> {
       max(0, constraints.maxHeight - insets.vertical),
     );
 
-    final size = (child?.layout(ctx, childConstraints) ?? Size.zero).withInsets(insets);
+    final size = (child?.layout(childConstraints) ?? Size.zero).withInsets(insets);
     transform.setSize(size);
 
     child?.transform.x = insets.left;
@@ -53,7 +53,7 @@ abstract class SingleChildWidgetInstance<T extends InstanceWidget> extends Widge
     Widget? childWidget,
   }) {
     if (childWidget != null) {
-      _child = childWidget.assemble(this).instantiate()..parent = this;
+      _child = adopt(childWidget.assemble(this).instantiate());
     }
   }
 
@@ -67,7 +67,7 @@ abstract class SingleChildWidgetInstance<T extends InstanceWidget> extends Widge
     if (value == _child) return;
 
     _child?.dispose();
-    _child = value..parent = this;
+    _child = adopt(value);
     markNeedsLayout();
   }
 }
@@ -80,7 +80,7 @@ abstract class OptionalChildWidgetInstance<T extends InstanceWidget> extends Wid
     required super.widget,
     required Widget? childWidget,
   }) {
-    _child = childWidget?.assemble(this).instantiate()?..parent = this;
+    _child = adopt(childWidget?.assemble(this).instantiate());
   }
 
   @override
@@ -92,7 +92,7 @@ abstract class OptionalChildWidgetInstance<T extends InstanceWidget> extends Wid
       _child!.dispose();
     }
 
-    _child = value?..parent = this;
+    _child = adopt(value);
     markNeedsLayout();
   }
 }
@@ -112,10 +112,10 @@ class CenterInstance extends SingleChildWidgetInstance<Center> {
   }
 
   @override
-  void doLayout(LayoutContext ctx, Constraints constraints) {
+  void doLayout(Constraints constraints) {
     final widthFactor = widget.widthFactor, heightFactor = widget.heightFactor;
 
-    final childSize = child.layout(ctx, constraints.asLoose());
+    final childSize = child.layout(constraints.asLoose());
     final selfSize = Size(
             widthFactor != null || !constraints.hasBoundedWidth
                 ? childSize.width * (widthFactor ?? 1)
@@ -220,7 +220,7 @@ class KeyboardInputInstance extends SingleChildWidgetInstance<KeyboardInput> wit
 //   HappyWidget(this.size, {this.cornerRadius = 10});
 
 //   @override
-//   void doLayout(LayoutContext ctx, Constraints constraints) {
+//   void doLayout(Constraints constraints) {
 //     final constrained = size.constrained(constraints);
 //     transform.setSize(constrained);
 //   }
@@ -313,10 +313,9 @@ class ConstrainedInstance extends SingleChildWidgetInstance<Constrained> {
   }
 
   @override
-  void doLayout(LayoutContext ctx, Constraints constraints) {
-    final size = child.layout(ctx, widget.constraints.respecting(constraints));
-    transform.width = size.width;
-    transform.height = size.height;
+  void doLayout(Constraints constraints) {
+    final size = child.layout(widget.constraints.respecting(constraints));
+    transform.setSize(size);
   }
 }
 
@@ -381,11 +380,11 @@ class LayoutAfterTransformInstance<LayoutAfterTransform> extends SingleChildWidg
   });
 
   @override
-  void doLayout(LayoutContext ctx, Constraints constraints) {
+  void doLayout(Constraints constraints) {
     child.transform.x = 0;
     child.transform.y = 0;
 
-    child.layout(ctx, constraints);
+    child.layout(constraints);
 
     final size = Size(
       child.transform.aabb.width,
@@ -471,7 +470,7 @@ class StencilClipInstance extends SingleChildWidgetInstance with ShrinkWrapLayou
     final window = ctx.renderContext.window;
     final framebuffer = _framebufferByWindow[window] ??= (() {
       final buffer = GlFramebuffer.trackingWindow(window, stencil: true);
-      ctx.renderContext.frameEvents.listen((_) => buffer.clear(color: Color.ofArgb(0), depth: 0, stencil: 0));
+      ctx.renderContext.frameEvents.listen((_) => buffer.clear(color: const Color(0), depth: 0, stencil: 0));
       return buffer;
     })();
 
@@ -480,7 +479,7 @@ class StencilClipInstance extends SingleChildWidgetInstance with ShrinkWrapLayou
 
     gl.stencilFunc(glEqual, stencilValue - 1, 0xFF);
     gl.stencilOp(glKeep, glIncr, glIncr);
-    ctx.primitives.rect(transform.width, transform.height, Color.ofArgb(0), ctx.transform, ctx.projection);
+    ctx.primitives.rect(transform.width, transform.height, const Color(0), ctx.transform, ctx.projection);
 
     gl.stencilFunc(glEqual, stencilValue, 0xFF);
     gl.stencilOp(glKeep, glKeep, glKeep);
@@ -527,7 +526,7 @@ class StencilClipInstance extends SingleChildWidgetInstance with ShrinkWrapLayou
 
 // class Overlay extends WidgetInstance {
 //   @override
-//   void doLayout(LayoutContext ctx, Constraints constraints) => transform.setSize(constraints.minSize);
+//   void doLayout(Constraints constraints) => transform.setSize(constraints.minSize);
 
 //   @override
 //   void draw(DrawContext ctx) {}
@@ -605,7 +604,7 @@ class AppScaffoldInstance extends WidgetInstance with ChildRenderer, ChildListRe
     required super.widget,
     required Widget root,
   }) {
-    _root = root.assemble(this).instantiate()..parent = this;
+    _root = adopt(root.assemble(this).instantiate());
   }
 
   WidgetInstance get root => _root;
@@ -617,10 +616,10 @@ class AppScaffoldInstance extends WidgetInstance with ChildRenderer, ChildListRe
   }
 
   @override
-  void doLayout(LayoutContext ctx, Constraints constraints) {
+  void doLayout(Constraints constraints) {
     var selfSize = Size.zero;
     for (final child in children) {
-      selfSize = Size.max(selfSize, child.layout(ctx, constraints));
+      selfSize = Size.max(selfSize, child.layout(constraints));
     }
 
     transform.setSize(selfSize.constrained(constraints));
@@ -648,8 +647,8 @@ class AppScaffoldInstance extends WidgetInstance with ChildRenderer, ChildListRe
     super.markNeedsLayout();
     if (hasParent) return;
 
-    if (layoutData case LayoutData data) {
-      layout(data.ctx, data.constraints);
+    if (constraints case Constraints constraints) {
+      layout(constraints);
     }
   }
 }
@@ -672,7 +671,7 @@ class AppScaffoldInstance extends WidgetInstance with ChildRenderer, ChildListRe
 //   Expanded.both({WidgetInstance? child}) : this(horizontal: true, vertical: true, child: child);
 
 //   @override
-//   void doLayout(LayoutContext ctx, Constraints constraints) {
+//   void doLayout(Constraints constraints) {
 //     final innerConstraints = Constraints.tightOnAxis(
 //       horizontal: horizontal ? double.infinity : null,
 //       vertical: vertical ? double.infinity : null,
@@ -735,7 +734,7 @@ class AppScaffoldInstance extends WidgetInstance with ChildRenderer, ChildListRe
 //   }
 
 //   @override
-//   void doLayout(LayoutContext ctx, Constraints constraints) {
+//   void doLayout(Constraints constraints) {
 //     final innerConstraints = Constraints.tightOnAxis(
 //       vertical: !_vertical ? _thickness : null,
 //       horizontal: _vertical ? _thickness : null,
