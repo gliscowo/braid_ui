@@ -42,14 +42,29 @@ class ClockApp extends StatelessWidget {
     return Column(children: [
       Flexible(
         child: Panel(
+          color: Color.blue,
+          cornerRadius: 0.0,
+        ),
+        flexFactor: .5,
+      ),
+      Flexible(
+        key: Key('a'),
+        child: Panel(
           color: Color.white,
           cornerRadius: 0.0,
-          child: const Center(
-            child: TimeText(),
+          child: Center(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TimeText(),
+                Button.text(onClick: () => print('yup'), text: 'a'),
+              ],
+            ),
           ),
         ),
       ),
       Flexible(
+        key: Key('b'),
         child: Panel(
           color: Color.blue,
           cornerRadius: 0.0,
@@ -82,7 +97,7 @@ class TimeTextState extends WidgetState<TimeText> {
   void init() {
     super.init();
     _timer = Timer.periodic(
-      Duration(seconds: 1),
+      Duration(seconds: 5),
       (timer) => setState(() => _time = DateTime.now()),
     );
   }

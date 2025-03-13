@@ -223,8 +223,8 @@ class AppState implements InstanceHost {
     _scaffold = AppScaffold(app: _root).instantiate()..depth = 0;
     _scaffold.attachHost(this);
 
-    _scheduleScaffoldLayout(force: true);
-    _subscriptions.add(window.onResize.listen((event) => _scheduleScaffoldLayout()));
+    _scheduleScaffoldLayout(force: true, global: true);
+    _subscriptions.add(window.onResize.listen((event) => _scheduleScaffoldLayout(force: true)));
 
     // ---
 
@@ -283,6 +283,7 @@ node [shape="box"];
 
   void draw() {
     final ctx = DrawContext(context, primitives, projection, textRenderer);
+
     ctx.transform.scopedTransform(
       scaffold.transform.transformToParent,
       (_) => scaffold.draw(ctx),
@@ -380,9 +381,9 @@ node [shape="box"];
     return state;
   }
 
-  void _scheduleScaffoldLayout({bool force = false}) {
+  void _scheduleScaffoldLayout({bool force = false, bool global = false}) {
     if (force) {
-      scaffold.clearLayoutCache();
+      scaffold.clearLayoutCache(recursive: global);
     }
 
     scheduleLayout(scaffold);

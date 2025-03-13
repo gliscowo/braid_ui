@@ -58,13 +58,8 @@ class Flexible extends Widget {
     return _VisitorWidget(
       key: key,
       instanceWidget: child.assemble(context),
-      visitor: (instance) {
-        if (instance.parentData case FlexParentData data) {
-          data.flexFactor = flexFactor;
-        } else {
-          instance.parentData = FlexParentData(flexFactor);
-        }
-      },
+      apply: (instance) => instance.parentData = FlexParentData(flexFactor),
+      reset: (instance) => instance.parentData = null,
     );
   }
 }
@@ -73,19 +68,22 @@ typedef _InstanceVisitor = void Function(WidgetInstance instance);
 
 class _VisitorWidget extends InstanceWidget {
   final InstanceWidget _instanceWidget;
-  final _InstanceVisitor _visitor;
+  final _InstanceVisitor _applyVisitor;
+  final _InstanceVisitor _undoVisitor;
 
   _VisitorWidget({
     required super.key,
     required InstanceWidget instanceWidget,
-    required _InstanceVisitor visitor,
+    required _InstanceVisitor apply,
+    required _InstanceVisitor reset,
   })  : _instanceWidget = instanceWidget,
-        _visitor = visitor;
+        _applyVisitor = apply,
+        _undoVisitor = reset;
 
   @override
   WidgetInstance instantiate() {
     final instance = _instanceWidget.instantiate();
-    _visitor(instance);
+    _visit(instance);
 
     return instance;
   }
@@ -94,7 +92,12 @@ class _VisitorWidget extends InstanceWidget {
   // ignore: must_call_super
   void updateInstance(covariant WidgetInstance instance) {
     _instanceWidget.updateInstance(instance);
-    _visitor(instance);
+    _visit(instance);
+  }
+
+  void _visit(WidgetInstance instance) {
+    _applyVisitor(instance);
+    instance.scheduleWidgetUpdateCallback(() => _undoVisitor(instance));
   }
 
   @override
@@ -311,7 +314,8 @@ class HitTestOccluder extends Widget {
     return _VisitorWidget(
       key: key,
       instanceWidget: child.assemble(context),
-      visitor: (instance) => instance.flags |= InstanceFlags.hitTestBoundary,
+      apply: (instance) => instance.flags += InstanceFlags.hitTestBoundary,
+      reset: (instance) => instance.flags -= InstanceFlags.hitTestBoundary,
     );
   }
 }
@@ -353,6 +357,7 @@ abstract class WidgetState<T extends StatefulWidget> {
 
   StatefulWidgetInstance? _owner;
 
+  @nonVirtual
   void setState(void Function() fn) {
     assert(_owner != null, "setState invoked on WidgetState before it was mounted");
 
@@ -403,4 +408,11 @@ class StatefulWidgetInstance<T extends StatefulWidget> extends SingleChildWidget
     super.dispose();
     _state.dispose();
   }
+
+  // ---
+
+  static final _genericPattern = RegExp(r'<(.*)>$');
+
+  @override
+  String debugDescribeType() => runtimeType.toString().replaceFirst(_genericPattern, '[${_state.runtimeType}]');
 }
