@@ -110,12 +110,7 @@ class FlexInstance extends WidgetInstance<Flex> with ChildRenderer<Flex>, ChildL
 
   FlexInstance({
     required super.widget,
-    required List<Widget> childWidgets,
-  }) {
-    for (final childWidget in childWidgets) {
-      _children.add(adopt(childWidget.assemble(this).instantiate()));
-    }
-  }
+  });
 
   // TODO: revisit whether available main axis space should always
   // saturate constraints for non-flex children
@@ -218,124 +213,6 @@ class FlexInstance extends WidgetInstance<Flex> with ChildRenderer<Flex>, ChildL
       mainAxisOffset += child.transform.getAxisExtent(mainAxis) + betweenSpace;
     }
   }
-
-  void _updateChildren(List<Widget> children) {
-    final newWidgets = children.map((e) => e.assemble(this)).toList();
-
-    var newChildrenTop = 0;
-    var oldChildrenTop = 0;
-    var newChildrenBottom = newWidgets.length - 1;
-    var oldChildrenBottom = _children.length - 1;
-
-    final newChildren = List<WidgetInstance?>.filled(children.length, null);
-
-    // sync from the top
-    while ((oldChildrenTop <= oldChildrenBottom) && (newChildrenTop <= newChildrenBottom)) {
-      final oldChild = _children[oldChildrenTop];
-      final newWidget = newWidgets[newChildrenTop];
-
-      if (!newWidget.canUpdate(oldChild.widget)) {
-        break;
-      }
-
-      newWidget.updateInstance(oldChild);
-
-      newChildren[newChildrenTop] = oldChild;
-      oldChildrenTop++;
-      newChildrenTop++;
-    }
-
-    // scan from the bottom
-    while ((oldChildrenTop <= oldChildrenBottom) && (newChildrenTop <= newChildrenBottom)) {
-      final oldChild = _children[oldChildrenTop];
-      final newWidget = newWidgets[newChildrenTop];
-
-      if (!newWidget.canUpdate(oldChild.widget)) {
-        break;
-      }
-
-      oldChildrenTop++;
-      newChildrenTop++;
-    }
-
-    // scan middle, store keyed and disposed un-keyed
-
-    final hasOldChildren = oldChildrenTop <= oldChildrenBottom;
-    Map<Key, WidgetInstance>? keyedOldChildren;
-
-    if (hasOldChildren) {
-      keyedOldChildren = HashMap();
-      while (oldChildrenTop <= oldChildrenBottom) {
-        final oldChild = _children[oldChildrenTop];
-        final key = oldChild.widget.key;
-
-        if (key != null) {
-          keyedOldChildren[key!] = oldChild;
-        } else {
-          oldChild.dispose();
-        }
-
-        oldChildrenTop++;
-      }
-    }
-
-    // sync middle, updating keyed
-
-    while (newChildrenTop <= newChildrenBottom) {
-      WidgetInstance? oldChild;
-      final newWidget = newWidgets[newChildrenTop];
-
-      if (hasOldChildren) {
-        final key = newWidget.key;
-        if (key != null) {
-          oldChild = keyedOldChildren![key];
-          if (oldChild != null) {
-            if (newWidget.canUpdate(oldChild.widget)) {
-              keyedOldChildren.remove(key);
-            } else {
-              oldChild = null;
-            }
-          }
-        }
-      }
-
-      if (oldChild != null) {
-        newWidget.updateInstance(oldChild);
-        newChildren[newChildrenTop] = oldChild;
-      } else {
-        newChildren[newChildrenTop] = adopt(newWidget.instantiate());
-      }
-
-      newChildrenTop++;
-    }
-
-    newChildrenBottom = newWidgets.length - 1;
-    oldChildrenBottom = _children.length - 1;
-
-    while ((oldChildrenTop <= oldChildrenBottom) && (newChildrenTop <= newChildrenBottom)) {
-      final oldChild = _children[oldChildrenTop];
-      final newWidget = newWidgets[newChildrenTop];
-
-      newWidget.updateInstance(oldChild);
-
-      newChildren[newChildrenTop] = oldChild;
-      oldChildrenTop++;
-      newChildrenTop++;
-    }
-
-    // dispose keyed instances that were not reused
-    if (hasOldChildren && keyedOldChildren!.isNotEmpty) {
-      for (final instance in keyedOldChildren.values) {
-        instance.dispose();
-      }
-    }
-
-    // finally, install new instances
-    _children = newChildren.cast();
-
-    // TODO: this must not always actually be called
-    markNeedsLayout();
-  }
 }
 
 // ---
@@ -355,14 +232,151 @@ class Flex extends InstanceWidget {
   });
 
   @override
-  WidgetInstance instantiate() => FlexInstance(
-        widget: this,
-        childWidgets: children,
-      );
+  WidgetProxy proxy() => FlexProxy(this);
 
   @override
-  void updateInstance(FlexInstance instance) {
-    super.updateInstance(instance);
-    instance._updateChildren(children);
+  WidgetInstance instantiate() => FlexInstance(widget: this);
+}
+
+class FlexProxy extends InstanceWidgetProxy {
+  List<WidgetProxy> _children = [];
+
+  FlexProxy(super.widget);
+
+  @override
+  Iterable<WidgetProxy> get children => _children;
+
+  @override
+  FlexInstance get instance => (super.instance as FlexInstance);
+
+  @override
+  void mount(WidgetProxy parent) {
+    super.mount(parent);
+    for (final childWidget in (widget as Flex).children) {
+      final proxy = childWidget.proxy()..mount(this);
+      instance._children.add(instance.adopt(proxy.associatedInstance));
+
+      _children.add(proxy);
+    }
+  }
+
+  @override
+  void doRebuild() {
+    instance.widget = widget as Flex;
+    final newWidgets = (widget as Flex).children;
+
+    var newChildrenTop = 0;
+    var oldChildrenTop = 0;
+    var newChildrenBottom = newWidgets.length - 1;
+    var oldChildrenBottom = _children.length - 1;
+
+    final newChildren = List<WidgetProxy?>.filled(newWidgets.length, null);
+
+    // sync from the top
+    while ((oldChildrenTop <= oldChildrenBottom) && (newChildrenTop <= newChildrenBottom)) {
+      final oldChild = _children[oldChildrenTop];
+      final newWidget = newWidgets[newChildrenTop];
+
+      if (!Widget.canUpdate(oldChild.widget, newWidget)) {
+        break;
+      }
+
+      oldChild.widget = newWidget;
+
+      newChildren[newChildrenTop] = oldChild;
+      oldChildrenTop++;
+      newChildrenTop++;
+    }
+
+    // scan from the bottom
+    while ((oldChildrenTop <= oldChildrenBottom) && (newChildrenTop <= newChildrenBottom)) {
+      final oldChild = _children[oldChildrenTop];
+      final newWidget = newWidgets[newChildrenTop];
+
+      if (!Widget.canUpdate(oldChild.widget, newWidget)) {
+        break;
+      }
+
+      oldChildrenTop++;
+      newChildrenTop++;
+    }
+
+    // scan middle, store keyed and disposed un-keyed
+
+    final hasOldChildren = oldChildrenTop <= oldChildrenBottom;
+    Map<Key, WidgetProxy>? keyedOldChildren;
+
+    if (hasOldChildren) {
+      keyedOldChildren = HashMap();
+      while (oldChildrenTop <= oldChildrenBottom) {
+        final oldChild = _children[oldChildrenTop];
+        final key = oldChild.widget.key;
+
+        if (key != null) {
+          keyedOldChildren[key!] = oldChild;
+        } else {
+          oldChild.unmount();
+        }
+
+        oldChildrenTop++;
+      }
+    }
+
+    // sync middle, updating keyed
+
+    while (newChildrenTop <= newChildrenBottom) {
+      WidgetProxy? oldChild;
+      final newWidget = newWidgets[newChildrenTop];
+
+      if (hasOldChildren) {
+        final key = newWidget.key;
+        if (key != null) {
+          oldChild = keyedOldChildren![key];
+          if (oldChild != null) {
+            if (Widget.canUpdate(oldChild.widget, newWidget)) {
+              keyedOldChildren.remove(key);
+            } else {
+              oldChild = null;
+            }
+          }
+        }
+      }
+
+      if (oldChild != null) {
+        oldChild.widget = newWidget;
+        newChildren[newChildrenTop] = oldChild;
+      } else {
+        newChildren[newChildrenTop] = newWidget.proxy()..mount(this);
+      }
+
+      newChildrenTop++;
+    }
+
+    newChildrenBottom = newWidgets.length - 1;
+    oldChildrenBottom = _children.length - 1;
+
+    while ((oldChildrenTop <= oldChildrenBottom) && (newChildrenTop <= newChildrenBottom)) {
+      final oldChild = _children[oldChildrenTop];
+      final newWidget = newWidgets[newChildrenTop];
+
+      oldChild.widget = newWidget;
+
+      newChildren[newChildrenTop] = oldChild;
+      oldChildrenTop++;
+      newChildrenTop++;
+    }
+
+    // dispose keyed proxies that were not reused
+    if (hasOldChildren && keyedOldChildren!.isNotEmpty) {
+      for (final proxy in keyedOldChildren.values) {
+        proxy.unmount();
+      }
+    }
+
+    // finally, install new children and instances
+    _children = newChildren.cast();
+    instance._children = _children.map((e) => instance.adopt(e.associatedInstance)).toList();
+
+    super.doRebuild();
   }
 }

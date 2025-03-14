@@ -143,7 +143,7 @@ abstract interface class InstanceHost {
 
 typedef VoidCallback = void Function();
 
-abstract class WidgetInstance<T extends InstanceWidget> implements BuildContext, Comparable<WidgetInstance> {
+abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth implements Comparable<WidgetInstance> {
   late final WidgetTransform transform = createTransform();
 
   Object? parentData;
@@ -185,17 +185,6 @@ abstract class WidgetInstance<T extends InstanceWidget> implements BuildContext,
   bool _needsLayout = false;
   bool get needsLayout => _needsLayout;
 
-  int _depth = -1;
-  int get depth => _depth;
-  set depth(int value) {
-    if (_depth == value) return;
-
-    _depth = value;
-    for (final child in children) {
-      child.depth = _depth + 1;
-    }
-  }
-
   WidgetInstance? _relayoutBoundary;
   bool get isRelayoutBoundary => _relayoutBoundary == this;
 
@@ -233,9 +222,9 @@ abstract class WidgetInstance<T extends InstanceWidget> implements BuildContext,
 
   @protected
   W adopt<W extends WidgetInstance?>(W child) {
-    if (child == null) return child;
+    if (child == null || child._parent == this) return child;
 
-    child.depth = _depth + 1;
+    child.depth = depth + 1;
     child._parent = this;
     if (host != null) {
       child.attachHost(host!);
@@ -267,18 +256,14 @@ abstract class WidgetInstance<T extends InstanceWidget> implements BuildContext,
     }
   }
 
-  @mustCallSuper
-  void dispose() {
-    for (final child in children) {
-      child.dispose();
-    }
-  }
+  void dispose() {}
 
   @protected
   WidgetTransform createTransform() => WidgetTransform();
 
   Constraints? get constraints => _constraints;
 
+  @override
   Iterable<WidgetInstance> get children => const [];
 
   void hitTest(double x, double y, HitTestState state) {
@@ -312,7 +297,7 @@ abstract class WidgetInstance<T extends InstanceWidget> implements BuildContext,
   // }
 
   @override
-  int compareTo(WidgetInstance<InstanceWidget> other) => depth.compareTo(other.depth);
+  int compareTo(WidgetInstance<InstanceWidget> other) => NodeWithDepth.compare(this, other);
 
   @visibleForOverriding
   String debugDescribeType() => runtimeType.toString();

@@ -41,13 +41,6 @@ class ClockApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(children: [
       Flexible(
-        child: Panel(
-          color: Color.blue,
-          cornerRadius: 0.0,
-        ),
-        flexFactor: .5,
-      ),
-      Flexible(
         key: Key('a'),
         child: Panel(
           color: Color.white,
@@ -97,7 +90,7 @@ class TimeTextState extends WidgetState<TimeText> {
   void init() {
     super.init();
     _timer = Timer.periodic(
-      Duration(seconds: 5),
+      Duration(seconds: 1),
       (timer) => setState(() => _time = DateTime.now()),
     );
   }

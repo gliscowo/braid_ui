@@ -202,8 +202,9 @@ class AppState implements InstanceHost {
   final TextRenderer textRenderer;
   final PrimitiveRenderer primitives;
 
+  final BuildScope _buildScope = BuildScope();
   late final Widget _root;
-  late AppScaffoldInstance _scaffold;
+  late AppScaffoldProxy _appRoot;
 
   Set<MouseListener> _hovered = {};
   KeyboardListener? _focused;
@@ -220,8 +221,14 @@ class AppState implements InstanceHost {
     this._root, {
     this.logger,
   }) : cursorController = CursorController.ofWindow(window) {
-    _scaffold = AppScaffold(app: _root).instantiate()..depth = 0;
-    _scaffold.attachHost(this);
+    _appRoot = AppScaffold(app: _root, scope: _buildScope).proxy();
+    _appRoot
+      ..setup()
+      ..rebuild(force: true);
+
+    _appRoot.instance
+      ..depth = 0
+      ..attachHost(this);
 
     _scheduleScaffoldLayout(force: true, global: true);
     _subscriptions.add(window.onResize.listen((event) => _scheduleScaffoldLayout(force: true)));
@@ -258,7 +265,7 @@ digraph {
 splines=false;
 node [shape="box"];
 ''');
-          dumpGraphviz(scaffold, out);
+          dumpGraphviz(appRootInstance, out);
           out
             ..writeln('}')
             ..flush().then((value) {
@@ -285,8 +292,8 @@ node [shape="box"];
     final ctx = DrawContext(context, primitives, projection, textRenderer);
 
     ctx.transform.scopedTransform(
-      scaffold.transform.transformToParent,
-      (_) => scaffold.draw(ctx),
+      appRootInstance.transform.transformToParent,
+      (_) => appRootInstance.draw(ctx),
     );
   }
 
@@ -294,6 +301,7 @@ node [shape="box"];
     // TODO: schedule things properly
     // scaffold.update(delta);
 
+    _buildScope.rebuildDirtyProxies();
     flushLayoutQueue();
 
     // ---
@@ -332,15 +340,8 @@ node [shape="box"];
   void rebuildRoot() {
     final watch = Stopwatch()..start();
 
-    final newRoot = _root.assemble(const RootBuildContext());
-    if (newRoot.canUpdate(_scaffold.root.widget)) {
-      newRoot.updateInstance(_scaffold.root);
-    } else {
-      _scaffold.root = newRoot.instantiate()..depth = 0;
-    }
-
-    // TODO: this is probably not needed
-    // _doScaffoldLayout(force: true);
+    _appRoot.reassemble();
+    _scheduleScaffoldLayout(force: true, global: true);
 
     final elapesd = watch.elapsedMicroseconds;
     logger?.fine('completed full app rebuild in ${elapesd}us');
@@ -352,8 +353,8 @@ node [shape="box"];
     final family = await FontFamily.load(resources, familyName);
     textRenderer.addFamily(identifier ?? familyName, family);
 
-    scaffold.clearLayoutCache();
-    scheduleLayout(scaffold);
+    appRootInstance.clearLayoutCache();
+    scheduleLayout(appRootInstance);
     // _doScaffoldLayout(force: true);
   }
 
@@ -363,12 +364,12 @@ node [shape="box"];
       subscription.cancel();
     }
 
-    _scaffold.dispose();
+    _appRoot.unmount();
   }
 
   // ---
 
-  AppScaffoldInstance get scaffold => _scaffold;
+  AppRoot get appRootInstance => _appRoot.instance as AppRoot;
 
   // ---
 
@@ -376,17 +377,17 @@ node [shape="box"];
     final (x, y) = coordinates ?? (window.cursorX, window.cursorY);
 
     final state = HitTestState();
-    scaffold.hitTest(x, y, state);
+    appRootInstance.hitTest(x, y, state);
 
     return state;
   }
 
   void _scheduleScaffoldLayout({bool force = false, bool global = false}) {
     if (force) {
-      scaffold.clearLayoutCache(recursive: global);
+      appRootInstance.clearLayoutCache(recursive: global);
     }
 
-    scheduleLayout(scaffold);
+    scheduleLayout(appRootInstance);
   }
 
   // ---

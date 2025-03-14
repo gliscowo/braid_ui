@@ -5,9 +5,26 @@ import '../../braid_ui.dart';
 
 abstract interface class BuildContext {}
 
-final class RootBuildContext implements BuildContext {
-  const RootBuildContext();
+// ---
+
+mixin NodeWithDepth {
+  int _depth = -1;
+  int get depth => _depth;
+  set depth(int value) {
+    if (_depth == value) return;
+
+    _depth = value;
+    for (final child in children) {
+      child.depth = _depth + 1;
+    }
+  }
+
+  Iterable<NodeWithDepth> get children;
+
+  static int compare(NodeWithDepth a, NodeWithDepth b) => a._depth.compareTo(b._depth);
 }
+
+// ---
 
 @immutable
 abstract class Widget {
@@ -17,217 +34,498 @@ abstract class Widget {
     this.key,
   });
 
-  InstanceWidget assemble(BuildContext context);
+  WidgetProxy proxy();
+
+  static bool canUpdate(Widget oldWidget, Widget newWidget) {
+    return (oldWidget.runtimeType == newWidget.runtimeType) && oldWidget.key == newWidget.key;
+  }
 }
 
-// ---
-
 abstract class InstanceWidget extends Widget {
-  const InstanceWidget({
-    super.key,
-  });
+  const InstanceWidget({super.key});
 
   @factory
   WidgetInstance instantiate();
+}
 
-  @mustCallSuper
-  void updateInstance(covariant WidgetInstance instance) => instance.widget = this;
+abstract class SingleChildInstanceWidget extends InstanceWidget {
+  final Widget child;
 
-  bool canUpdate(InstanceWidget oldWidget) {
-    return (oldWidget.runtimeType == runtimeType) && oldWidget.key == key;
-  }
+  const SingleChildInstanceWidget({
+    super.key,
+    required this.child,
+  });
+
+  @override
+  @factory
+  SingleChildWidgetInstance instantiate();
 
   // ---
 
   @override
-  InstanceWidget assemble(BuildContext context) => this;
+  SingleChildInstanceWidgetProxy proxy() => SingleChildInstanceWidgetProxy(this);
 }
 
-class Flexible extends Widget {
+abstract class OptionalChildInstanceWidget extends InstanceWidget {
+  final Widget? child;
+
+  const OptionalChildInstanceWidget({
+    super.key,
+    this.child,
+  });
+
+  @override
+  @factory
+  OptionalChildWidgetInstance instantiate();
+
+  // ---
+
+  @override
+  OptionalChildInstanceWidgetProxy proxy() => OptionalChildInstanceWidgetProxy(this);
+}
+
+abstract class LeafInstanceWidget extends InstanceWidget {
+  const LeafInstanceWidget({super.key});
+
+  @override
+  LeafInstaceWidgetProxy proxy() => LeafInstaceWidgetProxy(this);
+}
+
+// ---
+
+class BuildScope {
+  final List<WidgetProxy> _dirtyProxies = [];
+  bool _resortProxies = true;
+
+  void scheduleRebuild(WidgetProxy proxy) {
+    _dirtyProxies.add(proxy);
+    _resortProxies = true;
+  }
+
+  void rebuildDirtyProxies() {
+    for (var idx = 0; idx < _dirtyProxies.length; idx = _nextDirtyindex(idx)) {
+      _dirtyProxies[idx].rebuild();
+    }
+
+    _dirtyProxies.clear();
+  }
+
+  int _nextDirtyindex(int idx) {
+    if (!_resortProxies) return idx + 1;
+
+    _dirtyProxies.sort();
+    _resortProxies = false;
+
+    idx++;
+    while (idx > 0 && _dirtyProxies[idx - 1].needsRebuild) {
+      idx--;
+    }
+
+    return idx;
+  }
+}
+
+sealed class WidgetProxy with NodeWithDepth implements BuildContext, Comparable<WidgetProxy> {
+  Widget _widget;
+  Widget get widget => _widget;
+  set widget(Widget value) {
+    if (_widget == value) return;
+
+    _widget = value;
+    rebuild(force: true);
+  }
+
+  WidgetProxy? _parent;
+  WidgetProxy? get parent => _parent;
+
+  bool get mounted => _parent != null;
+
+  WidgetProxy(this._widget);
+
+  BuildScope? _parentBuildScope;
+  BuildScope get buildScope => _parentBuildScope!;
+
+  @override
+  Iterable<WidgetProxy> get children => const [];
+
+  void mount(WidgetProxy parent) {
+    assert(parent.mounted, 'parent proxy must be mounted before its children');
+
+    _parent = parent;
+    _parentBuildScope = parent.buildScope;
+    depth = parent.depth + 1;
+  }
+
+  void unmount() {
+    for (final child in children) {
+      child.unmount();
+    }
+  }
+
+  bool needsRebuild = false;
+  void markNeedsRebuild() {
+    if (needsRebuild) return;
+
+    needsRebuild = true;
+    buildScope.scheduleRebuild(this);
+  }
+
+  void reassemble() {
+    markNeedsRebuild();
+    for (final child in children) {
+      child.reassemble();
+    }
+  }
+
+  @nonVirtual
+  void rebuild({bool force = false}) {
+    if (!force && !needsRebuild) return;
+
+    doRebuild();
+  }
+
+  @mustCallSuper
+  void doRebuild() {
+    needsRebuild = false;
+  }
+
+  // ---
+
+  WidgetInstance get associatedInstance;
+
+  // ---
+
+  @override
+  int compareTo(WidgetProxy other) => NodeWithDepth.compare(this, other);
+
+  @override
+  String toString() => '$runtimeType (${_widget.runtimeType})';
+}
+
+abstract class InstanceWidgetProxy extends WidgetProxy {
+  WidgetInstance instance;
+
+  InstanceWidgetProxy(InstanceWidget super.widget) : instance = widget.instantiate();
+
+  @override
+  void mount(WidgetProxy parent) {
+    super.mount(parent);
+
+    while (parent is! InstanceWidgetProxy) {
+      (parent as ComposedProxy)._descendantInstance = instance;
+      parent = parent._parent!;
+    }
+  }
+
+  @override
+  void unmount() {
+    super.unmount();
+    instance.dispose();
+  }
+
+  @override
+  WidgetInstance<InstanceWidget> get associatedInstance => instance;
+}
+
+mixin SingleChildWidgetProxy on WidgetProxy {
+  WidgetProxy? _child;
+
+  WidgetProxy? get child => _child;
+  set child(WidgetProxy? value) {
+    _child?.unmount();
+
+    if (value != null) {
+      value.mount(this);
+      _child = value;
+    } else {
+      _child = null;
+    }
+  }
+
+  @override
+  Iterable<WidgetProxy> get children => [if (_child != null) _child!];
+}
+
+class SingleChildInstanceWidgetProxy extends InstanceWidgetProxy with SingleChildWidgetProxy {
+  SingleChildInstanceWidgetProxy(SingleChildInstanceWidget super.widget);
+
+  @override
+  SingleChildWidgetInstance get instance => (super.instance as SingleChildWidgetInstance);
+
+  @override
+  void mount(WidgetProxy parent) {
+    super.mount(parent);
+    child = (widget as SingleChildInstanceWidget).child.proxy();
+    instance.child = child!.associatedInstance;
+  }
+
+  @override
+  void doRebuild() {
+    instance.widget = widget as SingleChildInstanceWidget;
+
+    final newWidget = (widget as SingleChildInstanceWidget).child;
+    if (Widget.canUpdate(child!.widget, newWidget)) {
+      child!.widget = newWidget;
+    } else {
+      child = newWidget.proxy();
+    }
+
+    instance.child = child!.associatedInstance;
+    super.doRebuild();
+  }
+}
+
+class OptionalChildInstanceWidgetProxy extends InstanceWidgetProxy with SingleChildWidgetProxy {
+  OptionalChildInstanceWidgetProxy(OptionalChildInstanceWidget super.widget);
+
+  @override
+  OptionalChildWidgetInstance get instance => (super.instance as OptionalChildWidgetInstance);
+
+  @override
+  void mount(WidgetProxy parent) {
+    super.mount(parent);
+    child = (widget as OptionalChildInstanceWidget).child?.proxy();
+    if (child != null) {
+      instance.child = child!.associatedInstance;
+    }
+  }
+
+  @override
+  void doRebuild() {
+    instance.widget = (widget as OptionalChildInstanceWidget);
+
+    final newWidget = (widget as OptionalChildInstanceWidget).child;
+    if (newWidget != null) {
+      if (Widget.canUpdate(child!.widget, newWidget)) {
+        child!.widget = newWidget;
+      } else {
+        child = newWidget.proxy();
+      }
+      instance.child = child!.associatedInstance;
+    } else {
+      instance.child = null;
+    }
+
+    super.doRebuild();
+  }
+}
+
+class LeafInstaceWidgetProxy extends InstanceWidgetProxy {
+  LeafInstaceWidgetProxy(super.widget);
+
+  @override
+  void doRebuild() {
+    instance.widget = (widget as InstanceWidget);
+    super.doRebuild();
+  }
+}
+
+abstract class ComposedProxy extends WidgetProxy with SingleChildWidgetProxy {
+  WidgetInstance? _descendantInstance;
+
+  ComposedProxy(super.widget);
+
+  @override
+  WidgetInstance<InstanceWidget> get associatedInstance {
+    assert(
+      _descendantInstance != null,
+      'cannot query associated instance of ComposedProxy'
+      'before descendant InstanceWidgetProxy has been mounted',
+    );
+    return _descendantInstance!;
+  }
+}
+
+class StatelessProxy extends ComposedProxy {
+  StatelessProxy(StatelessWidget super.widget);
+
+  @override
+  void mount(WidgetProxy parent) {
+    super.mount(parent);
+    child = (widget as StatelessWidget).build(this).proxy();
+  }
+
+  @override
+  void doRebuild() {
+    final newWidget = (widget as StatelessWidget).build(this);
+    if (Widget.canUpdate(child!.widget, newWidget)) {
+      child!.widget = newWidget;
+    } else {
+      child = newWidget.proxy();
+    }
+
+    super.doRebuild();
+  }
+}
+
+class StatefulProxy extends ComposedProxy {
+  final WidgetState _state;
+
+  StatefulProxy(StatefulWidget super.widget) : _state = widget.createState() {
+    _state
+      .._widget = (widget as StatefulWidget)
+      .._owner = this;
+  }
+
+  @override
+  void mount(WidgetProxy parent) {
+    super.mount(parent);
+    _state.init();
+    child = _state.build(this).proxy();
+  }
+
+  @override
+  void unmount() {
+    super.unmount();
+    _state.dispose();
+  }
+
+  @override
+  void doRebuild() {
+    final newWidget = _state.build(this);
+    if (Widget.canUpdate(child!.widget, newWidget)) {
+      child!.widget = newWidget;
+    } else {
+      child = newWidget.proxy();
+    }
+
+    super.doRebuild();
+  }
+
+  @override
+  set widget(Widget value) {
+    final oldWidget = widget as StatefulWidget;
+    _state
+      .._widget = value as StatefulWidget
+      ..didUpdateWidget(oldWidget);
+
+    super.widget = value;
+  }
+}
+
+// ---
+
+abstract class VisitorWidget extends Widget {
   final Widget child;
+
+  const VisitorWidget({
+    super.key,
+    required this.child,
+  });
+
+  @override
+  VisitorProxy proxy();
+}
+
+typedef InstanceVisitor = void Function(WidgetInstance instance);
+
+class VisitorProxy extends ComposedProxy {
+  final InstanceVisitor visitor;
+  VisitorProxy(VisitorWidget super.widget, this.visitor);
+
+  @override
+  void mount(WidgetProxy parent) {
+    super.mount(parent);
+    child = (widget as VisitorWidget).child.proxy();
+
+    visitor(child!.associatedInstance);
+  }
+
+  @override
+  void doRebuild() {
+    final newWidget = (widget as VisitorWidget).child;
+    if (Widget.canUpdate(child!.widget, newWidget)) {
+      child!.widget = newWidget;
+    } else {
+      child = newWidget.proxy();
+    }
+
+    visitor(child!.associatedInstance);
+
+    super.doRebuild();
+  }
+}
+
+// ---
+
+class Flexible extends VisitorWidget {
   final double flexFactor;
 
   const Flexible({
     super.key,
     this.flexFactor = 1.0,
-    required this.child,
+    required super.child,
   });
 
   @override
-  InstanceWidget assemble(BuildContext context) {
-    return _VisitorWidget(
-      key: key,
-      instanceWidget: child.assemble(context),
-      apply: (instance) => instance.parentData = FlexParentData(flexFactor),
-      reset: (instance) => instance.parentData = null,
-    );
-  }
+  VisitorProxy proxy() => VisitorProxy(
+        this,
+        (instance) {
+          if (instance.parentData case FlexParentData data) {
+            data.flexFactor = flexFactor;
+          } else {
+            instance.parentData = FlexParentData(flexFactor);
+          }
+        },
+      );
 }
 
-typedef _InstanceVisitor = void Function(WidgetInstance instance);
-
-class _VisitorWidget extends InstanceWidget {
-  final InstanceWidget _instanceWidget;
-  final _InstanceVisitor _applyVisitor;
-  final _InstanceVisitor _undoVisitor;
-
-  _VisitorWidget({
-    required super.key,
-    required InstanceWidget instanceWidget,
-    required _InstanceVisitor apply,
-    required _InstanceVisitor reset,
-  })  : _instanceWidget = instanceWidget,
-        _applyVisitor = apply,
-        _undoVisitor = reset;
-
-  @override
-  WidgetInstance instantiate() {
-    final instance = _instanceWidget.instantiate();
-    _visit(instance);
-
-    return instance;
-  }
-
-  @override
-  // ignore: must_call_super
-  void updateInstance(covariant WidgetInstance instance) {
-    _instanceWidget.updateInstance(instance);
-    _visit(instance);
-  }
-
-  void _visit(WidgetInstance instance) {
-    _applyVisitor(instance);
-    instance.scheduleWidgetUpdateCallback(() => _undoVisitor(instance));
-  }
-
-  @override
-  bool canUpdate(InstanceWidget oldWidget) {
-    return (oldWidget.runtimeType == _instanceWidget.runtimeType) && oldWidget.key == key;
-  }
-}
-
-abstract class SingleChildWidget extends InstanceWidget {
-  const SingleChildWidget({
-    super.key,
-  });
-
-  Widget get child;
-
-  @mustCallSuper
-  @override
-  void updateInstance(covariant SingleChildWidgetInstance instance) {
-    super.updateInstance(instance);
-
-    final newWidget = child.assemble(instance);
-    if (newWidget.canUpdate(instance.child.widget)) {
-      newWidget.updateInstance(instance.child);
-    } else {
-      instance.child = newWidget.instantiate();
-    }
-  }
-}
-
-abstract class OptionalChildWidget extends InstanceWidget {
-  const OptionalChildWidget({
-    super.key,
-  });
-
-  Widget? get child;
-
-  @mustCallSuper
-  @override
-  void updateInstance(covariant OptionalChildWidgetInstance instance) {
-    super.updateInstance(instance);
-
-    final newWidget = child?.assemble(instance);
-    if (newWidget != null) {
-      if (instance.child != null && newWidget.canUpdate(instance.child!.widget)) {
-        newWidget.updateInstance(instance.child!);
-      } else {
-        instance.child = newWidget.instantiate();
-      }
-    } else {
-      instance.child = null;
-    }
-  }
-}
-
-class Padding extends OptionalChildWidget {
+class Padding extends OptionalChildInstanceWidget {
   final Insets insets;
-  @override
-  final Widget? child;
 
   const Padding({
     super.key,
     required this.insets,
-    this.child,
+    super.child,
   });
 
   @override
-  PaddingInstance instantiate() => PaddingInstance(
-        widget: this,
-        childWidget: child,
-      );
+  PaddingInstance instantiate() => PaddingInstance(widget: this);
 }
 
-class Constrained extends SingleChildWidget {
+class Constrained extends SingleChildInstanceWidget {
   final Constraints constraints;
-  @override
-  final Widget child;
 
   Constrained({
     super.key,
     required this.constraints,
-    required this.child,
+    required super.child,
   });
 
   @override
-  ConstrainedInstance instantiate() => ConstrainedInstance(
-        widget: this,
-        childWidget: child,
-      );
+  ConstrainedInstance instantiate() => ConstrainedInstance(widget: this);
 }
 
-class Center extends SingleChildWidget {
+class Center extends SingleChildInstanceWidget {
   final double? widthFactor, heightFactor;
-  @override
-  final Widget child;
 
   const Center({
     super.key,
     this.widthFactor,
     this.heightFactor,
-    required this.child,
+    required super.child,
   });
 
   @override
-  CenterInstance instantiate() => CenterInstance(
-        widget: this,
-        childWidget: child,
-      );
+  CenterInstance instantiate() => CenterInstance(widget: this);
 }
 
-class Panel extends OptionalChildWidget {
+class Panel extends OptionalChildInstanceWidget {
   final Color color;
   final double cornerRadius;
-  @override
-  final Widget? child;
 
   Panel({
     super.key,
     required this.color,
     this.cornerRadius = 10.0,
-    this.child,
+    super.child,
   });
 
   @override
-  PanelInstance instantiate() => PanelInstance(
-        widget: this,
-        childWidget: child,
-      );
+  PanelInstance instantiate() => PanelInstance(widget: this);
 }
 
-class Label extends InstanceWidget {
+class Label extends LeafInstanceWidget {
   final Text text;
   final LabelStyle style;
 
@@ -247,15 +545,12 @@ class Label extends InstanceWidget {
   LabelInstance instantiate() => LabelInstance(widget: this);
 }
 
-class MouseArea extends SingleChildWidget {
+class MouseArea extends SingleChildInstanceWidget {
   final void Function()? clickCallback;
   final void Function()? enterCallback;
   final void Function()? exitCallback;
   final void Function(double horizontal, double vertical)? scrollCallback;
   final CursorStyle? cursorStyle;
-
-  @override
-  final Widget child;
 
   const MouseArea({
     super.key,
@@ -264,25 +559,19 @@ class MouseArea extends SingleChildWidget {
     this.exitCallback,
     this.scrollCallback,
     this.cursorStyle,
-    required this.child,
+    required super.child,
   });
 
   @override
-  MouseAreaInstance instantiate() => MouseAreaInstance(
-        widget: this,
-        childWidget: child,
-      );
+  MouseAreaInstance instantiate() => MouseAreaInstance(widget: this);
 }
 
-class KeyboardInput extends SingleChildWidget {
+class KeyboardInput extends SingleChildInstanceWidget {
   final void Function(int keyCode, int modifiers)? keyDownCallback;
   final void Function(int keyCode, int modifiers)? keyUpCallback;
   final void Function(int charCode, int modifiers)? charCallback;
   final void Function()? focusGainedCallback;
   final void Function()? focusLostCallback;
-
-  @override
-  final Widget child;
 
   const KeyboardInput({
     super.key,
@@ -291,33 +580,24 @@ class KeyboardInput extends SingleChildWidget {
     this.charCallback,
     this.focusGainedCallback,
     this.focusLostCallback,
-    required this.child,
+    required super.child,
   });
 
   @override
-  KeyboardInputInstance instantiate() => KeyboardInputInstance(
-        widget: this,
-        childWidget: child,
-      );
+  KeyboardInputInstance instantiate() => KeyboardInputInstance(widget: this);
 }
 
-class HitTestOccluder extends Widget {
-  final Widget child;
-
+class HitTestOccluder extends VisitorWidget {
   const HitTestOccluder({
     super.key,
-    required this.child,
+    required super.child,
   });
 
   @override
-  InstanceWidget assemble(BuildContext context) {
-    return _VisitorWidget(
-      key: key,
-      instanceWidget: child.assemble(context),
-      apply: (instance) => instance.flags += InstanceFlags.hitTestBoundary,
-      reset: (instance) => instance.flags -= InstanceFlags.hitTestBoundary,
-    );
-  }
+  VisitorProxy proxy() => VisitorProxy(
+        this,
+        (instance) => instance.flags += InstanceFlags.hitTestBoundary,
+      );
 }
 
 // ---
@@ -330,12 +610,12 @@ abstract class StatelessWidget extends Widget {
   // ---
 
   @override
-  InstanceWidget assemble(BuildContext context) => build(context).assemble(context);
+  StatelessProxy proxy() => StatelessProxy(this);
 }
 
 // ---
 
-abstract class StatefulWidget extends InstanceWidget {
+abstract class StatefulWidget extends Widget {
   const StatefulWidget({super.key});
 
   WidgetState createState();
@@ -343,7 +623,7 @@ abstract class StatefulWidget extends InstanceWidget {
   // ---
 
   @override
-  StatefulWidgetInstance instantiate() => StatefulWidgetInstance(widget: this);
+  StatefulProxy proxy() => StatefulProxy(this);
 }
 
 abstract class WidgetState<T extends StatefulWidget> {
@@ -355,64 +635,15 @@ abstract class WidgetState<T extends StatefulWidget> {
   void init() {}
   void dispose() {}
 
-  StatefulWidgetInstance? _owner;
+  StatefulProxy? _owner;
 
   @nonVirtual
   void setState(void Function() fn) {
     assert(_owner != null, "setState invoked on WidgetState before it was mounted");
 
     fn();
-    rebuild();
+    _owner!.markNeedsRebuild();
   }
 
   void didUpdateWidget(covariant T oldWidget) {}
-
-  @internal
-  void rebuild() {
-    final newWidget = build(_owner!).assemble(_owner!);
-    if (newWidget.canUpdate(_owner!.child.widget)) {
-      newWidget.updateInstance(_owner!.child);
-    } else {
-      _owner!.child = newWidget.instantiate();
-    }
-  }
-}
-
-class StatefulWidgetInstance<T extends StatefulWidget> extends SingleChildWidgetInstance<T> with ShrinkWrapLayout {
-  late WidgetState _state;
-
-  StatefulWidgetInstance({
-    required super.widget,
-  }) {
-    _state = widget.createState()
-      .._widget = widget
-      .._owner = this
-      ..init();
-
-    child = _state.build(this).assemble(this).instantiate();
-  }
-
-  @override
-  set widget(T value) {
-    final oldWidget = widget;
-    super.widget = value;
-
-    _state._widget = value;
-    _state.didUpdateWidget(oldWidget);
-
-    _state.rebuild();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _state.dispose();
-  }
-
-  // ---
-
-  static final _genericPattern = RegExp(r'<(.*)>$');
-
-  @override
-  String debugDescribeType() => runtimeType.toString().replaceFirst(_genericPattern, '[${_state.runtimeType}]');
 }
