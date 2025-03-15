@@ -199,7 +199,7 @@ class _RootWidget extends SingleChildInstanceWidget {
   });
 
   @override
-  SingleChildWidgetInstance<SingleChildInstanceWidget> instantiate() => _RootInstance(widget: this);
+  SingleChildWidgetInstance<InstanceWidget> instantiate() => _RootInstance(widget: this);
 
   @override
   _RootProxy proxy() => _RootProxy(this);

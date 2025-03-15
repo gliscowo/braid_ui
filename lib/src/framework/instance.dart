@@ -374,7 +374,7 @@ mixin OptionalShrinkWrapLayout<T extends InstanceWidget> on WidgetInstance<T>, O
 
 // --- template classes
 
-abstract class SingleChildWidgetInstance<T extends SingleChildInstanceWidget> extends WidgetInstance<T>
+abstract class SingleChildWidgetInstance<T extends InstanceWidget> extends WidgetInstance<T>
     with SingleChildProvider, ChildRenderer, SingleChildRenderer {
   WidgetInstance? _child;
 
@@ -401,7 +401,7 @@ abstract class SingleChildWidgetInstance<T extends SingleChildInstanceWidget> ex
   }
 }
 
-abstract class OptionalChildWidgetInstance<T extends OptionalChildInstanceWidget> extends WidgetInstance<T>
+abstract class OptionalChildWidgetInstance<T extends InstanceWidget> extends WidgetInstance<T>
     with OptionalChildProvider, ChildRenderer, OptionalChildRenderer {
   WidgetInstance? _child;
 

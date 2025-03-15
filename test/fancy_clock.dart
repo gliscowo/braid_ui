@@ -4,6 +4,7 @@ import 'package:braid_ui/braid_ui.dart';
 import 'package:braid_ui/src/framework/proxy.dart';
 import 'package:braid_ui/src/framework/widget.dart';
 import 'package:braid_ui/src/widgets/basic.dart';
+import 'package:braid_ui/src/widgets/layout_builder.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
@@ -60,9 +61,11 @@ class ClockApp extends StatelessWidget {
       ),
       Flexible(
         key: Key('b'),
-        child: Panel(
-          color: Color.blue,
-          cornerRadius: 0.0,
+        child: LayoutBuilder(
+          builder: (context, constraints) => Panel(
+            color: constraints.maxWidth > 600 ? Color.green : Color.blue,
+            cornerRadius: 0.0,
+          ),
         ),
         flexFactor: .5,
       ),

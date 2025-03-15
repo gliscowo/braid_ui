@@ -559,3 +559,41 @@ class StencilClipInstance extends SingleChildWidgetInstance with ShrinkWrapLayou
     }
   }
 }
+
+// ---
+
+typedef WidgetBuilder = Widget Function(BuildContext context);
+
+class Builder extends Widget {
+  final WidgetBuilder builder;
+
+  Builder({
+    super.key,
+    required this.builder,
+  });
+
+  @override
+  WidgetProxy proxy() => _BuilderProxy(this);
+}
+
+class _BuilderProxy extends ComposedProxy with SingleChildWidgetProxy {
+  _BuilderProxy(Builder super.widget);
+
+  @override
+  void mount(WidgetProxy parent) {
+    super.mount(parent);
+    rebuild();
+  }
+
+  @override
+  void updateWidget(covariant Widget newWidget) {
+    super.updateWidget(newWidget);
+    rebuild(force: true);
+  }
+
+  @override
+  void doRebuild() {
+    super.doRebuild();
+    child = refreshChild(child, (widget as Builder).builder(this));
+  }
+}
