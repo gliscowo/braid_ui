@@ -1,7 +1,10 @@
 import 'package:diamond_gl/diamond_gl.dart';
 
-import '../../braid_ui.dart';
-import '../immediate/foundation.dart';
+import '../context.dart';
+import '../core/constraints.dart';
+import '../framework/instance.dart';
+import '../framework/widget.dart';
+import '../text/text.dart';
 
 class LabelStyle {
   static const empty = LabelStyle();
@@ -69,7 +72,27 @@ class LabelStyle {
 //   });
 // }
 
-class LabelInstance extends WidgetInstance<Label> {
+class Label extends LeafInstanceWidget {
+  final Text text;
+  final LabelStyle style;
+
+  Label({
+    super.key,
+    required String text,
+    this.style = LabelStyle.empty,
+  }) : text = Text.string(text);
+
+  Label.text({
+    super.key,
+    required this.text,
+    this.style = LabelStyle.empty,
+  });
+
+  @override
+  LabelInstance instantiate() => LabelInstance(widget: this);
+}
+
+class LabelInstance extends LeafWidgetInstance<Label> {
   late Text _styledText;
   LabelStyle? _contextStyle;
 

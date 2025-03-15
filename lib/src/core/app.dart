@@ -12,16 +12,18 @@ import 'package:vector_math/vector_math.dart';
 
 import '../baked_assets.g.dart' as assets;
 import '../context.dart';
-import '../immediate/foundation.dart';
+import '../framework/instance.dart';
+import '../framework/proxy.dart';
+import '../framework/widget.dart';
 import '../primitive_renderer.dart';
 import '../resources.dart';
 import '../text/text_renderer.dart';
+import '../widgets/basic.dart';
 import 'constraints.dart';
 import 'cursors.dart';
 import 'math.dart';
 import 'reload_hook.dart';
 import 'widget.dart';
-import 'widget_base.dart';
 
 Future<void> runBraidApp({
   required AppState app,

@@ -1,10 +1,9 @@
 import 'dart:collection';
 import 'dart:math';
 
-import '../immediate/foundation.dart';
-import 'constraints.dart';
-import 'math.dart';
-import 'widget_base.dart';
+import '../../braid_ui.dart';
+import '../framework/proxy.dart';
+import '../framework/widget.dart';
 
 /// A vertical array of widgets
 class Column extends Flex {
@@ -116,7 +115,11 @@ class FlexInstance extends WidgetInstance<Flex> with ChildRenderer<Flex>, ChildL
   // saturate constraints for non-flex children
 
   @override
-  Iterable<WidgetInstance> get children => _children;
+  void visitChildren(WidgetInstanceVisitor visitor) {
+    for (final child in _children) {
+      visitor(child);
+    }
+  }
 
   @override
   set widget(Flex value) {
@@ -147,7 +150,7 @@ class FlexInstance extends WidgetInstance<Flex> with ChildRenderer<Flex>, ChildL
     );
 
     // first, lay out all non-flex children and store their sizes
-    final childSizes = children
+    final childSizes = _children
         .where((element) => element.parentData is! FlexParentData)
         .map((e) => e.layout(childConstraints))
         .toList();
@@ -158,7 +161,7 @@ class FlexInstance extends WidgetInstance<Flex> with ChildRenderer<Flex>, ChildL
 
     // get the flex children and compute the total flex factor in order
     // to divvy up the remaining space properly later
-    final flexChildren = children.where((element) => element.parentData is FlexParentData);
+    final flexChildren = _children.where((element) => element.parentData is FlexParentData);
     final totalFlexFactor = flexChildren.fold(
         0.0, (previousValue, element) => previousValue + (element.parentData as FlexParentData).flexFactor);
 
@@ -197,7 +200,7 @@ class FlexInstance extends WidgetInstance<Flex> with ChildRenderer<Flex>, ChildL
 
     // move children into position and apply cross-axis alignment
     var mainAxisOffset = leadingSpace;
-    for (final child in children) {
+    for (final child in _children) {
       child.transform.setAxisCoordinate(
         mainAxis,
         mainAxisOffset,
@@ -244,20 +247,25 @@ class FlexProxy extends InstanceWidgetProxy {
   FlexProxy(super.widget);
 
   @override
-  Iterable<WidgetProxy> get children => _children;
+  FlexInstance get instance => (super.instance as FlexInstance);
 
   @override
-  FlexInstance get instance => (super.instance as FlexInstance);
+  void visitChildren(WidgetProxyVisitor visitor) {
+    for (final child in _children) {
+      visitor(child);
+    }
+  }
 
   @override
   void mount(WidgetProxy parent) {
     super.mount(parent);
-    for (final childWidget in (widget as Flex).children) {
-      final proxy = childWidget.proxy()..mount(this);
-      instance._children.add(instance.adopt(proxy.associatedInstance));
+    rebuild();
+  }
 
-      _children.add(proxy);
-    }
+  @override
+  void updateWidget(Flex newWidget) {
+    super.updateWidget(newWidget);
+    rebuild(force: true);
   }
 
   @override
@@ -281,9 +289,7 @@ class FlexProxy extends InstanceWidgetProxy {
         break;
       }
 
-      oldChild.widget = newWidget;
-
-      newChildren[newChildrenTop] = oldChild;
+      newChildren[newChildrenTop] = refreshChild(oldChild, newWidget);
       oldChildrenTop++;
       newChildrenTop++;
     }
@@ -342,13 +348,7 @@ class FlexProxy extends InstanceWidgetProxy {
         }
       }
 
-      if (oldChild != null) {
-        oldChild.widget = newWidget;
-        newChildren[newChildrenTop] = oldChild;
-      } else {
-        newChildren[newChildrenTop] = newWidget.proxy()..mount(this);
-      }
-
+      newChildren[newChildrenTop] = refreshChild(oldChild, newWidget);
       newChildrenTop++;
     }
 
@@ -359,9 +359,7 @@ class FlexProxy extends InstanceWidgetProxy {
       final oldChild = _children[oldChildrenTop];
       final newWidget = newWidgets[newChildrenTop];
 
-      oldChild.widget = newWidget;
-
-      newChildren[newChildrenTop] = oldChild;
+      newChildren[newChildrenTop] = refreshChild(oldChild, newWidget);
       oldChildrenTop++;
       newChildrenTop++;
     }

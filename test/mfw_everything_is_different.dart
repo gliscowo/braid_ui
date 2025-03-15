@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:braid_ui/braid_ui.dart';
-import 'package:braid_ui/src/immediate/foundation.dart';
+import 'package:braid_ui/src/framework/proxy.dart';
+import 'package:braid_ui/src/framework/widget.dart';
+import 'package:braid_ui/src/widgets/basic.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
@@ -33,7 +35,7 @@ class TimeTextState extends WidgetState<TimeText> {
   }
 
   @override
-  Widget build() {
+  Widget build(BuildContext context) {
     return MouseArea(
       cursorStyle: CursorStyle.hand,
       // clickCallback: () => setState(() => _time = DateTime.now()),
@@ -49,7 +51,7 @@ class Clock extends StatelessWidget {
   const Clock();
 
   @override
-  Widget build() {
+  Widget build(BuildContext context) {
     return Panel(
       color: Color.blue,
       child: const Padding(
@@ -64,7 +66,7 @@ class App extends StatelessWidget {
   const App();
 
   @override
-  Widget build() {
+  Widget build(BuildContext context) {
     return Panel(
       color: Color.white,
       cornerRadius: 0.0,

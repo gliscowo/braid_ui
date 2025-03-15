@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:braid_ui/braid_ui.dart';
-import 'package:braid_ui/src/immediate/foundation.dart';
+import 'package:braid_ui/src/framework/proxy.dart';
+import 'package:braid_ui/src/framework/widget.dart';
+import 'package:braid_ui/src/widgets/basic.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
@@ -104,7 +106,7 @@ class TimeTextState extends WidgetState<TimeText> {
   @override
   Widget build(BuildContext context) {
     return Label(
-      text: DateFormat('Hms').format(_time),
+      text: '${DateFormat('Hms').format(_time)}:${_time.millisecond}',
       style: LabelStyle(fontSize: 80.0, bold: true, textColor: Color.ofHsv(_time.second / 60.0, 1.0, 1.0)),
     );
   }
