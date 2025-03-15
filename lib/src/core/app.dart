@@ -23,7 +23,6 @@ import 'constraints.dart';
 import 'cursors.dart';
 import 'math.dart';
 import 'reload_hook.dart';
-import 'widget.dart';
 
 Future<void> runBraidApp({
   required AppState app,
@@ -191,6 +190,48 @@ cause: $cause
 
 // ---
 
+class _RootWidget extends SingleChildInstanceWidget {
+  final BuildScope rootBuildScope;
+
+  _RootWidget({
+    required super.child,
+    required this.rootBuildScope,
+  });
+
+  @override
+  SingleChildWidgetInstance<SingleChildInstanceWidget> instantiate() => _RootInstance(widget: this);
+
+  @override
+  _RootProxy proxy() => _RootProxy(this);
+}
+
+class _RootProxy extends SingleChildInstanceWidgetProxy {
+  _RootProxy(super.widget);
+
+  @override
+  BuildScope get buildScope => (widget as _RootWidget).rootBuildScope;
+
+  @override
+  bool get mounted => _bootstrapped;
+  bool _bootstrapped = false;
+
+  void bootstrap(InstanceHost host) {
+    _bootstrapped = true;
+
+    rebuild();
+    depth = 0;
+
+    instance.depth = 0;
+    instance.attachHost(host);
+  }
+}
+
+class _RootInstance extends SingleChildWidgetInstance with ShrinkWrapLayout {
+  _RootInstance({required super.widget});
+}
+
+// ---
+
 class AppState implements InstanceHost {
   final BraidResources resources;
   final Logger? logger;
@@ -204,9 +245,8 @@ class AppState implements InstanceHost {
   final TextRenderer textRenderer;
   final PrimitiveRenderer primitives;
 
-  final BuildScope _buildScope = BuildScope();
-  late final Widget _root;
-  late AppScaffoldProxy _appRoot;
+  final BuildScope _rootBuildScope = BuildScope();
+  late _RootProxy _root;
 
   Set<MouseListener> _hovered = {};
   KeyboardListener? _focused;
@@ -220,17 +260,11 @@ class AppState implements InstanceHost {
     this.context,
     this.textRenderer,
     this.primitives,
-    this._root, {
+    Widget root, {
     this.logger,
   }) : cursorController = CursorController.ofWindow(window) {
-    _appRoot = AppScaffold(app: _root, scope: _buildScope).proxy();
-    _appRoot
-      ..setup()
-      ..rebuild(force: true);
-
-    _appRoot.instance
-      ..depth = 0
-      ..attachHost(this);
+    _root = _RootWidget(child: root, rootBuildScope: _rootBuildScope).proxy();
+    _root.bootstrap(this);
 
     _scheduleScaffoldLayout(force: true, global: true);
     _subscriptions.add(window.onResize.listen((event) => _scheduleScaffoldLayout(force: true)));
@@ -267,7 +301,7 @@ digraph {
 splines=false;
 node [shape="box"];
 ''');
-          dumpGraphviz(appRootInstance, out);
+          dumpGraphviz(rootInstance, out);
           out
             ..writeln('}')
             ..flush().then((value) {
@@ -294,8 +328,8 @@ node [shape="box"];
     final ctx = DrawContext(context, primitives, projection, textRenderer);
 
     ctx.transform.scopedTransform(
-      appRootInstance.transform.transformToParent,
-      (_) => appRootInstance.draw(ctx),
+      rootInstance.transform.transformToParent,
+      (_) => rootInstance.draw(ctx),
     );
   }
 
@@ -303,7 +337,7 @@ node [shape="box"];
     // TODO: schedule things properly
     // scaffold.update(delta);
 
-    _buildScope.rebuildDirtyProxies();
+    _rootBuildScope.rebuildDirtyProxies();
     flushLayoutQueue();
 
     // ---
@@ -342,7 +376,7 @@ node [shape="box"];
   void rebuildRoot() {
     final watch = Stopwatch()..start();
 
-    _appRoot.reassemble();
+    _root.reassemble();
     _scheduleScaffoldLayout(force: true, global: true);
 
     final elapesd = watch.elapsedMicroseconds;
@@ -355,8 +389,8 @@ node [shape="box"];
     final family = await FontFamily.load(resources, familyName);
     textRenderer.addFamily(identifier ?? familyName, family);
 
-    appRootInstance.clearLayoutCache();
-    scheduleLayout(appRootInstance);
+    rootInstance.clearLayoutCache();
+    scheduleLayout(rootInstance);
     // _doScaffoldLayout(force: true);
   }
 
@@ -366,12 +400,12 @@ node [shape="box"];
       subscription.cancel();
     }
 
-    _appRoot.unmount();
+    _root.unmount();
   }
 
   // ---
 
-  AppRoot get appRootInstance => _appRoot.instance as AppRoot;
+  SingleChildWidgetInstance get rootInstance => _root.instance;
 
   // ---
 
@@ -379,17 +413,17 @@ node [shape="box"];
     final (x, y) = coordinates ?? (window.cursorX, window.cursorY);
 
     final state = HitTestState();
-    appRootInstance.hitTest(x, y, state);
+    rootInstance.hitTest(x, y, state);
 
     return state;
   }
 
   void _scheduleScaffoldLayout({bool force = false, bool global = false}) {
     if (force) {
-      appRootInstance.clearLayoutCache(recursive: global);
+      rootInstance.clearLayoutCache(recursive: global);
     }
 
-    scheduleLayout(appRootInstance);
+    scheduleLayout(rootInstance);
   }
 
   // ---

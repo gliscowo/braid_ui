@@ -6,7 +6,6 @@ export 'src/core/cursors.dart';
 export 'src/core/icons.dart';
 export 'src/core/math.dart';
 export 'src/core/scroll.dart';
-export 'src/core/widget.dart';
 export 'src/framework/instance.dart';
 export 'src/primitive_renderer.dart';
 export 'src/resources.dart';
