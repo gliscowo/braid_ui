@@ -38,6 +38,12 @@ class VisitorProxy extends ComposedProxy {
   }
 
   @override
+  void updateWidget(covariant Widget newWidget) {
+    super.updateWidget(newWidget);
+    rebuild(force: true);
+  }
+
+  @override
   void doRebuild() {
     child = refreshChild(child, (widget as VisitorWidget).child);
     visitor(child!.associatedInstance);
@@ -134,7 +140,7 @@ class PaddingInstance extends OptionalChildWidgetInstance<Padding> {
 class Constrained extends SingleChildInstanceWidget {
   final Constraints constraints;
 
-  Constrained({
+  const Constrained({
     super.key,
     required this.constraints,
     required super.child,
@@ -220,7 +226,7 @@ class Panel extends OptionalChildInstanceWidget {
   final Color color;
   final double cornerRadius;
 
-  Panel({
+  const Panel({
     super.key,
     required this.color,
     this.cornerRadius = 10.0,
@@ -365,7 +371,7 @@ class Gradient extends OptionalChildInstanceWidget {
   final double size;
   final double angle;
 
-  Gradient({
+  const Gradient({
     super.key,
     required this.startColor,
     required this.endColor,
@@ -439,7 +445,7 @@ class TransformInstance extends SingleChildWidgetInstance<Transform> with Shrink
 // ---
 
 class LayoutAfterTransform extends SingleChildInstanceWidget {
-  LayoutAfterTransform({
+  const LayoutAfterTransform({
     super.key,
     required super.child,
   });
@@ -476,7 +482,7 @@ class LayoutAfterTransformInstance<LayoutAfterTransform> extends SingleChildWidg
 // ---
 
 class Clip extends SingleChildInstanceWidget {
-  Clip({
+  const Clip({
     super.key,
     required super.child,
   });
@@ -510,7 +516,7 @@ class ClipInstance extends SingleChildWidgetInstance<Clip> with ShrinkWrapLayout
 // ---
 
 class StencipClip extends SingleChildInstanceWidget {
-  StencipClip({
+  const StencipClip({
     super.key,
     required super.child,
   });
@@ -567,7 +573,7 @@ typedef WidgetBuilder = Widget Function(BuildContext context);
 class Builder extends Widget {
   final WidgetBuilder builder;
 
-  Builder({
+  const Builder({
     super.key,
     required this.builder,
   });

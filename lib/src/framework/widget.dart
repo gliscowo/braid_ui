@@ -3,7 +3,9 @@ import 'package:meta/meta.dart';
 import 'instance.dart';
 import 'proxy.dart';
 
-abstract interface class BuildContext {}
+abstract interface class BuildContext {
+  T? dependOnAncestor<T extends Widget>();
+}
 
 // ---
 
@@ -24,6 +26,22 @@ abstract class Widget {
   static bool canUpdate(Widget oldWidget, Widget newWidget) {
     return (oldWidget.runtimeType == newWidget.runtimeType) && oldWidget.key == newWidget.key;
   }
+}
+
+// ---
+
+abstract class InheritedWidget extends Widget {
+  final Widget child;
+
+  const InheritedWidget({
+    super.key,
+    required this.child,
+  });
+
+  bool mustRebuildDependents(covariant InheritedWidget newWidget);
+
+  @override
+  WidgetProxy proxy() => InheritedProxy(this);
 }
 
 // ---

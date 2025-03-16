@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:meta/meta.dart';
 
 import 'instance.dart';
@@ -86,6 +88,8 @@ sealed class WidgetProxy with NodeWithDepth implements BuildContext, Comparable<
   BuildScope? _parentBuildScope;
   BuildScope get buildScope => _parentBuildScope!;
 
+  final Map<Type, InheritedProxy?> _dependencies = HashMap();
+
   void mount(WidgetProxy parent) {
     assert(parent.mounted, 'parent proxy must be mounted before its children');
 
@@ -95,7 +99,13 @@ sealed class WidgetProxy with NodeWithDepth implements BuildContext, Comparable<
   }
 
   static void _unmountChild(WidgetProxy child) => child.unmount();
-  void unmount() => visitChildren(_unmountChild);
+  void unmount() {
+    for (final dependency in _dependencies.values.nonNulls) {
+      dependency.removeDependent(this);
+    }
+
+    visitChildren(_unmountChild);
+  }
 
   bool needsRebuild = true;
   void markNeedsRebuild() {
@@ -149,6 +159,31 @@ sealed class WidgetProxy with NodeWithDepth implements BuildContext, Comparable<
   @mustCallSuper
   void doRebuild() {
     needsRebuild = false;
+  }
+
+  // ---
+
+  @override
+  T? dependOnAncestor<T extends Widget>() {
+    if (_dependencies.containsKey(T)) {
+      return _dependencies[T]?.widget as T?;
+    }
+
+    var ancestor = _parent;
+    while (ancestor != null) {
+      if (ancestor is InheritedProxy && ancestor.widget.runtimeType == T) {
+        _dependencies[T] = ancestor..addDependent(this);
+        return ancestor.widget as T;
+      }
+
+      ancestor = ancestor.parent;
+    }
+
+    return null;
+  }
+
+  void notifyDependenciesChanged() {
+    markNeedsRebuild();
   }
 
   // ---
@@ -245,6 +280,46 @@ abstract class InstanceWidgetProxy extends WidgetProxy {
 }
 
 // ---
+
+class InheritedProxy extends ComposedProxy with SingleChildWidgetProxy {
+  final List<WidgetProxy> _dependents = [];
+
+  InheritedProxy(InheritedWidget super.widget);
+
+  void addDependent(WidgetProxy dependent) {
+    _dependents.add(dependent);
+  }
+
+  void removeDependent(WidgetProxy dependent) {
+    _dependents.remove(dependent);
+  }
+
+  @override
+  void mount(WidgetProxy parent) {
+    super.mount(parent);
+    rebuild();
+  }
+
+  @override
+  void updateWidget(covariant InheritedWidget newWidget) {
+    final shouldUpdate = (widget as InheritedWidget).mustRebuildDependents(newWidget);
+
+    super.updateWidget(newWidget);
+
+    rebuild(force: true);
+    if (shouldUpdate) {
+      for (final dependent in _dependents) {
+        dependent.notifyDependenciesChanged();
+      }
+    }
+  }
+
+  @override
+  void doRebuild() {
+    super.doRebuild();
+    child = refreshChild(child, (widget as InheritedWidget).child);
+  }
+}
 
 class StatelessProxy extends ComposedProxy {
   StatelessProxy(StatelessWidget super.widget);

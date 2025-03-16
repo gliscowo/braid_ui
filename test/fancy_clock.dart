@@ -35,6 +35,19 @@ Future<void> main(List<String> args) async {
   );
 }
 
+class ColorProvider extends InheritedWidget {
+  final Color color;
+
+  const ColorProvider({
+    super.key,
+    required this.color,
+    required super.child,
+  });
+
+  @override
+  bool mustRebuildDependents(ColorProvider newWidget) => color != newWidget.color;
+}
+
 // ---
 
 class ClockApp extends StatelessWidget {
@@ -76,7 +89,53 @@ class ClockApp extends StatelessWidget {
           cornerRadius: 0.0,
         ),
       ),
+      Constrained(
+        constraints: Constraints.only(minHeight: 25),
+        child: DependencyTest(),
+      )
     ]);
+  }
+}
+
+class DependencyTest extends StatefulWidget {
+  @override
+  WidgetState<StatefulWidget> createState() => DependencyTestState();
+}
+
+class DependencyTestState extends WidgetState<DependencyTest> {
+  Color color = Color.red;
+
+  @override
+  Widget build(BuildContext context) {
+    return ColorProvider(
+      color: color,
+      child: Row(children: [
+        Button.text(
+          onClick: () => setState(() {
+            color = color == Color.red ? Color.green : Color.red;
+          }),
+          text: 'toggle',
+        ),
+        Constrained(
+          constraints: Constraints.only(minWidth: 10),
+          child: Panel(
+            color: color,
+            cornerRadius: 0.0,
+          ),
+        ),
+        const Flexible(
+          child: Builder(
+            builder: _innerBuild,
+          ),
+        )
+      ]),
+    );
+  }
+
+  static Widget _innerBuild(BuildContext context) {
+    return Panel(
+      color: context.dependOnAncestor<ColorProvider>()!.color,
+    );
   }
 }
 
@@ -95,7 +154,7 @@ class TimeTextState extends WidgetState<TimeText> {
   void init() {
     super.init();
     _timer = Timer.periodic(
-      Duration(seconds: 1),
+      Duration(milliseconds: 10),
       (timer) => setState(() => _time = DateTime.now()),
     );
   }

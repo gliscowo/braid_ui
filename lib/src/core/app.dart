@@ -464,5 +464,5 @@ node [shape="box"];
   void scheduleLayout(WidgetInstance<InstanceWidget> instance) => _layoutQueue.add(instance);
 
   @override
-  void notifyContinuousLayout() => _mergeToLayoutQueue = true;
+  void notifySubtreeRebuild() => _mergeToLayoutQueue = true;
 }

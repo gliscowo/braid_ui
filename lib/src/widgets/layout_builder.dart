@@ -8,7 +8,7 @@ typedef LayoutBuilderCallback = Widget Function(BuildContext context, Constraint
 class LayoutBuilder extends InstanceWidget {
   final LayoutBuilderCallback builder;
 
-  LayoutBuilder({
+  const LayoutBuilder({
     required this.builder,
   });
 
@@ -48,7 +48,9 @@ class _LayoutBuilderInstance extends OptionalChildWidgetInstance with OptionalSh
 
   @override
   void doLayout(Constraints constraints) {
+    host!.notifySubtreeRebuild();
     _callback(constraints);
+
     super.doLayout(constraints);
   }
 }

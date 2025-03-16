@@ -6,6 +6,7 @@ import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math.dart';
 
 import '../../braid_ui.dart';
+import '../widgets/layout_builder.dart';
 import 'proxy.dart';
 import 'widget.dart';
 
@@ -135,9 +136,21 @@ extension type const InstanceFlags._(int _value) {
 abstract interface class InstanceHost {
   TextRenderer get textRenderer;
 
+  /// Schedule a [WidgetInstance.layout] invocation for [instance],
+  /// to be executed during the next layout pass.
+  ///
+  /// This function must generally not be called during a layout pass
+  /// unless [notifySubtreeRebuild] has been invoked first since
+  /// otherwise we run the risk of laying out some instances twice
   void scheduleLayout(WidgetInstance instance);
-  // TODO: this needs a better name
-  void notifyContinuousLayout();
+
+  /// Notify the layout scheduler that a widget or proxy subtree
+  /// of the current element is (likely) about to rebuild and
+  /// subsequently [scheduleLayout] may be invoked during the
+  /// current layout pass
+  ///
+  /// This is used to implement the [LayoutBuilder] mechanism
+  void notifySubtreeRebuild();
 }
 
 typedef VoidCallback = void Function();
@@ -174,9 +187,9 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
 
   @nonVirtual
   Size layout(Constraints constraints) {
-    print('${'  ' * depth}﹂layout $this ${constraints.isTight ? 'TIGHT' : ''}');
+    // print('${'  ' * depth}﹂layout $this ${constraints.isTight ? 'TIGHT' : ''}');
     if (!_needsLayout && constraints == _constraints) {
-      print('${'  ' * depth}﹂skipped');
+      // print('${'  ' * depth}﹂skipped');
       return transform.toSize();
     }
 
@@ -270,21 +283,11 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
 
   // ---
 
-  // void dump() {
-  //   print('${'  ' * depth}﹂$this');
-  //   for (final child in children) {
-  //     child.dump();
-  //   }
-  // }
-
   @override
   int compareTo(WidgetInstance<InstanceWidget> other) => NodeWithDepth.compare(this, other);
 
-  @visibleForOverriding
-  String debugDescribeType() => runtimeType.toString();
-
   @override
-  String toString() => '${isRelayoutBoundary ? 'BOUNDARY@' : ''}${debugDescribeType()}@${hashCode.toRadixString(16)}';
+  String toString() => '${isRelayoutBoundary ? 'BOUNDARY@' : ''}$runtimeType@${hashCode.toRadixString(16)}';
 }
 
 abstract class LeafWidgetInstance<T extends InstanceWidget> extends WidgetInstance<T> {
@@ -380,12 +383,7 @@ abstract class SingleChildWidgetInstance<T extends InstanceWidget> extends Widge
 
   SingleChildWidgetInstance({
     required super.widget,
-    // Widget? childWidget,
-  }) {
-    // if (childWidget != null) {
-    //   _child = adopt(childWidget.assemble(this).instantiate());
-    // }
-  }
+  });
 
   @override
   WidgetInstance get child {
@@ -407,10 +405,7 @@ abstract class OptionalChildWidgetInstance<T extends InstanceWidget> extends Wid
 
   OptionalChildWidgetInstance({
     required super.widget,
-    // required Widget? childWidget,
-  }) {
-    // _child = adopt(childWidget?.assemble(this).instantiate());
-  }
+  });
 
   @override
   WidgetInstance? get child => _child;
@@ -438,5 +433,5 @@ WidgetInstance dumpGraphviz(WidgetInstance widget, [IOSink? out]) {
 }
 
 String _formatWidget(WidgetInstance widget) {
-  return '"${widget.debugDescribeType()}\\n${widget.hashCode.toRadixString(16)}\\n${widget.transform.x}, ${widget.transform.y}"';
+  return '"${widget.runtimeType}\\n${widget.hashCode.toRadixString(16)}\\n${widget.transform.x}, ${widget.transform.y}"';
 }

@@ -7,7 +7,7 @@ import '../framework/widget.dart';
 
 /// A vertical array of widgets
 class Column extends Flex {
-  Column({
+  const Column({
     super.mainAxisAlignment,
     super.crossAxisAlignment,
     required super.children,
@@ -16,7 +16,7 @@ class Column extends Flex {
 
 /// A horizontal array of widgets
 class Row extends Flex {
-  Row({
+  const Row({
     super.mainAxisAlignment,
     super.crossAxisAlignment,
     required super.children,
@@ -226,7 +226,7 @@ class Flex extends InstanceWidget {
   final CrossAxisAlignment crossAxisAlignment;
   final List<Widget> children;
 
-  Flex({
+  const Flex({
     super.key,
     this.mainAxisAlignment = MainAxisAlignment.start,
     this.crossAxisAlignment = CrossAxisAlignment.start,
