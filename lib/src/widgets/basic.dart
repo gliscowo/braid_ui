@@ -46,7 +46,7 @@ class VisitorProxy extends ComposedProxy {
   @override
   void doRebuild() {
     child = refreshChild(child, (widget as VisitorWidget).child);
-    visitor(child!.associatedInstance);
+    child!.instanceCallback = visitor;
 
     super.doRebuild();
   }

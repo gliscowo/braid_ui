@@ -217,6 +217,7 @@ class _RootProxy extends SingleChildInstanceWidgetProxy {
 
   void bootstrap(InstanceHost host) {
     _bootstrapped = true;
+    lifecycle = ProxyLifecycle.live;
 
     rebuild();
     depth = 0;

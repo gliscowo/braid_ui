@@ -72,7 +72,10 @@ class BuildScope {
 
 // ---
 
+enum ProxyLifecycle { initial, live, dead }
+
 typedef WidgetProxyVisitor = void Function(WidgetProxy child);
+typedef InstanceCallback = void Function(WidgetInstance childInstance);
 
 sealed class WidgetProxy with NodeWithDepth implements BuildContext, Comparable<WidgetProxy> {
   WidgetProxy(this._widget);
@@ -88,10 +91,15 @@ sealed class WidgetProxy with NodeWithDepth implements BuildContext, Comparable<
   BuildScope? _parentBuildScope;
   BuildScope get buildScope => _parentBuildScope!;
 
+  ProxyLifecycle lifecycle = ProxyLifecycle.initial;
+
   final Map<Type, InheritedProxy?> _dependencies = HashMap();
 
   void mount(WidgetProxy parent) {
     assert(parent.mounted, 'parent proxy must be mounted before its children');
+
+    assert(lifecycle == ProxyLifecycle.initial, 'proxy must be in "initial" lifecycle state when mount() is called');
+    lifecycle = ProxyLifecycle.live;
 
     _parent = parent;
     _parentBuildScope = parent.buildScope;
@@ -100,6 +108,9 @@ sealed class WidgetProxy with NodeWithDepth implements BuildContext, Comparable<
 
   static void _unmountChild(WidgetProxy child) => child.unmount();
   void unmount() {
+    assert(lifecycle == ProxyLifecycle.live, 'proxy must be in "live" lifecycle state when unmount() is called');
+    lifecycle = ProxyLifecycle.dead;
+
     for (final dependency in _dependencies.values.nonNulls) {
       dependency.removeDependent(this);
     }
@@ -136,6 +147,10 @@ sealed class WidgetProxy with NodeWithDepth implements BuildContext, Comparable<
 
       return child;
     } else {
+      if (child != null) {
+        child.unmount();
+      }
+
       return newWidget.proxy()..mount(this);
     }
   }
@@ -151,7 +166,7 @@ sealed class WidgetProxy with NodeWithDepth implements BuildContext, Comparable<
 
   @nonVirtual
   void rebuild({bool force = false}) {
-    if (!force && !needsRebuild) return;
+    if (!(force || (needsRebuild && lifecycle == ProxyLifecycle.live))) return;
 
     doRebuild();
   }
@@ -191,11 +206,13 @@ sealed class WidgetProxy with NodeWithDepth implements BuildContext, Comparable<
   @override
   void visitChildren(WidgetProxyVisitor visitor);
 
-  /// The instance conceptually associated with this proxy, either
-  /// through direct ownership (in the case of an [InstanceWidgetProxy])
-  /// or indirect through ownership of a descendant (in the case of
-  /// a [ComposedProxy])
-  WidgetInstance get associatedInstance;
+  /// Set a callback to be invoked whenever the first instance associated
+  /// with this branch of the proxy tree changes.
+  ///
+  /// The provided callback is invoked immediately with the current instance
+  /// and potentially later during the lifetime of this branch if a descendant
+  /// rebuilds to a different instance
+  set instanceCallback(InstanceCallback callback);
 
   // ---
 
@@ -226,18 +243,21 @@ mixin SingleChildWidgetProxy on WidgetProxy {
 /// an instance because a chain of composed proxies (in the descendants)
 /// can only be terminated by an instance proxy
 abstract class ComposedProxy extends WidgetProxy with SingleChildWidgetProxy {
-  WidgetInstance? _descendantInstance;
-
   ComposedProxy(super.widget);
 
+  WidgetInstance? _descendantInstance;
+  void Function(WidgetInstance)? _instanceCallback;
+
   @override
-  WidgetInstance<InstanceWidget> get associatedInstance {
+  set instanceCallback(void Function(WidgetInstance<InstanceWidget> newAssociatedInstance) callback) {
     assert(
       _descendantInstance != null,
-      'cannot query associated instance of ComposedProxy '
-      'before descendant InstanceWidgetProxy has been mounted',
+      'cannot set instance callback on a ComposedProxy before its '
+      'descendant InstanceWidgetProxy has been mounted',
     );
-    return _descendantInstance!;
+
+    callback(_descendantInstance!);
+    _instanceCallback = callback;
   }
 }
 
@@ -250,6 +270,7 @@ abstract class InstanceWidgetProxy extends WidgetProxy {
   /// initialized upon proxy instantiation and available throughout
   /// its entire lifetime
   WidgetInstance instance;
+  List<InstanceCallback>? _queuedInstanceCallbacks;
 
   InstanceWidgetProxy(InstanceWidget super.widget) : instance = widget.instantiate();
 
@@ -259,6 +280,10 @@ abstract class InstanceWidgetProxy extends WidgetProxy {
 
     while (parent is! InstanceWidgetProxy) {
       (parent as ComposedProxy)._descendantInstance = instance;
+      if (parent._instanceCallback case InstanceCallback callback) {
+        (_queuedInstanceCallbacks ??= []).add(callback);
+      }
+
       parent = parent._parent!;
     }
   }
@@ -276,7 +301,22 @@ abstract class InstanceWidgetProxy extends WidgetProxy {
   }
 
   @override
-  WidgetInstance<InstanceWidget> get associatedInstance => instance;
+  void doRebuild() {
+    super.doRebuild();
+
+    if (_queuedInstanceCallbacks != null) {
+      for (final callback in _queuedInstanceCallbacks!) {
+        callback(instance);
+      }
+    }
+  }
+
+  @override
+  set instanceCallback(InstanceCallback callback) {
+    // Since the instance associated with this proxy can never change,
+    // it is sufficient to invoke the callback once here
+    callback(instance);
+  }
 }
 
 // ---
@@ -433,7 +473,7 @@ class SingleChildInstanceWidgetProxy extends InstanceWidgetProxy with SingleChil
   @override
   void doRebuild() {
     child = refreshChild(child, (widget as SingleChildInstanceWidget).child);
-    instance.child = child!.associatedInstance;
+    child!.instanceCallback = (childInstance) => instance.child = childInstance;
 
     super.doRebuild();
   }
@@ -460,7 +500,7 @@ class OptionalChildInstanceWidgetProxy extends InstanceWidgetProxy with SingleCh
   @override
   void doRebuild() {
     child = refreshChild(child, (widget as OptionalChildInstanceWidget).child);
-    instance.child = child?.associatedInstance;
+    child?.instanceCallback = (childInstance) => instance.child = childInstance;
 
     super.doRebuild();
   }

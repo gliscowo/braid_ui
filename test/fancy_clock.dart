@@ -55,7 +55,7 @@ class ClockApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: [
+    Widget widget = Column(children: [
       Flexible(
         key: Key('a'),
         child: Panel(
@@ -94,6 +94,16 @@ class ClockApp extends StatelessWidget {
         child: DependencyTest(),
       )
     ]);
+
+    const orange = false;
+    if (orange) {
+      widget = DefaultButtonStyle(
+        style: const ButtonStyle(color: Color.rgb(0xEB5B00), hoveredColor: Color.rgb(0xEB5B00)),
+        child: widget,
+      );
+    }
+
+    return widget;
   }
 }
 
@@ -154,7 +164,7 @@ class TimeTextState extends WidgetState<TimeText> {
   void init() {
     super.init();
     _timer = Timer.periodic(
-      Duration(milliseconds: 10),
+      Duration(seconds: 1),
       (timer) => setState(() => _time = DateTime.now()),
     );
   }

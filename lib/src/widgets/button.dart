@@ -9,14 +9,19 @@ import '../framework/widget.dart';
 import 'basic.dart';
 import 'label.dart';
 
-// class ButtonStyleHost extends SingleChildWidgetInstance with ShrinkWrapLayout {
-//   ButtonStyle style;
+class DefaultButtonStyle extends InheritedWidget {
+  final ButtonStyle style;
 
-//   ButtonStyleHost({
-//     required this.style,
-//     required super.child,
-//   });
-// }
+  DefaultButtonStyle({
+    required this.style,
+    required super.child,
+  });
+
+  @override
+  bool mustRebuildDependents(DefaultButtonStyle newWidget) => newWidget.style != style;
+
+  static ButtonStyle? maybeOf(BuildContext context) => context.dependOnAncestor<DefaultButtonStyle>()?.style;
+}
 
 class ButtonStyle {
   static const empty = ButtonStyle();
@@ -102,20 +107,25 @@ class ButtonState extends WidgetState<Button> {
 
   @override
   Widget build(BuildContext context) {
+    var style = widget.style;
+    if (DefaultButtonStyle.maybeOf(context) case ButtonStyle contextStyle) {
+      style = style.overriding(contextStyle);
+    }
+
     return MouseArea(
       cursorStyle: CursorStyle.hand,
       clickCallback: widget.onClick,
       enterCallback: () => setState(() => _hovered = true),
       exitCallback: () => setState(() => _hovered = false),
       child: Panel(
-        cornerRadius: widget.style.cornerRadius ?? _defaultCornerRadius,
+        cornerRadius: style.cornerRadius ?? _defaultCornerRadius,
         color: widget.enabled
             ? _hovered
-                ? widget.style.hoveredColor ?? _defaultHoveredColor
-                : _defaultColor
-            : _defaultDisabledColor,
+                ? style.hoveredColor ?? _defaultHoveredColor
+                : style.color ?? _defaultColor
+            : style.disabledColor ?? _defaultDisabledColor,
         child: Padding(
-          insets: widget.style.padding ?? _defaultPadding,
+          insets: style.padding ?? _defaultPadding,
           child: widget.child,
         ),
       ),

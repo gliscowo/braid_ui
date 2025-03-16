@@ -373,7 +373,12 @@ class FlexProxy extends InstanceWidgetProxy {
 
     // finally, install new children and instances
     _children = newChildren.cast();
-    instance._children = _children.map((e) => instance.adopt(e.associatedInstance)).toList();
+
+    final newInstances = List<WidgetInstance?>.filled(newChildren.length, null);
+    instance._children = newInstances.cast();
+    for (final (idx, newChild) in newChildren.indexed) {
+      newChild!.instanceCallback = (childInstance) => newInstances[idx] = instance.adopt(childInstance);
+    }
 
     super.doRebuild();
   }

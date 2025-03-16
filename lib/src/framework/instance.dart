@@ -153,7 +153,6 @@ abstract interface class InstanceHost {
   void notifySubtreeRebuild();
 }
 
-typedef VoidCallback = void Function();
 typedef WidgetInstanceVisitor = void Function(WidgetInstance child);
 
 abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth implements Comparable<WidgetInstance> {
