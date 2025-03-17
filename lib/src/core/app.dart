@@ -294,7 +294,9 @@ class AppState implements InstanceHost {
       }),
       // ---
       window.onKey.listen((event) {
-        if (event.key == glfwKeyD && (event.mods & glfwModAlt) != 0) {
+        if (event.action == glfwPress &&
+            (event.key == glfwKeyI || event.key == glfwKeyP) &&
+            (event.mods & (glfwModAlt | glfwModShift)) != 0) {
           final treeFile = File('widget_tree.dot');
           final out = treeFile.openWrite();
           out.writeln('''
@@ -302,13 +304,15 @@ digraph {
 splines=false;
 node [shape="box"];
 ''');
-          dumpGraphviz(rootInstance, out);
+          event.key == glfwKeyI ? dumpInstancesGraphviz(rootInstance, out) : dumpProxiesGraphviz(_root, out);
           out
             ..writeln('}')
             ..flush().then((value) {
               Process.start('dot', ['-Tsvg', '-owidget_tree.svg', 'widget_tree.dot'],
                       mode: ProcessStartMode.inheritStdio)
-                  .then((proc) => proc.exitCode.then((_) => treeFile.delete()));
+                  .then((proc) => proc.exitCode.then((_) {
+                        return treeFile.delete();
+                      }));
             });
         }
 

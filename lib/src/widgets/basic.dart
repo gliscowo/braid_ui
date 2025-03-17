@@ -27,13 +27,13 @@ abstract class VisitorWidget extends Widget {
 
 typedef InstanceVisitor = void Function(WidgetInstance instance);
 
-class VisitorProxy extends ComposedProxy {
+class VisitorProxy extends ComposedProxy with InstanceListenerProxy {
   final InstanceVisitor visitor;
   VisitorProxy(VisitorWidget super.widget, this.visitor);
 
   @override
-  void mount(WidgetProxy parent) {
-    super.mount(parent);
+  void mount(WidgetProxy parent, Object? slot) {
+    super.mount(parent, slot);
     rebuild();
   }
 
@@ -45,10 +45,13 @@ class VisitorProxy extends ComposedProxy {
 
   @override
   void doRebuild() {
-    child = refreshChild(child, (widget as VisitorWidget).child);
-    child!.instanceCallback = visitor;
-
+    child = refreshChild(child, (widget as VisitorWidget).child, slot);
     super.doRebuild();
+  }
+
+  @override
+  void notifyDescendantInstance(WidgetInstance<InstanceWidget>? instance, covariant Object? slot) {
+    visitor(instance!);
   }
 }
 
@@ -586,8 +589,8 @@ class _BuilderProxy extends ComposedProxy with SingleChildWidgetProxy {
   _BuilderProxy(Builder super.widget);
 
   @override
-  void mount(WidgetProxy parent) {
-    super.mount(parent);
+  void mount(WidgetProxy parent, Object? slot) {
+    super.mount(parent, slot);
     rebuild();
   }
 
@@ -600,6 +603,6 @@ class _BuilderProxy extends ComposedProxy with SingleChildWidgetProxy {
   @override
   void doRebuild() {
     super.doRebuild();
-    child = refreshChild(child, (widget as Builder).builder(this));
+    child = refreshChild(child, (widget as Builder).builder(this), slot);
   }
 }

@@ -416,19 +416,17 @@ abstract class OptionalChildWidgetInstance<T extends InstanceWidget> extends Wid
   }
 }
 
-// --- widget tree debugging
+// --- instance tree debugging
 
-WidgetInstance dumpGraphviz(WidgetInstance widget, [IOSink? out]) {
+void dumpInstancesGraphviz(WidgetInstance widget, [IOSink? out]) {
   out ??= stdout;
 
   if (widget._parent != null) {
     out.writeln('  ${_formatWidget(widget._parent!)} -> ${_formatWidget(widget)};');
   }
   widget.visitChildren((child) {
-    dumpGraphviz(child, out);
+    dumpInstancesGraphviz(child, out);
   });
-
-  return widget;
 }
 
 String _formatWidget(WidgetInstance widget) {

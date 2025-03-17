@@ -243,6 +243,7 @@ class Flex extends InstanceWidget {
 
 class FlexProxy extends InstanceWidgetProxy {
   List<WidgetProxy> _children = [];
+  List<WidgetInstance?> _childInstances = [];
 
   FlexProxy(super.widget);
 
@@ -257,8 +258,8 @@ class FlexProxy extends InstanceWidgetProxy {
   }
 
   @override
-  void mount(WidgetProxy parent) {
-    super.mount(parent);
+  void mount(WidgetProxy parent, Object? slot) {
+    super.mount(parent, slot);
     rebuild();
   }
 
@@ -280,6 +281,13 @@ class FlexProxy extends InstanceWidgetProxy {
 
     final newChildren = List<WidgetProxy?>.filled(newWidgets.length, null);
 
+    // we already set up the new child instance list, so that any
+    // notifyDescendantInstance invocations caused by the below
+    // refreshChild calls always index into the correct list
+    _childInstances = List<WidgetInstance?>.filled(newChildren.length, null);
+    List.copyRange(_childInstances, 0, instance._children, 0, min(_childInstances.length, instance._children.length));
+    instance._children = _childInstances.cast();
+
     // sync from the top
     while ((oldChildrenTop <= oldChildrenBottom) && (newChildrenTop <= newChildrenBottom)) {
       final oldChild = _children[oldChildrenTop];
@@ -289,7 +297,9 @@ class FlexProxy extends InstanceWidgetProxy {
         break;
       }
 
-      newChildren[newChildrenTop] = refreshChild(oldChild, newWidget);
+      newChildren[newChildrenTop] = refreshChild(oldChild, newWidget, newChildrenTop);
+      assert(_childInstances[newChildrenTop] != null);
+
       oldChildrenTop++;
       newChildrenTop++;
     }
@@ -348,7 +358,9 @@ class FlexProxy extends InstanceWidgetProxy {
         }
       }
 
-      newChildren[newChildrenTop] = refreshChild(oldChild, newWidget);
+      newChildren[newChildrenTop] = refreshChild(oldChild, newWidget, newChildrenTop);
+      assert(_childInstances[newChildrenTop] != null);
+
       newChildrenTop++;
     }
 
@@ -359,7 +371,9 @@ class FlexProxy extends InstanceWidgetProxy {
       final oldChild = _children[oldChildrenTop];
       final newWidget = newWidgets[newChildrenTop];
 
-      newChildren[newChildrenTop] = refreshChild(oldChild, newWidget);
+      newChildren[newChildrenTop] = refreshChild(oldChild, newWidget, newChildrenTop);
+      assert(_childInstances[newChildrenTop] != null);
+
       oldChildrenTop++;
       newChildrenTop++;
     }
@@ -371,15 +385,14 @@ class FlexProxy extends InstanceWidgetProxy {
       }
     }
 
-    // finally, install new children and instances
+    // finally, install new children
     _children = newChildren.cast();
 
-    final newInstances = List<WidgetInstance?>.filled(newChildren.length, null);
-    instance._children = newInstances.cast();
-    for (final (idx, newChild) in newChildren.indexed) {
-      newChild!.instanceCallback = (childInstance) => newInstances[idx] = instance.adopt(childInstance);
-    }
-
     super.doRebuild();
+  }
+
+  @override
+  void notifyDescendantInstance(WidgetInstance<InstanceWidget>? instance, int slot) {
+    _childInstances[slot] = this.instance.adopt(instance);
   }
 }

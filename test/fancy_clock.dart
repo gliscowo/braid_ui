@@ -92,7 +92,7 @@ class ClockApp extends StatelessWidget {
       Constrained(
         constraints: Constraints.only(minHeight: 25),
         child: DependencyTest(),
-      )
+      ),
     ]);
 
     const orange = false;
