@@ -25,10 +25,10 @@ abstract class VisitorWidget extends Widget {
   VisitorProxy proxy();
 }
 
-typedef InstanceVisitor = void Function(WidgetInstance instance);
+typedef InstanceVisitor<T> = void Function(T widget, WidgetInstance instance);
 
-class VisitorProxy extends ComposedProxy with InstanceListenerProxy {
-  final InstanceVisitor visitor;
+class VisitorProxy<T extends VisitorWidget> extends ComposedProxy with InstanceListenerProxy {
+  final InstanceVisitor<T> visitor;
   VisitorProxy(VisitorWidget super.widget, this.visitor);
 
   @override
@@ -51,7 +51,7 @@ class VisitorProxy extends ComposedProxy with InstanceListenerProxy {
 
   @override
   void notifyDescendantInstance(WidgetInstance<InstanceWidget>? instance, covariant Object? slot) {
-    visitor(instance!);
+    visitor(widget as T, instance!);
   }
 }
 
@@ -66,17 +66,16 @@ class Flexible extends VisitorWidget {
     required super.child,
   });
 
+  static _visitor(Flexible widget, WidgetInstance instance) {
+    if (instance.parentData case FlexParentData data) {
+      data.flexFactor = widget.flexFactor;
+    } else {
+      instance.parentData = FlexParentData(widget.flexFactor);
+    }
+  }
+
   @override
-  VisitorProxy proxy() => VisitorProxy(
-        this,
-        (instance) {
-          if (instance.parentData case FlexParentData data) {
-            data.flexFactor = flexFactor;
-          } else {
-            instance.parentData = FlexParentData(flexFactor);
-          }
-        },
-      );
+  VisitorProxy proxy() => VisitorProxy<Flexible>(this, _visitor);
 }
 
 class HitTestOccluder extends VisitorWidget {
@@ -85,11 +84,12 @@ class HitTestOccluder extends VisitorWidget {
     required super.child,
   });
 
+  static _visitor(HitTestOccluder _, WidgetInstance instance) {
+    instance.flags += InstanceFlags.hitTestBoundary;
+  }
+
   @override
-  VisitorProxy proxy() => VisitorProxy(
-        this,
-        (instance) => instance.flags += InstanceFlags.hitTestBoundary,
-      );
+  VisitorProxy proxy() => VisitorProxy<HitTestOccluder>(this, _visitor);
 }
 
 // ---

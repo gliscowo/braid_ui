@@ -32,7 +32,7 @@ class _LayoutBuilderProxy extends InstanceWidgetProxy with SingleChildWidgetProx
 
   void _rebuild(Constraints constraints) {
     final newWidget = (widget as LayoutBuilder).builder(this, constraints);
-    child = refreshChild(child, newWidget, slot);
+    child = refreshChild(child, newWidget, null);
 
     buildScope.rebuildDirtyProxies();
   }
