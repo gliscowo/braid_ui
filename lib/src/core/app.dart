@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:ffi' as ffi;
 import 'dart:io';
 import 'dart:math';
@@ -205,7 +206,7 @@ class _RootWidget extends SingleChildInstanceWidget {
   _RootProxy proxy() => _RootProxy(this);
 }
 
-class _RootProxy extends SingleChildInstanceWidgetProxy {
+class _RootProxy extends SingleChildInstanceWidgetProxy with RootProxyMixin {
   _RootProxy(super.widget);
 
   @override
@@ -215,15 +216,17 @@ class _RootProxy extends SingleChildInstanceWidgetProxy {
   bool get mounted => _bootstrapped;
   bool _bootstrapped = false;
 
-  void bootstrap(InstanceHost host) {
+  void bootstrap(InstanceHost instanceHost, ProxyHost proxyHost) {
     _bootstrapped = true;
     lifecycle = ProxyLifecycle.live;
+
+    host = proxyHost;
 
     rebuild();
     depth = 0;
 
     instance.depth = 0;
-    instance.attachHost(host);
+    instance.attachHost(instanceHost);
   }
 }
 
@@ -233,7 +236,7 @@ class _RootInstance extends SingleChildWidgetInstance with ShrinkWrapLayout {
 
 // ---
 
-class AppState implements InstanceHost {
+class AppState implements InstanceHost, ProxyHost {
   final BraidResources resources;
   final Logger? logger;
 
@@ -247,6 +250,7 @@ class AppState implements InstanceHost {
   final PrimitiveRenderer primitives;
 
   final BuildScope _rootBuildScope = BuildScope();
+  Queue<AnimationCallback> _callbacks = DoubleLinkedQueue();
   late _RootProxy _root;
 
   Set<MouseListener> _hovered = {};
@@ -265,7 +269,7 @@ class AppState implements InstanceHost {
     this.logger,
   }) : cursorController = CursorController.ofWindow(window) {
     _root = _RootWidget(child: root, rootBuildScope: _rootBuildScope).proxy();
-    _root.bootstrap(this);
+    _root.bootstrap(this, this);
 
     _scheduleScaffoldLayout(force: true, global: true);
     _subscriptions.add(window.onResize.listen((event) => _scheduleScaffoldLayout(force: true)));
@@ -341,6 +345,16 @@ node [shape="box"];
   void updateWidgetsAndInteractions(double delta) {
     // TODO: schedule things properly
     // scaffold.update(delta);
+
+    if (_callbacks.isNotEmpty) {
+      final callbacksForThisFrame = _callbacks;
+      _callbacks = DoubleLinkedQueue();
+
+      while (callbacksForThisFrame.isNotEmpty) {
+        final callback = callbacksForThisFrame.removeFirst();
+        callback(delta);
+      }
+    }
 
     _rootBuildScope.rebuildDirtyProxies();
     flushLayoutQueue();
@@ -470,4 +484,7 @@ node [shape="box"];
 
   @override
   void notifySubtreeRebuild() => _mergeToLayoutQueue = true;
+
+  @override
+  void scheduleAnimationCallback(AnimationCallback callback) => _callbacks.add(callback);
 }

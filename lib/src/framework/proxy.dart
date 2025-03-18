@@ -37,15 +37,34 @@ mixin NodeWithDepth {
 
 // ---
 
+typedef AnimationCallback = void Function(double delta);
+
+abstract interface class ProxyHost {
+  void scheduleAnimationCallback(AnimationCallback callback);
+}
+
 class BuildScope {
   final List<WidgetProxy> _dirtyProxies = [];
   bool _resortProxies = true;
 
+  final void Function()? _scheduleRebuild;
+  BuildScope([this._scheduleRebuild]);
+
+  /// Schedule a rebuild of [proxy] during the next (or current, if
+  /// there is one) build pass of this scope
   void scheduleRebuild(WidgetProxy proxy) {
     _dirtyProxies.add(proxy);
     _resortProxies = true;
+
+    _scheduleRebuild?.call();
   }
 
+  /// Rebuild all dirty proxies in this scope
+  ///
+  /// The framework only ever invokes this on the root proxy's scope,
+  /// this if any descendant proxies introduce a new build scope
+  /// it is their responsibility to build the proxies in that scope
+  /// when appropriate
   void rebuildDirtyProxies() {
     _dirtyProxies.sort();
 
@@ -94,6 +113,9 @@ sealed class WidgetProxy with NodeWithDepth implements BuildContext, Comparable<
   Object? _slot;
   Object? get slot => _slot;
 
+  ProxyHost? _host;
+  ProxyHost? get host => _host;
+
   ProxyLifecycle lifecycle = ProxyLifecycle.initial;
 
   final Map<Type, InheritedProxy?> _dependencies = HashMap();
@@ -108,6 +130,7 @@ sealed class WidgetProxy with NodeWithDepth implements BuildContext, Comparable<
     _parentBuildScope = parent.buildScope;
     depth = parent.depth + 1;
     _slot = slot;
+    _host = parent._host;
   }
 
   @mustCallSuper
@@ -226,6 +249,10 @@ sealed class WidgetProxy with NodeWithDepth implements BuildContext, Comparable<
 
   @override
   String toString() => '$runtimeType (${_widget.runtimeType})';
+}
+
+mixin RootProxyMixin on WidgetProxy {
+  set host(ProxyHost? value) => _host = value;
 }
 
 /// Storage and visiting facilities for all proxies which
@@ -449,7 +476,11 @@ abstract class WidgetState<T extends StatefulWidget> {
     _owner!.markNeedsRebuild();
   }
 
-  void didUpdateWidget(covariant T oldWidget) {}
+  // TODO: this is not really the ideal way of doing this
+  @nonVirtual
+  void scheduleAnimationCallback(AnimationCallback callback) => _owner!.host!.scheduleAnimationCallback(callback);
+
+  void didUpdateWidget(T oldWidget) {}
 }
 
 // ---

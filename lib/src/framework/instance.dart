@@ -238,7 +238,6 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
     }
   }
 
-  @protected
   void markNeedsLayout() {
     _needsLayout = true;
 

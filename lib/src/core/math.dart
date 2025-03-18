@@ -75,6 +75,9 @@ class Insets {
 
   Insets operator /(Insets other) =>
       Insets(top: top / other.top, bottom: bottom / other.bottom, left: left / other.left, right: right / other.right);
+
+  @override
+  String toString() => 'Insets(top: $top, bottom: $bottom, left: $left, right: $right)';
 }
 
 extension Dimensions on Aabb3 {

@@ -21,7 +21,7 @@ class LayoutBuilder extends InstanceWidget {
 
 class _LayoutBuilderProxy extends InstanceWidgetProxy with SingleChildWidgetProxy {
   @override
-  final BuildScope buildScope = BuildScope();
+  late final BuildScope buildScope = BuildScope(() => instance.markNeedsLayout());
 
   @override
   _LayoutBuilderInstance get instance => super.instance as _LayoutBuilderInstance;

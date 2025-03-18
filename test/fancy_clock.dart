@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:braid_ui/braid_ui.dart';
 import 'package:braid_ui/src/framework/proxy.dart';
 import 'package:braid_ui/src/framework/widget.dart';
+import 'package:braid_ui/src/widgets/animated_padding.dart';
 import 'package:braid_ui/src/widgets/basic.dart';
 import 'package:braid_ui/src/widgets/layout_builder.dart';
 import 'package:diamond_gl/diamond_gl.dart';
@@ -78,6 +79,13 @@ class ClockApp extends StatelessWidget {
           builder: (context, constraints) => Panel(
             color: constraints.maxWidth > 600 ? Color.green : Color.blue,
             cornerRadius: 0.0,
+            child: const AnimatedPadding(
+              duration: Duration(milliseconds: 250),
+              insets: Insets(top: 10, bottom: 10, left: 10, right: 10),
+              child: Panel(
+                color: Color.white,
+              ),
+            ),
           ),
         ),
         flexFactor: .5,
