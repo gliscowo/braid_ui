@@ -254,6 +254,7 @@ class AppState implements InstanceHost, ProxyHost {
   late _RootProxy _root;
 
   Set<MouseListener> _hovered = {};
+  MouseListener? _dragStart;
   KeyboardListener? _focused;
 
   final List<StreamSubscription> _subscriptions = [];
@@ -282,14 +283,22 @@ class AppState implements InstanceHost, ProxyHost {
           .listen((event) {
         final state = _hitTest();
 
-        state.firstWhere(
+        final clicked = state.firstWhere(
           (instance) => instance is MouseListener && (instance as MouseListener).onMouseDown(),
         );
+
+        if (clicked != null) {
+          _dragStart = clicked.instance as MouseListener;
+        }
 
         _focused?.onFocusLost();
         _focused = state.firstWhere((instance) => instance is KeyboardListener)?.instance as KeyboardListener?;
         _focused?.onFocusGained();
       }),
+      window.onMouseMove.listen((event) => _dragStart?.onMouseDrag(event.deltaX, event.deltaY)),
+      window.onMouseButton
+          .where((event) => event.action == glfwRelease && event.button == glfwMouseButtonLeft)
+          .listen((event) => _dragStart = null),
       // ---
       window.onMouseScroll.listen((event) {
         _hitTest().firstWhere(

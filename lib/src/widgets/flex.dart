@@ -29,6 +29,11 @@ enum LayoutAxis {
   horizontal,
   vertical;
 
+  T choose<T>(T horizontal, T vertical) => switch (this) {
+        LayoutAxis.horizontal => horizontal,
+        LayoutAxis.vertical => vertical,
+      };
+
   Size createSize(double extent, double crossExtent) => switch (this) {
         LayoutAxis.horizontal => Size(extent, crossExtent),
         LayoutAxis.vertical => Size(crossExtent, extent),

@@ -232,7 +232,7 @@ class Panel extends OptionalChildInstanceWidget {
   const Panel({
     super.key,
     required this.color,
-    this.cornerRadius = 10.0,
+    this.cornerRadius = 0.0,
     super.child,
   });
 
@@ -265,6 +265,7 @@ class MouseArea extends SingleChildInstanceWidget {
   final void Function()? clickCallback;
   final void Function()? enterCallback;
   final void Function()? exitCallback;
+  final void Function(double dx, double dy)? dragCallback;
   final void Function(double horizontal, double vertical)? scrollCallback;
   final CursorStyle? cursorStyle;
 
@@ -273,6 +274,7 @@ class MouseArea extends SingleChildInstanceWidget {
     this.clickCallback,
     this.enterCallback,
     this.exitCallback,
+    this.dragCallback,
     this.scrollCallback,
     this.cursorStyle,
     required super.child,
@@ -283,32 +285,25 @@ class MouseArea extends SingleChildInstanceWidget {
 }
 
 class MouseAreaInstance extends SingleChildWidgetInstance<MouseArea> with ShrinkWrapLayout, MouseListener {
-  bool _hovered = false;
-
   MouseAreaInstance({
     required super.widget,
   });
 
   @override
-  bool onMouseDown() => (widget.clickCallback?..call()) != null;
+  bool onMouseDown() => (widget.clickCallback?..call()) != null || widget.dragCallback != null;
 
   @override
-  void onMouseEnter() {
-    _hovered = true;
-    widget.enterCallback?.call();
-  }
+  void onMouseEnter() => widget.enterCallback?.call();
 
   @override
-  void onMouseExit() {
-    _hovered = false;
-    widget.exitCallback?.call();
-  }
+  void onMouseExit() => widget.exitCallback?.call();
+
+  @override
+  void onMouseDrag(double dx, double dy) => widget.dragCallback?.call(dx, dy);
 
   @override
   bool onMouseScroll(double horizontal, double vertical) =>
       (widget.scrollCallback?..call(horizontal, vertical)) != null;
-
-  bool get hovered => _hovered;
 }
 
 // ---
