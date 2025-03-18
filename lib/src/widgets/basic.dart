@@ -265,7 +265,9 @@ class MouseArea extends SingleChildInstanceWidget {
   final void Function()? clickCallback;
   final void Function()? enterCallback;
   final void Function()? exitCallback;
+  final void Function()? dragStartCallback;
   final void Function(double dx, double dy)? dragCallback;
+  final void Function()? dragEndCallback;
   final void Function(double horizontal, double vertical)? scrollCallback;
   final CursorStyle? cursorStyle;
 
@@ -274,7 +276,9 @@ class MouseArea extends SingleChildInstanceWidget {
     this.clickCallback,
     this.enterCallback,
     this.exitCallback,
+    this.dragStartCallback,
     this.dragCallback,
+    this.dragEndCallback,
     this.scrollCallback,
     this.cursorStyle,
     required super.child,
@@ -299,7 +303,13 @@ class MouseAreaInstance extends SingleChildWidgetInstance<MouseArea> with Shrink
   void onMouseExit() => widget.exitCallback?.call();
 
   @override
+  void onMouseDragStart() => widget.dragStartCallback?.call();
+
+  @override
   void onMouseDrag(double dx, double dy) => widget.dragCallback?.call(dx, dy);
+
+  @override
+  void onMouseDragEnd() => widget.dragEndCallback?.call();
 
   @override
   bool onMouseScroll(double horizontal, double vertical) =>

@@ -37,19 +37,42 @@ class DragApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SplitPane(
-      firstChild: Panel(
+    return const HorizontalSplitPane(
+      leftChild: Panel(
         key: Key('a'),
         color: Color.blue,
       ),
-      secondChild: SplitPane(
+      rightChild: VerticalSplitPane(
         key: Key('b'),
-        axis: LayoutAxis.vertical,
-        firstChild: Flexible(child: Panel(color: Color.white)),
-        secondChild: Flexible(child: Panel(color: Color.red)),
+        topChild: Flexible(child: Panel(color: Color.white)),
+        bottomChild: Flexible(child: Panel(color: Color.red)),
       ),
     );
   }
+}
+
+class VerticalSplitPane extends SplitPane {
+  const VerticalSplitPane({
+    super.key,
+    required Widget topChild,
+    required Widget bottomChild,
+  }) : super(
+          axis: LayoutAxis.vertical,
+          firstChild: topChild,
+          secondChild: bottomChild,
+        );
+}
+
+class HorizontalSplitPane extends SplitPane {
+  const HorizontalSplitPane({
+    super.key,
+    required Widget leftChild,
+    required Widget rightChild,
+  }) : super(
+          axis: LayoutAxis.horizontal,
+          firstChild: leftChild,
+          secondChild: rightChild,
+        );
 }
 
 class SplitPane extends StatefulWidget {
@@ -59,7 +82,7 @@ class SplitPane extends StatefulWidget {
 
   const SplitPane({
     super.key,
-    this.axis = LayoutAxis.horizontal,
+    required this.axis,
     required this.firstChild,
     required this.secondChild,
   });
@@ -69,19 +92,20 @@ class SplitPane extends StatefulWidget {
 }
 
 class _SplitPaneState extends WidgetState<SplitPane> {
-  double _splitLocation = 0.5;
+  double? _splitCoordinate;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final axis = widget.axis;
-        final maxSize = constraints.maxOnAxis(axis) - 6;
+        final maxSize = constraints.maxOnAxis(axis) - 4;
 
-        final firstConstraints =
-            Constraints.tight(axis.createSize(maxSize * _splitLocation, constraints.maxOnAxis(axis.opposite)));
+        final split = (_splitCoordinate ??= .5 * maxSize).clamp(.1 * maxSize, .9 * maxSize).toDouble();
+
+        final firstConstraints = Constraints.tight(axis.createSize(split, constraints.maxOnAxis(axis.opposite)));
         final secondConstraints =
-            Constraints.tight(axis.createSize(maxSize * (1 - _splitLocation), constraints.maxOnAxis(axis.opposite)));
+            Constraints.tight(axis.createSize(maxSize - split, constraints.maxOnAxis(axis.opposite)));
 
         return Flex(
           mainAxis: axis,
@@ -96,8 +120,9 @@ class _SplitPaneState extends WidgetState<SplitPane> {
               child: MouseArea(
                 cursorStyle: axis.choose(CursorStyle.horizontalResize, CursorStyle.verticalResize),
                 dragCallback: (dx, dy) => setState(() {
-                  _splitLocation = (_splitLocation + axis.choose(dx, dy) / constraints.maxOnAxis(axis)).clamp(0.1, 0.9);
+                  _splitCoordinate = (_splitCoordinate! + axis.choose(dx, dy));
                 }),
+                dragEndCallback: () => _splitCoordinate = _splitCoordinate!.clamp(.1 * maxSize, .9 * maxSize),
                 child: Panel(color: Color.green),
               ),
             ),

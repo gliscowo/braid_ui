@@ -111,7 +111,9 @@ mixin MouseListener {
   bool onMouseDown() => false;
   void onMouseEnter() {}
   void onMouseExit() {}
+  void onMouseDragStart() {}
   void onMouseDrag(double dx, double dy) {}
+  void onMouseDragEnd() {}
   bool onMouseScroll(double horizontal, double vertical) => false;
 }
 

@@ -254,7 +254,8 @@ class AppState implements InstanceHost, ProxyHost {
   late _RootProxy _root;
 
   Set<MouseListener> _hovered = {};
-  MouseListener? _dragStart;
+  MouseListener? _dragging;
+  bool _dragStarted = false;
   KeyboardListener? _focused;
 
   final List<StreamSubscription> _subscriptions = [];
@@ -288,17 +289,31 @@ class AppState implements InstanceHost, ProxyHost {
         );
 
         if (clicked != null) {
-          _dragStart = clicked.instance as MouseListener;
+          _dragging = clicked.instance as MouseListener;
+          _dragStarted = false;
         }
 
         _focused?.onFocusLost();
         _focused = state.firstWhere((instance) => instance is KeyboardListener)?.instance as KeyboardListener?;
         _focused?.onFocusGained();
       }),
-      window.onMouseMove.listen((event) => _dragStart?.onMouseDrag(event.deltaX, event.deltaY)),
+      window.onMouseMove.listen((event) {
+        if (!_dragStarted) {
+          _dragging?.onMouseDragStart();
+          _dragStarted = true;
+        }
+
+        _dragging?.onMouseDrag(event.deltaX, event.deltaY);
+      }),
       window.onMouseButton
           .where((event) => event.action == glfwRelease && event.button == glfwMouseButtonLeft)
-          .listen((event) => _dragStart = null),
+          .listen((event) {
+        if (_dragStarted) {
+          _dragging?.onMouseDragEnd();
+        }
+
+        _dragging = null;
+      }),
       // ---
       window.onMouseScroll.listen((event) {
         _hitTest().firstWhere(
@@ -391,14 +406,18 @@ node [shape="box"];
 
     // ---
 
-    final cursorStyleSource = state.firstWhere(
-        (widgetInstance) => widgetInstance is MouseAreaInstance && widgetInstance.widget.cursorStyle != null);
-    if (cursorStyleSource
-        case (instance: MouseAreaInstance(widget: MouseArea(cursorStyle: var cursorStyle?)), coordinates: _)) {
-      cursorController.style = cursorStyle;
+    CursorStyle? activeStyle;
+    if (_dragging != null) {
+      activeStyle = _dragging is MouseAreaInstance ? (_dragging as MouseAreaInstance).widget.cursorStyle : null;
     } else {
-      cursorController.style = CursorStyle.none;
+      final cursorStyleSource = state.firstWhere(
+        (widgetInstance) => widgetInstance is MouseAreaInstance && widgetInstance.widget.cursorStyle != null,
+      );
+
+      activeStyle = (cursorStyleSource?.instance as MouseAreaInstance?)?.widget.cursorStyle;
     }
+
+    cursorController.style = activeStyle ?? CursorStyle.none;
   }
 
   void rebuildRoot() {
