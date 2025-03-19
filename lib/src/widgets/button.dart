@@ -1,5 +1,3 @@
-// TODO: descendant->ancestor layout dependencies
-
 import 'package:diamond_gl/diamond_gl.dart';
 
 import '../core/cursors.dart';

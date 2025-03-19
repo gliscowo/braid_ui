@@ -367,9 +367,6 @@ node [shape="box"];
   }
 
   void updateWidgetsAndInteractions(double delta) {
-    // TODO: schedule things properly
-    // scaffold.update(delta);
-
     if (_callbacks.isNotEmpty) {
       final callbacksForThisFrame = _callbacks;
       _callbacks = DoubleLinkedQueue();

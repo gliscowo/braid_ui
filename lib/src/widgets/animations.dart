@@ -77,6 +77,7 @@ class AnimatedPadding extends AutomaticallyAnimatedWidget {
 
 // ---
 
+// TODO: customizable easing
 abstract class AutomaticallyAnimatedWidget extends StatefulWidget {
   final Duration duration;
 
