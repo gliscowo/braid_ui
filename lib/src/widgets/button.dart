@@ -94,7 +94,14 @@ class Button extends StatefulWidget {
     bool enabled = true,
     required void Function() onClick,
     required String text,
-  }) : this(key: key, style: style, enabled: enabled, onClick: onClick, child: Label(text: text));
+  }) : this(
+          key: key,
+          style: style,
+          enabled: enabled,
+          onClick: onClick,
+          // TODO: allow customizing this through the button style
+          child: Label(text: text, style: LabelStyle(fontSize: 14, bold: true)),
+        );
 
   @override
   WidgetState createState() => ButtonState();
@@ -110,24 +117,30 @@ class ButtonState extends WidgetState<Button> {
       style = style.overriding(contextStyle);
     }
 
-    return MouseArea(
-      cursorStyle: CursorStyle.hand,
-      clickCallback: widget.onClick,
-      enterCallback: () => setState(() => _hovered = true),
-      exitCallback: () => setState(() => _hovered = false),
-      child: Panel(
-        cornerRadius: style.cornerRadius ?? _defaultCornerRadius,
-        color: widget.enabled
-            ? _hovered
-                ? style.hoveredColor ?? _defaultHoveredColor
-                : style.color ?? _defaultColor
-            : style.disabledColor ?? _defaultDisabledColor,
-        child: Padding(
-          insets: style.padding ?? _defaultPadding,
-          child: widget.child,
-        ),
+    Widget result = Panel(
+      cornerRadius: style.cornerRadius ?? _defaultCornerRadius,
+      color: widget.enabled
+          ? _hovered
+              ? style.hoveredColor ?? _defaultHoveredColor
+              : style.color ?? _defaultColor
+          : style.disabledColor ?? _defaultDisabledColor,
+      child: Padding(
+        insets: style.padding ?? _defaultPadding,
+        child: widget.child,
       ),
     );
+
+    if (widget.enabled) {
+      result = MouseArea(
+        cursorStyle: CursorStyle.hand,
+        clickCallback: widget.onClick,
+        enterCallback: () => setState(() => _hovered = true),
+        exitCallback: () => setState(() => _hovered = false),
+        child: result,
+      );
+    }
+
+    return result;
   }
 
   static const _defaultColor = Color.rgb(0x3867d6);
