@@ -175,28 +175,73 @@ class ConstrainedInstance extends SingleChildWidgetInstance<Constrained> {
 
 // ---
 
-class Center extends SingleChildInstanceWidget {
+class Alignment {
+  static const topLeft = Alignment(horizontal: 0, vertical: 0);
+  static const top = Alignment(horizontal: .5, vertical: 0);
+  static const topRight = Alignment(horizontal: 1, vertical: 0);
+  static const left = Alignment(horizontal: 0, vertical: .5);
+  static const center = Alignment(horizontal: .5, vertical: .5);
+  static const right = Alignment(horizontal: 1, vertical: .5);
+  static const bottomLeft = Alignment(horizontal: 0, vertical: 1);
+  static const bottom = Alignment(horizontal: .5, vertical: 1);
+  static const bottomRight = Alignment(horizontal: 1, vertical: 1);
+
+  // ---
+
+  final double horizontal;
+  final double vertical;
+
+  const Alignment({
+    required this.horizontal,
+    required this.vertical,
+  });
+
+  get _props => (horizontal, vertical);
+
+  @override
+  int get hashCode => _props.hashCode;
+
+  @override
+  bool operator ==(Object other) => other is Alignment && other._props == _props;
+}
+
+class Center extends Align {
+  const Center({
+    super.key,
+    super.widthFactor,
+    super.heightFactor,
+    required super.child,
+  }) : super(alignment: Alignment.center);
+}
+
+class Align extends SingleChildInstanceWidget {
+  final Alignment alignment;
   final double? widthFactor, heightFactor;
 
-  const Center({
+  const Align({
     super.key,
     this.widthFactor,
     this.heightFactor,
+    required this.alignment,
     required super.child,
   });
 
   @override
-  CenterInstance instantiate() => CenterInstance(widget: this);
+  SingleChildWidgetInstance instantiate() => _AlignInstance(widget: this);
 }
 
-class CenterInstance extends SingleChildWidgetInstance<Center> {
-  CenterInstance({
+class _AlignInstance extends SingleChildWidgetInstance<Align> {
+  _AlignInstance({
     required super.widget,
   });
 
   @override
-  set widget(Center value) {
-    if (widget.widthFactor == value.widthFactor && widget.heightFactor == value.heightFactor) return;
+  set widget(Align value) {
+    if (widget.widthFactor == value.widthFactor &&
+        widget.heightFactor == value.heightFactor &&
+        widget.alignment == value.alignment) {
+      return;
+    }
 
     super.widget = value;
     markNeedsLayout();
@@ -205,6 +250,7 @@ class CenterInstance extends SingleChildWidgetInstance<Center> {
   @override
   void doLayout(Constraints constraints) {
     final widthFactor = widget.widthFactor, heightFactor = widget.heightFactor;
+    final alignment = widget.alignment;
 
     final childSize = child.layout(constraints.asLoose());
     final selfSize = Size(
@@ -216,8 +262,8 @@ class CenterInstance extends SingleChildWidgetInstance<Center> {
                 : constraints.maxHeight)
         .constrained(constraints);
 
-    child.transform.x = ((selfSize.width - childSize.width) / 2).floorToDouble();
-    child.transform.y = ((selfSize.height - childSize.height) / 2).floorToDouble();
+    child.transform.x = ((selfSize.width - childSize.width) * alignment.horizontal).floorToDouble();
+    child.transform.y = ((selfSize.height - childSize.height) * alignment.vertical).floorToDouble();
 
     transform.setSize(selfSize);
   }
@@ -228,31 +274,40 @@ class CenterInstance extends SingleChildWidgetInstance<Center> {
 class Panel extends OptionalChildInstanceWidget {
   final Color color;
   final double cornerRadius;
+  final double? outlineThickness;
 
   const Panel({
     super.key,
     required this.color,
     this.cornerRadius = 0.0,
+    this.outlineThickness,
     super.child,
   });
 
   @override
-  PanelInstance instantiate() => PanelInstance(widget: this);
+  OptionalChildWidgetInstance instantiate() => _PanelInstance(widget: this);
 }
 
-class PanelInstance extends OptionalChildWidgetInstance<Panel> with OptionalShrinkWrapLayout {
-  PanelInstance({
+class _PanelInstance extends OptionalChildWidgetInstance<Panel> with OptionalShrinkWrapLayout {
+  _PanelInstance({
     required super.widget,
   });
 
   @override
   void draw(DrawContext ctx) {
     final cornerRadius = widget.cornerRadius;
-    if (cornerRadius <= 1) {
+    if (cornerRadius <= 1 && widget.outlineThickness == null) {
       ctx.primitives.rect(transform.width, transform.height, widget.color, ctx.transform, ctx.projection);
     } else {
-      ctx.primitives
-          .roundedRect(transform.width, transform.height, cornerRadius, widget.color, ctx.transform, ctx.projection);
+      ctx.primitives.roundedRect(
+        transform.width,
+        transform.height,
+        cornerRadius,
+        widget.color,
+        ctx.transform,
+        ctx.projection,
+        outlineThickness: widget.outlineThickness,
+      );
     }
 
     super.draw(ctx);

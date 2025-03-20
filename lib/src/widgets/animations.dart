@@ -185,6 +185,7 @@ class _AnimatedPaddingState extends AutomaticallyAnimatedWidgetState<AnimatedPad
 class AnimatedPanel extends AutomaticallyAnimatedWidget {
   final Color color;
   final double cornerRadius;
+  final double? outlineThickness;
   final Widget? child;
 
   const AnimatedPanel({
@@ -193,6 +194,7 @@ class AnimatedPanel extends AutomaticallyAnimatedWidget {
     required super.duration,
     required this.color,
     this.cornerRadius = 0,
+    this.outlineThickness,
     this.child,
   });
 
@@ -215,6 +217,7 @@ class _AnimatedPanelState extends AutomaticallyAnimatedWidgetState<AnimatedPanel
     return Panel(
       color: _color!.compute(animationValue),
       cornerRadius: _cornerRadius!.compute(animationValue),
+      outlineThickness: widget.outlineThickness,
       child: widget.child,
     );
   }
