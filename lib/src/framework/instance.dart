@@ -330,7 +330,7 @@ mixin ChildRenderer<T extends InstanceWidget> on WidgetInstance<T> {
       ctx.transform.scope((mat4) {
         mat4.translate(aabb.min.x, aabb.min.y, 0);
         ctx.primitives.roundedRect(
-            aabb.max.x - aabb.min.x, aabb.max.y - aabb.min.y, 5, Color.black, mat4, ctx.projection,
+            aabb.max.x - aabb.min.x, aabb.max.y - aabb.min.y, 2, Color.black, mat4, ctx.projection,
             outlineThickness: 1);
       });
     }

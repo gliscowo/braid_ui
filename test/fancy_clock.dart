@@ -80,9 +80,11 @@ class ClockApp extends StatelessWidget {
             color: constraints.maxWidth > 600 ? Color.green : Color.blue,
             cornerRadius: 0.0,
             child: const AnimatedPadding(
+              easing: Easing.inOutExpo,
               duration: Duration(milliseconds: 1000),
               insets: Insets(top: 10, bottom: 10, left: 10, right: 10),
               child: AnimatedPanel(
+                easing: Easing.outExpo,
                 duration: Duration(seconds: 1),
                 cornerRadius: 15,
                 color: Color.white,

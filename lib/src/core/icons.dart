@@ -4,12 +4,12 @@ import '../baked_assets.g.dart';
 import '../text/text.dart';
 
 class Icon extends Span {
-  Icon(String name, {Color? color})
+  Icon(String name, {Color? color, double scale = .75})
       : super(
           lookupIcon(name),
           style: TextStyle(
             fontFamily: 'MaterialSymbols',
-            scale: .75,
+            scale: scale,
             color: color ?? const Color.rgb(0xe8eaed),
           ),
         );
