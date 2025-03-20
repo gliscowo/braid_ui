@@ -16,10 +16,7 @@ import 'flex.dart';
 abstract class VisitorWidget extends Widget {
   final Widget child;
 
-  const VisitorWidget({
-    super.key,
-    required this.child,
-  });
+  const VisitorWidget({super.key, required this.child});
 
   @override
   VisitorProxy proxy();
@@ -60,11 +57,7 @@ class VisitorProxy<T extends VisitorWidget> extends ComposedProxy with InstanceL
 class Flexible extends VisitorWidget {
   final double flexFactor;
 
-  const Flexible({
-    super.key,
-    this.flexFactor = 1.0,
-    required super.child,
-  });
+  const Flexible({super.key, this.flexFactor = 1.0, required super.child});
 
   static _visitor(Flexible widget, WidgetInstance instance) {
     if (instance.parentData case FlexParentData data) {
@@ -79,10 +72,7 @@ class Flexible extends VisitorWidget {
 }
 
 class HitTestOccluder extends VisitorWidget {
-  const HitTestOccluder({
-    super.key,
-    required super.child,
-  });
+  const HitTestOccluder({super.key, required super.child});
 
   static _visitor(HitTestOccluder _, WidgetInstance instance) {
     instance.flags += InstanceFlags.hitTestBoundary;
@@ -97,20 +87,14 @@ class HitTestOccluder extends VisitorWidget {
 class Padding extends OptionalChildInstanceWidget {
   final Insets insets;
 
-  const Padding({
-    super.key,
-    required this.insets,
-    super.child,
-  });
+  const Padding({super.key, required this.insets, super.child});
 
   @override
   PaddingInstance instantiate() => PaddingInstance(widget: this);
 }
 
 class PaddingInstance extends OptionalChildWidgetInstance<Padding> {
-  PaddingInstance({
-    required super.widget,
-  });
+  PaddingInstance({required super.widget});
 
   @override
   set widget(Padding value) {
@@ -143,20 +127,14 @@ class PaddingInstance extends OptionalChildWidgetInstance<Padding> {
 class Constrained extends SingleChildInstanceWidget {
   final Constraints constraints;
 
-  const Constrained({
-    super.key,
-    required this.constraints,
-    required super.child,
-  });
+  const Constrained({super.key, required this.constraints, required super.child});
 
   @override
   ConstrainedInstance instantiate() => ConstrainedInstance(widget: this);
 }
 
 class ConstrainedInstance extends SingleChildWidgetInstance<Constrained> {
-  ConstrainedInstance({
-    required super.widget,
-  });
+  ConstrainedInstance({required super.widget});
 
   @override
   set widget(Constrained value) {
@@ -191,15 +169,12 @@ class Alignment {
   final double horizontal;
   final double vertical;
 
-  const Alignment({
-    required this.horizontal,
-    required this.vertical,
-  });
+  const Alignment({required this.horizontal, required this.vertical});
 
   (double, double) align(Size space, Size object) => (
-        ((space.width - object.width) * horizontal).floorToDouble(),
-        ((space.height - object.height) * vertical).floorToDouble(),
-      );
+    ((space.width - object.width) * horizontal).floorToDouble(),
+    ((space.height - object.height) * vertical).floorToDouble(),
+  );
 
   get _props => (horizontal, vertical);
 
@@ -211,34 +186,22 @@ class Alignment {
 }
 
 class Center extends Align {
-  const Center({
-    super.key,
-    super.widthFactor,
-    super.heightFactor,
-    required super.child,
-  }) : super(alignment: Alignment.center);
+  const Center({super.key, super.widthFactor, super.heightFactor, required super.child})
+    : super(alignment: Alignment.center);
 }
 
 class Align extends SingleChildInstanceWidget {
   final Alignment alignment;
   final double? widthFactor, heightFactor;
 
-  const Align({
-    super.key,
-    this.widthFactor,
-    this.heightFactor,
-    required this.alignment,
-    required super.child,
-  });
+  const Align({super.key, this.widthFactor, this.heightFactor, required this.alignment, required super.child});
 
   @override
   SingleChildWidgetInstance instantiate() => _AlignInstance(widget: this);
 }
 
 class _AlignInstance extends SingleChildWidgetInstance<Align> {
-  _AlignInstance({
-    required super.widget,
-  });
+  _AlignInstance({required super.widget});
 
   @override
   set widget(Align value) {
@@ -259,13 +222,11 @@ class _AlignInstance extends SingleChildWidgetInstance<Align> {
 
     final childSize = child.layout(constraints.asLoose());
     final selfSize = Size(
-            widthFactor != null || !constraints.hasBoundedWidth
-                ? childSize.width * (widthFactor ?? 1)
-                : constraints.maxWidth,
-            heightFactor != null || !constraints.hasBoundedHeight
-                ? childSize.height * (heightFactor ?? 1)
-                : constraints.maxHeight)
-        .constrained(constraints);
+      widthFactor != null || !constraints.hasBoundedWidth ? childSize.width * (widthFactor ?? 1) : constraints.maxWidth,
+      heightFactor != null || !constraints.hasBoundedHeight
+          ? childSize.height * (heightFactor ?? 1)
+          : constraints.maxHeight,
+    ).constrained(constraints);
 
     final (childX, childY) = alignment.align(selfSize, childSize);
     child.transform.x = childX;
@@ -282,22 +243,14 @@ class Panel extends OptionalChildInstanceWidget {
   final double cornerRadius;
   final double? outlineThickness;
 
-  const Panel({
-    super.key,
-    required this.color,
-    this.cornerRadius = 0.0,
-    this.outlineThickness,
-    super.child,
-  });
+  const Panel({super.key, required this.color, this.cornerRadius = 0.0, this.outlineThickness, super.child});
 
   @override
   OptionalChildWidgetInstance instantiate() => _PanelInstance(widget: this);
 }
 
 class _PanelInstance extends OptionalChildWidgetInstance<Panel> with OptionalShrinkWrapLayout {
-  _PanelInstance({
-    required super.widget,
-  });
+  _PanelInstance({required super.widget});
 
   @override
   void draw(DrawContext ctx) {
@@ -327,10 +280,7 @@ typedef CustomDrawFunction = void Function(DrawContext ctx, WidgetTransform tran
 class CustomDraw extends LeafInstanceWidget {
   final CustomDrawFunction drawFunction;
 
-  CustomDraw({
-    super.key,
-    required this.drawFunction,
-  });
+  CustomDraw({super.key, required this.drawFunction});
 
   @override
   CustomDrawInstance instantiate() => CustomDrawInstance(widget: this);
@@ -379,9 +329,7 @@ class MouseArea extends SingleChildInstanceWidget {
 }
 
 class MouseAreaInstance extends SingleChildWidgetInstance<MouseArea> with ShrinkWrapLayout, MouseListener {
-  MouseAreaInstance({
-    required super.widget,
-  });
+  MouseAreaInstance({required super.widget});
 
   @override
   CursorStyle? get cursorStyle => widget.cursorStyle;
@@ -435,9 +383,7 @@ class KeyboardInput extends SingleChildInstanceWidget {
 class KeyboardInputInstance extends SingleChildWidgetInstance<KeyboardInput> with ShrinkWrapLayout, KeyboardListener {
   bool _focused = false;
 
-  KeyboardInputInstance({
-    required super.widget,
-  });
+  KeyboardInputInstance({required super.widget});
 
   @override
   void onKeyDown(int keyCode, int modifiers) => widget.keyDownCallback?.call(keyCode, modifiers);
@@ -487,9 +433,7 @@ class Gradient extends OptionalChildInstanceWidget {
 }
 
 class GradientInstance extends OptionalChildWidgetInstance<Gradient> with OptionalShrinkWrapLayout {
-  GradientInstance({
-    required super.widget,
-  });
+  GradientInstance({required super.widget});
 
   @override
   void draw(DrawContext ctx) {
@@ -514,20 +458,14 @@ class GradientInstance extends OptionalChildWidgetInstance<Gradient> with Option
 class Transform extends SingleChildInstanceWidget {
   final Matrix4 matrix;
 
-  Transform({
-    super.key,
-    required this.matrix,
-    required super.child,
-  });
+  Transform({super.key, required this.matrix, required super.child});
 
   @override
   TransformInstance instantiate() => TransformInstance(widget: this);
 }
 
 class TransformInstance extends SingleChildWidgetInstance<Transform> with ShrinkWrapLayout {
-  TransformInstance({
-    required super.widget,
-  }) {
+  TransformInstance({required super.widget}) {
     (transform as CustomWidgetTransform).matrix = widget.matrix;
   }
 
@@ -546,19 +484,14 @@ class TransformInstance extends SingleChildWidgetInstance<Transform> with Shrink
 // ---
 
 class LayoutAfterTransform extends SingleChildInstanceWidget {
-  const LayoutAfterTransform({
-    super.key,
-    required super.child,
-  });
+  const LayoutAfterTransform({super.key, required super.child});
 
   @override
   LayoutAfterTransformInstance instantiate() => LayoutAfterTransformInstance(widget: this);
 }
 
 class LayoutAfterTransformInstance<LayoutAfterTransform> extends SingleChildWidgetInstance {
-  LayoutAfterTransformInstance({
-    required super.widget,
-  });
+  LayoutAfterTransformInstance({required super.widget});
 
   @override
   void doLayout(Constraints constraints) {
@@ -567,10 +500,7 @@ class LayoutAfterTransformInstance<LayoutAfterTransform> extends SingleChildWidg
 
     child.layout(constraints);
 
-    final size = Size(
-      child.transform.aabb.width,
-      child.transform.aabb.height,
-    ).constrained(constraints);
+    final size = Size(child.transform.aabb.width, child.transform.aabb.height).constrained(constraints);
 
     child.transform.x = -child.transform.aabb.min.x;
     child.transform.y = -child.transform.aabb.min.y;
@@ -583,10 +513,7 @@ class LayoutAfterTransformInstance<LayoutAfterTransform> extends SingleChildWidg
 // ---
 
 class Clip extends SingleChildInstanceWidget {
-  const Clip({
-    super.key,
-    required super.child,
-  });
+  const Clip({super.key, required super.child});
 
   @override
   ClipInstance instantiate() => ClipInstance(widget: this);
@@ -594,9 +521,7 @@ class Clip extends SingleChildInstanceWidget {
 
 //TODO support nested clips
 class ClipInstance extends SingleChildWidgetInstance<Clip> with ShrinkWrapLayout {
-  ClipInstance({
-    required super.widget,
-  });
+  ClipInstance({required super.widget});
 
   @override
   void draw(DrawContext ctx) {
@@ -617,10 +542,7 @@ class ClipInstance extends SingleChildWidgetInstance<Clip> with ShrinkWrapLayout
 // ---
 
 class StencipClip extends SingleChildInstanceWidget {
-  const StencipClip({
-    super.key,
-    required super.child,
-  });
+  const StencipClip({super.key, required super.child});
 
   @override
   StencilClipInstance instantiate() => StencilClipInstance(widget: this);
@@ -630,20 +552,20 @@ class StencilClipInstance extends SingleChildWidgetInstance with ShrinkWrapLayou
   static final _framebufferByWindow = <Window, GlFramebuffer>{};
   static var stencilValue = 0;
 
-  StencilClipInstance({
-    required super.widget,
-  });
+  StencilClipInstance({required super.widget});
 
   @override
   void draw(DrawContext ctx) {
     stencilValue++;
 
     final window = ctx.renderContext.window;
-    final framebuffer = _framebufferByWindow[window] ??= (() {
-      final buffer = GlFramebuffer.trackingWindow(window, stencil: true);
-      ctx.renderContext.frameEvents.listen((_) => buffer.clear(color: const Color(0), depth: 0, stencil: 0));
-      return buffer;
-    })();
+    final framebuffer =
+        _framebufferByWindow[window] ??=
+            (() {
+              final buffer = GlFramebuffer.trackingWindow(window, stencil: true);
+              ctx.renderContext.frameEvents.listen((_) => buffer.clear(color: const Color(0), depth: 0, stencil: 0));
+              return buffer;
+            })();
 
     framebuffer.bind();
     gl.enable(glStencilTest);
@@ -674,10 +596,7 @@ typedef WidgetBuilder = Widget Function(BuildContext context);
 class Builder extends Widget {
   final WidgetBuilder builder;
 
-  const Builder({
-    super.key,
-    required this.builder,
-  });
+  const Builder({super.key, required this.builder});
 
   @override
   WidgetProxy proxy() => _BuilderProxy(this);

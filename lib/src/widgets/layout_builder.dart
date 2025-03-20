@@ -8,9 +8,7 @@ typedef LayoutBuilderCallback = Widget Function(BuildContext context, Constraint
 class LayoutBuilder extends InstanceWidget {
   final LayoutBuilderCallback builder;
 
-  const LayoutBuilder({
-    required this.builder,
-  });
+  const LayoutBuilder({required this.builder});
 
   @override
   WidgetInstance instantiate() => _LayoutBuilderInstance(widget: this);
@@ -52,9 +50,7 @@ class _LayoutBuilderProxy extends InstanceWidgetProxy with SingleChildWidgetProx
 class _LayoutBuilderInstance extends OptionalChildWidgetInstance with OptionalShrinkWrapLayout {
   late final void Function(Constraints constraints) _callback;
 
-  _LayoutBuilderInstance({
-    required super.widget,
-  });
+  _LayoutBuilderInstance({required super.widget});
 
   @override
   void doLayout(Constraints constraints) {

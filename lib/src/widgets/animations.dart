@@ -33,23 +33,19 @@ class InsetsLerp extends Lerp<Insets> {
 
   @override
   Insets operator [](double t) => Insets(
-        top: start.top.lerp(t, end.top),
-        bottom: start.bottom.lerp(t, end.bottom),
-        left: start.left.lerp(t, end.left),
-        right: start.right.lerp(t, end.right),
-      );
+    top: start.top.lerp(t, end.top),
+    bottom: start.bottom.lerp(t, end.bottom),
+    left: start.left.lerp(t, end.left),
+    right: start.right.lerp(t, end.right),
+  );
 }
 
 class ColorLerp extends Lerp<Color> {
   const ColorLerp(super.start, super.end);
 
   @override
-  Color operator [](double t) => Color.values(
-        start.r.lerp(t, end.r),
-        start.g.lerp(t, end.g),
-        start.b.lerp(t, end.b),
-        start.a.lerp(t, end.a),
-      );
+  Color operator [](double t) =>
+      Color.values(start.r.lerp(t, end.r), start.g.lerp(t, end.g), start.b.lerp(t, end.b), start.a.lerp(t, end.a));
 }
 
 class DoubleLerp extends Lerp<double> {
@@ -65,13 +61,7 @@ class AnimatedPadding extends AutomaticallyAnimatedWidget {
   final Insets insets;
   final Widget? child;
 
-  const AnimatedPadding({
-    super.key,
-    super.easing,
-    required super.duration,
-    required this.insets,
-    this.child,
-  });
+  const AnimatedPadding({super.key, super.easing, required super.duration, required this.insets, this.child});
 
   @override
   AutomaticallyAnimatedWidgetState<AnimatedPadding> createState() => _AnimatedPaddingState();
@@ -84,11 +74,7 @@ abstract class AutomaticallyAnimatedWidget extends StatefulWidget {
   final Duration duration;
   final Easing easing;
 
-  const AutomaticallyAnimatedWidget({
-    super.key,
-    this.easing = Easing.linear,
-    required this.duration,
-  });
+  const AutomaticallyAnimatedWidget({super.key, this.easing = Easing.linear, required this.duration});
 
   @override
   AutomaticallyAnimatedWidgetState<AutomaticallyAnimatedWidget> createState();
@@ -173,10 +159,7 @@ class _AnimatedPaddingState extends AutomaticallyAnimatedWidgetState<AnimatedPad
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      insets: _insets!.compute(animationValue),
-      child: widget.child,
-    );
+    return Padding(insets: _insets!.compute(animationValue), child: widget.child);
   }
 }
 

@@ -7,9 +7,7 @@ import 'package:source_helper/source_helper.dart';
 Future<void> main(List<String> args) async {
   final out = File('lib/src/baked_assets.g.dart').openWrite();
 
-  final segments = await Future.wait(
-    segmentBuilders.map((builder) => builder()),
-  );
+  final segments = await Future.wait(segmentBuilders.map((builder) => builder()));
 
   final imports = segments.expand((element) => element.imports).toSet();
   for (final import in imports) {
@@ -91,14 +89,15 @@ final braidIcon = decodePng(base64Decode(_braidIconBase64))!;
       }
 
       final shaderName = shaderPath.quoted;
-      final shaderCode = shader.$2
-          .replaceAllMapped(whitespacePattern, (match) => match[0]![0])
-          .split('\n')
-          .map((e) => e.trim())
-          .where((e) => !e.startsWith('//'))
-          .map((e) => e.startsWith('#') ? '$e\n' : e)
-          .join()
-          .quoted;
+      final shaderCode =
+          shader.$2
+              .replaceAllMapped(whitespacePattern, (match) => match[0]![0])
+              .split('\n')
+              .map((e) => e.trim())
+              .where((e) => !e.startsWith('//'))
+              .map((e) => e.startsWith('#') ? '$e\n' : e)
+              .join()
+              .quoted;
 
       codeOut.writeln('  $shaderName: $shaderCode,');
     }
@@ -126,10 +125,7 @@ class BakedAssetResources implements BraidResources {
 }
 ''');
 
-    return (
-      imports: const <String>['dart:typed_data', 'resources.dart'],
-      code: codeOut.toString(),
-    );
+    return (imports: const <String>['dart:typed_data', 'resources.dart'], code: codeOut.toString());
   },
   () async {
     final lines = await openAsset('icon_mappings.codepoints').readAsLines();
@@ -151,11 +147,8 @@ class BakedAssetResources implements BraidResources {
 String lookupIcon(String iconName) => String.fromCharCode(_iconMappings[iconName] ?? 0);
 ''');
 
-    return (
-      imports: const <String>[],
-      code: result.toString(),
-    );
-  }
+    return (imports: const <String>[], code: result.toString());
+  },
 ];
 
 // ---

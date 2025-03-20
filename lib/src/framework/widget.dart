@@ -17,9 +17,7 @@ extension type const Key(String value) {}
 abstract class Widget {
   final Key? key;
 
-  const Widget({
-    this.key,
-  });
+  const Widget({this.key});
 
   WidgetProxy proxy();
 
@@ -33,10 +31,7 @@ abstract class Widget {
 abstract class InheritedWidget extends Widget {
   final Widget child;
 
-  const InheritedWidget({
-    super.key,
-    required this.child,
-  });
+  const InheritedWidget({super.key, required this.child});
 
   bool mustRebuildDependents(covariant InheritedWidget newWidget);
 
@@ -82,10 +77,7 @@ abstract class InstanceWidget extends Widget {
 abstract class SingleChildInstanceWidget extends InstanceWidget {
   final Widget child;
 
-  const SingleChildInstanceWidget({
-    super.key,
-    required this.child,
-  });
+  const SingleChildInstanceWidget({super.key, required this.child});
 
   @override
   @factory
@@ -100,10 +92,7 @@ abstract class SingleChildInstanceWidget extends InstanceWidget {
 abstract class OptionalChildInstanceWidget extends InstanceWidget {
   final Widget? child;
 
-  const OptionalChildInstanceWidget({
-    super.key,
-    this.child,
-  });
+  const OptionalChildInstanceWidget({super.key, this.child});
 
   @override
   @factory
@@ -118,10 +107,7 @@ abstract class OptionalChildInstanceWidget extends InstanceWidget {
 abstract class MultiChildInstanceWidget extends InstanceWidget {
   final List<Widget> children;
 
-  const MultiChildInstanceWidget({
-    super.key,
-    required this.children,
-  });
+  const MultiChildInstanceWidget({super.key, required this.children});
 
   @override
   @factory

@@ -25,10 +25,7 @@ class Size {
 
   Size copy({double? width, double? height}) => Size(width ?? this.width, height ?? this.height);
 
-  Size withInsets(Insets insets) => Size(
-        width + insets.horizontal,
-        height + insets.vertical,
-      );
+  Size withInsets(Insets insets) => Size(width + insets.horizontal, height + insets.vertical);
 
   Size ceil() => Size(width.ceilToDouble(), height.ceilToDouble());
   Size floor() => Size(width.floorToDouble(), height.floorToDouble());
@@ -51,10 +48,10 @@ class Insets {
   const Insets.all(double all) : this.axis(vertical: all, horizontal: all);
   @literal
   const Insets.axis({double vertical = 0, double horizontal = 0})
-      : top = vertical,
-        bottom = vertical,
-        left = horizontal,
-        right = horizontal;
+    : top = vertical,
+      bottom = vertical,
+      left = horizontal,
+      right = horizontal;
 
   double get vertical => top + bottom;
   double get horizontal => left + right;
@@ -93,14 +90,14 @@ class Matrix4Stack extends Matrix4 {
   }
 
   void scopeWith(Matrix4 transform, void Function(Matrix4 mat4) action) => scope((mat4) {
-        mat4.multiply(transform);
-        action(mat4);
-      });
+    mat4.multiply(transform);
+    action(mat4);
+  });
 
   void scopedTransform(void Function(Matrix4) transformer, void Function(Matrix4 mat4) action) => scope((mat4) {
-        transformer(mat4);
-        action(mat4);
-      });
+    transformer(mat4);
+    action(mat4);
+  });
 
   void scope(void Function(Matrix4 mat4) action) {
     push();

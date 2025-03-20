@@ -28,12 +28,7 @@ class FontFamily {
   final Font defaultFont;
   final Font boldFont, italicFont, boldItalicFont;
 
-  FontFamily(
-    this.defaultFont,
-    this.boldFont,
-    this.italicFont,
-    this.boldItalicFont,
-  );
+  FontFamily(this.defaultFont, this.boldFont, this.italicFont, this.boldItalicFont);
 
   @factory
   static Future<FontFamily> load(BraidResources resources, String familyName) async {
@@ -62,11 +57,7 @@ class FontFamily {
   }
 }
 
-typedef _NativeFontResources = ({
-  Map<int, Pointer<hb_font>> hbFonts,
-  FT_Face ftFace,
-  Pointer<Uint8> fontMemory,
-});
+typedef _NativeFontResources = ({Map<int, Pointer<hb_font>> hbFonts, FT_Face ftFace, Pointer<Uint8> fontMemory});
 
 class Font {
   static const atlasSize = 2048;
@@ -106,11 +97,7 @@ class Font {
     bold = faceStruct.style_flags & FT_STYLE_FLAG_BOLD != 0;
     italic = faceStruct.style_flags & FT_STYLE_FLAG_ITALIC != 0;
 
-    _nativeResources = (
-      hbFonts: {},
-      ftFace: face.value,
-      fontMemory: fontMemory,
-    );
+    _nativeResources = (hbFonts: {}, ftFace: face.value, fontMemory: fontMemory);
 
     _finalizer.attach(this, _nativeResources);
   }
@@ -274,8 +261,8 @@ class TextRenderer {
   int _fontStorageGeneration = 0;
 
   TextRenderer(RenderContext context, this._defaultFont, Map<String, FontFamily> fontStorage)
-      : _textProgram = context.findProgram('text'),
-        _fontStorage = fontStorage;
+    : _textProgram = context.findProgram('text'),
+      _fontStorage = fontStorage;
 
   FontFamily getFamily(String? familyName) =>
       familyName == null ? _defaultFont : _fontStorage[familyName] ?? _defaultFont;
@@ -348,8 +335,9 @@ class TextRenderer {
 
     final buffers = <int, MeshBuffer<TextVertexFunction>>{};
     MeshBuffer<TextVertexFunction> buffer(int texture) {
-      return buffers[texture] ??= ((_cachedBuffers[texture]?..clear()) ??
-          (_cachedBuffers[texture] = MeshBuffer(textVertexDescriptor, _textProgram)));
+      return buffers[texture] ??=
+          ((_cachedBuffers[texture]?..clear()) ??
+              (_cachedBuffers[texture] = MeshBuffer(textVertexDescriptor, _textProgram)));
     }
 
     for (final shapedGlyph in text.glyphs) {

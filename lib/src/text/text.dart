@@ -21,36 +21,23 @@ class TextStyle {
   final bool? italic;
   final double? scale;
 
-  const TextStyle({
-    this.color,
-    this.fontFamily,
-    this.bold,
-    this.italic,
-    this.scale,
-  });
+  const TextStyle({this.color, this.fontFamily, this.bold, this.italic, this.scale});
 
-  TextStyle copy({
-    Color? color,
-    String? fontFamily,
-    bool? bold,
-    bool? italic,
-    double? scale,
-  }) =>
-      TextStyle(
-        color: color ?? this.color,
-        fontFamily: fontFamily ?? this.fontFamily,
-        bold: bold ?? this.bold,
-        italic: italic ?? this.italic,
-        scale: scale ?? this.scale,
-      );
+  TextStyle copy({Color? color, String? fontFamily, bool? bold, bool? italic, double? scale}) => TextStyle(
+    color: color ?? this.color,
+    fontFamily: fontFamily ?? this.fontFamily,
+    bold: bold ?? this.bold,
+    italic: italic ?? this.italic,
+    scale: scale ?? this.scale,
+  );
 
   TextStyle overriding(TextStyle other) => TextStyle(
-        color: color ?? other.color,
-        fontFamily: fontFamily ?? other.fontFamily,
-        bold: bold ?? other.bold,
-        italic: italic ?? other.italic,
-        scale: scale ?? other.scale,
-      );
+    color: color ?? other.color,
+    fontFamily: fontFamily ?? other.fontFamily,
+    bold: bold ?? other.bold,
+    italic: italic ?? other.italic,
+    scale: scale ?? other.scale,
+  );
 
   get _props => (color, fontFamily, bold, italic, scale);
 
@@ -126,20 +113,19 @@ class Text {
       malloc.free(glpyhCount);
 
       for (var i = 0; i < glyphs; i++) {
-        _shapedGlyphs.add(ShapedGlyph._(
-          spanFontFamily.fontForStyle(spanStyle),
-          glyphInfo[i].codepoint,
-          (
-            x: cursorX + glyphPos[i].x_offset.toDouble() * spanScale,
-            y: cursorY + glyphPos[i].y_offset.toDouble() * spanScale,
+        _shapedGlyphs.add(
+          ShapedGlyph._(
+            spanFontFamily.fontForStyle(spanStyle),
+            glyphInfo[i].codepoint,
+            (
+              x: cursorX + glyphPos[i].x_offset.toDouble() * spanScale,
+              y: cursorY + glyphPos[i].y_offset.toDouble() * spanScale,
+            ),
+            (x: glyphPos[i].x_advance.toDouble(), y: glyphPos[i].y_advance.toDouble()),
+            spanStyle,
+            glyphInfo[i].cluster,
           ),
-          (
-            x: glyphPos[i].x_advance.toDouble(),
-            y: glyphPos[i].y_advance.toDouble(),
-          ),
-          spanStyle,
-          glyphInfo[i].cluster,
-        ));
+        );
 
         cursorX += (glyphPos[i].x_advance * spanScale).round();
         cursorY += (glyphPos[i].y_advance * spanScale).round();

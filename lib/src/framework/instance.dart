@@ -24,9 +24,9 @@ class WidgetTransform {
   set height(double value) => _setState(() => _height = value);
 
   void setSize(Size size) => _setState(() {
-        _width = size.width;
-        _height = size.height;
-      });
+    _width = size.width;
+    _height = size.height;
+  });
 
   Size toSize() => Size(width, height);
 
@@ -64,10 +64,12 @@ class CustomWidgetTransform extends WidgetTransform {
   Matrix4 get matrix => _matrix;
 
   @override
-  Matrix4 get toParent => _toParent ??= Matrix4.identity()
-    ..setTranslationRaw(_x + _width / 2, _y + _height / 2, 0)
-    ..multiply(_matrix)
-    ..translate(-_width / 2, -_height / 2);
+  Matrix4 get toParent =>
+      _toParent ??=
+          Matrix4.identity()
+            ..setTranslationRaw(_x + _width / 2, _y + _height / 2, 0)
+            ..multiply(_matrix)
+            ..translate(-_width / 2, -_height / 2);
 
   @override
   void transformToParent(Matrix4 mat) => mat.multiply(toParent);
@@ -94,10 +96,8 @@ class HitTestState {
   Iterable<Hit> get occludedTrace =>
       trace.takeWhile((value) => !(value.instance.flags & InstanceFlags.hitTestBoundary));
 
-  Hit? firstWhere(bool Function(Hit hit) predicate) => occludedTrace.cast<Hit?>().firstWhere(
-        (element) => predicate(element!),
-        orElse: () => null,
-      );
+  Hit? firstWhere(bool Function(Hit hit) predicate) =>
+      occludedTrace.cast<Hit?>().firstWhere((element) => predicate(element!), orElse: () => null);
 
   void addHit(WidgetInstance instance, double x, double y) {
     _hitWidgets.addFirst((instance: instance, coordinates: (x: x, y: y)));
@@ -161,9 +161,7 @@ abstract interface class InstanceHost {
 typedef WidgetInstanceVisitor = void Function(WidgetInstance child);
 
 abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth implements Comparable<WidgetInstance> {
-  WidgetInstance({
-    required this.widget,
-  });
+  WidgetInstance({required this.widget});
 
   // ---
 
@@ -285,11 +283,7 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
       coordinates.setValues(x, y, 0);
       child.transform.toWidgetCoordinates(coordinates);
 
-      child.hitTest(
-        coordinates.x,
-        coordinates.y,
-        state,
-      );
+      child.hitTest(coordinates.x, coordinates.y, state);
     });
   }
 
@@ -348,8 +342,14 @@ mixin ChildRenderer<T extends InstanceWidget> on WidgetInstance<T> {
       ctx.transform.scope((mat4) {
         mat4.translate(aabb.min.x, aabb.min.y, 0);
         ctx.primitives.roundedRect(
-            aabb.max.x - aabb.min.x, aabb.max.y - aabb.min.y, 2, Color.black, mat4, ctx.projection,
-            outlineThickness: 1);
+          aabb.max.x - aabb.min.x,
+          aabb.max.y - aabb.min.y,
+          2,
+          Color.black,
+          mat4,
+          ctx.projection,
+          outlineThickness: 1,
+        );
       });
     }
   }
@@ -400,9 +400,7 @@ abstract class SingleChildWidgetInstance<T extends InstanceWidget> extends Widge
     with SingleChildProvider, ChildRenderer, SingleChildRenderer {
   WidgetInstance? _child;
 
-  SingleChildWidgetInstance({
-    required super.widget,
-  });
+  SingleChildWidgetInstance({required super.widget});
 
   @override
   WidgetInstance get child {
@@ -422,9 +420,7 @@ abstract class OptionalChildWidgetInstance<T extends InstanceWidget> extends Wid
     with OptionalChildProvider, ChildRenderer, OptionalChildRenderer {
   WidgetInstance? _child;
 
-  OptionalChildWidgetInstance({
-    required super.widget,
-  });
+  OptionalChildWidgetInstance({required super.widget});
 
   @override
   WidgetInstance? get child => _child;
@@ -440,9 +436,7 @@ abstract class MultiChildWidgetInstance<T extends MultiChildInstanceWidget> exte
     with ChildRenderer, ChildListRenderer {
   List<WidgetInstance> children = [];
 
-  MultiChildWidgetInstance({
-    required super.widget,
-  });
+  MultiChildWidgetInstance({required super.widget});
 
   @override
   void visitChildren(WidgetInstanceVisitor visitor) {

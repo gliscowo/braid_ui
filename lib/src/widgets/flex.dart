@@ -5,22 +5,14 @@ import '../framework/widget.dart';
 
 /// A vertical array of widgets
 class Column extends Flex {
-  const Column({
-    super.key,
-    super.mainAxisAlignment,
-    super.crossAxisAlignment,
-    required super.children,
-  }) : super(mainAxis: LayoutAxis.vertical);
+  const Column({super.key, super.mainAxisAlignment, super.crossAxisAlignment, required super.children})
+    : super(mainAxis: LayoutAxis.vertical);
 }
 
 /// A horizontal array of widgets
 class Row extends Flex {
-  const Row({
-    super.key,
-    super.mainAxisAlignment,
-    super.crossAxisAlignment,
-    required super.children,
-  }) : super(mainAxis: LayoutAxis.horizontal);
+  const Row({super.key, super.mainAxisAlignment, super.crossAxisAlignment, required super.children})
+    : super(mainAxis: LayoutAxis.horizontal);
 }
 
 class Flex extends MultiChildInstanceWidget {
@@ -47,41 +39,58 @@ enum LayoutAxis {
   vertical;
 
   T choose<T>(T horizontal, T vertical) => switch (this) {
-        LayoutAxis.horizontal => horizontal,
-        LayoutAxis.vertical => vertical,
-      };
+    LayoutAxis.horizontal => horizontal,
+    LayoutAxis.vertical => vertical,
+  };
 
   Size createSize(double extent, double crossExtent) => switch (this) {
-        LayoutAxis.horizontal => Size(extent, crossExtent),
-        LayoutAxis.vertical => Size(crossExtent, extent),
-      };
+    LayoutAxis.horizontal => Size(extent, crossExtent),
+    LayoutAxis.vertical => Size(crossExtent, extent),
+  };
 
-  LayoutAxis get opposite =>
-      switch (this) { LayoutAxis.horizontal => LayoutAxis.vertical, LayoutAxis.vertical => LayoutAxis.horizontal };
+  LayoutAxis get opposite => switch (this) {
+    LayoutAxis.horizontal => LayoutAxis.vertical,
+    LayoutAxis.vertical => LayoutAxis.horizontal,
+  };
 }
 
 extension ConstraintsAxisOperations on Constraints {
-  double minOnAxis(LayoutAxis axis) =>
-      switch (axis) { LayoutAxis.horizontal => minWidth, LayoutAxis.vertical => minHeight };
+  double minOnAxis(LayoutAxis axis) => switch (axis) {
+    LayoutAxis.horizontal => minWidth,
+    LayoutAxis.vertical => minHeight,
+  };
 
-  double maxOnAxis(LayoutAxis axis) =>
-      switch (axis) { LayoutAxis.horizontal => maxWidth, LayoutAxis.vertical => maxHeight };
+  double maxOnAxis(LayoutAxis axis) => switch (axis) {
+    LayoutAxis.horizontal => maxWidth,
+    LayoutAxis.vertical => maxHeight,
+  };
 }
 
 extension SizeAxisOperations on Size {
-  double getAxisExtent(LayoutAxis axis) =>
-      switch (axis) { LayoutAxis.horizontal => width, LayoutAxis.vertical => height };
+  double getAxisExtent(LayoutAxis axis) => switch (axis) {
+    LayoutAxis.horizontal => width,
+    LayoutAxis.vertical => height,
+  };
 }
 
 extension TransformAxisOperations on WidgetTransform {
-  double getAxisExtent(LayoutAxis axis) =>
-      switch (axis) { LayoutAxis.horizontal => width, LayoutAxis.vertical => height };
-  double getAxisCoordinate(LayoutAxis axis) => switch (axis) { LayoutAxis.horizontal => x, LayoutAxis.vertical => y };
+  double getAxisExtent(LayoutAxis axis) => switch (axis) {
+    LayoutAxis.horizontal => width,
+    LayoutAxis.vertical => height,
+  };
+  double getAxisCoordinate(LayoutAxis axis) => switch (axis) {
+    LayoutAxis.horizontal => x,
+    LayoutAxis.vertical => y,
+  };
 
-  void setAxisExtent(LayoutAxis axis, double value) =>
-      switch (axis) { LayoutAxis.horizontal => width = value, LayoutAxis.vertical => height = value };
-  void setAxisCoordinate(LayoutAxis axis, double value) =>
-      switch (axis) { LayoutAxis.horizontal => x = value, LayoutAxis.vertical => y = value };
+  void setAxisExtent(LayoutAxis axis, double value) => switch (axis) {
+    LayoutAxis.horizontal => width = value,
+    LayoutAxis.vertical => height = value,
+  };
+  void setAxisCoordinate(LayoutAxis axis, double value) => switch (axis) {
+    LayoutAxis.horizontal => x = value,
+    LayoutAxis.vertical => y = value,
+  };
 }
 
 extension on (double, double) {
@@ -95,11 +104,11 @@ enum CrossAxisAlignment {
   stretch;
 
   double _computeChildOffset(double freeSpace) => switch (this) {
-        CrossAxisAlignment.stretch => 0,
-        CrossAxisAlignment.start => 0,
-        CrossAxisAlignment.center => (freeSpace / 2).floorToDouble(),
-        CrossAxisAlignment.end => freeSpace,
-      };
+    CrossAxisAlignment.stretch => 0,
+    CrossAxisAlignment.start => 0,
+    CrossAxisAlignment.center => (freeSpace / 2).floorToDouble(),
+    CrossAxisAlignment.end => freeSpace,
+  };
 }
 
 enum MainAxisAlignment {
@@ -110,15 +119,15 @@ enum MainAxisAlignment {
   spaceAround,
   spaceEvenly;
 
-  (double leading, double between) _distributeSpace(double freeSpace, int childCount) => (switch (this) {
+  (double leading, double between) _distributeSpace(double freeSpace, int childCount) =>
+      (switch (this) {
         MainAxisAlignment.start => (0.0, 0.0),
         MainAxisAlignment.end => (freeSpace, 0.0),
         MainAxisAlignment.center => (freeSpace / 2, 0.0),
         MainAxisAlignment.spaceBetween => (0.0, freeSpace / (childCount - 1)),
         MainAxisAlignment.spaceAround => (freeSpace / childCount / 2, freeSpace / childCount),
-        MainAxisAlignment.spaceEvenly => (freeSpace / (childCount + 1), freeSpace / (childCount + 1))
-      })
-          .floorToDouble();
+        MainAxisAlignment.spaceEvenly => (freeSpace / (childCount + 1), freeSpace / (childCount + 1)),
+      }).floorToDouble();
 }
 
 class FlexParentData {
@@ -129,9 +138,7 @@ class FlexParentData {
 // class MultiChilkWidgetInstance<T ex> extends WidgetInstance
 
 class FlexInstance extends MultiChildWidgetInstance<Flex> {
-  FlexInstance({
-    required super.widget,
-  });
+  FlexInstance({required super.widget});
 
   // TODO: revisit whether available main axis space should always
   // saturate constraints for non-flex children
@@ -153,9 +160,10 @@ class FlexInstance extends MultiChildWidgetInstance<Flex> {
     final mainAxis = widget.mainAxis;
     final crossAxis = mainAxis.opposite;
 
-    final crossAxisMinimum = widget.crossAxisAlignment == CrossAxisAlignment.stretch
-        ? constraints.maxOnAxis(crossAxis)
-        : constraints.minOnAxis(crossAxis);
+    final crossAxisMinimum =
+        widget.crossAxisAlignment == CrossAxisAlignment.stretch
+            ? constraints.maxOnAxis(crossAxis)
+            : constraints.minOnAxis(crossAxis);
 
     final childConstraints = Constraints(
       mainAxis == LayoutAxis.vertical ? crossAxisMinimum : 0,
@@ -165,10 +173,11 @@ class FlexInstance extends MultiChildWidgetInstance<Flex> {
     );
 
     // first, lay out all non-flex children and store their sizes
-    final childSizes = children
-        .where((element) => element.parentData is! FlexParentData)
-        .map((e) => e.layout(childConstraints))
-        .toList();
+    final childSizes =
+        children
+            .where((element) => element.parentData is! FlexParentData)
+            .map((e) => e.layout(childConstraints))
+            .toList();
 
     // now, compute the remaining space on the main axis
     final remainingSpace =
@@ -178,20 +187,24 @@ class FlexInstance extends MultiChildWidgetInstance<Flex> {
     // to divvy up the remaining space properly later
     final flexChildren = children.where((element) => element.parentData is FlexParentData);
     final totalFlexFactor = flexChildren.fold(
-        0.0, (previousValue, element) => previousValue + (element.parentData as FlexParentData).flexFactor);
+      0.0,
+      (previousValue, element) => previousValue + (element.parentData as FlexParentData).flexFactor,
+    );
 
     // lay out all flex children with (for now) tight constraints
     // on the main axis according to their allotted space
     for (final child in flexChildren) {
       final space = remainingSpace * ((child.parentData as FlexParentData).flexFactor / totalFlexFactor);
-      childSizes.add(child.layout(
-        childConstraints.respecting(
-          Constraints.tightOnAxis(
-            horizontal: mainAxis == LayoutAxis.horizontal ? space : null,
-            vertical: mainAxis == LayoutAxis.vertical ? space : null,
+      childSizes.add(
+        child.layout(
+          childConstraints.respecting(
+            Constraints.tightOnAxis(
+              horizontal: mainAxis == LayoutAxis.horizontal ? space : null,
+              vertical: mainAxis == LayoutAxis.vertical ? space : null,
+            ),
           ),
         ),
-      ));
+      );
     }
 
     // compute and apply the final size of ourselves
@@ -216,10 +229,7 @@ class FlexInstance extends MultiChildWidgetInstance<Flex> {
     // move children into position and apply cross-axis alignment
     var mainAxisOffset = leadingSpace;
     for (final child in children) {
-      child.transform.setAxisCoordinate(
-        mainAxis,
-        mainAxisOffset,
-      );
+      child.transform.setAxisCoordinate(mainAxis, mainAxisOffset);
 
       child.transform.setAxisCoordinate(
         crossAxis,

@@ -16,11 +16,11 @@ class PrimitiveRenderer {
   MeshBuffer<BlitVertexFunction>? _blitBuffer;
 
   PrimitiveRenderer(this._context)
-      : _solidBuffer = MeshBuffer(posVertexDescriptor, _context.findProgram('solid_fill')),
-        _gradientBuffer = MeshBuffer(posUvVertexDescriptor, _context.findProgram('gradient_fill')),
-        _circleBuffer = MeshBuffer(posVertexDescriptor, _context.findProgram('circle_solid')),
-        _roundedSolidBuffer = MeshBuffer(posVertexDescriptor, _context.findProgram('rounded_rect_solid')),
-        _roundedOutlineBuffer = MeshBuffer(posVertexDescriptor, _context.findProgram('rounded_rect_outline'));
+    : _solidBuffer = MeshBuffer(posVertexDescriptor, _context.findProgram('solid_fill')),
+      _gradientBuffer = MeshBuffer(posUvVertexDescriptor, _context.findProgram('gradient_fill')),
+      _circleBuffer = MeshBuffer(posVertexDescriptor, _context.findProgram('circle_solid')),
+      _roundedSolidBuffer = MeshBuffer(posVertexDescriptor, _context.findProgram('rounded_rect_solid')),
+      _roundedOutlineBuffer = MeshBuffer(posVertexDescriptor, _context.findProgram('rounded_rect_outline'));
 
   void roundedRect(
     double width,
@@ -137,17 +137,19 @@ class PrimitiveRenderer {
   }
 
   void blitFramebuffer(GlFramebuffer framebuffer) {
-    final mesh = _blitBuffer ??= (() {
-      final buffer = MeshBuffer(blitVertexDescriptor, _context.findProgram('blit'));
-      buffer
-        ..vertex(Vector2.zero())
-        ..vertex(Vector2(1, 0))
-        ..vertex(Vector2(1, 1))
-        ..vertex(Vector2.zero())
-        ..vertex(Vector2(1, 1))
-        ..vertex(Vector2(0, 1));
-      return buffer..upload();
-    })();
+    final mesh =
+        _blitBuffer ??=
+            (() {
+              final buffer = MeshBuffer(blitVertexDescriptor, _context.findProgram('blit'));
+              buffer
+                ..vertex(Vector2.zero())
+                ..vertex(Vector2(1, 0))
+                ..vertex(Vector2(1, 1))
+                ..vertex(Vector2.zero())
+                ..vertex(Vector2(1, 1))
+                ..vertex(Vector2(0, 1));
+              return buffer..upload();
+            })();
 
     gl.disable(glBlend);
 
@@ -160,13 +162,7 @@ class PrimitiveRenderer {
     mesh.draw();
   }
 
-  void buildRect(
-    PosVertexFunction vertex,
-    double x,
-    double y,
-    double width,
-    double height,
-  ) {
+  void buildRect(PosVertexFunction vertex, double x, double y, double width, double height) {
     vertex(Vector3(x, y, 0));
     vertex(Vector3(x, y + height, 0));
     vertex(Vector3(x + width, y + height, 0));
@@ -175,13 +171,7 @@ class PrimitiveRenderer {
     vertex(Vector3(x, y, 0));
   }
 
-  void buildGradientRect(
-    PosUvVertexFunction vertex,
-    double x,
-    double y,
-    double width,
-    double height,
-  ) {
+  void buildGradientRect(PosUvVertexFunction vertex, double x, double y, double width, double height) {
     vertex(Vector3(x, y, 0), Vector2.zero());
     vertex(Vector3(x, y + height, 0), Vector2(0, 1));
     vertex(Vector3(x + width, y + height, 0), Vector2.all(1));

@@ -79,10 +79,7 @@ WidgetInstance buttonPanel(Icon icon, String name, List<WidgetInstance> buttons)
                     children: [
                       LabelInstance.text(text: Text([icon])),
                       PaddingInstance(insets: const Insets.all(10.0)),
-                      LabelInstance.text(
-                        text: Text.string(name),
-                        style: LabelStyle(fontSize: 18.0),
-                      ),
+                      LabelInstance.text(text: Text.string(name), style: LabelStyle(fontSize: 18.0)),
                     ],
                   ),
                   PaddingInstance(
@@ -97,7 +94,7 @@ WidgetInstance buttonPanel(Icon icon, String name, List<WidgetInstance> buttons)
               ),
             ),
           ),
-        )
+        ),
       ],
     ),
   );

@@ -23,27 +23,17 @@ Future<void> main(List<String> args) async {
     baseLogger: Logger('yep'),
     windowWidth: 600,
     windowHeight: 400,
-    resources: BraidResources.filesystem(
-      fontDirectory: 'resources/font',
-      shaderDirectory: 'resources/shader',
-    ),
+    resources: BraidResources.filesystem(fontDirectory: 'resources/font', shaderDirectory: 'resources/shader'),
     widget: const ClockApp(),
   );
 
-  runBraidApp(
-    app: app,
-    experimentalReloadHook: true,
-  );
+  runBraidApp(app: app, experimentalReloadHook: true);
 }
 
 class ColorProvider extends InheritedWidget {
   final Color color;
 
-  const ColorProvider({
-    super.key,
-    required this.color,
-    required super.child,
-  });
+  const ColorProvider({super.key, required this.color, required super.child});
 
   @override
   bool mustRebuildDependents(ColorProvider newWidget) => color != newWidget.color;
@@ -56,56 +46,50 @@ class ClockApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget widget = Column(children: [
-      Flexible(
-        key: Key('a'),
-        child: Panel(
-          color: Color.white,
-          cornerRadius: 0.0,
-          child: Center(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TimeText(),
-                Button.text(onClick: () => print('yup'), text: 'a'),
-              ],
-            ),
-          ),
-        ),
-      ),
-      Flexible(
-        key: Key('b'),
-        child: LayoutBuilder(
-          builder: (context, constraints) => Panel(
-            color: constraints.maxWidth > 600 ? Color.green : Color.blue,
+    Widget widget = Column(
+      children: [
+        Flexible(
+          key: Key('a'),
+          child: Panel(
+            color: Color.white,
             cornerRadius: 0.0,
-            child: const AnimatedPadding(
-              easing: Easing.inOutExpo,
-              duration: Duration(milliseconds: 1000),
-              insets: Insets(top: 10, bottom: 10, left: 10, right: 10),
-              child: AnimatedPanel(
-                easing: Easing.outExpo,
-                duration: Duration(seconds: 1),
-                cornerRadius: 15,
-                color: Color.white,
+            child: Center(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [TimeText(), Button.text(onClick: () => print('yup'), text: 'a')],
               ),
             ),
           ),
         ),
-        flexFactor: .5,
-      ),
-      Constrained(
-        constraints: Constraints.tightOnAxis(vertical: 75),
-        child: Panel(
-          color: Color.black,
-          cornerRadius: 0.0,
+        Flexible(
+          key: Key('b'),
+          child: LayoutBuilder(
+            builder:
+                (context, constraints) => Panel(
+                  color: constraints.maxWidth > 600 ? Color.green : Color.blue,
+                  cornerRadius: 0.0,
+                  child: const AnimatedPadding(
+                    easing: Easing.inOutExpo,
+                    duration: Duration(milliseconds: 1000),
+                    insets: Insets(top: 10, bottom: 10, left: 10, right: 10),
+                    child: AnimatedPanel(
+                      easing: Easing.outExpo,
+                      duration: Duration(seconds: 1),
+                      cornerRadius: 15,
+                      color: Color.white,
+                    ),
+                  ),
+                ),
+          ),
+          flexFactor: .5,
         ),
-      ),
-      Constrained(
-        constraints: Constraints.only(minHeight: 25),
-        child: DependencyTest(),
-      ),
-    ]);
+        Constrained(
+          constraints: Constraints.tightOnAxis(vertical: 75),
+          child: Panel(color: Color.black, cornerRadius: 0.0),
+        ),
+        Constrained(constraints: Constraints.only(minHeight: 25), child: DependencyTest()),
+      ],
+    );
 
     const orange = false;
     if (orange) {
@@ -131,33 +115,24 @@ class DependencyTestState extends WidgetState<DependencyTest> {
   Widget build(BuildContext context) {
     return ColorProvider(
       color: color,
-      child: Row(children: [
-        Button.text(
-          onClick: () => setState(() {
-            color = color == Color.red ? Color.green : Color.red;
-          }),
-          text: 'toggle',
-        ),
-        Constrained(
-          constraints: Constraints.only(minWidth: 10),
-          child: Panel(
-            color: color,
-            cornerRadius: 0.0,
+      child: Row(
+        children: [
+          Button.text(
+            onClick:
+                () => setState(() {
+                  color = color == Color.red ? Color.green : Color.red;
+                }),
+            text: 'toggle',
           ),
-        ),
-        const Flexible(
-          child: Builder(
-            builder: _innerBuild,
-          ),
-        )
-      ]),
+          Constrained(constraints: Constraints.only(minWidth: 10), child: Panel(color: color, cornerRadius: 0.0)),
+          const Flexible(child: Builder(builder: _innerBuild)),
+        ],
+      ),
     );
   }
 
   static Widget _innerBuild(BuildContext context) {
-    return Panel(
-      color: context.dependOnAncestor<ColorProvider>()!.color,
-    );
+    return Panel(color: context.dependOnAncestor<ColorProvider>()!.color);
   }
 }
 
@@ -175,10 +150,7 @@ class TimeTextState extends WidgetState<TimeText> {
   @override
   void init() {
     super.init();
-    _timer = Timer.periodic(
-      Duration(seconds: 1),
-      (timer) => setState(() => _time = DateTime.now()),
-    );
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) => setState(() => _time = DateTime.now()));
   }
 
   @override

@@ -16,14 +16,7 @@ class LabelStyle {
   final bool? italic;
   final double? lineHeight;
 
-  const LabelStyle({
-    this.textColor,
-    this.fontSize,
-    this.fontFamily,
-    this.bold,
-    this.italic,
-    this.lineHeight,
-  });
+  const LabelStyle({this.textColor, this.fontSize, this.fontFamily, this.bold, this.italic, this.lineHeight});
 
   LabelStyle copy({
     Color? textColor,
@@ -32,24 +25,23 @@ class LabelStyle {
     bool? bold,
     bool? italic,
     double? lineHeight,
-  }) =>
-      LabelStyle(
-        textColor: textColor ?? this.textColor,
-        fontSize: fontSize ?? this.fontSize,
-        fontFamily: fontFamily ?? this.fontFamily,
-        bold: bold ?? this.bold,
-        italic: italic ?? this.italic,
-        lineHeight: lineHeight ?? this.lineHeight,
-      );
+  }) => LabelStyle(
+    textColor: textColor ?? this.textColor,
+    fontSize: fontSize ?? this.fontSize,
+    fontFamily: fontFamily ?? this.fontFamily,
+    bold: bold ?? this.bold,
+    italic: italic ?? this.italic,
+    lineHeight: lineHeight ?? this.lineHeight,
+  );
 
   LabelStyle overriding(LabelStyle other) => LabelStyle(
-        textColor: textColor ?? other.textColor,
-        fontSize: fontSize ?? other.fontSize,
-        fontFamily: fontFamily ?? other.fontFamily,
-        bold: bold ?? other.bold,
-        italic: italic ?? other.italic,
-        lineHeight: lineHeight ?? other.lineHeight,
-      );
+    textColor: textColor ?? other.textColor,
+    fontSize: fontSize ?? other.fontSize,
+    fontFamily: fontFamily ?? other.fontFamily,
+    bold: bold ?? other.bold,
+    italic: italic ?? other.italic,
+    lineHeight: lineHeight ?? other.lineHeight,
+  );
 
   // for now we'll leave it at this, since it's a lot nicer to implement and shorter.
   // however, quick benchmarks indicate that this is ~4x slower than a full manual
@@ -76,17 +68,9 @@ class Label extends LeafInstanceWidget {
   final Text text;
   final LabelStyle style;
 
-  Label({
-    super.key,
-    required String text,
-    this.style = LabelStyle.empty,
-  }) : text = Text.string(text);
+  Label({super.key, required String text, this.style = LabelStyle.empty}) : text = Text.string(text);
 
-  Label.text({
-    super.key,
-    required this.text,
-    this.style = LabelStyle.empty,
-  });
+  Label.text({super.key, required this.text, this.style = LabelStyle.empty});
 
   @override
   LabelInstance instantiate() => LabelInstance(widget: this);
@@ -96,9 +80,7 @@ class LabelInstance extends LeafWidgetInstance<Label> {
   late Text _styledText;
   LabelStyle? _contextStyle;
 
-  LabelInstance({
-    required super.widget,
-  }) {
+  LabelInstance({required super.widget}) {
     _computeStyledText();
   }
 

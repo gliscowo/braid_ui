@@ -18,17 +18,11 @@ Future<void> main(List<String> args) async {
     baseLogger: Logger('drag_test'),
     windowWidth: 600,
     windowHeight: 400,
-    resources: BraidResources.filesystem(
-      fontDirectory: 'resources/font',
-      shaderDirectory: 'resources/shader',
-    ),
+    resources: BraidResources.filesystem(fontDirectory: 'resources/font', shaderDirectory: 'resources/shader'),
     widget: const DragApp(),
   );
 
-  runBraidApp(
-    app: app,
-    experimentalReloadHook: true,
-  );
+  runBraidApp(app: app, experimentalReloadHook: true);
 }
 
 class DragApp extends StatelessWidget {
@@ -37,10 +31,7 @@ class DragApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const HorizontalSplitPane(
-      leftChild: Panel(
-        key: Key('a'),
-        color: Color.blue,
-      ),
+      leftChild: Panel(key: Key('a'), color: Color.blue),
       rightChild: VerticalSplitPane(
         key: Key('b'),
         topChild: Flexible(child: Panel(color: Color.white)),

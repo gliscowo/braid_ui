@@ -22,10 +22,7 @@ class TimeTextState extends WidgetState<TimeText> {
   @override
   void init() {
     super.init();
-    _timer = Timer.periodic(
-      Duration(seconds: 1),
-      (timer) => setState(() => _time = DateTime.now()),
-    );
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) => setState(() => _time = DateTime.now()));
   }
 
   @override
@@ -39,10 +36,7 @@ class TimeTextState extends WidgetState<TimeText> {
     return MouseArea(
       cursorStyle: CursorStyle.hand,
       // clickCallback: () => setState(() => _time = DateTime.now()),
-      child: Label(
-        text: DateFormat('Hms').format(_time),
-        style: LabelStyle(fontSize: 40.0, bold: true),
-      ),
+      child: Label(text: DateFormat('Hms').format(_time), style: LabelStyle(fontSize: 40.0, bold: true)),
     );
   }
 }
@@ -52,13 +46,7 @@ class Clock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Panel(
-      color: Color.blue,
-      child: const Padding(
-        insets: Insets.all(10),
-        child: TimeText(),
-      ),
-    );
+    return Panel(color: Color.blue, child: const Padding(insets: Insets.all(10), child: TimeText()));
   }
 }
 
@@ -67,13 +55,7 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Panel(
-      color: Color.white,
-      cornerRadius: 0.0,
-      child: const Center(
-        child: Clock(),
-      ),
-    );
+    return Panel(color: Color.white, cornerRadius: 0.0, child: const Center(child: Clock()));
   }
 }
 
@@ -89,15 +71,9 @@ Future<void> main(List<String> args) async {
     baseLogger: Logger('yep'),
     windowWidth: 300,
     windowHeight: 200,
-    resources: BraidResources.filesystem(
-      fontDirectory: 'resources/font',
-      shaderDirectory: 'resources/shader',
-    ),
+    resources: BraidResources.filesystem(fontDirectory: 'resources/font', shaderDirectory: 'resources/shader'),
     widget: const App(),
   );
 
-  runBraidApp(
-    app: app,
-    experimentalReloadHook: true,
-  );
+  runBraidApp(app: app, experimentalReloadHook: true);
 }

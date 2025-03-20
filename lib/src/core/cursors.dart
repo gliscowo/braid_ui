@@ -23,7 +23,7 @@ class CursorController {
     CursorStyle.hand,
     CursorStyle.move,
     CursorStyle.horizontalResize,
-    CursorStyle.verticalResize
+    CursorStyle.verticalResize,
   ];
 
   final Map<CursorStyle, Pointer<GLFWcursor>> _cursors = {};

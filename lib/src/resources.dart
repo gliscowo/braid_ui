@@ -14,22 +14,14 @@ import 'core/app.dart';
 /// features can be used
 ///
 /// In case of failure, a [BraidInitializationException] is thrown
-void loadNatives(
-  String baseDirectory, {
-  BraidNatives? natives,
-}) {
+void loadNatives(String baseDirectory, {BraidNatives? natives}) {
   natives ??= BraidNatives.defaultForPlatform;
   BraidNatives._activeLibraries = natives._load(baseDirectory);
 }
 
 // ---
 
-typedef NativesBundle = ({
-  BraidNatives spec,
-  DynamicLibrary glfw,
-  DynamicLibrary freetype,
-  DynamicLibrary harfbuzz,
-});
+typedef NativesBundle = ({BraidNatives spec, DynamicLibrary glfw, DynamicLibrary freetype, DynamicLibrary harfbuzz});
 
 class BraidNatives {
   static const linux = BraidNatives(
@@ -51,24 +43,15 @@ class BraidNatives {
   final String glfw, freetype, harfbuzz;
   final String _subdirectory;
 
-  const BraidNatives({
-    required this.glfw,
-    required this.freetype,
-    required this.harfbuzz,
-    required String subdirectory,
-  }) : _subdirectory = subdirectory;
+  const BraidNatives({required this.glfw, required this.freetype, required this.harfbuzz, required String subdirectory})
+    : _subdirectory = subdirectory;
 
-  BraidNatives copy({
-    String? glfw,
-    String? freetype,
-    String? harfbuzz,
-  }) =>
-      BraidNatives(
-        glfw: glfw ?? this.glfw,
-        freetype: freetype ?? this.freetype,
-        harfbuzz: harfbuzz ?? this.harfbuzz,
-        subdirectory: _subdirectory,
-      );
+  BraidNatives copy({String? glfw, String? freetype, String? harfbuzz}) => BraidNatives(
+    glfw: glfw ?? this.glfw,
+    freetype: freetype ?? this.freetype,
+    harfbuzz: harfbuzz ?? this.harfbuzz,
+    subdirectory: _subdirectory,
+  );
 
   NativesBundle _load(String baseDirectory) {
     final prevDir = Directory.current;
@@ -115,20 +98,15 @@ abstract interface class BraidResources {
   Future<String> loadShader(String path);
   Stream<Uint8List> loadFontFamily(String familyName);
 
-  factory BraidResources.filesystem({
-    required String fontDirectory,
-    required String shaderDirectory,
-  }) = FilesystemResources;
+  factory BraidResources.filesystem({required String fontDirectory, required String shaderDirectory}) =
+      FilesystemResources;
 }
 
 class FilesystemResources implements BraidResources {
   final String fontDirectory;
   final String shaderDirectory;
 
-  FilesystemResources({
-    required this.fontDirectory,
-    required this.shaderDirectory,
-  }) {
+  FilesystemResources({required this.fontDirectory, required this.shaderDirectory}) {
     if (!FileSystemEntity.isDirectorySync(fontDirectory)) {
       throw BraidInitializationException('font directory $fontDirectory does not exist');
     }

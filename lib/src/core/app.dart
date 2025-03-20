@@ -24,11 +24,7 @@ import 'cursors.dart';
 import 'math.dart';
 import 'reload_hook.dart';
 
-Future<void> runBraidApp({
-  required AppState app,
-  int targetFps = 60,
-  bool experimentalReloadHook = false,
-}) async {
+Future<void> runBraidApp({required AppState app, int targetFps = 60, bool experimentalReloadHook = false}) async {
   void Function()? reloadCancelCallback;
 
   if (experimentalReloadHook) {
@@ -50,9 +46,7 @@ Future<void> runBraidApp({
   while (glfw.windowShouldClose(app.window.handle) != glfwTrue && app._running) {
     final measuredDelta = glfw.getTime() - lastFrameTimestamp;
 
-    await Future.delayed(Duration(
-      microseconds: max(((oneFrame - measuredDelta) * 1000000).toInt(), 0),
-    ));
+    await Future.delayed(Duration(microseconds: max(((oneFrame - measuredDelta) * 1000000).toInt(), 0)));
 
     final effectiveDelta = glfw.getTime() - lastFrameTimestamp;
     lastFrameTimestamp = glfw.getTime();
@@ -133,10 +127,8 @@ Future<AppState> createBraidApp({
     renderContext.addProgram(program);
   }
 
-  final (notoSans, materialSymbols) = await (
-    FontFamily.load(resources, 'NotoSans'),
-    FontFamily.load(resources, 'MaterialSymbols'),
-  ).wait;
+  final (notoSans, materialSymbols) =
+      await (FontFamily.load(resources, 'NotoSans'), FontFamily.load(resources, 'MaterialSymbols')).wait;
 
   final textRenderer = TextRenderer(renderContext, notoSans, {
     'Noto Sans': notoSans,
@@ -161,10 +153,7 @@ Future<AppState> createBraidApp({
 }
 
 Future<GlProgram> _vertFragProgram(BraidResources resources, String name, String vert, String frag) async {
-  final (vertSource, fragSource) = await (
-    resources.loadShader('$vert.vert'),
-    resources.loadShader('$frag.frag'),
-  ).wait;
+  final (vertSource, fragSource) = await (resources.loadShader('$vert.vert'), resources.loadShader('$frag.frag')).wait;
 
   final shaders = [
     GlShader('$vert.vert', vertSource, GlShaderType.vertex),
@@ -180,12 +169,13 @@ final class BraidInitializationException implements Exception {
   BraidInitializationException(this.message, {this.cause});
 
   @override
-  String toString() => cause != null
-      ? '''
+  String toString() =>
+      cause != null
+          ? '''
 error during braid initialization: $message
 cause: $cause
 '''
-      : 'error during braid initialization: $message';
+          : 'error during braid initialization: $message';
 }
 
 // ---
@@ -193,10 +183,7 @@ cause: $cause
 class _RootWidget extends SingleChildInstanceWidget {
   final BuildScope rootBuildScope;
 
-  _RootWidget({
-    required super.child,
-    required this.rootBuildScope,
-  });
+  _RootWidget({required super.child, required this.rootBuildScope});
 
   @override
   SingleChildWidgetInstance<InstanceWidget> instantiate() => _RootInstance(widget: this);
@@ -285,9 +272,9 @@ class AppState implements InstanceHost, ProxyHost {
     // ---
 
     _subscriptions.addAll([
-      window.onMouseButton
-          .where((event) => event.action == glfwPress && event.button == glfwMouseButtonLeft)
-          .listen((event) {
+      window.onMouseButton.where((event) => event.action == glfwPress && event.button == glfwMouseButtonLeft).listen((
+        event,
+      ) {
         final state = _hitTest();
 
         final clicked = state.firstWhere(
@@ -313,10 +300,7 @@ class AppState implements InstanceHost, ProxyHost {
           _dragStarted = true;
         }
 
-        final (x, y) = _dragging!.globalToWidgetCoordinates(
-          window.cursorX,
-          window.cursorY,
-        );
+        final (x, y) = _dragging!.globalToWidgetCoordinates(window.cursorX, window.cursorY);
 
         // apply *only the rotation* of the instance's transform
         // to the mouse movement
@@ -325,9 +309,9 @@ class AppState implements InstanceHost, ProxyHost {
 
         _dragging!.onMouseDrag(x, y, delta.x, delta.y);
       }),
-      window.onMouseButton
-          .where((event) => event.action == glfwRelease && event.button == glfwMouseButtonLeft)
-          .listen((event) {
+      window.onMouseButton.where((event) => event.action == glfwRelease && event.button == glfwMouseButtonLeft).listen((
+        event,
+      ) {
         if (_dragStarted) {
           _dragging?.onMouseDragEnd();
         }
@@ -339,8 +323,12 @@ class AppState implements InstanceHost, ProxyHost {
         _hitTest().firstWhere(
           (hit) =>
               hit.instance is MouseListener &&
-              (hit.instance as MouseListener)
-                  .onMouseScroll(hit.coordinates.x, hit.coordinates.y, event.xOffset, event.yOffset),
+              (hit.instance as MouseListener).onMouseScroll(
+                hit.coordinates.x,
+                hit.coordinates.y,
+                event.xOffset,
+                event.yOffset,
+              ),
         );
       }),
       // ---
@@ -359,11 +347,15 @@ node [shape="box"];
           out
             ..writeln('}')
             ..flush().then((value) {
-              Process.start('dot', ['-Tsvg', '-owidget_tree.svg', 'widget_tree.dot'],
-                      mode: ProcessStartMode.inheritStdio)
-                  .then((proc) => proc.exitCode.then((_) {
-                        return treeFile.delete();
-                      }));
+              Process.start('dot', [
+                '-Tsvg',
+                '-owidget_tree.svg',
+                'widget_tree.dot',
+              ], mode: ProcessStartMode.inheritStdio).then(
+                (proc) => proc.exitCode.then((_) {
+                  return treeFile.delete();
+                }),
+              );
             });
         }
 
@@ -383,10 +375,7 @@ node [shape="box"];
   void draw() {
     final ctx = DrawContext(context, primitives, projection, textRenderer, drawBoundingBoxes: debugDrawInstanceBoxes);
 
-    ctx.transform.scopedTransform(
-      rootInstance.transform.transformToParent,
-      (_) => rootInstance.draw(ctx),
-    );
+    ctx.transform.scopedTransform(rootInstance.transform.transformToParent, (_) => rootInstance.draw(ctx));
   }
 
   void updateWidgetsAndInteractions(double delta) {
