@@ -115,6 +115,24 @@ abstract class OptionalChildInstanceWidget extends InstanceWidget {
   OptionalChildInstanceWidgetProxy proxy() => OptionalChildInstanceWidgetProxy(this);
 }
 
+abstract class MultiChildInstanceWidget extends InstanceWidget {
+  final List<Widget> children;
+
+  const MultiChildInstanceWidget({
+    super.key,
+    required this.children,
+  });
+
+  @override
+  @factory
+  MultiChildWidgetInstance instantiate();
+
+  // ---
+
+  @override
+  MultiChildInstanceWidgetProxy proxy() => MultiChildInstanceWidgetProxy(this);
+}
+
 abstract class LeafInstanceWidget extends InstanceWidget {
   const LeafInstanceWidget({super.key});
 

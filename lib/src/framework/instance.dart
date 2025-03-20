@@ -94,8 +94,8 @@ class HitTestState {
   Iterable<Hit> get occludedTrace =>
       trace.takeWhile((value) => !(value.instance.flags & InstanceFlags.hitTestBoundary));
 
-  Hit? firstWhere(bool Function(WidgetInstance instance) predicate) => occludedTrace.cast<Hit?>().firstWhere(
-        (element) => predicate(element!.instance),
+  Hit? firstWhere(bool Function(Hit hit) predicate) => occludedTrace.cast<Hit?>().firstWhere(
+        (element) => predicate(element!),
         orElse: () => null,
       );
 
@@ -107,17 +107,19 @@ class HitTestState {
   String toString() => 'HitTestState [${_hitWidgets.map((e) => e.instance.runtimeType).join(', ')}]';
 }
 
-mixin MouseListener {
-  bool onMouseDown() => false;
+mixin MouseListener<T extends InstanceWidget> on WidgetInstance<T> {
+  CursorStyle? get cursorStyle => null;
+
+  bool onMouseDown(double x, double y) => false;
   void onMouseEnter() {}
   void onMouseExit() {}
   void onMouseDragStart() {}
-  void onMouseDrag(double dx, double dy) {}
+  void onMouseDrag(double x, double y, double dx, double dy) {}
   void onMouseDragEnd() {}
-  bool onMouseScroll(double horizontal, double vertical) => false;
+  bool onMouseScroll(double x, double y, double horizontal, double vertical) => false;
 }
 
-mixin KeyboardListener {
+mixin KeyboardListener<T extends InstanceWidget> on WidgetInstance<T> {
   void onKeyDown(int keyCode, int modifiers);
   void onKeyUp(int keyCode, int modifiers);
   void onChar(int charCode, int modifiers);
@@ -251,7 +253,13 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
     }
   }
 
-  void dispose() {}
+  bool _debugDisposed = false;
+
+  @mustCallSuper
+  void dispose() {
+    assert(!_debugDisposed, 'tried to dispose a widget instance twice');
+    _debugDisposed = true;
+  }
 
   @protected
   WidgetTransform createTransform() => WidgetTransform();
@@ -260,6 +268,14 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
 
   @override
   void visitChildren(WidgetInstanceVisitor visitor);
+
+  Iterable<WidgetInstance> get ancestors sync* {
+    var ancestor = _parent;
+    while (ancestor != null) {
+      yield ancestor;
+      ancestor = ancestor._parent;
+    }
+  }
 
   void hitTest(double x, double y, HitTestState state) {
     if (hitTestSelf(x, y)) state.addHit(this, x, y);
@@ -277,6 +293,15 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
     });
   }
 
+  (double, double) globalToWidgetCoordinates(double x, double y) {
+    final coordinates = Vector3(x, y, 0);
+    for (final ancestor in this.ancestors.toList().reversed) {
+      ancestor.transform.toWidgetCoordinates(coordinates);
+    }
+
+    return (coordinates.x, coordinates.y);
+  }
+
   @protected
   bool hitTestSelf(double x, double y) => x >= 0 && x <= transform.width && y >= 0 && y <= transform.height;
 
@@ -289,13 +314,6 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
 
   @override
   String toString() => '${isRelayoutBoundary ? 'BOUNDARY@' : ''}$runtimeType@${hashCode.toRadixString(16)}';
-}
-
-abstract class LeafWidgetInstance<T extends InstanceWidget> extends WidgetInstance<T> {
-  LeafWidgetInstance({required super.widget});
-
-  @override
-  void visitChildren(WidgetInstanceVisitor visitor) {}
 }
 
 // --- rendering/layout mixins
@@ -416,6 +434,33 @@ abstract class OptionalChildWidgetInstance<T extends InstanceWidget> extends Wid
     _child = adopt(value);
     markNeedsLayout();
   }
+}
+
+abstract class MultiChildWidgetInstance<T extends MultiChildInstanceWidget> extends WidgetInstance<T>
+    with ChildRenderer, ChildListRenderer {
+  List<WidgetInstance> children = [];
+
+  MultiChildWidgetInstance({
+    required super.widget,
+  });
+
+  @override
+  void visitChildren(WidgetInstanceVisitor visitor) {
+    for (final child in children) {
+      visitor(child);
+    }
+  }
+
+  void insertChild(int index, WidgetInstance child) {
+    children[index] = adopt(child);
+  }
+}
+
+abstract class LeafWidgetInstance<T extends InstanceWidget> extends WidgetInstance<T> {
+  LeafWidgetInstance({required super.widget});
+
+  @override
+  void visitChildren(WidgetInstanceVisitor visitor) {}
 }
 
 // --- instance tree debugging

@@ -130,7 +130,7 @@ class PaddingInstance extends OptionalChildWidgetInstance<Padding> {
       max(0, constraints.maxHeight - insets.vertical),
     );
 
-    final size = (child?.layout(childConstraints) ?? Size.zero).withInsets(insets);
+    final size = (child?.layout(childConstraints) ?? Size.zero).withInsets(insets).constrained(constraints);
     transform.setSize(size);
 
     child?.transform.x = insets.left;
@@ -195,6 +195,11 @@ class Alignment {
     required this.horizontal,
     required this.vertical,
   });
+
+  (double, double) align(Size space, Size object) => (
+        ((space.width - object.width) * horizontal).floorToDouble(),
+        ((space.height - object.height) * vertical).floorToDouble(),
+      );
 
   get _props => (horizontal, vertical);
 
@@ -262,8 +267,9 @@ class _AlignInstance extends SingleChildWidgetInstance<Align> {
                 : constraints.maxHeight)
         .constrained(constraints);
 
-    child.transform.x = ((selfSize.width - childSize.width) * alignment.horizontal).floorToDouble();
-    child.transform.y = ((selfSize.height - childSize.height) * alignment.vertical).floorToDouble();
+    final (childX, childY) = alignment.align(selfSize, childSize);
+    child.transform.x = childX;
+    child.transform.y = childY;
 
     transform.setSize(selfSize);
   }
@@ -316,12 +322,41 @@ class _PanelInstance extends OptionalChildWidgetInstance<Panel> with OptionalShr
 
 // ---
 
+typedef CustomDrawFunction = void Function(DrawContext ctx, WidgetTransform transform);
+
+class CustomDraw extends LeafInstanceWidget {
+  final CustomDrawFunction drawFunction;
+
+  CustomDraw({
+    super.key,
+    required this.drawFunction,
+  });
+
+  @override
+  CustomDrawInstance instantiate() => CustomDrawInstance(widget: this);
+}
+
+class CustomDrawInstance extends LeafWidgetInstance<CustomDraw> {
+  CustomDrawInstance({required super.widget});
+
+  @override
+  void doLayout(Constraints constraints) {
+    final size = constraints.minSize;
+    transform.setSize(size);
+  }
+
+  @override
+  void draw(DrawContext ctx) => widget.drawFunction(ctx, transform);
+}
+
+// ---
+
 class MouseArea extends SingleChildInstanceWidget {
-  final void Function()? clickCallback;
+  final void Function(double x, double y)? clickCallback;
   final void Function()? enterCallback;
   final void Function()? exitCallback;
   final void Function()? dragStartCallback;
-  final void Function(double dx, double dy)? dragCallback;
+  final void Function(double x, double y, double dx, double dy)? dragCallback;
   final void Function()? dragEndCallback;
   final void Function(double horizontal, double vertical)? scrollCallback;
   final CursorStyle? cursorStyle;
@@ -349,7 +384,10 @@ class MouseAreaInstance extends SingleChildWidgetInstance<MouseArea> with Shrink
   });
 
   @override
-  bool onMouseDown() => (widget.clickCallback?..call()) != null || widget.dragCallback != null;
+  CursorStyle? get cursorStyle => widget.cursorStyle;
+
+  @override
+  bool onMouseDown(double x, double y) => (widget.clickCallback?..call(x, y)) != null || widget.dragCallback != null;
 
   @override
   void onMouseEnter() => widget.enterCallback?.call();
@@ -361,13 +399,13 @@ class MouseAreaInstance extends SingleChildWidgetInstance<MouseArea> with Shrink
   void onMouseDragStart() => widget.dragStartCallback?.call();
 
   @override
-  void onMouseDrag(double dx, double dy) => widget.dragCallback?.call(dx, dy);
+  void onMouseDrag(double x, double y, double dx, double dy) => widget.dragCallback?.call(x, y, dx, dy);
 
   @override
   void onMouseDragEnd() => widget.dragEndCallback?.call();
 
   @override
-  bool onMouseScroll(double horizontal, double vertical) =>
+  bool onMouseScroll(double x, double y, double horizontal, double vertical) =>
       (widget.scrollCallback?..call(horizontal, vertical)) != null;
 }
 

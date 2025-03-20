@@ -1,13 +1,12 @@
-import 'dart:collection';
 import 'dart:math';
 
 import '../../braid_ui.dart';
-import '../framework/proxy.dart';
 import '../framework/widget.dart';
 
 /// A vertical array of widgets
 class Column extends Flex {
   const Column({
+    super.key,
     super.mainAxisAlignment,
     super.crossAxisAlignment,
     required super.children,
@@ -17,10 +16,28 @@ class Column extends Flex {
 /// A horizontal array of widgets
 class Row extends Flex {
   const Row({
+    super.key,
     super.mainAxisAlignment,
     super.crossAxisAlignment,
     required super.children,
   }) : super(mainAxis: LayoutAxis.horizontal);
+}
+
+class Flex extends MultiChildInstanceWidget {
+  final LayoutAxis mainAxis;
+  final MainAxisAlignment mainAxisAlignment;
+  final CrossAxisAlignment crossAxisAlignment;
+
+  const Flex({
+    super.key,
+    this.mainAxisAlignment = MainAxisAlignment.start,
+    this.crossAxisAlignment = CrossAxisAlignment.start,
+    required this.mainAxis,
+    required super.children,
+  });
+
+  @override
+  FlexInstance instantiate() => FlexInstance(widget: this);
 }
 
 // ---
@@ -109,22 +126,15 @@ class FlexParentData {
   FlexParentData(this.flexFactor);
 }
 
-class FlexInstance extends WidgetInstance<Flex> with ChildRenderer<Flex>, ChildListRenderer<Flex> {
-  List<WidgetInstance> _children = [];
+// class MultiChilkWidgetInstance<T ex> extends WidgetInstance
 
+class FlexInstance extends MultiChildWidgetInstance<Flex> {
   FlexInstance({
     required super.widget,
   });
 
   // TODO: revisit whether available main axis space should always
   // saturate constraints for non-flex children
-
-  @override
-  void visitChildren(WidgetInstanceVisitor visitor) {
-    for (final child in _children) {
-      visitor(child);
-    }
-  }
 
   @override
   set widget(Flex value) {
@@ -155,7 +165,7 @@ class FlexInstance extends WidgetInstance<Flex> with ChildRenderer<Flex>, ChildL
     );
 
     // first, lay out all non-flex children and store their sizes
-    final childSizes = _children
+    final childSizes = children
         .where((element) => element.parentData is! FlexParentData)
         .map((e) => e.layout(childConstraints))
         .toList();
@@ -166,7 +176,7 @@ class FlexInstance extends WidgetInstance<Flex> with ChildRenderer<Flex>, ChildL
 
     // get the flex children and compute the total flex factor in order
     // to divvy up the remaining space properly later
-    final flexChildren = _children.where((element) => element.parentData is FlexParentData);
+    final flexChildren = children.where((element) => element.parentData is FlexParentData);
     final totalFlexFactor = flexChildren.fold(
         0.0, (previousValue, element) => previousValue + (element.parentData as FlexParentData).flexFactor);
 
@@ -205,7 +215,7 @@ class FlexInstance extends WidgetInstance<Flex> with ChildRenderer<Flex>, ChildL
 
     // move children into position and apply cross-axis alignment
     var mainAxisOffset = leadingSpace;
-    for (final child in _children) {
+    for (final child in children) {
       child.transform.setAxisCoordinate(
         mainAxis,
         mainAxisOffset,
@@ -220,184 +230,5 @@ class FlexInstance extends WidgetInstance<Flex> with ChildRenderer<Flex>, ChildL
 
       mainAxisOffset += child.transform.getAxisExtent(mainAxis) + betweenSpace;
     }
-  }
-}
-
-// ---
-
-class Flex extends InstanceWidget {
-  final LayoutAxis mainAxis;
-  final MainAxisAlignment mainAxisAlignment;
-  final CrossAxisAlignment crossAxisAlignment;
-  final List<Widget> children;
-
-  const Flex({
-    super.key,
-    this.mainAxisAlignment = MainAxisAlignment.start,
-    this.crossAxisAlignment = CrossAxisAlignment.start,
-    required this.mainAxis,
-    required this.children,
-  });
-
-  @override
-  WidgetProxy proxy() => FlexProxy(this);
-
-  @override
-  WidgetInstance instantiate() => FlexInstance(widget: this);
-}
-
-class FlexProxy extends InstanceWidgetProxy {
-  List<WidgetProxy> _children = [];
-  List<WidgetInstance?> _childInstances = [];
-
-  FlexProxy(super.widget);
-
-  @override
-  FlexInstance get instance => (super.instance as FlexInstance);
-
-  @override
-  void visitChildren(WidgetProxyVisitor visitor) {
-    for (final child in _children) {
-      visitor(child);
-    }
-  }
-
-  @override
-  void mount(WidgetProxy parent, Object? slot) {
-    super.mount(parent, slot);
-    rebuild();
-  }
-
-  @override
-  void updateWidget(Flex newWidget) {
-    super.updateWidget(newWidget);
-    rebuild(force: true);
-  }
-
-  @override
-  void doRebuild() {
-    instance.widget = widget as Flex;
-    final newWidgets = (widget as Flex).children;
-
-    var newChildrenTop = 0;
-    var oldChildrenTop = 0;
-    var newChildrenBottom = newWidgets.length - 1;
-    var oldChildrenBottom = _children.length - 1;
-
-    final newChildren = List<WidgetProxy?>.filled(newWidgets.length, null);
-
-    // we already set up the new child instance list, so that any
-    // notifyDescendantInstance invocations caused by the below
-    // refreshChild calls always index into the correct list
-    _childInstances = List<WidgetInstance?>.filled(newChildren.length, null);
-    List.copyRange(_childInstances, 0, instance._children, 0, min(_childInstances.length, instance._children.length));
-    instance._children = _childInstances.cast();
-
-    // sync from the top
-    while ((oldChildrenTop <= oldChildrenBottom) && (newChildrenTop <= newChildrenBottom)) {
-      final oldChild = _children[oldChildrenTop];
-      final newWidget = newWidgets[newChildrenTop];
-
-      if (!Widget.canUpdate(oldChild.widget, newWidget)) {
-        break;
-      }
-
-      newChildren[newChildrenTop] = refreshChild(oldChild, newWidget, newChildrenTop);
-      assert(_childInstances[newChildrenTop] != null);
-
-      oldChildrenTop++;
-      newChildrenTop++;
-    }
-
-    // scan from the bottom
-    while ((oldChildrenTop <= oldChildrenBottom) && (newChildrenTop <= newChildrenBottom)) {
-      final oldChild = _children[oldChildrenTop];
-      final newWidget = newWidgets[newChildrenTop];
-
-      if (!Widget.canUpdate(oldChild.widget, newWidget)) {
-        break;
-      }
-
-      oldChildrenTop++;
-      newChildrenTop++;
-    }
-
-    // scan middle, store keyed and disposed un-keyed
-
-    final hasOldChildren = oldChildrenTop <= oldChildrenBottom;
-    Map<Key, WidgetProxy>? keyedOldChildren;
-
-    if (hasOldChildren) {
-      keyedOldChildren = HashMap();
-      while (oldChildrenTop <= oldChildrenBottom) {
-        final oldChild = _children[oldChildrenTop];
-        final key = oldChild.widget.key;
-
-        if (key != null) {
-          keyedOldChildren[key!] = oldChild;
-        } else {
-          oldChild.unmount();
-        }
-
-        oldChildrenTop++;
-      }
-    }
-
-    // sync middle, updating keyed
-
-    while (newChildrenTop <= newChildrenBottom) {
-      WidgetProxy? oldChild;
-      final newWidget = newWidgets[newChildrenTop];
-
-      if (hasOldChildren) {
-        final key = newWidget.key;
-        if (key != null) {
-          oldChild = keyedOldChildren![key];
-          if (oldChild != null) {
-            if (Widget.canUpdate(oldChild.widget, newWidget)) {
-              keyedOldChildren.remove(key);
-            } else {
-              oldChild = null;
-            }
-          }
-        }
-      }
-
-      newChildren[newChildrenTop] = refreshChild(oldChild, newWidget, newChildrenTop);
-      assert(_childInstances[newChildrenTop] != null);
-
-      newChildrenTop++;
-    }
-
-    newChildrenBottom = newWidgets.length - 1;
-    oldChildrenBottom = _children.length - 1;
-
-    while ((oldChildrenTop <= oldChildrenBottom) && (newChildrenTop <= newChildrenBottom)) {
-      final oldChild = _children[oldChildrenTop];
-      final newWidget = newWidgets[newChildrenTop];
-
-      newChildren[newChildrenTop] = refreshChild(oldChild, newWidget, newChildrenTop);
-      assert(_childInstances[newChildrenTop] != null);
-
-      oldChildrenTop++;
-      newChildrenTop++;
-    }
-
-    // dispose keyed proxies that were not reused
-    if (hasOldChildren && keyedOldChildren!.isNotEmpty) {
-      for (final proxy in keyedOldChildren.values) {
-        proxy.unmount();
-      }
-    }
-
-    // finally, install new children
-    _children = newChildren.cast();
-
-    super.doRebuild();
-  }
-
-  @override
-  void notifyDescendantInstance(WidgetInstance<InstanceWidget>? instance, int slot) {
-    _childInstances[slot] = this.instance.adopt(instance);
   }
 }

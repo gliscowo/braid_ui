@@ -1,5 +1,6 @@
 import 'dart:collection';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:meta/meta.dart';
 
@@ -549,6 +550,162 @@ class OptionalChildInstanceWidgetProxy extends InstanceWidgetProxy with SingleCh
   @override
   void notifyDescendantInstance(WidgetInstance<InstanceWidget>? instance, covariant Object? slot) {
     this.instance.child = instance;
+  }
+}
+
+class MultiChildInstanceWidgetProxy extends InstanceWidgetProxy {
+  List<WidgetProxy> children = [];
+  List<WidgetInstance?> childInstances = [];
+
+  MultiChildInstanceWidgetProxy(super.widget);
+
+  @override
+  MultiChildWidgetInstance get instance => (super.instance as MultiChildWidgetInstance);
+
+  @override
+  void visitChildren(WidgetProxyVisitor visitor) {
+    for (final child in children) {
+      visitor(child);
+    }
+  }
+
+  @override
+  void mount(WidgetProxy parent, Object? slot) {
+    super.mount(parent, slot);
+    rebuild();
+  }
+
+  @override
+  void updateWidget(MultiChildInstanceWidget newWidget) {
+    super.updateWidget(newWidget);
+    rebuild(force: true);
+  }
+
+  @override
+  void doRebuild() {
+    instance.widget = widget as MultiChildInstanceWidget;
+    final newWidgets = (widget as MultiChildInstanceWidget).children;
+
+    var newChildrenTop = 0;
+    var oldChildrenTop = 0;
+    var newChildrenBottom = newWidgets.length - 1;
+    var oldChildrenBottom = children.length - 1;
+
+    final newChildren = List<WidgetProxy?>.filled(newWidgets.length, null);
+
+    // we already set up the new child instance list, so that any
+    // notifyDescendantInstance invocations caused by the below
+    // refreshChild calls always index into the correct list
+    childInstances = List<WidgetInstance?>.filled(newChildren.length, null);
+    List.copyRange(childInstances, 0, instance.children, 0, min(childInstances.length, instance.children.length));
+    instance.children = childInstances.cast();
+
+    // sync from the top
+    while ((oldChildrenTop <= oldChildrenBottom) && (newChildrenTop <= newChildrenBottom)) {
+      final oldChild = children[oldChildrenTop];
+      final newWidget = newWidgets[newChildrenTop];
+
+      if (!Widget.canUpdate(oldChild.widget, newWidget)) {
+        break;
+      }
+
+      newChildren[newChildrenTop] = refreshChild(oldChild, newWidget, newChildrenTop);
+      assert(childInstances[newChildrenTop] != null);
+
+      oldChildrenTop++;
+      newChildrenTop++;
+    }
+
+    // scan from the bottom
+    while ((oldChildrenTop <= oldChildrenBottom) && (newChildrenTop <= newChildrenBottom)) {
+      final oldChild = children[oldChildrenTop];
+      final newWidget = newWidgets[newChildrenTop];
+
+      if (!Widget.canUpdate(oldChild.widget, newWidget)) {
+        break;
+      }
+
+      oldChildrenTop++;
+      newChildrenTop++;
+    }
+
+    // scan middle, store keyed and disposed un-keyed
+
+    final hasOldChildren = oldChildrenTop <= oldChildrenBottom;
+    Map<Key, WidgetProxy>? keyedOldChildren;
+
+    if (hasOldChildren) {
+      keyedOldChildren = HashMap();
+      while (oldChildrenTop <= oldChildrenBottom) {
+        final oldChild = children[oldChildrenTop];
+        final key = oldChild.widget.key;
+
+        if (key != null) {
+          keyedOldChildren[key!] = oldChild;
+        } else {
+          oldChild.unmount();
+        }
+
+        oldChildrenTop++;
+      }
+    }
+
+    // sync middle, updating keyed
+
+    while (newChildrenTop <= newChildrenBottom) {
+      WidgetProxy? oldChild;
+      final newWidget = newWidgets[newChildrenTop];
+
+      if (hasOldChildren) {
+        final key = newWidget.key;
+        if (key != null) {
+          oldChild = keyedOldChildren![key];
+          if (oldChild != null) {
+            if (Widget.canUpdate(oldChild.widget, newWidget)) {
+              keyedOldChildren.remove(key);
+            } else {
+              oldChild = null;
+            }
+          }
+        }
+      }
+
+      newChildren[newChildrenTop] = refreshChild(oldChild, newWidget, newChildrenTop);
+      assert(childInstances[newChildrenTop] != null);
+
+      newChildrenTop++;
+    }
+
+    newChildrenBottom = newWidgets.length - 1;
+    oldChildrenBottom = children.length - 1;
+
+    while ((oldChildrenTop <= oldChildrenBottom) && (newChildrenTop <= newChildrenBottom)) {
+      final oldChild = children[oldChildrenTop];
+      final newWidget = newWidgets[newChildrenTop];
+
+      newChildren[newChildrenTop] = refreshChild(oldChild, newWidget, newChildrenTop);
+      assert(childInstances[newChildrenTop] != null);
+
+      oldChildrenTop++;
+      newChildrenTop++;
+    }
+
+    // dispose keyed proxies that were not reused
+    if (hasOldChildren && keyedOldChildren!.isNotEmpty) {
+      for (final proxy in keyedOldChildren.values) {
+        proxy.unmount();
+      }
+    }
+
+    // finally, install new children
+    children = newChildren.cast();
+
+    super.doRebuild();
+  }
+
+  @override
+  void notifyDescendantInstance(WidgetInstance<InstanceWidget>? instance, int slot) {
+    this.instance.insertChild(slot, instance!);
   }
 }
 

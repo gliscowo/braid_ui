@@ -19,7 +19,6 @@ import '../framework/widget.dart';
 import '../primitive_renderer.dart';
 import '../resources.dart';
 import '../text/text_renderer.dart';
-import '../widgets/basic.dart';
 import 'constraints.dart';
 import 'cursors.dart';
 import 'math.dart';
@@ -292,7 +291,9 @@ class AppState implements InstanceHost, ProxyHost {
         final state = _hitTest();
 
         final clicked = state.firstWhere(
-          (instance) => instance is MouseListener && (instance as MouseListener).onMouseDown(),
+          (hit) =>
+              hit.instance is MouseListener &&
+              (hit.instance as MouseListener).onMouseDown(hit.coordinates.x, hit.coordinates.y),
         );
 
         if (clicked != null) {
@@ -305,12 +306,24 @@ class AppState implements InstanceHost, ProxyHost {
         _focused?.onFocusGained();
       }),
       window.onMouseMove.listen((event) {
+        if (_dragging == null) return;
+
         if (!_dragStarted) {
-          _dragging?.onMouseDragStart();
+          _dragging!.onMouseDragStart();
           _dragStarted = true;
         }
 
-        _dragging?.onMouseDrag(event.deltaX, event.deltaY);
+        final (x, y) = _dragging!.globalToWidgetCoordinates(
+          window.cursorX,
+          window.cursorY,
+        );
+
+        // apply *only the rotation* of the instance's transform
+        // to the mouse movement
+        final delta = Vector4(event.deltaX, event.deltaY, 0, 0);
+        _dragging!.transform.toWidget.transform(delta);
+
+        _dragging!.onMouseDrag(x, y, delta.x, delta.y);
       }),
       window.onMouseButton
           .where((event) => event.action == glfwRelease && event.button == glfwMouseButtonLeft)
@@ -324,7 +337,10 @@ class AppState implements InstanceHost, ProxyHost {
       // ---
       window.onMouseScroll.listen((event) {
         _hitTest().firstWhere(
-          (widget) => widget is MouseListener && (widget as MouseListener).onMouseScroll(event.xOffset, event.yOffset),
+          (hit) =>
+              hit.instance is MouseListener &&
+              (hit.instance as MouseListener)
+                  .onMouseScroll(hit.coordinates.x, hit.coordinates.y, event.xOffset, event.yOffset),
         );
       }),
       // ---
@@ -412,13 +428,13 @@ node [shape="box"];
 
     CursorStyle? activeStyle;
     if (_dragging != null) {
-      activeStyle = _dragging is MouseAreaInstance ? (_dragging as MouseAreaInstance).widget.cursorStyle : null;
+      activeStyle = _dragging!.cursorStyle;
     } else {
       final cursorStyleSource = state.firstWhere(
-        (widgetInstance) => widgetInstance is MouseAreaInstance && widgetInstance.widget.cursorStyle != null,
+        (hit) => hit.instance is MouseListener && (hit.instance as MouseListener).cursorStyle != null,
       );
 
-      activeStyle = (cursorStyleSource?.instance as MouseAreaInstance?)?.widget.cursorStyle;
+      activeStyle = (cursorStyleSource?.instance as MouseListener?)?.cursorStyle;
     }
 
     cursorController.style = activeStyle ?? CursorStyle.none;

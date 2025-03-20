@@ -78,7 +78,8 @@ class _SplitPaneState extends WidgetState<SplitPane> {
               key: const Key('splitter'),
               child: MouseArea(
                 cursorStyle: axis.choose(CursorStyle.horizontalResize, CursorStyle.verticalResize),
-                dragCallback: (dx, dy) => setState(() => _splitCoordinate = _splitCoordinate! + axis.choose(dx, dy)),
+                dragCallback: (x, y, dx, dy) =>
+                    setState(() => _splitCoordinate = _splitCoordinate! + axis.choose(dx, dy)),
                 dragEndCallback: () => _splitCoordinate = _splitCoordinate!.clamp(.1 * maxSize, .9 * maxSize),
                 child: Panel(color: Color.green),
               ),
