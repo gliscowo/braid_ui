@@ -42,7 +42,7 @@ class Constraints {
 
   bool get hasLooseWidth => minWidth == 0;
   bool get hasLooseHeight => minHeight == 0;
-  bool get isLoose => hasBoundedWidth && hasLooseHeight;
+  bool get isLoose => hasLooseWidth && hasLooseHeight;
 
   bool get isTight => minWidth == maxWidth && minHeight == maxHeight;
 
