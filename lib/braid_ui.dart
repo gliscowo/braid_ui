@@ -1,3 +1,4 @@
+export 'src/animation/easings.dart';
 export 'src/baked_assets.g.dart' show BakedAssetResources;
 export 'src/context.dart';
 export 'src/core/app.dart';

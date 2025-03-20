@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:meta/meta.dart';
 
+import '../animation/easings.dart';
 import '../core/math.dart';
 import '../framework/proxy.dart';
 import '../framework/widget.dart';
@@ -66,8 +67,9 @@ class AnimatedPadding extends AutomaticallyAnimatedWidget {
 
   const AnimatedPadding({
     super.key,
-    required this.insets,
+    super.easing,
     required super.duration,
+    required this.insets,
     this.child,
   });
 
@@ -80,9 +82,11 @@ class AnimatedPadding extends AutomaticallyAnimatedWidget {
 // TODO: customizable easing
 abstract class AutomaticallyAnimatedWidget extends StatefulWidget {
   final Duration duration;
+  final Easing easing;
 
   const AutomaticallyAnimatedWidget({
     super.key,
+    this.easing = Easing.linear,
     required this.duration,
   });
 
@@ -111,16 +115,19 @@ abstract class AutomaticallyAnimatedWidgetState<T extends AutomaticallyAnimatedW
 
   @override
   void didUpdateWidget(T oldWidget) {
-    var restartAnimation = false;
-    _visitLerps((previous, targetValue, factory) {
-      if (previous!.end != targetValue) {
-        restartAnimation = true;
-      }
+    var restartAnimation = widget.easing != oldWidget.easing;
+    if (!restartAnimation) {
+      _visitLerps((previous, targetValue, factory) {
+        if (previous!.end != targetValue) {
+          restartAnimation = true;
+        }
 
-      return previous;
-    });
+        return previous;
+      });
+    }
 
     if (restartAnimation) {
+      print('starting animation');
       _visitLerps((previous, targetValue, factory) => factory(previous!.compute(_progress), targetValue));
 
       _elapsedTime = 0;
@@ -136,7 +143,7 @@ abstract class AutomaticallyAnimatedWidgetState<T extends AutomaticallyAnimatedW
 
   void _callback(double delta) {
     _elapsedTime += delta;
-    setState(() => _progress = min(1, Easings.expo(_elapsedTime / (widget.duration.inMilliseconds / 1000))));
+    setState(() => _progress = min(1, widget.easing(_elapsedTime / (widget.duration.inMilliseconds / 1000))));
 
     if (_progress + 1e-3 < 1) {
       scheduleAnimationCallback(_callback);
@@ -182,6 +189,7 @@ class AnimatedPanel extends AutomaticallyAnimatedWidget {
 
   const AnimatedPanel({
     super.key,
+    super.easing,
     required super.duration,
     required this.color,
     this.cornerRadius = 0,
@@ -209,26 +217,5 @@ class _AnimatedPanelState extends AutomaticallyAnimatedWidgetState<AnimatedPanel
       cornerRadius: _cornerRadius!.compute(animationValue),
       child: widget.child,
     );
-  }
-}
-
-// ---
-
-abstract final class Easings {
-  static double linear(double x) => x;
-
-  static double sine(double x) => sin(x * pi - pi / 2) * 0.5 + 0.5;
-
-  static double quadratic(double x) => x < 0.5 ? 2 * x * x : (1 - pow(-2 * x + 2, 2) / 2);
-
-  static double cubic(double x) => x < 0.5 ? 4 * x * x * x : (1 - pow(-2 * x + 2, 3) / 2);
-
-  static double quartic(double x) => x < 0.5 ? 8 * x * x * x * x : (1 - pow(-2 * x + 2, 4) / 2);
-
-  static double expo(double x) {
-    if (x == 0) return 0;
-    if (x == 1) return 1;
-
-    return x < 0.5 ? pow(2, 20 * x - 10) / 2 : (2 - pow(2, -20 * x + 10)) / 2;
   }
 }
