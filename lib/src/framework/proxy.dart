@@ -536,6 +536,13 @@ class OptionalChildInstanceWidgetProxy extends InstanceWidgetProxy with SingleCh
   @override
   void doRebuild() {
     child = refreshChild(child, (widget as OptionalChildInstanceWidget).child, null);
+
+    // TODO: this should very likely be done by the descendant
+    // when it unmounts
+    if ((widget as OptionalChildInstanceWidget).child == null) {
+      instance.child = null;
+    }
+
     super.doRebuild();
   }
 
