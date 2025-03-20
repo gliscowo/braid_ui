@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:braid_ui/braid_ui.dart';
 import 'package:braid_ui/src/framework/proxy.dart';
 import 'package:braid_ui/src/framework/widget.dart';
-import 'package:braid_ui/src/widgets/animations.dart';
+import 'package:braid_ui/src/widgets/animated_widgets.dart';
 import 'package:braid_ui/src/widgets/basic.dart';
 import 'package:braid_ui/src/widgets/layout_builder.dart';
 import 'package:diamond_gl/diamond_gl.dart';

@@ -5,11 +5,11 @@ import 'dart:typed_data';
 import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math.dart';
 
-extension DoubleLerp on double {
+extension LerpDouble on double {
   double lerp(double delta, double other) => this + delta * (other - this);
 }
 
-extension IntLerp on int {
+extension LerpInt on int {
   int lerp(double delta, int other) => this + (delta * (other - this)).round();
 }
 
