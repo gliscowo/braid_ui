@@ -48,7 +48,7 @@ Future<void> runBraidApp({
 
   gl.enable(glBlend);
   glfw.swapInterval(0);
-  while (glfw.windowShouldClose(app.window.handle) != glfwTrue) {
+  while (glfw.windowShouldClose(app.window.handle) != glfwTrue && app._running) {
     final measuredDelta = glfw.getTime() - lastFrameTimestamp;
 
     await Future.delayed(Duration(
@@ -259,6 +259,13 @@ class AppState implements InstanceHost, ProxyHost {
   KeyboardListener? _focused;
 
   final List<StreamSubscription> _subscriptions = [];
+  bool _running = true;
+
+  // --- debug properties ---
+
+  bool debugDrawInstanceBoxes = false;
+
+  // ------------------------
 
   AppState(
     this.resources,
@@ -358,7 +365,7 @@ node [shape="box"];
   }
 
   void draw() {
-    final ctx = DrawContext(context, primitives, projection, textRenderer);
+    final ctx = DrawContext(context, primitives, projection, textRenderer, drawBoundingBoxes: debugDrawInstanceBoxes);
 
     ctx.transform.scopedTransform(
       rootInstance.transform.transformToParent,
@@ -445,6 +452,10 @@ node [shape="box"];
     }
 
     _root.unmount();
+  }
+
+  void scheduleShutdown() {
+    _running = false;
   }
 
   // ---
