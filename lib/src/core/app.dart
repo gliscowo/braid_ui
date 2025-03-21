@@ -374,7 +374,6 @@ node [shape="box"];
 
   void draw() {
     final ctx = DrawContext(context, primitives, projection, textRenderer, drawBoundingBoxes: debugDrawInstanceBoxes);
-
     ctx.transform.scopedTransform(rootInstance.transform.transformToParent, (_) => rootInstance.draw(ctx));
   }
 
@@ -469,8 +468,8 @@ node [shape="box"];
 
   // ---
 
-  HitTestState _hitTest([(double x, double y)? coordinates]) {
-    final (x, y) = coordinates ?? (window.cursorX, window.cursorY);
+  HitTestState _hitTest() {
+    final (x, y) = (window.cursorX, window.cursorY);
 
     final state = HitTestState();
     rootInstance.hitTest(x, y, state);

@@ -17,7 +17,6 @@ abstract class AutomaticallyAnimatedWidget extends StatefulWidget {
   AutomaticallyAnimatedWidgetState<AutomaticallyAnimatedWidget> createState();
 }
 
-typedef LerpFactory<T extends Lerp<V>, V> = T Function(V start, V end);
 typedef _LerpVisitor<L extends Lerp<V>, V> = L Function(Lerp<V>? previous, V targetValue, LerpFactory<L, V> factory);
 
 abstract class AutomaticallyAnimatedWidgetState<T extends AutomaticallyAnimatedWidget> extends WidgetState<T> {
@@ -80,6 +79,12 @@ abstract class AutomaticallyAnimatedWidgetState<T extends AutomaticallyAnimatedW
   @protected
   L visitLerp<L extends Lerp<V>, V>(Lerp<V>? previous, V targetValue, LerpFactory<L, V> factory) {
     return _activeVisitor!.call(previous, targetValue, (start, end) => factory(start, end)) as L;
+  }
+
+  @protected
+  Lerp<V?> visitNullableLerp<V>(Lerp<V?>? previous, V? targetValue, LerpFactory<Lerp<V>, V> factory) {
+    return _activeVisitor!.call(previous, targetValue, (start, end) => NullableLerp<V>(start, end, factory))
+        as Lerp<V?>;
   }
 
   @protected

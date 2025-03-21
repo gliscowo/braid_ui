@@ -87,7 +87,18 @@ class ClockApp extends StatelessWidget {
           constraints: Constraints.tightOnAxis(vertical: 75),
           child: Panel(color: Color.black, cornerRadius: 0.0),
         ),
-        Constrained(constraints: Constraints.only(minHeight: 25), child: DependencyTest()),
+        AnimatedAlign(
+          duration: Duration(milliseconds: 1000),
+          easing: Easing.inOutCubic,
+          alignment: Alignment.right,
+          child: AnimatedSized(
+            duration: Duration(milliseconds: 500),
+            easing: Easing.inOutExpo,
+            height: 50,
+            width: 200,
+            child: DependencyTest(),
+          ),
+        ),
       ],
     );
 

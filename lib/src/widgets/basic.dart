@@ -124,7 +124,21 @@ class PaddingInstance extends OptionalChildWidgetInstance<Padding> {
 
 // ---
 
-class Constrained extends SingleChildInstanceWidget {
+class Sized extends SingleChildInstanceWidget with ConstraintWidget {
+  final double? width;
+  final double? height;
+
+  const Sized({super.key, this.width, this.height, required super.child});
+
+  @override
+  Constraints get constraints => Constraints.tightOnAxis(horizontal: width, vertical: height);
+
+  @override
+  SingleChildWidgetInstance<InstanceWidget> instantiate() => ConstrainedInstance(widget: this);
+}
+
+class Constrained extends SingleChildInstanceWidget with ConstraintWidget {
+  @override
   final Constraints constraints;
 
   const Constrained({super.key, required this.constraints, required super.child});
@@ -133,11 +147,15 @@ class Constrained extends SingleChildInstanceWidget {
   ConstrainedInstance instantiate() => ConstrainedInstance(widget: this);
 }
 
-class ConstrainedInstance extends SingleChildWidgetInstance<Constrained> {
+mixin ConstraintWidget on SingleChildInstanceWidget {
+  Constraints get constraints;
+}
+
+class ConstrainedInstance extends SingleChildWidgetInstance<ConstraintWidget> {
   ConstrainedInstance({required super.widget});
 
   @override
-  set widget(Constrained value) {
+  set widget(ConstraintWidget value) {
     if (widget.constraints == value.constraints) return;
 
     super.widget = value;
@@ -192,7 +210,8 @@ class Center extends Align {
 
 class Align extends SingleChildInstanceWidget {
   final Alignment alignment;
-  final double? widthFactor, heightFactor;
+  final double? widthFactor;
+  final double? heightFactor;
 
   const Align({super.key, this.widthFactor, this.heightFactor, required this.alignment, required super.child});
 

@@ -72,3 +72,77 @@ class _AnimatedPanelState extends AutomaticallyAnimatedWidgetState<AnimatedPanel
     );
   }
 }
+
+// ---
+
+class AnimatedSized extends AutomaticallyAnimatedWidget {
+  final double? width;
+  final double? height;
+  final Widget child;
+
+  AnimatedSized({super.key, super.easing, required super.duration, this.width, this.height, required this.child});
+
+  @override
+  AutomaticallyAnimatedWidgetState<AnimatedSized> createState() => _AnimatedSizedState();
+}
+
+class _AnimatedSizedState extends AutomaticallyAnimatedWidgetState<AnimatedSized> {
+  Lerp<double?>? _width;
+  Lerp<double?>? _height;
+
+  @override
+  void updateLerps() {
+    _width = visitNullableLerp(_width, widget.width, DoubleLerp.new);
+    _height = visitNullableLerp(_height, widget.height, DoubleLerp.new);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Sized(width: _width!.compute(animationValue), height: _height!.compute(animationValue), child: widget.child);
+  }
+}
+
+// ---
+
+class AnimatedAlign extends AutomaticallyAnimatedWidget {
+  final Alignment alignment;
+  final double? widthFactor;
+  final double? heightFactor;
+  final Widget child;
+
+  AnimatedAlign({
+    super.key,
+    super.easing,
+    required super.duration,
+    this.widthFactor,
+    this.heightFactor,
+    required this.alignment,
+    required this.child,
+  });
+
+  @override
+  AutomaticallyAnimatedWidgetState<AnimatedAlign> createState() => _AnimatedAlignState();
+}
+
+class _AnimatedAlignState extends AutomaticallyAnimatedWidgetState<AnimatedAlign> {
+  Lerp<double?>? _widthFactor;
+  Lerp<double?>? _heightFactor;
+  AlignmentLerp? _alignment;
+
+  @override
+  void updateLerps() {
+    _widthFactor = visitNullableLerp(_widthFactor, widget.widthFactor, DoubleLerp.new);
+    _heightFactor = visitNullableLerp(_heightFactor, widget.heightFactor, DoubleLerp.new);
+    _alignment = visitLerp(_alignment, widget.alignment, AlignmentLerp.new);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      widthFactor: _widthFactor!.compute(animationValue),
+      heightFactor: _heightFactor!.compute(animationValue),
+      alignment: _alignment!.compute(animationValue),
+      child: widget.child,
+    );
+  }
+}
