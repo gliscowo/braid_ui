@@ -293,6 +293,7 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
       ancestor.transform.toWidgetCoordinates(coordinates);
     }
 
+    transform.toWidgetCoordinates(coordinates);
     return (coordinates.x, coordinates.y);
   }
 

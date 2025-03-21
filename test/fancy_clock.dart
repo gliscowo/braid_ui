@@ -83,7 +83,7 @@ class ClockApp extends StatelessWidget {
           ),
           flexFactor: .5,
         ),
-        Constrained(
+        Constrain(
           constraints: Constraints.tightOnAxis(vertical: 75),
           child: Panel(color: Color.black, cornerRadius: 0.0),
         ),
@@ -135,7 +135,7 @@ class DependencyTestState extends WidgetState<DependencyTest> {
                 }),
             text: 'toggle',
           ),
-          Constrained(constraints: Constraints.only(minWidth: 10), child: Panel(color: color, cornerRadius: 0.0)),
+          Constrain(constraints: Constraints.only(minWidth: 10), child: Panel(color: color, cornerRadius: 0.0)),
           const Flexible(child: Builder(builder: _innerBuild)),
         ],
       ),

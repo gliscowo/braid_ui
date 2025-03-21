@@ -137,11 +137,11 @@ class Sized extends SingleChildInstanceWidget with ConstraintWidget {
   SingleChildWidgetInstance<InstanceWidget> instantiate() => ConstrainedInstance(widget: this);
 }
 
-class Constrained extends SingleChildInstanceWidget with ConstraintWidget {
+class Constrain extends SingleChildInstanceWidget with ConstraintWidget {
   @override
   final Constraints constraints;
 
-  const Constrained({super.key, required this.constraints, required super.child});
+  const Constrain({super.key, required this.constraints, required super.child});
 
   @override
   ConstrainedInstance instantiate() => ConstrainedInstance(widget: this);

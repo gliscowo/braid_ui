@@ -77,8 +77,9 @@ class RawSlider extends StatelessWidget {
           child: Stack(
             alignment: Alignment.left,
             children: [
-              Constrained(
-                constraints: Constraints.tightOnAxis(horizontal: constraints.maxWidth, vertical: 3),
+              Sized(
+                width: constraints.maxWidth,
+                height: 3,
                 child: Padding(
                   insets: const Insets.axis(horizontal: _handleRadius),
                   child: Panel(cornerRadius: 2, color: Color.rgb(0xb1aebb)),
@@ -87,13 +88,7 @@ class RawSlider extends StatelessWidget {
               Row(
                 children: [
                   Padding(insets: Insets(left: normalizedValue * (constraints.maxWidth - _handleRadius * 2))),
-                  Constrained(
-                    constraints: const Constraints.tightOnAxis(
-                      horizontal: _handleRadius * 2,
-                      vertical: _handleRadius * 2,
-                    ),
-                    child: handle,
-                  ),
+                  Sized(width: _handleRadius * 2, height: _handleRadius * 2, child: handle),
                 ],
               ),
             ],

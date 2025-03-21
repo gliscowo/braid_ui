@@ -51,18 +51,18 @@ class _SplitPaneState extends WidgetState<SplitPane> {
         return Flex(
           mainAxis: axis,
           children: [
-            Constrained(key: widget.firstChild.key, constraints: firstConstraints, child: widget.firstChild),
+            Constrain(key: widget.firstChild.key, constraints: firstConstraints, child: widget.firstChild),
             Flexible(
               key: const Key('splitter'),
               child: MouseArea(
                 cursorStyle: axis.choose(CursorStyle.horizontalResize, CursorStyle.verticalResize),
                 dragCallback:
-                    (x, y, dx, dy) => setState(() => _splitCoordinate = _splitCoordinate! + axis.choose(dx, dy)),
+                    (_, _, dx, dy) => setState(() => _splitCoordinate = _splitCoordinate! + axis.choose(dx, dy)),
                 dragEndCallback: () => _splitCoordinate = _splitCoordinate!.clamp(.1 * maxSize, .9 * maxSize),
                 child: Panel(color: Color.green),
               ),
             ),
-            Constrained(key: widget.secondChild.key, constraints: secondConstraints, child: widget.secondChild),
+            Constrain(key: widget.secondChild.key, constraints: secondConstraints, child: widget.secondChild),
           ],
         );
       },

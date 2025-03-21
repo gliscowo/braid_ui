@@ -116,7 +116,7 @@ class ButtonState extends WidgetState<Button> {
     if (widget.enabled) {
       result = MouseArea(
         cursorStyle: CursorStyle.hand,
-        clickCallback: (x, y) => widget.onClick(),
+        clickCallback: (_, _) => widget.onClick(),
         enterCallback: () => setState(() => _hovered = true),
         exitCallback: () => setState(() => _hovered = false),
         child: result,
