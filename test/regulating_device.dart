@@ -1,90 +1,102 @@
 import 'package:braid_ui/braid_ui.dart';
+import 'package:braid_ui/src/framework/widget.dart';
+import 'package:braid_ui/src/widgets/basic.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:logging/logging.dart';
 
-void main(List<String> args) {
+Future<void> main(List<String> args) async {
   Logger.root.level = Level.FINE;
   Logger.root.onRecord.listen((event) {
     print('[${event.loggerName}] (${event.level.toString().toLowerCase()}) ${event.message}');
   });
 
-  // runBraidApp(
-  //   name: "Regulating Device",
-  //   windowWidth: 400,
-  //   windowHeight: 750,
-  //   widget: () {
-  //     return ButtonTheme(
-  //       color: Color.ofRgb(0xbac3ff),
-  //       hoveredColor: Color.ofRgb(0xaeb7f3),
-  //       textColor: Color.ofRgb(0x222c61),
-  //       padding: Insets.axis(horizontal: 25.0, vertical: 15.0),
-  //       cornerRadius: 25.0,
-  //       child: Panel(
-  //         cornerRadius: 0.0,
-  //         color: Color.ofRgb(0x121318),
-  //         child: Flex(
-  //           mainAxis: LayoutAxis.vertical,
-  //           children: [
-  //             Padding(
-  //               insets: Insets.all(15.0).copy(bottom: 25.0),
-  //               child: Label(
-  //                 textColor: Color.white,
-  //                 text: Text.string(
-  //                   "Regulating Device",
-  //                   style: TextStyle(bold: true, fontFamily: "Nunito"),
-  //                 ),
-  //               ),
-  //             ),
-  //             Padding(
-  //               insets: Insets.axis(horizontal: 10.0),
-  //               child: Flex(
-  //                 mainAxis: LayoutAxis.vertical,
-  //                 children: [
-  //                   buttonPanel(
-  //                     Icon("settings"),
-  //                     "Settings",
-  //                     [
-  //                       Button(text: Text.string("On"), onClick: (button) => ()),
-  //                       Button(text: Text.string("Off"), onClick: (button) => ())
-  //                     ],
-  //                   ),
-  //                 ],
-  //               ),
-  //             )
-  //           ],
-  //         ),
-  //       ),
-  //     );
-  //   },
-  // );
+  loadNatives('resources/lib');
+
+  final app = await createBraidApp(
+    name: "Regulating Device",
+    windowWidth: 600,
+    windowHeight: 400,
+    resources: BraidResources.filesystem(fontDirectory: 'resources/font', shaderDirectory: 'resources/shader'),
+    widget: const RegulatingDeviceApp(),
+  );
+
+  runBraidApp(app: app, experimentalReloadHook: true);
 }
 
-WidgetInstance buttonPanel(Icon icon, String name, List<WidgetInstance> buttons) {
-  return PaddingInstance(
-    insets: const Insets(bottom: 10.0),
-    child: FlexInstance(
-      mainAxis: LayoutAxis.horizontal,
-      children: [
-        FlexChildInstance(
-          child: PanelInstance(
-            color: Color.ofRgb(0x1b1b21),
-            child: PaddingInstance(
-              insets: const Insets.all(20.0),
-              child: FlexInstance(
+class RegulatingDeviceApp extends StatelessWidget {
+  const RegulatingDeviceApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultButtonStyle(
+      style: const ButtonStyle(
+        color: Color.rgb(0xbac3ff),
+        hoveredColor: Color.rgb(0xaeb7f3),
+        // textColor: Color.rgb(0x222c61),
+        padding: Insets.axis(horizontal: 25.0, vertical: 15.0),
+        cornerRadius: CornerRadius.all(25.0),
+      ),
+
+      child: Panel(
+        color: Color.rgb(0x121318),
+        cornerRadius: const CornerRadius.all(10),
+        child: Flex(
+          mainAxis: LayoutAxis.vertical,
+          children: [
+            Padding(
+              insets: const Insets.all(15.0).copy(bottom: 25.0),
+              child: Label.text(
+                text: Text.string(
+                  "Regulating Device",
+                  style: TextStyle(bold: true, fontFamily: "Nunito", color: Color.white),
+                ),
+              ),
+            ),
+            Padding(
+              insets: const Insets.axis(horizontal: 10.0),
+              child: Flex(
                 mainAxis: LayoutAxis.vertical,
                 children: [
-                  FlexInstance(
+                  buttonPanel(Icon("settings"), "Settings", [
+                    Button.text(text: "On", onClick: () => ()),
+                    Button.text(text: "Off", onClick: () => ()),
+                  ]),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+Widget buttonPanel(Icon icon, String name, List<Widget> buttons) {
+  return Padding(
+    insets: const Insets(bottom: 10.0),
+    child: Flex(
+      mainAxis: LayoutAxis.horizontal,
+      children: [
+        Flexible(
+          child: Panel(
+            color: Color.rgb(0x1b1b21),
+            child: Padding(
+              insets: const Insets.all(20.0),
+              child: Flex(
+                mainAxis: LayoutAxis.vertical,
+                children: [
+                  Flex(
                     mainAxis: LayoutAxis.horizontal,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      LabelInstance.text(text: Text([icon])),
-                      PaddingInstance(insets: const Insets.all(10.0)),
-                      LabelInstance.text(text: Text.string(name), style: LabelStyle(fontSize: 18.0)),
+                      Label.text(text: Text([icon])),
+                      Padding(insets: const Insets.all(10.0)),
+                      Label.text(text: Text.string(name), style: LabelStyle(fontSize: 18.0)),
                     ],
                   ),
-                  PaddingInstance(
+                  Padding(
                     insets: const Insets(top: 20.0),
-                    child: FlexInstance(
+                    child: Flex(
                       mainAxis: LayoutAxis.horizontal,
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: buttons,
