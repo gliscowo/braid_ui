@@ -49,7 +49,6 @@ abstract class AutomaticallyAnimatedWidgetState<T extends AutomaticallyAnimatedW
     }
 
     if (restartAnimation) {
-      print('starting animation');
       _visitLerps((previous, targetValue, factory) => factory(previous!.compute(_progress), targetValue));
 
       _elapsedTime = 0;

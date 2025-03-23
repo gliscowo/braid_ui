@@ -25,18 +25,23 @@ class ButtonStyle {
   final Color? hoveredColor;
   final Color? disabledColor;
   final Insets? padding;
-  final double? cornerRadius;
+  final CornerRadius? cornerRadius;
 
   const ButtonStyle({this.color, this.hoveredColor, this.disabledColor, this.padding, this.cornerRadius});
 
-  ButtonStyle copy({Color? color, Color? hoveredColor, Color? disabledColor, Insets? padding, double? cornerRadius}) =>
-      ButtonStyle(
-        color: color ?? this.color,
-        hoveredColor: hoveredColor ?? this.hoveredColor,
-        disabledColor: disabledColor ?? this.disabledColor,
-        padding: padding ?? this.padding,
-        cornerRadius: cornerRadius ?? this.cornerRadius,
-      );
+  ButtonStyle copy({
+    Color? color,
+    Color? hoveredColor,
+    Color? disabledColor,
+    Insets? padding,
+    CornerRadius? cornerRadius,
+  }) => ButtonStyle(
+    color: color ?? this.color,
+    hoveredColor: hoveredColor ?? this.hoveredColor,
+    disabledColor: disabledColor ?? this.disabledColor,
+    padding: padding ?? this.padding,
+    cornerRadius: cornerRadius ?? this.cornerRadius,
+  );
 
   ButtonStyle overriding(ButtonStyle other) => ButtonStyle(
     color: color ?? other.color,
@@ -130,5 +135,5 @@ class ButtonState extends WidgetState<Button> {
   static const _defaultHoveredColor = Color.rgb(0x4b7bec);
   static const _defaultDisabledColor = Color.rgb(0x4b6584);
   static const _defaultPadding = Insets.all(3.0);
-  static const _defaultCornerRadius = 3.0;
+  static const _defaultCornerRadius = CornerRadius.all(3.0);
 }

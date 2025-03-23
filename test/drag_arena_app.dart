@@ -32,29 +32,34 @@ class DragArenaApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return PanArena(
       children: [
-        const FunnyDraggable(child: Sized(width: 50, height: 50, child: Panel(color: Color.red, cornerRadius: 5.0))),
+        const FunnyDraggable(
+          child: Sized(width: 50, height: 50, child: Panel(color: Color.red, cornerRadius: CornerRadius.all(5))),
+        ),
         FunnyDraggable(
           child: Panel(
             color: Color.green,
-            cornerRadius: 5.0,
+            cornerRadius: const CornerRadius.all(5),
             child: Padding(insets: const Insets.all(10), child: Button.text(onClick: () {}, text: 'a funny button')),
           ),
         ),
         const FunnyDraggable(
-          child: Sized(
-            width: 400,
-            height: 400,
-            child: Panel(
-              color: Color.white,
-              cornerRadius: 10.0,
-              child: Padding(
-                insets: Insets.all(25),
+          child: Panel(
+            color: Color.white,
+            cornerRadius: CornerRadius.all(10),
+            child: Padding(
+              insets: Insets.all(25),
+              child: Resizable(
+                initialSize: Size(200, 200),
                 child: Panel(
                   color: Color.black,
                   child: PanArena(
                     children: [
                       FunnyDraggable(
-                        child: Sized(width: 50, height: 50, child: Panel(color: Color.red, cornerRadius: 5.0)),
+                        child: Sized(
+                          width: 50,
+                          height: 50,
+                          child: Panel(color: Color.red, cornerRadius: CornerRadius.all(5)),
+                        ),
                       ),
                     ],
                   ),
@@ -63,7 +68,9 @@ class DragArenaApp extends StatelessWidget {
             ),
           ),
         ),
-        const FunnyDraggable(child: Sized(width: 50, height: 50, child: Panel(color: Color.blue, cornerRadius: 5.0))),
+        const FunnyDraggable(
+          child: Sized(width: 50, height: 50, child: Panel(color: Color.blue, cornerRadius: CornerRadius.all(5))),
+        ),
       ],
     );
   }
@@ -162,5 +169,60 @@ class _PanArenaState extends WidgetState<PanArena> {
       ..setIdentity()
       ..setTranslationRaw(xOffset, yOffset, 0)
       ..scale(scale);
+  }
+}
+
+class Resizable extends StatefulWidget {
+  final Widget child;
+  final Size initialSize;
+
+  const Resizable({super.key, required this.initialSize, required this.child});
+
+  @override
+  WidgetState<Resizable> createState() => _ResizableState();
+}
+
+class _ResizableState extends WidgetState<Resizable> {
+  late Size size;
+
+  @override
+  void init() {
+    super.init();
+    size = widget.initialSize;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Sized(
+      width: size.width + 1,
+      height: size.height + 1,
+      child: Row(
+        children: [
+          Flexible(
+            child: Column(
+              children: [
+                Flexible(child: widget.child),
+                MouseArea(
+                  cursorStyle: CursorStyle.verticalResize,
+                  dragCallback:
+                      (_, _, _, dy) => setState(() {
+                        size = size.copy(height: size.height + dy);
+                      }),
+                  child: Padding(insets: const Insets(top: 1)),
+                ),
+              ],
+            ),
+          ),
+          MouseArea(
+            cursorStyle: CursorStyle.horizontalResize,
+            dragCallback:
+                (_, _, dx, _) => setState(() {
+                  size = size.copy(width: size.width + dx);
+                }),
+            child: Padding(insets: const Insets(left: 1)),
+          ),
+        ],
+      ),
+    );
   }
 }

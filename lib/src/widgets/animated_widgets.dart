@@ -34,7 +34,7 @@ class _AnimatedPaddingState extends AutomaticallyAnimatedWidgetState<AnimatedPad
 
 class AnimatedPanel extends AutomaticallyAnimatedWidget {
   final Color color;
-  final double cornerRadius;
+  final CornerRadius cornerRadius;
   final double? outlineThickness;
   final Widget? child;
 
@@ -43,7 +43,7 @@ class AnimatedPanel extends AutomaticallyAnimatedWidget {
     super.easing,
     required super.duration,
     required this.color,
-    this.cornerRadius = 0,
+    this.cornerRadius = CornerRadius.zero,
     this.outlineThickness,
     this.child,
   });
@@ -54,12 +54,12 @@ class AnimatedPanel extends AutomaticallyAnimatedWidget {
 
 class _AnimatedPanelState extends AutomaticallyAnimatedWidgetState<AnimatedPanel> {
   ColorLerp? _color;
-  DoubleLerp? _cornerRadius;
+  CornerRadiusLerp? _cornerRadius;
 
   @override
   void updateLerps() {
     _color = visitLerp(_color, widget.color, ColorLerp.new);
-    _cornerRadius = visitLerp(_cornerRadius, widget.cornerRadius, DoubleLerp.new);
+    _cornerRadius = visitLerp(_cornerRadius, widget.cornerRadius, CornerRadiusLerp.new);
   }
 
   @override

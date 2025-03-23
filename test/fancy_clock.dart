@@ -52,7 +52,6 @@ class ClockApp extends StatelessWidget {
           key: Key('a'),
           child: Panel(
             color: Color.white,
-            cornerRadius: 0.0,
             child: Center(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -67,7 +66,6 @@ class ClockApp extends StatelessWidget {
             builder:
                 (context, constraints) => Panel(
                   color: constraints.maxWidth > 600 ? Color.green : Color.blue,
-                  cornerRadius: 0.0,
                   child: const AnimatedPadding(
                     easing: Easing.inOutExpo,
                     duration: Duration(milliseconds: 1000),
@@ -75,7 +73,7 @@ class ClockApp extends StatelessWidget {
                     child: AnimatedPanel(
                       easing: Easing.outExpo,
                       duration: Duration(seconds: 1),
-                      cornerRadius: 15,
+                      cornerRadius: CornerRadius.all(15),
                       color: Color.white,
                     ),
                   ),
@@ -83,10 +81,7 @@ class ClockApp extends StatelessWidget {
           ),
           flexFactor: .5,
         ),
-        Constrain(
-          constraints: Constraints.tightOnAxis(vertical: 75),
-          child: Panel(color: Color.black, cornerRadius: 0.0),
-        ),
+        Constrain(constraints: Constraints.tightOnAxis(vertical: 75), child: Panel(color: Color.black)),
         AnimatedAlign(
           duration: Duration(milliseconds: 1000),
           easing: Easing.inOutCubic,
@@ -135,7 +130,7 @@ class DependencyTestState extends WidgetState<DependencyTest> {
                 }),
             text: 'toggle',
           ),
-          Constrain(constraints: Constraints.only(minWidth: 10), child: Panel(color: color, cornerRadius: 0.0)),
+          Constrain(constraints: Constraints.only(minWidth: 10), child: Panel(color: color)),
           const Flexible(child: Builder(builder: _innerBuild)),
         ],
       ),

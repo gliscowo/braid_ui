@@ -3,6 +3,7 @@ import 'package:diamond_gl/diamond_gl.dart';
 import 'package:vector_math/vector_math.dart';
 
 import 'context.dart';
+import 'core/math.dart';
 import 'vertex_descriptors.dart';
 
 class PrimitiveRenderer {
@@ -25,7 +26,7 @@ class PrimitiveRenderer {
   void roundedRect(
     double width,
     double height,
-    double radius,
+    CornerRadius radius,
     Color color,
     Matrix4 transform,
     Matrix4 projection, {
@@ -36,7 +37,7 @@ class PrimitiveRenderer {
       ..uniformMat4('uTransform', transform)
       ..uniformMat4('uProjection', projection)
       ..uniform4vf('uColor', color.asVector())
-      ..uniform1f('uRadius', radius)
+      ..uniform4f('uRadius', radius.bottomRight, radius.topRight, radius.bottomLeft, radius.topLeft)
       ..uniform2f('uSize', width, height)
       ..use();
 

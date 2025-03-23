@@ -77,6 +77,44 @@ class Insets {
   String toString() => 'Insets(top: $top, bottom: $bottom, left: $left, right: $right)';
 }
 
+class CornerRadius {
+  static const zero = CornerRadius.all(0);
+
+  final double topLeft;
+  final double topRight;
+  final double bottomLeft;
+  final double bottomRight;
+
+  @literal
+  const CornerRadius({this.topLeft = 0.0, this.topRight = 0.0, this.bottomLeft = 0.0, this.bottomRight = 0.0});
+
+  @literal
+  const CornerRadius.all(double radius)
+    : this(topLeft: radius, topRight: radius, bottomLeft: radius, bottomRight: radius);
+
+  @literal
+  const CornerRadius.top(double radius) : this(topLeft: radius, topRight: radius);
+
+  @literal
+  const CornerRadius.left(double radius) : this(topLeft: radius, bottomLeft: radius);
+
+  @literal
+  const CornerRadius.bottom(double radius) : this(bottomLeft: radius, bottomRight: radius);
+
+  @literal
+  const CornerRadius.right(double radius) : this(topRight: radius, bottomRight: radius);
+
+  bool get isVanishing => topLeft <= 1 && topRight <= 1 && bottomLeft <= 1 && bottomRight <= 1;
+
+  get _props => (topLeft, topRight, bottomLeft, bottomRight);
+
+  @override
+  int get hashCode => _props.hashCode;
+
+  @override
+  bool operator ==(Object other) => other is CornerRadius && other._props == _props;
+}
+
 extension Dimensions on Aabb3 {
   double get width => (this.max.x - this.min.x).abs();
   double get height => (this.max.y - this.min.y).abs();

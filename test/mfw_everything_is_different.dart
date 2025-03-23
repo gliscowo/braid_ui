@@ -55,7 +55,7 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Panel(color: Color.white, cornerRadius: 0.0, child: const Center(child: Clock()));
+    return Panel(color: Color.white, child: const Center(child: Clock()));
   }
 }
 

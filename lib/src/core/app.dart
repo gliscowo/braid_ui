@@ -241,6 +241,7 @@ class AppState implements InstanceHost, ProxyHost {
 
   Set<MouseListener> _hovered = {};
   MouseListener? _dragging;
+  CursorStyle? _draggingCursorStyle;
   bool _dragStarted = false;
   KeyboardListener? _focused;
 
@@ -285,6 +286,10 @@ class AppState implements InstanceHost, ProxyHost {
 
         if (clicked != null) {
           _dragging = clicked.instance as MouseListener;
+          _draggingCursorStyle = (clicked.instance as MouseListener).cursorStyleAt(
+            clicked.coordinates.x,
+            clicked.coordinates.y,
+          );
           _dragStarted = false;
         }
 
@@ -417,13 +422,20 @@ node [shape="box"];
 
     CursorStyle? activeStyle;
     if (_dragging != null) {
-      activeStyle = _dragging!.cursorStyle;
+      activeStyle = _draggingCursorStyle;
     } else {
       final cursorStyleSource = state.firstWhere(
-        (hit) => hit.instance is MouseListener && (hit.instance as MouseListener).cursorStyle != null,
+        (hit) =>
+            hit.instance is MouseListener &&
+            (hit.instance as MouseListener).cursorStyleAt(hit.coordinates.x, hit.coordinates.y) != null,
       );
 
-      activeStyle = (cursorStyleSource?.instance as MouseListener?)?.cursorStyle;
+      if (cursorStyleSource != null) {
+        activeStyle = (cursorStyleSource.instance as MouseListener?)?.cursorStyleAt(
+          cursorStyleSource.coordinates.x,
+          cursorStyleSource.coordinates.y,
+        );
+      }
     }
 
     cursorController.style = activeStyle ?? CursorStyle.none;

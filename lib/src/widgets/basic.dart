@@ -261,22 +261,28 @@ class _AlignInstance extends SingleChildWidgetInstance<Align> {
 
 class Panel extends OptionalChildInstanceWidget {
   final Color color;
-  final double cornerRadius;
+  final CornerRadius cornerRadius;
   final double? outlineThickness;
 
-  const Panel({super.key, required this.color, this.cornerRadius = 0.0, this.outlineThickness, super.child});
+  const Panel({
+    super.key,
+    required this.color,
+    this.cornerRadius = CornerRadius.zero,
+    this.outlineThickness,
+    super.child,
+  });
 
   @override
-  OptionalChildWidgetInstance instantiate() => _PanelInstance(widget: this);
+  OptionalChildWidgetInstance instantiate() => PanelInstance(widget: this);
 }
 
-class _PanelInstance extends OptionalChildWidgetInstance<Panel> with OptionalShrinkWrapLayout {
-  _PanelInstance({required super.widget});
+class PanelInstance extends OptionalChildWidgetInstance<Panel> with OptionalShrinkWrapLayout {
+  PanelInstance({required super.widget});
 
   @override
   void draw(DrawContext ctx) {
     final cornerRadius = widget.cornerRadius;
-    if (cornerRadius <= 1 && widget.outlineThickness == null) {
+    if (cornerRadius.isVanishing && widget.outlineThickness == null) {
       ctx.primitives.rect(transform.width, transform.height, widget.color, ctx.transform, ctx.projection);
     } else {
       ctx.primitives.roundedRect(
@@ -330,9 +336,9 @@ class MouseArea extends SingleChildInstanceWidget {
   final void Function(double x, double y, double dx, double dy)? dragCallback;
   final void Function()? dragEndCallback;
   final void Function(double horizontal, double vertical)? scrollCallback;
-  final CursorStyle? cursorStyle;
+  final CursorStyle? Function(double x, double y)? cursorStyleSupplier;
 
-  const MouseArea({
+  MouseArea({
     super.key,
     this.clickCallback,
     this.enterCallback,
@@ -341,9 +347,10 @@ class MouseArea extends SingleChildInstanceWidget {
     this.dragCallback,
     this.dragEndCallback,
     this.scrollCallback,
-    this.cursorStyle,
+    CursorStyle? cursorStyle,
+    CursorStyle? Function(double x, double y)? cursorStyleSupplier,
     required super.child,
-  });
+  }) : cursorStyleSupplier = (cursorStyleSupplier ?? (_, _) => cursorStyle);
 
   @override
   MouseAreaInstance instantiate() => MouseAreaInstance(widget: this);
@@ -353,7 +360,7 @@ class MouseAreaInstance extends SingleChildWidgetInstance<MouseArea> with Shrink
   MouseAreaInstance({required super.widget});
 
   @override
-  CursorStyle? get cursorStyle => widget.cursorStyle;
+  CursorStyle? cursorStyleAt(double x, double y) => widget.cursorStyleSupplier?.call(x, y);
 
   @override
   bool onMouseDown(double x, double y) => (widget.clickCallback?..call(x, y)) != null || widget.dragCallback != null;
@@ -661,5 +668,51 @@ class _BuilderProxy extends ComposedProxy with SingleChildWidgetProxy {
   void doRebuild() {
     super.doRebuild();
     child = refreshChild(child, (widget as Builder).builder(this), slot);
+  }
+}
+
+// ---
+
+class Visibility extends SingleChildInstanceWidget {
+  final bool visible;
+  final bool reportSize;
+
+  Visibility({this.visible = false, this.reportSize = false, required super.child});
+
+  @override
+  SingleChildWidgetInstance<InstanceWidget> instantiate() => _VisibilityInstance(widget: this);
+}
+
+class _VisibilityInstance extends SingleChildWidgetInstance<Visibility> {
+  _VisibilityInstance({required super.widget});
+
+  @override
+  set widget(Visibility value) {
+    if (widget.visible == value.visible && widget.reportSize == value.reportSize) return;
+
+    super.widget = value;
+    markNeedsLayout();
+  }
+
+  @override
+  void doLayout(Constraints constraints) {
+    final childSize = child.layout(constraints);
+    if (widget.visible || widget.reportSize) {
+      transform.setSize(childSize);
+    } else {
+      transform.setSize(Size.zero);
+    }
+  }
+
+  @override
+  void draw(DrawContext ctx) {
+    if (!widget.visible) return;
+    super.draw(ctx);
+  }
+
+  @override
+  void hitTest(double x, double y, HitTestState state) {
+    if (!widget.visible) return;
+    super.hitTest(x, y, state);
   }
 }

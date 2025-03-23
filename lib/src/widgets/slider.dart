@@ -82,7 +82,7 @@ class RawSlider extends StatelessWidget {
                 height: 3,
                 child: Padding(
                   insets: const Insets.axis(horizontal: _handleRadius),
-                  child: Panel(cornerRadius: 2, color: Color.rgb(0xb1aebb)),
+                  child: Panel(cornerRadius: const CornerRadius.all(2), color: Color.rgb(0xb1aebb)),
                 ),
               ),
               Padding(

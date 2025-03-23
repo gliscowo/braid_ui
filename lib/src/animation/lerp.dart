@@ -80,3 +80,15 @@ class AlignmentLerp extends Lerp<Alignment> {
     );
   }
 }
+
+class CornerRadiusLerp extends Lerp<CornerRadius> {
+  const CornerRadiusLerp(super.start, super.end);
+
+  @override
+  CornerRadius operator [](double t) => CornerRadius(
+    topLeft: start.topLeft.lerp(t, end.topLeft),
+    topRight: start.topRight.lerp(t, end.topRight),
+    bottomLeft: start.bottomLeft.lerp(t, end.bottomLeft),
+    bottomRight: start.bottomRight.lerp(t, end.bottomRight),
+  );
+}

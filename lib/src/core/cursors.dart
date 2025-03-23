@@ -10,7 +10,9 @@ enum CursorStyle {
   hand(glfwHandCursor),
   move(glfwResizeAllCursor),
   horizontalResize(glfwHresizeCursor),
-  verticalResize(glfwVresizeCursor);
+  verticalResize(glfwVresizeCursor),
+  nwseResize(glfwResizeNwseCursor),
+  neswResize(glfwResizeNeswCursor);
 
   final int glfw;
   const CursorStyle(this.glfw);
@@ -24,6 +26,8 @@ class CursorController {
     CursorStyle.move,
     CursorStyle.horizontalResize,
     CursorStyle.verticalResize,
+    CursorStyle.nwseResize,
+    CursorStyle.neswResize,
   ];
 
   final Map<CursorStyle, Pointer<GLFWcursor>> _cursors = {};

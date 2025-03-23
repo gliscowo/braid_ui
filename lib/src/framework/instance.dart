@@ -87,28 +87,35 @@ class CustomWidgetTransform extends WidgetTransform {
 typedef Hit = ({WidgetInstance instance, ({double x, double y}) coordinates});
 
 class HitTestState {
-  final _hitWidgets = DoubleLinkedQueue<Hit>();
+  final _hits = DoubleLinkedQueue<Hit>();
 
-  bool get anyHit => _hitWidgets.isNotEmpty;
-  Hit get firstHit => _hitWidgets.first;
+  bool get anyHit => _hits.isNotEmpty;
+  Hit get firstHit => _hits.first;
 
-  Iterable<Hit> get trace => _hitWidgets;
-  Iterable<Hit> get occludedTrace =>
-      trace.takeWhile((value) => !(value.instance.flags & InstanceFlags.hitTestBoundary));
+  Iterable<Hit> get trace => _hits;
+  Iterable<Hit> get occludedTrace sync* {
+    for (final hit in _hits) {
+      yield hit;
+
+      if (hit.instance.flags & InstanceFlags.hitTestBoundary) {
+        return;
+      }
+    }
+  }
 
   Hit? firstWhere(bool Function(Hit hit) predicate) =>
       occludedTrace.cast<Hit?>().firstWhere((element) => predicate(element!), orElse: () => null);
 
   void addHit(WidgetInstance instance, double x, double y) {
-    _hitWidgets.addFirst((instance: instance, coordinates: (x: x, y: y)));
+    _hits.addFirst((instance: instance, coordinates: (x: x, y: y)));
   }
 
   @override
-  String toString() => 'HitTestState [${_hitWidgets.map((e) => e.instance.runtimeType).join(', ')}]';
+  String toString() => 'HitTestState [${_hits.map((e) => e.instance.runtimeType).join(', ')}]';
 }
 
 mixin MouseListener<T extends InstanceWidget> on WidgetInstance<T> {
-  CursorStyle? get cursorStyle => null;
+  CursorStyle? cursorStyleAt(double x, double y);
 
   bool onMouseDown(double x, double y) => false;
   void onMouseEnter() {}
@@ -294,6 +301,8 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
       result.multiply(ancestor.transform.toWidget);
     }
 
+    result.multiply(transform.toWidget);
+
     return result;
   }
 
@@ -345,7 +354,7 @@ mixin ChildRenderer<T extends InstanceWidget> on WidgetInstance<T> {
         ctx.primitives.roundedRect(
           aabb.max.x - aabb.min.x,
           aabb.max.y - aabb.min.y,
-          2,
+          const CornerRadius.all(2),
           Color.black,
           mat4,
           ctx.projection,
@@ -448,6 +457,7 @@ abstract class MultiChildWidgetInstance<T extends MultiChildInstanceWidget> exte
 
   void insertChild(int index, WidgetInstance child) {
     children[index] = adopt(child);
+    markNeedsLayout();
   }
 }
 
