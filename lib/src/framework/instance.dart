@@ -287,14 +287,14 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
     });
   }
 
-  (double, double) globalToWidgetCoordinates(double x, double y) {
-    final coordinates = Vector3(x, y, 0);
+  Matrix4 computeGlobalTransform() {
+    final result = Matrix4.identity();
+
     for (final ancestor in this.ancestors.toList().reversed) {
-      ancestor.transform.toWidgetCoordinates(coordinates);
+      result.multiply(ancestor.transform.toWidget);
     }
 
-    transform.toWidgetCoordinates(coordinates);
-    return (coordinates.x, coordinates.y);
+    return result;
   }
 
   @protected

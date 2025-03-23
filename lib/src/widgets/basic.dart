@@ -59,12 +59,14 @@ class Flexible extends VisitorWidget {
 
   const Flexible({super.key, this.flexFactor = 1.0, required super.child});
 
-  static _visitor(Flexible widget, WidgetInstance instance) {
+  static void _visitor(Flexible widget, WidgetInstance instance) {
     if (instance.parentData case FlexParentData data) {
       data.flexFactor = widget.flexFactor;
     } else {
       instance.parentData = FlexParentData(widget.flexFactor);
     }
+
+    instance.markNeedsLayout();
   }
 
   @override
@@ -74,7 +76,7 @@ class Flexible extends VisitorWidget {
 class HitTestOccluder extends VisitorWidget {
   const HitTestOccluder({super.key, required super.child});
 
-  static _visitor(HitTestOccluder _, WidgetInstance instance) {
+  static void _visitor(HitTestOccluder _, WidgetInstance instance) {
     instance.flags += InstanceFlags.hitTestBoundary;
   }
 
@@ -490,7 +492,10 @@ class TransformInstance extends SingleChildWidgetInstance<Transform> with Shrink
 
   @override
   set widget(Transform value) {
-    if (widget.matrix == value.matrix) return;
+    if (widget.matrix == value.matrix) {
+      (transform as CustomWidgetTransform).recompute();
+      return;
+    }
 
     super.widget = value;
     markNeedsLayout();
@@ -532,7 +537,10 @@ class LayoutAfterTransformInstance<LayoutAfterTransform> extends SingleChildWidg
 // ---
 
 class Clip extends SingleChildInstanceWidget {
-  const Clip({super.key, required super.child});
+  final bool clipHitTest;
+  final bool clipDrawing;
+
+  const Clip({super.key, this.clipHitTest = false, this.clipDrawing = true, required super.child});
 
   @override
   ClipInstance instantiate() => ClipInstance(widget: this);
@@ -543,7 +551,20 @@ class ClipInstance extends SingleChildWidgetInstance<Clip> with ShrinkWrapLayout
   ClipInstance({required super.widget});
 
   @override
+  void hitTest(double x, double y, HitTestState state) {
+    if (widget.clipHitTest && (x < 0 || x > transform.width || y < 0 || y > transform.height)) {
+      return;
+    }
+
+    super.hitTest(x, y, state);
+  }
+
+  @override
   void draw(DrawContext ctx) {
+    if (!widget.clipDrawing) {
+      return;
+    }
+
     final scissorBox = Aabb3.copy(transform.aabb)..transform(ctx.transform);
     gl.scissor(
       scissorBox.min.x.toInt(),

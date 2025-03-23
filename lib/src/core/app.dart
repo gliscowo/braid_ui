@@ -300,12 +300,13 @@ class AppState implements InstanceHost, ProxyHost {
           _dragStarted = true;
         }
 
-        final (x, y) = _dragging!.globalToWidgetCoordinates(window.cursorX, window.cursorY);
+        final globalTransform = _dragging!.computeGlobalTransform();
+        final (x, y) = globalTransform.transform2(window.cursorX, window.cursorY);
 
         // apply *only the rotation* of the instance's transform
         // to the mouse movement
         final delta = Vector4(event.deltaX, event.deltaY, 0, 0);
-        _dragging!.transform.toWidget.transform(delta);
+        globalTransform.transform(delta);
 
         _dragging!.onMouseDrag(x, y, delta.x, delta.y);
       }),

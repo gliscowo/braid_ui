@@ -62,8 +62,8 @@ class BuildScope {
 
   /// Rebuild all dirty proxies in this scope
   ///
-  /// The framework only ever invokes this on the root proxy's scope,
-  /// this if any descendant proxies introduce a new build scope
+  /// The framework only ever invokes this on the root proxy's scope.
+  /// Thus if any descendant proxies introduce a new build scope,
   /// it is their responsibility to build the proxies in that scope
   /// when appropriate
   void rebuildDirtyProxies() {
@@ -231,7 +231,7 @@ sealed class WidgetProxy with NodeWithDepth implements BuildContext, Comparable<
       ancestor = ancestor.parent;
     }
 
-    return null;
+    return _dependencies[T] = null;
   }
 
   void notifyDependenciesChanged() {
@@ -271,7 +271,7 @@ mixin SingleChildWidgetProxy on WidgetProxy {
 }
 
 mixin InstanceListenerProxy on WidgetProxy {
-  void notifyDescendantInstance(WidgetInstance? instance, covariant Object? slot) {}
+  void notifyDescendantInstance(WidgetInstance? instance, covariant Object? slot);
 }
 
 /// The opposite of an [InstanceWidgetProxy] - that is, a composed
@@ -342,16 +342,11 @@ abstract class InstanceWidgetProxy extends WidgetProxy with InstanceListenerProx
       listener.notifyDescendantInstance(instance, slot);
     }
   }
-
-  // ---
-
-  @override
-  void notifyDescendantInstance(WidgetInstance<InstanceWidget>? instance, covariant Object? slot);
 }
 
 // ---
 
-class InheritedProxy extends ComposedProxy with SingleChildWidgetProxy {
+class InheritedProxy extends ComposedProxy {
   final List<WidgetProxy> _dependents = [];
 
   InheritedProxy(InheritedWidget super.widget);
@@ -720,6 +715,11 @@ class LeafInstanceWidgetProxy extends InstanceWidgetProxy {
 
   @override
   void visitChildren(WidgetProxyVisitor visitor) {}
+
+  @override
+  void notifyDescendantInstance(WidgetInstance<InstanceWidget>? instance, covariant Object? slot) {
+    assert(false, 'a leaf proxy cannot have descendant instances');
+  }
 }
 
 // --- proxy tree debugging

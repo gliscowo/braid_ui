@@ -30,7 +30,7 @@ class NullableLerp<T> extends Lerp<T?> {
 
   NullableLerp(super.start, super.end, LerpFactory<Lerp<T>, T> delegateFactory) {
     if (start != null && end != null) {
-      _delegate = delegateFactory(start!, end!);
+      _delegate = delegateFactory(start as T, end as T);
     } else {
       _delegate = null;
     }

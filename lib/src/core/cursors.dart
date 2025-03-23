@@ -17,7 +17,7 @@ enum CursorStyle {
 }
 
 class CursorController {
-  static const List<CursorStyle> activeStyles = [
+  static const activeStyles = [
     CursorStyle.pointer,
     CursorStyle.text,
     CursorStyle.hand,
