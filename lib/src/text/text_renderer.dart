@@ -104,6 +104,9 @@ class Font {
 
   double get lineHeight => _nativeResources.ftFace.ref.height / _nativeResources.ftFace.ref.units_per_EM;
 
+  double get ascender => _nativeResources.ftFace.ref.ascender / _nativeResources.ftFace.ref.units_per_EM;
+  double get descender => _nativeResources.ftFace.ref.descender / _nativeResources.ftFace.ref.units_per_EM;
+
   Glyph getGlyph(int index, double size) {
     final pixelSize = toPixelSize(size);
     return _glyphs[(index, pixelSize)] ?? _loadGlyph(index, pixelSize);
@@ -307,19 +310,17 @@ class TextRenderer {
   }) {
     _ensureShaped(text, size);
 
-    int baselineY;
+    int baselineY = (text.glyphs.first.font.ascender * size).floor();
+
     if (lineHeightOverride != null) {
       // TODO: this might benefit from some caching. then again, once actual paragraph
       // layout and rendering is implemented, the relevant datastructures are likely
       // gonna change anyways soooo
-      final intrinsicHeight = text.glyphs.fold(0.0, (acc, glyph) => max(acc, glyph.font.lineHeight));
-      baselineY = ((1 + (lineHeightOverride - intrinsicHeight) * .5) * size).floor();
-    } else {
-      baselineY = size.floor();
+      baselineY += ((lineHeightOverride - text.glyphs.first.font.lineHeight) * .5 * size).ceil();
     }
 
     if (debugCtx != null) {
-      final textSize = sizeOf(text, size);
+      final textSize = sizeOf(text, size, lineHeightOverride: lineHeightOverride);
       debugCtx.primitives.rect(textSize.width, textSize.height, Color.black.copyWith(a: .25), transform, projection);
 
       debugCtx.transform.scope((mat4) {

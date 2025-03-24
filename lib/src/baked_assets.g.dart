@@ -1,38 +1,28 @@
+// ignore_for_file: constant_identifier_names
+
 import 'dart:convert';
 import 'package:image/image.dart';
 import 'dart:typed_data';
 import 'resources.dart';
+import 'widgets/icon.dart';
 
-const _braidIconBase64 =
-    'iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAMWUlEQVR42u2d23OU932HSZOp3TRXbVr3qrnpTOxm6qvONBe9yUxK3Yt2pgdfNkMC+9tdPI6kGNchZR3Fh9oGgQGDjTlYAYEsCyGQkISWkxDng3YtIRAHWUdgJaGzhFhxME8/fXd/I5FKuys2Jpnh95l5/oHnYff9ctDLPDc3t9+3Ycw3+anJF4Z5877mjDzGseQ//1ji68kxkGeEf7WL8Ljl5ybl/0wsEa+6CI9f/qvBpHzxX+LnLsJX+52fYw5j5b+2GFqa4EgYXjOSL5aKX5gNLsLjkm9XH07I/2+xTLzuInw18n82g3y7o+GE/JD4pchXBFyErEeOv3xK/ktw+QKzrr7Gyoc3xJv+1S5CliPPtHnyXxFr3oY7k6TcsZqkfPGWeMdFyGq84vtHyY9jL52PC9JHOF4Dbxv4H/GOeNdFyGqSP1/y49hL5+Pl6SOcCifkvyeWixXumZDVJH++5Mf5RfLS2ZxBhDPhhPwCsVK87yJkNYmfL+LYS+eTDCKcCyfkrxKrjXARso4g+XHyDfxK/DqDCA3hhPw14gOxzkXIauQrwhuKYC+dbRlEiIStfFgvPnIRsprkz5f8OPbS2Z5BhGgYPvTkwwax0UXIahI/X8Sxl06xItxNE6ExbOXDJrHZRchqLPe/IPlxViQvndKC9BE+r0nI3yI+8VjjImQxVinCSkWwl86uDCI01iTkF4qtosj/mjOZZQTJj7PGwFqxO4MI52sS8reJ7eZLdvh+6Ew+wsB8c54m8fP5QBHspbM7g2fCmU+RfNghis0FSl/8ujM6h8Uxb93GfDmOvxxefor1/hckP469dPYWwL0UEb68D3tfh08NlIhS/384qxnL9y2YwDAuRsUIpsaLsEERNiiCvXSq00ToPJ2Q/5nY6St2ZjPYLRY9I/njVv6wGBT9itBqI2xShM3JS2dfigj34lC2WPINotfZzSiAed/KH+NNBgki+fSJHhthi5kv+XHspVO7fPYIta9DmYFy84DCBU87wykGL359DNM/gmGYAPfpY5IIfQSRfG6IazZCof8FyY+zzUCRODjLJ6HuXSQfdouKRc84yyk2yqLvSz5DYpSV2MWJECOI5NMlOmyEIkXYbuLJSwcOzRAhvCwp33xJXf43nOUUG8b/I8lnQNyikum7TYQugrRj+EK02gjFilCsCPZhWzctwuQYVPiFgUrT4Qyn2SC+JZLPTXGbI/zmbhGhjSBXMVwWLdMiSH6cnQbKxNECuD8JbYesfKgyHzvDaSb5QcmnV9wizEwbJ8oVgkg+F0Qz/toOFjxNqSKUKcIuA7vF8QKoXQJ7PfmIHzjDadaL71/sw3aIrcy2MSJcJMh5DI0iaj8J5Yqwx8QFVAgrv9ocdnYzWAzzbcm/fw3DdZbwgPvMthEiNBFE8mkQZxWhBkWoUIRKRbDya8w4tb7vObsZTvLrk5cOoxwh1YaJ0EAQyee0OIWv2otQrQhVZkLy77HP96/O6hzWie+fJJ82j59yhxuk2hBRyQ9yAsMxUY+/tg49E6oX/wUHzF86o4+wVnz7WzFcEW0s4x7DpNoAEY4TpB5DnTiU/CQ4k4+4S7z0p5cxX9hL5zJLucMAqdZPlCMEJd9wQNR6nwT3Rw+PvIv4/1ry++ylc5Fl3GWYVLtJhIMECWPYJ6rcJ2HuC/bzXX8//5wP35D8ZyU/Zi+dJpYyyQCp1kuUWoJUY9grKvDXFrpPQmbzDfBDM8CEuQmi8sWL/GGDIoiYvXQiGUToIUoVQSow7Ba7XIQM5fdz25PfJ3oQUxEkP3YSw3FxVhHiaSLEiLKHIGUYSkWJi5Ch/N6k/Ji4IboTEU4qwjFMrB7DEXEygwjXiVJGkBIMxWK7i5BCfl9C/vJBOD4Bgetgrolu0ZGIUKcIImYvnaOKcDtNhGtEKSEo+YZtotBFmJp/kH8wN6fkvzcA8Qd4i9yGQBeYTtEh2qhZ0MHTdYog+TF76RxWhIk0EbqJKkCQX2P4RGxxEX5Dfs/D8u0iExDoRPLFF6I1ESGsCJIfs5fOgQwidBJVgCCbMWwUG57kCGaAvzOSb7/vl1v5M+zcOATawFwVV8TlxNdRLb7vSX6fvXTCLOM2w6RaOxE2EeQjDB+Kdfiq1z6Jv0/w9fGulR+4Ab33SLlzYxC4iuSLFnExEaFSESS/bxeGnaI6gwhtRCQ/wAcY1ojVmFefuADBG3zXxOj3rpzrEOqBkftpIoxC4BKSLy6I5kSEMkUoVQR76VQqwkSKCFHCWPnviwKMmfckblGM58w1erwrpwtCijGcJkJkFAKSb86LJvE5NS+38pTEPyti9tIpYynjMzwTGjnwkPyV+Dc+0f96elGnInQpQgeYdgh1w/C9NBFGIODJF1ERmYog+TF76ZQowti0CJ9L/loMq538GSK0K0IbmFYIdWYQYRgCCmAaxDlxNhGhUBFEzF46O5IRpstf5eTPEOGqIrQqQvJBG2rLIMIQBBrAnBGnxSlFqOGpjXomSH7fhuSls4VXHpJfgH+9kz9bhMuKcAlMC4SuZhBhEAJnkHxxQhxPRFinCOsVYR3GyZ9zhIv0JK8cQldg+G6aCAMQOInki2OifiqCxPd53/dihZOfYYRmRTivCE1gGiHUkkGEfgh48sURUZeIUIB5diX+8hX4ljr5c43QSE/yyiF0IcMIkm8Oi0PioBfB/W3YI0eI8Lzk93uXzlkINcFImgjn+iAg+eaA2A++WorngfuVn1WEs4qQfNCGPoeRO2ki9EJAAUyt2Ofxc2cymwinFeGUIpxMXDqhhvQRjl9Lyq8RVUwurOY7zuQcl5/PH7xh+Ju1L/OUF+E4/d6VcxRCZ9NHKGxC8sVeUckmZ3RO42v5hhIF4C1DtMDw7UVHFaGe/uSVQ+g0jEwy64bisLgKTIXYw1B+He6HMzLdrwy/lHzeNtiXYzXaCJLfn7xyCJ1IHWH1SSRflHv8vTObwfIX8ldvGu5Ok88KsdJGOKgIBxVhP5gwhI7NHqHyUlL+LvDv5EfObgZ708dWK7/sA1ib48lntVirCB/bCLX0C0wNhI7MHKGuDUyZ2OnxirObZv/3wJX8sXcNrHoJJkahpwM+yvHks058aCNU8Zzk95hqMFUQOgTDcR5a9aWk/FLwfcZPnOE0k/wfSD7LRfk6sOvtgI05km/fx2QjVPC82Uu/qQRTAaEDMDItwsZTYD4TJR7zneE0e8fHT+zLEE9X89D6OqAwZ+p1QIWKUGwj7FGE3WDKIbQ/EWHyHuTuTsovZnJxKd9yhtNsheFV7y2U4nw9/283O6AoZ9qrgKZHKKffft+H9kFJFMynolhsp8rZzWArffgknzWiYR8zbqALPsuD7QaKRYmhyYtQznOS32O/cqbJZ9F2vu/sZrBVfl6wb6AMb2TWDXTAzhxPPqWizNC41yhCMc9Lfr8nf0dCvq+Irc5shlu/mG+tM0x+aOCTnNTvZBrsgD05sMu+BmJ6hB30Sz6miEheKX/kzM5hkl+ZvHSI7iXlBtuhKmfqR4KrkxEW7uA7/iJ+vHAzf+KMznEb/PztJsODLQa2BqHnCik30gW1eZ58asV+RahTBGcyi23xU2gvndI8GOom5Ybb4WCOJ5+D4rCLkN0KF/D0Vh9nigzsELtyYaiTlBvtgvo8Tz5HxDEXIbsVL+KZYkOLvXQq82CkO02EdjiR48nnhDilCA0uwqNvW4A/l/zmMgPlojoXRjpJufEuOJPnyeeMaHARslu5IuxWBHvp7M8gwq0uiOZ58omKRhch+wiS31xtYJ84lAujaSJMdEFTnief8+KCIlxxER59YUWoVQR76RzNhbE0EW53QUseXDRwSVxxEbKPcEgR7KVzMhfG00SId8HVPE8+raLNRcg+guQ320vnXC7cShNhsgva8zz5dIpuRYi5CI++E4og+c320onmwkSaCHe6oDtPGLguYi5Cdju9iGckv+Wcgai4kAfx7jQR2iGWIwz0in5FGF3o/rwoqwhRRbCXzqUMItxtg76AJ59BMWzIdyazWLMiSH7LBQMtojUPJmeL8ADGiqbLF37+zVnMck16JlwyNNtLpyMXJjtnkF+ckD8kRsSYH/ffm/y29oUitCpCm4EOcS0X7nROyR8vhgEn/6uP0KkI9tLpzYW7HU7+Y127ngmS32IvnZvBh+XfMuQ6S1/x+hShVxGmP2xHnfzHH2FQEZz83+HGf8yfjRjeG/fx786Gm9vv2/4XC0UqC0LW4vgAAAAASUVORK5CYII=';
+const _braidIconBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAMWUlEQVR42u2d23OU932HSZOp3TRXbVr3qrnpTOxm6qvONBe9yUxK3Yt2pgdfNkMC+9tdPI6kGNchZR3Fh9oGgQGDjTlYAYEsCyGQkISWkxDng3YtIRAHWUdgJaGzhFhxME8/fXd/I5FKuys2Jpnh95l5/oHnYff9ctDLPDc3t9+3Ycw3+anJF4Z5877mjDzGseQ//1ji68kxkGeEf7WL8Ljl5ybl/0wsEa+6CI9f/qvBpHzxX+LnLsJX+52fYw5j5b+2GFqa4EgYXjOSL5aKX5gNLsLjkm9XH07I/2+xTLzuInw18n82g3y7o+GE/JD4pchXBFyErEeOv3xK/ktw+QKzrr7Gyoc3xJv+1S5CliPPtHnyXxFr3oY7k6TcsZqkfPGWeMdFyGq84vtHyY9jL52PC9JHOF4Dbxv4H/GOeNdFyGqSP1/y49hL5+Pl6SOcCifkvyeWixXumZDVJH++5Mf5RfLS2ZxBhDPhhPwCsVK87yJkNYmfL+LYS+eTDCKcCyfkrxKrjXARso4g+XHyDfxK/DqDCA3hhPw14gOxzkXIauQrwhuKYC+dbRlEiIStfFgvPnIRsprkz5f8OPbS2Z5BhGgYPvTkwwax0UXIahI/X8Sxl06xItxNE6ExbOXDJrHZRchqLPe/IPlxViQvndKC9BE+r0nI3yI+8VjjImQxVinCSkWwl86uDCI01iTkF4qtosj/mjOZZQTJj7PGwFqxO4MI52sS8reJ7eZLdvh+6Ew+wsB8c54m8fP5QBHspbM7g2fCmU+RfNghis0FSl/8ujM6h8Uxb93GfDmOvxxefor1/hckP469dPYWwL0UEb68D3tfh08NlIhS/384qxnL9y2YwDAuRsUIpsaLsEERNiiCvXSq00ToPJ2Q/5nY6St2ZjPYLRY9I/njVv6wGBT9itBqI2xShM3JS2dfigj34lC2WPINotfZzSiAed/KH+NNBgki+fSJHhthi5kv+XHspVO7fPYIta9DmYFy84DCBU87wykGL359DNM/gmGYAPfpY5IIfQSRfG6IazZCof8FyY+zzUCRODjLJ6HuXSQfdouKRc84yyk2yqLvSz5DYpSV2MWJECOI5NMlOmyEIkXYbuLJSwcOzRAhvCwp33xJXf43nOUUG8b/I8lnQNyikum7TYQugrRj+EK02gjFilCsCPZhWzctwuQYVPiFgUrT4Qyn2SC+JZLPTXGbI/zmbhGhjSBXMVwWLdMiSH6cnQbKxNECuD8JbYesfKgyHzvDaSb5QcmnV9wizEwbJ8oVgkg+F0Qz/toOFjxNqSKUKcIuA7vF8QKoXQJ7PfmIHzjDadaL71/sw3aIrcy2MSJcJMh5DI0iaj8J5Yqwx8QFVAgrv9ocdnYzWAzzbcm/fw3DdZbwgPvMthEiNBFE8mkQZxWhBkWoUIRKRbDya8w4tb7vObsZTvLrk5cOoxwh1YaJ0EAQyee0OIWv2otQrQhVZkLy77HP96/O6hzWie+fJJ82j59yhxuk2hBRyQ9yAsMxUY+/tg49E6oX/wUHzF86o4+wVnz7WzFcEW0s4x7DpNoAEY4TpB5DnTiU/CQ4k4+4S7z0p5cxX9hL5zJLucMAqdZPlCMEJd9wQNR6nwT3Rw+PvIv4/1ry++ylc5Fl3GWYVLtJhIMECWPYJ6rcJ2HuC/bzXX8//5wP35D8ZyU/Zi+dJpYyyQCp1kuUWoJUY9grKvDXFrpPQmbzDfBDM8CEuQmi8sWL/GGDIoiYvXQiGUToIUoVQSow7Ba7XIQM5fdz25PfJ3oQUxEkP3YSw3FxVhHiaSLEiLKHIGUYSkWJi5Ch/N6k/Ji4IboTEU4qwjFMrB7DEXEygwjXiVJGkBIMxWK7i5BCfl9C/vJBOD4Bgetgrolu0ZGIUKcIImYvnaOKcDtNhGtEKSEo+YZtotBFmJp/kH8wN6fkvzcA8Qd4i9yGQBeYTtEh2qhZ0MHTdYog+TF76RxWhIk0EbqJKkCQX2P4RGxxEX5Dfs/D8u0iExDoRPLFF6I1ESGsCJIfs5fOgQwidBJVgCCbMWwUG57kCGaAvzOSb7/vl1v5M+zcOATawFwVV8TlxNdRLb7vSX6fvXTCLOM2w6RaOxE2EeQjDB+Kdfiq1z6Jv0/w9fGulR+4Ab33SLlzYxC4iuSLFnExEaFSESS/bxeGnaI6gwhtRCQ/wAcY1ojVmFefuADBG3zXxOj3rpzrEOqBkftpIoxC4BKSLy6I5kSEMkUoVQR76VQqwkSKCFHCWPnviwKMmfckblGM58w1erwrpwtCijGcJkJkFAKSb86LJvE5NS+38pTEPyti9tIpYynjMzwTGjnwkPyV+Dc+0f96elGnInQpQgeYdgh1w/C9NBFGIODJF1ERmYog+TF76ZQowti0CJ9L/loMq538GSK0K0IbmFYIdWYQYRgCCmAaxDlxNhGhUBFEzF46O5IRpstf5eTPEOGqIrQqQvJBG2rLIMIQBBrAnBGnxSlFqOGpjXomSH7fhuSls4VXHpJfgH+9kz9bhMuKcAlMC4SuZhBhEAJnkHxxQhxPRFinCOsVYR3GyZ9zhIv0JK8cQldg+G6aCAMQOInki2OifiqCxPd53/dihZOfYYRmRTivCE1gGiHUkkGEfgh48sURUZeIUIB5diX+8hX4ljr5c43QSE/yyiF0IcMIkm8Oi0PioBfB/W3YI0eI8Lzk93uXzlkINcFImgjn+iAg+eaA2A++WorngfuVn1WEs4qQfNCGPoeRO2ki9EJAAUyt2Ofxc2cymwinFeGUIpxMXDqhhvQRjl9Lyq8RVUwurOY7zuQcl5/PH7xh+Ju1L/OUF+E4/d6VcxRCZ9NHKGxC8sVeUckmZ3RO42v5hhIF4C1DtMDw7UVHFaGe/uSVQ+g0jEwy64bisLgKTIXYw1B+He6HMzLdrwy/lHzeNtiXYzXaCJLfn7xyCJ1IHWH1SSRflHv8vTObwfIX8ldvGu5Ok88KsdJGOKgIBxVhP5gwhI7NHqHyUlL+LvDv5EfObgZ708dWK7/sA1ib48lntVirCB/bCLX0C0wNhI7MHKGuDUyZ2OnxirObZv/3wJX8sXcNrHoJJkahpwM+yvHks058aCNU8Zzk95hqMFUQOgTDcR5a9aWk/FLwfcZPnOE0k/wfSD7LRfk6sOvtgI05km/fx2QjVPC82Uu/qQRTAaEDMDItwsZTYD4TJR7zneE0e8fHT+zLEE9X89D6OqAwZ+p1QIWKUGwj7FGE3WDKIbQ/EWHyHuTuTsovZnJxKd9yhtNsheFV7y2U4nw9/283O6AoZ9qrgKZHKKffft+H9kFJFMynolhsp8rZzWArffgknzWiYR8zbqALPsuD7QaKRYmhyYtQznOS32O/cqbJZ9F2vu/sZrBVfl6wb6AMb2TWDXTAzhxPPqWizNC41yhCMc9Lfr8nf0dCvq+Irc5shlu/mG+tM0x+aOCTnNTvZBrsgD05sMu+BmJ6hB30Sz6miEheKX/kzM5hkl+ZvHSI7iXlBtuhKmfqR4KrkxEW7uA7/iJ+vHAzf+KMznEb/PztJsODLQa2BqHnCik30gW1eZ58asV+RahTBGcyi23xU2gvndI8GOom5Ybb4WCOJ5+D4rCLkN0KF/D0Vh9nigzsELtyYaiTlBvtgvo8Tz5HxDEXIbsVL+KZYkOLvXQq82CkO02EdjiR48nnhDilCA0uwqNvW4A/l/zmMgPlojoXRjpJufEuOJPnyeeMaHARslu5IuxWBHvp7M8gwq0uiOZ58omKRhch+wiS31xtYJ84lAujaSJMdEFTnief8+KCIlxxER59YUWoVQR76RzNhbE0EW53QUseXDRwSVxxEbKPcEgR7KVzMhfG00SId8HVPE8+raLNRcg+guQ320vnXC7cShNhsgva8zz5dIpuRYi5CI++E4og+c320onmwkSaCHe6oDtPGLguYi5Cdju9iGckv+Wcgai4kAfx7jQR2iGWIwz0in5FGF3o/rwoqwhRRbCXzqUMItxtg76AJ59BMWzIdyazWLMiSH7LBQMtojUPJmeL8ADGiqbLF37+zVnMck16JlwyNNtLpyMXJjtnkF+ckD8kRsSYH/ffm/y29oUitCpCm4EOcS0X7nROyR8vhgEn/6uP0KkI9tLpzYW7HU7+Y127ngmS32IvnZvBh+XfMuQ6S1/x+hShVxGmP2xHnfzHH2FQEZz83+HGf8yfjRjeG/fx786Gm9vv2/4XC0UqC0LW4vgAAAAASUVORK5CYII=';
 final braidIcon = decodePng(base64Decode(_braidIconBase64))!;
 
 const _shaderSources = {
-  'rounded_rect_outline.frag':
-      '#version 330 core\nuniform vec4 uColor;uniform vec2 uSize;uniform float uRadius;uniform float uThickness;in vec4 vColor;in vec2 vPos;out vec4 fragColor;float roundedBoxSDF(vec2 center, vec2 size, float radius) {return length(max(abs(center) - size + radius, 0.0)) - radius;}void main() {float distance = roundedBoxSDF(vPos - (uSize / 2.0), (uSize - uThickness * 2) / 2.0, uRadius);float smoothedAlpha = uRadius != 0? 1.0 - smoothstep(-1.0, 1.0, abs(distance) - uThickness): 1.0 - distance;if (smoothedAlpha < .001) discard;fragColor = vec4(uColor.rgb, uColor.a * smoothedAlpha);}',
-  'pos_uv.vert':
-      '#version 330 core\nuniform mat4 uProjection;uniform mat4 uTransform;in vec3 aPos;in vec2 aUv;out vec2 vPos;out vec2 vUv;void main() {gl_Position = uProjection * uTransform * vec4(aPos.xyz, 1.0);vPos = aPos.xy;vUv = aUv;}',
-  'gradient_fill.frag':
-      '#version 330 core\nuniform vec4 uStartColor;uniform vec4 uEndColor;uniform float uPosition;uniform float uSize;uniform float uAngle;in vec2 vUv;out vec4 fragColor;void main() {float pivot = uPosition + 0.5;float size = uSize;vec2 uv = vUv - pivot;float rotated = uv.x * cos(radians(uAngle)) - uv.y * sin(radians(uAngle));float pos = smoothstep((1.0 - size) + uPosition, size + 0.0001 + uPosition, rotated + pivot);fragColor = mix(uStartColor, uEndColor, pos);}',
-  'blit.vert':
-      '#version 330 core\nin vec2 aPos;out vec2 vUv;void main() {vec2 clipSpacePos = aPos * 2.0 - 1.0;gl_Position = vec4(clipSpacePos.xy, 1.0, 1.0);vUv = aPos.xy;}',
+  'rounded_rect_outline.frag': '#version 330 core\nuniform vec4 uColor;uniform vec2 uSize;uniform vec4 uRadius;uniform float uThickness;in vec2 vPos;out vec4 fragColor;float sdRoundBox(in vec2 pos, in vec2 size, in vec4 radii) {radii.xy = (pos.x > 0.0) ? radii.xy : radii.zw;radii.x = (pos.y > 0.0) ? radii.x : radii.y;vec2 q = abs(pos) - size + radii.x;return min(max(q.x, q.y), 0.0) + length(max(q, 0.0)) - radii.x;}void main() {float distance = sdRoundBox(vPos - (uSize / 2.0), (uSize - uThickness * 2) / 2.0, uRadius);float smoothedAlpha = uRadius != vec4(0)? 1.0 - smoothstep(-1.0, 1.0, abs(distance) - uThickness): 1.0 - distance;if (smoothedAlpha < .001) discard;fragColor = vec4(uColor.rgb, uColor.a * smoothedAlpha);}',
+  'pos_uv.vert': '#version 330 core\nuniform mat4 uProjection;uniform mat4 uTransform;in vec3 aPos;in vec2 aUv;out vec2 vPos;out vec2 vUv;void main() {gl_Position = uProjection * uTransform * vec4(aPos.xyz, 1.0);vPos = aPos.xy;vUv = aUv;}',
+  'gradient_fill.frag': '#version 330 core\nuniform vec4 uStartColor;uniform vec4 uEndColor;uniform float uPosition;uniform float uSize;uniform float uAngle;in vec2 vUv;out vec4 fragColor;void main() {float pivot = uPosition + 0.5;float size = uSize;vec2 uv = vUv - pivot;float rotated = uv.x * cos(radians(uAngle)) - uv.y * sin(radians(uAngle));float pos = smoothstep((1.0 - size) + uPosition, size + 0.0001 + uPosition, rotated + pivot);fragColor = mix(uStartColor, uEndColor, pos);}',
+  'blit.vert': '#version 330 core\nin vec2 aPos;out vec2 vUv;void main() {vec2 clipSpacePos = aPos * 2.0 - 1.0;gl_Position = vec4(clipSpacePos.xy, 1.0, 1.0);vUv = aPos.xy;}',
   'solid_fill.frag': '#version 330 core\nuniform vec4 uColor;out vec4 fragColor;void main() {fragColor = uColor;}',
-  'text.vert':
-      '#version 330 core\nuniform mat4 uProjection;uniform mat4 uTransform;in vec2 aPos;in vec2 aUv;in vec4 aColor;out vec2 vUv;out vec4 vColor;void main() {gl_Position = uProjection * uTransform * vec4(aPos, 0.0, 1.0);vUv = aUv;vColor = aColor;}',
-  'texture_fill.frag':
-      '#version 330 core\nuniform sampler2D uTexture;in vec2 vUv;out vec4 fragColor;void main() {fragColor = texture(uTexture, vUv);}',
-  'circle_solid.frag':
-      '#version 330 core\nuniform vec4 uColor;uniform float uRadius;in vec2 vPos;out vec4 fragColor;void main() {vec2 center = vec2(uRadius);float distance = length(vPos - center);float alpha = 1 - smoothstep(uRadius - 2, uRadius, distance);if(alpha < .001) discard;fragColor = vec4(uColor.rgb, alpha * uColor.a);}',
-  'rounded_rect_solid.frag':
-      '#version 330 core\nuniform vec4 uColor;uniform vec2 uSize;uniform float uRadius;in vec2 vPos;out vec4 fragColor;float roundedBoxSDF(vec2 center, vec2 size, float radius) {return length(max(abs(center) - size + radius, 0.0)) - radius;}void main() {float distance = roundedBoxSDF(vPos - (uSize / 2.0), uSize / 2.0, uRadius);float smoothedAlpha = uRadius != 0? 1.0 - smoothstep(-1.0, 1.0, distance): 1.0 - distance;if (smoothedAlpha < .001) discard;fragColor = vec4(uColor.rgb, uColor.a * smoothedAlpha);}',
-  'blit.frag':
-      '#version 330 core\nuniform sampler2D sFramebuffer;in vec2 vUv;out vec4 fragColor;void main() {fragColor = texture(sFramebuffer, vUv);}',
-  'pos.vert':
-      '#version 330 core\nin vec3 aPos;uniform mat4 uProjection;uniform mat4 uTransform;out vec2 vPos;void main() {gl_Position = uProjection * uTransform * vec4(aPos.xyz, 1.0);vPos = aPos.xy;}',
-  'pos_color.vert':
-      '#version 330 core\nin vec3 aPos;in vec4 aColor;uniform mat4 uProjection;uniform mat4 uTransform;out vec4 vColor;out vec2 vPos;void main() {gl_Position = uProjection * uTransform * vec4(aPos.xyz, 1.0);vColor = aColor;vPos = aPos.xy;}',
-  'text.frag':
-      '#version 330 core\nuniform sampler2D sText;in vec2 vUv;in vec4 vColor;layout(location = 0, index = 0) out vec4 fragColor;layout(location = 0, index = 1) out vec4 fragColorMask;void main() {fragColor = vColor;fragColorMask = vec4(texture(sText, vUv));}',
+  'text.vert': '#version 330 core\nuniform mat4 uProjection;uniform mat4 uTransform;in vec2 aPos;in vec2 aUv;in vec4 aColor;out vec2 vUv;out vec4 vColor;void main() {gl_Position = uProjection * uTransform * vec4(aPos, 0.0, 1.0);vUv = aUv;vColor = aColor;}',
+  'texture_fill.frag': '#version 330 core\nuniform sampler2D uTexture;in vec2 vUv;out vec4 fragColor;void main() {fragColor = texture(uTexture, vUv);}',
+  'circle_solid.frag': '#version 330 core\nuniform vec4 uColor;uniform float uRadius;in vec2 vPos;out vec4 fragColor;void main() {vec2 center = vec2(uRadius);float distance = length(vPos - center);float alpha = 1 - smoothstep(uRadius - 2, uRadius, distance);if(alpha < .001) discard;fragColor = vec4(uColor.rgb, alpha * uColor.a);}',
+  'rounded_rect_solid.frag': '#version 330 core\nuniform vec4 uColor;uniform vec2 uSize;uniform vec4 uRadius;in vec2 vPos;out vec4 fragColor;float sdRoundBox(in vec2 pos, in vec2 size, in vec4 radii) {radii.xy = (pos.x > 0.0) ? radii.xy : radii.zw;radii.x = (pos.y > 0.0) ? radii.x : radii.y;vec2 q = abs(pos) - size + radii.x;return min(max(q.x, q.y), 0.0) + length(max(q, 0.0)) - radii.x;}void main() {float distance = sdRoundBox(vPos - (uSize / 2.0), uSize / 2.0, uRadius);float smoothedAlpha = uRadius != vec4(0)? 1.0 - smoothstep(-0.5, 1.5, distance): 1.0 - distance;if (smoothedAlpha < .001) discard;fragColor = vec4(uColor.rgb, uColor.a * smoothedAlpha);}',
+  'blit.frag': '#version 330 core\nuniform sampler2D sFramebuffer;in vec2 vUv;out vec4 fragColor;void main() {fragColor = texture(sFramebuffer, vUv);}',
+  'pos.vert': '#version 330 core\nin vec3 aPos;uniform mat4 uProjection;uniform mat4 uTransform;out vec2 vPos;void main() {gl_Position = uProjection * uTransform * vec4(aPos.xyz, 1.0);vPos = aPos.xy;}',
+  'pos_color.vert': '#version 330 core\nin vec3 aPos;in vec4 aColor;uniform mat4 uProjection;uniform mat4 uTransform;out vec4 vColor;out vec2 vPos;void main() {gl_Position = uProjection * uTransform * vec4(aPos.xyz, 1.0);vColor = aColor;vPos = aPos.xy;}',
+  'text.frag': '#version 330 core\nuniform sampler2D sText;in vec2 vUv;in vec4 vColor;layout(location = 0, index = 0) out vec4 fragColor;layout(location = 0, index = 1) out vec4 fragColorMask;void main() {fragColor = vColor;fragColorMask = vec4(texture(sText, vUv));}',
 };
 
 String getShaderSource(String shaderName) {
@@ -54,2244 +44,3879 @@ class BakedAssetResources implements BraidResources {
   Stream<Uint8List> loadFontFamily(String familyName) => _fontDelegate.loadFontFamily(familyName);
 }
 
-const _iconMappings = {
-  '10k': 0xe951,
-  '10mp': 0xe952,
-  '11mp': 0xe953,
-  '123': 0xeb8d,
-  '12mp': 0xe954,
-  '13mp': 0xe955,
-  '14mp': 0xe956,
-  '15mp': 0xe957,
-  '16mp': 0xe958,
-  '17mp': 0xe959,
-  '18_up_rating': 0xf8fd,
-  '18mp': 0xe95a,
-  '19mp': 0xe95b,
-  '1k': 0xe95c,
-  '1k_plus': 0xe95d,
-  '1x_mobiledata': 0xefcd,
-  '20mp': 0xe95e,
-  '21mp': 0xe95f,
-  '22mp': 0xe960,
-  '23mp': 0xe961,
-  '24mp': 0xe962,
-  '2k': 0xe963,
-  '2k_plus': 0xe964,
-  '2mp': 0xe965,
-  '30fps': 0xefce,
-  '30fps_select': 0xefcf,
-  '360': 0xe577,
-  '3d_rotation': 0xe84d,
-  '3g_mobiledata': 0xefd0,
-  '3k': 0xe966,
-  '3k_plus': 0xe967,
-  '3mp': 0xe968,
-  '3p': 0xefd1,
-  '4g_mobiledata': 0xefd2,
-  '4g_plus_mobiledata': 0xefd3,
-  '4k': 0xe072,
-  '4k_plus': 0xe969,
-  '4mp': 0xe96a,
-  '5g': 0xef38,
-  '5k': 0xe96b,
-  '5k_plus': 0xe96c,
-  '5mp': 0xe96d,
-  '60fps': 0xefd4,
-  '60fps_select': 0xefd5,
-  '6_ft_apart': 0xf21e,
-  '6k': 0xe96e,
-  '6k_plus': 0xe96f,
-  '6mp': 0xe970,
-  '7k': 0xe971,
-  '7k_plus': 0xe972,
-  '7mp': 0xe973,
-  '8k': 0xe974,
-  '8k_plus': 0xe975,
-  '8mp': 0xe976,
-  '9k': 0xe977,
-  '9k_plus': 0xe978,
-  '9mp': 0xe979,
-  'abc': 0xeb94,
-  'ac_unit': 0xeb3b,
-  'access_alarm': 0xe190,
-  'access_alarms': 0xe191,
-  'access_time': 0xe192,
-  'access_time_filled': 0xefd6,
-  'accessibility': 0xe84e,
-  'accessibility_new': 0xe92c,
-  'accessible': 0xe914,
-  'accessible_forward': 0xe934,
-  'account_balance': 0xe84f,
-  'account_balance_wallet': 0xe850,
-  'account_box': 0xe851,
-  'account_circle': 0xe853,
-  'account_tree': 0xe97a,
-  'ad_units': 0xef39,
-  'adb': 0xe60e,
-  'add': 0xe145,
-  'add_a_photo': 0xe439,
-  'add_alarm': 0xe193,
-  'add_alert': 0xe003,
-  'add_box': 0xe146,
-  'add_business': 0xe729,
-  'add_call': 0xe0e8,
-  'add_card': 0xeb86,
-  'add_chart': 0xe97b,
-  'add_circle': 0xe147,
-  'add_circle_outline': 0xe148,
-  'add_comment': 0xe266,
-  'add_home': 0xf8eb,
-  'add_home_work': 0xf8ed,
-  'add_ic_call': 0xe97c,
-  'add_link': 0xe178,
-  'add_location': 0xe567,
-  'add_location_alt': 0xef3a,
-  'add_moderator': 0xe97d,
-  'add_photo_alternate': 0xe43e,
-  'add_reaction': 0xe1d3,
-  'add_road': 0xef3b,
-  'add_shopping_cart': 0xe854,
-  'add_task': 0xf23a,
-  'add_to_drive': 0xe65c,
-  'add_to_home_screen': 0xe1fe,
-  'add_to_photos': 0xe39d,
-  'add_to_queue': 0xe05c,
-  'addchart': 0xef3c,
-  'adf_scanner': 0xeada,
-  'adjust': 0xe39e,
-  'admin_panel_settings': 0xef3d,
-  'adobe': 0xea96,
-  'ads_click': 0xe762,
-  'agriculture': 0xea79,
-  'air': 0xefd8,
-  'airline_seat_flat': 0xe630,
-  'airline_seat_flat_angled': 0xe631,
-  'airline_seat_individual_suite': 0xe632,
-  'airline_seat_legroom_extra': 0xe633,
-  'airline_seat_legroom_normal': 0xe634,
-  'airline_seat_legroom_reduced': 0xe635,
-  'airline_seat_recline_extra': 0xe636,
-  'airline_seat_recline_normal': 0xe637,
-  'airline_stops': 0xe7d0,
-  'airlines': 0xe7ca,
-  'airplane_ticket': 0xefd9,
-  'airplanemode_active': 0xe195,
-  'airplanemode_inactive': 0xe194,
-  'airplanemode_off': 0xe194,
-  'airplanemode_on': 0xe195,
-  'airplay': 0xe055,
-  'airport_shuttle': 0xeb3c,
-  'alarm': 0xe855,
-  'alarm_add': 0xe856,
-  'alarm_off': 0xe857,
-  'alarm_on': 0xe858,
-  'album': 0xe019,
-  'align_horizontal_center': 0xe00f,
-  'align_horizontal_left': 0xe00d,
-  'align_horizontal_right': 0xe010,
-  'align_vertical_bottom': 0xe015,
-  'align_vertical_center': 0xe011,
-  'align_vertical_top': 0xe00c,
-  'all_inbox': 0xe97f,
-  'all_inclusive': 0xeb3d,
-  'all_out': 0xe90b,
-  'alt_route': 0xf184,
-  'alternate_email': 0xe0e6,
-  'amp_stories': 0xea13,
-  'analytics': 0xef3e,
-  'anchor': 0xf1cd,
-  'android': 0xe859,
-  'animation': 0xe71c,
-  'announcement': 0xe85a,
-  'aod': 0xefda,
-  'apartment': 0xea40,
-  'api': 0xf1b7,
-  'app_blocking': 0xef3f,
-  'app_registration': 0xef40,
-  'app_settings_alt': 0xef41,
-  'app_shortcut': 0xeae4,
-  'apple': 0xea80,
-  'approval': 0xe982,
-  'apps': 0xe5c3,
-  'apps_outage': 0xe7cc,
-  'architecture': 0xea3b,
-  'archive': 0xe149,
-  'area_chart': 0xe770,
-  'arrow_back': 0xe5c4,
-  'arrow_back_ios': 0xe5e0,
-  'arrow_back_ios_new': 0xe2ea,
-  'arrow_circle_down': 0xf181,
-  'arrow_circle_left': 0xeaa7,
-  'arrow_circle_right': 0xeaaa,
-  'arrow_circle_up': 0xf182,
-  'arrow_downward': 0xe5db,
-  'arrow_drop_down': 0xe5c5,
-  'arrow_drop_down_circle': 0xe5c6,
-  'arrow_drop_up': 0xe5c7,
-  'arrow_forward': 0xe5c8,
-  'arrow_forward_ios': 0xe5e1,
-  'arrow_left': 0xe5de,
-  'arrow_outward': 0xf8ce,
-  'arrow_right': 0xe5df,
-  'arrow_right_alt': 0xe941,
-  'arrow_upward': 0xe5d8,
-  'art_track': 0xe060,
-  'article': 0xef42,
-  'aspect_ratio': 0xe85b,
-  'assessment': 0xe85c,
-  'assignment': 0xe85d,
-  'assignment_add': 0xf848,
-  'assignment_ind': 0xe85e,
-  'assignment_late': 0xe85f,
-  'assignment_return': 0xe860,
-  'assignment_returned': 0xe861,
-  'assignment_turned_in': 0xe862,
-  'assist_walker': 0xf8d5,
-  'assistant': 0xe39f,
-  'assistant_direction': 0xe988,
-  'assistant_navigation': 0xe989,
-  'assistant_photo': 0xe3a0,
-  'assured_workload': 0xeb6f,
-  'atm': 0xe573,
-  'attach_email': 0xea5e,
-  'attach_file': 0xe226,
-  'attach_money': 0xe227,
-  'attachment': 0xe2bc,
-  'attractions': 0xea52,
-  'attribution': 0xefdb,
-  'audio_file': 0xeb82,
-  'audiotrack': 0xe3a1,
-  'auto_awesome': 0xe65f,
-  'auto_awesome_mosaic': 0xe660,
-  'auto_awesome_motion': 0xe661,
-  'auto_delete': 0xea4c,
-  'auto_fix_high': 0xe663,
-  'auto_fix_normal': 0xe664,
-  'auto_fix_off': 0xe665,
-  'auto_graph': 0xe4fb,
-  'auto_mode': 0xec20,
-  'auto_stories': 0xe666,
-  'autofps_select': 0xefdc,
-  'autorenew': 0xe863,
-  'av_timer': 0xe01b,
-  'baby_changing_station': 0xf19b,
-  'back_hand': 0xe764,
-  'backpack': 0xf19c,
-  'backspace': 0xe14a,
-  'backup': 0xe864,
-  'backup_table': 0xef43,
-  'badge': 0xea67,
-  'bakery_dining': 0xea53,
-  'balance': 0xeaf6,
-  'balcony': 0xe58f,
-  'ballot': 0xe172,
-  'bar_chart': 0xe26b,
-  'barcode_reader': 0xf85c,
-  'batch_prediction': 0xf0f5,
-  'bathroom': 0xefdd,
-  'bathtub': 0xea41,
-  'battery_0_bar': 0xebdc,
-  'battery_1_bar': 0xebd9,
-  'battery_2_bar': 0xebe0,
-  'battery_3_bar': 0xebdd,
-  'battery_4_bar': 0xebe2,
-  'battery_5_bar': 0xebd4,
-  'battery_6_bar': 0xebd2,
-  'battery_alert': 0xe19c,
-  'battery_charging_full': 0xe1a3,
-  'battery_full': 0xe1a4,
-  'battery_saver': 0xefde,
-  'battery_std': 0xe1a5,
-  'battery_unknown': 0xe1a6,
-  'beach_access': 0xeb3e,
-  'bed': 0xefdf,
-  'bedroom_baby': 0xefe0,
-  'bedroom_child': 0xefe1,
-  'bedroom_parent': 0xefe2,
-  'bedtime': 0xef44,
-  'bedtime_off': 0xeb76,
-  'beenhere': 0xe52d,
-  'bento': 0xf1f4,
-  'bike_scooter': 0xef45,
-  'biotech': 0xea3a,
-  'blender': 0xefe3,
-  'blind': 0xf8d6,
-  'blinds': 0xe286,
-  'blinds_closed': 0xec1f,
-  'block': 0xe14b,
-  'block_flipped': 0xef46,
-  'bloodtype': 0xefe4,
-  'bluetooth': 0xe1a7,
-  'bluetooth_audio': 0xe60f,
-  'bluetooth_connected': 0xe1a8,
-  'bluetooth_disabled': 0xe1a9,
-  'bluetooth_drive': 0xefe5,
-  'bluetooth_searching': 0xe1aa,
-  'blur_circular': 0xe3a2,
-  'blur_linear': 0xe3a3,
-  'blur_off': 0xe3a4,
-  'blur_on': 0xe3a5,
-  'bolt': 0xea0b,
-  'book': 0xe865,
-  'book_online': 0xf217,
-  'bookmark': 0xe866,
-  'bookmark_add': 0xe598,
-  'bookmark_added': 0xe599,
-  'bookmark_border': 0xe867,
-  'bookmark_outline': 0xe867,
-  'bookmark_remove': 0xe59a,
-  'bookmarks': 0xe98b,
-  'border_all': 0xe228,
-  'border_bottom': 0xe229,
-  'border_clear': 0xe22a,
-  'border_color': 0xe22b,
-  'border_horizontal': 0xe22c,
-  'border_inner': 0xe22d,
-  'border_left': 0xe22e,
-  'border_outer': 0xe22f,
-  'border_right': 0xe230,
-  'border_style': 0xe231,
-  'border_top': 0xe232,
-  'border_vertical': 0xe233,
-  'boy': 0xeb67,
-  'branding_watermark': 0xe06b,
-  'breakfast_dining': 0xea54,
-  'brightness_1': 0xe3a6,
-  'brightness_2': 0xe3a7,
-  'brightness_3': 0xe3a8,
-  'brightness_4': 0xe3a9,
-  'brightness_5': 0xe3aa,
-  'brightness_6': 0xe3ab,
-  'brightness_7': 0xe3ac,
-  'brightness_auto': 0xe1ab,
-  'brightness_high': 0xe1ac,
-  'brightness_low': 0xe1ad,
-  'brightness_medium': 0xe1ae,
-  'broadcast_on_home': 0xf8f8,
-  'broadcast_on_personal': 0xf8f9,
-  'broken_image': 0xe3ad,
-  'browse_gallery': 0xebd1,
-  'browser_not_supported': 0xef47,
-  'browser_updated': 0xe7cf,
-  'brunch_dining': 0xea73,
-  'brush': 0xe3ae,
-  'bubble_chart': 0xe6dd,
-  'bug_report': 0xe868,
-  'build': 0xe869,
-  'build_circle': 0xef48,
-  'bungalow': 0xe591,
-  'burst_mode': 0xe43c,
-  'bus_alert': 0xe98f,
-  'business': 0xe0af,
-  'business_center': 0xeb3f,
-  'cabin': 0xe589,
-  'cable': 0xefe6,
-  'cached': 0xe86a,
-  'cake': 0xe7e9,
-  'calculate': 0xea5f,
-  'calendar_month': 0xebcc,
-  'calendar_today': 0xe935,
-  'calendar_view_day': 0xe936,
-  'calendar_view_month': 0xefe7,
-  'calendar_view_week': 0xefe8,
-  'call': 0xe0b0,
-  'call_end': 0xe0b1,
-  'call_made': 0xe0b2,
-  'call_merge': 0xe0b3,
-  'call_missed': 0xe0b4,
-  'call_missed_outgoing': 0xe0e4,
-  'call_received': 0xe0b5,
-  'call_split': 0xe0b6,
-  'call_to_action': 0xe06c,
-  'camera': 0xe3af,
-  'camera_alt': 0xe3b0,
-  'camera_enhance': 0xe8fc,
-  'camera_front': 0xe3b1,
-  'camera_indoor': 0xefe9,
-  'camera_outdoor': 0xefea,
-  'camera_rear': 0xe3b2,
-  'camera_roll': 0xe3b3,
-  'cameraswitch': 0xefeb,
-  'campaign': 0xef49,
-  'cancel': 0xe5c9,
-  'cancel_presentation': 0xe0e9,
-  'cancel_schedule_send': 0xea39,
-  'candlestick_chart': 0xead4,
-  'car_crash': 0xebf2,
-  'car_rental': 0xea55,
-  'car_repair': 0xea56,
-  'card_giftcard': 0xe8f6,
-  'card_membership': 0xe8f7,
-  'card_travel': 0xe8f8,
-  'carpenter': 0xf1f8,
-  'cases': 0xe992,
-  'casino': 0xeb40,
-  'cast': 0xe307,
-  'cast_connected': 0xe308,
-  'cast_for_education': 0xefec,
-  'castle': 0xeab1,
-  'catching_pokemon': 0xe508,
-  'category': 0xe574,
-  'celebration': 0xea65,
-  'cell_tower': 0xebba,
-  'cell_wifi': 0xe0ec,
-  'center_focus_strong': 0xe3b4,
-  'center_focus_weak': 0xe3b5,
-  'chair': 0xefed,
-  'chair_alt': 0xefee,
-  'chalet': 0xe585,
-  'change_circle': 0xe2e7,
-  'change_history': 0xe86b,
-  'charging_station': 0xf19d,
-  'chat': 0xe0b7,
-  'chat_bubble': 0xe0ca,
-  'chat_bubble_outline': 0xe0cb,
-  'check': 0xe5ca,
-  'check_box': 0xe834,
-  'check_box_outline_blank': 0xe835,
-  'check_circle': 0xe86c,
-  'check_circle_outline': 0xe92d,
-  'checklist': 0xe6b1,
-  'checklist_rtl': 0xe6b3,
-  'checkroom': 0xf19e,
-  'chevron_left': 0xe5cb,
-  'chevron_right': 0xe5cc,
-  'child_care': 0xeb41,
-  'child_friendly': 0xeb42,
-  'chrome_reader_mode': 0xe86d,
-  'church': 0xeaae,
-  'circle': 0xef4a,
-  'circle_notifications': 0xe994,
-  'class': 0xe86e,
-  'clean_hands': 0xf21f,
-  'cleaning_services': 0xf0ff,
-  'clear': 0xe14c,
-  'clear_all': 0xe0b8,
-  'close': 0xe5cd,
-  'close_fullscreen': 0xf1cf,
-  'closed_caption': 0xe01c,
-  'closed_caption_disabled': 0xf1dc,
-  'closed_caption_off': 0xe996,
-  'cloud': 0xe2bd,
-  'cloud_circle': 0xe2be,
-  'cloud_done': 0xe2bf,
-  'cloud_download': 0xe2c0,
-  'cloud_off': 0xe2c1,
-  'cloud_queue': 0xe2c2,
-  'cloud_sync': 0xeb5a,
-  'cloud_upload': 0xe2c3,
-  'cloudy_snowing': 0xe810,
-  'co2': 0xe7b0,
-  'co_present': 0xeaf0,
-  'code': 0xe86f,
-  'code_off': 0xe4f3,
-  'coffee': 0xefef,
-  'coffee_maker': 0xeff0,
-  'collections': 0xe3b6,
-  'collections_bookmark': 0xe431,
-  'color_lens': 0xe3b7,
-  'colorize': 0xe3b8,
-  'comment': 0xe0b9,
-  'comment_bank': 0xea4e,
-  'comments_disabled': 0xe7a2,
-  'commit': 0xeaf5,
-  'commute': 0xe940,
-  'compare': 0xe3b9,
-  'compare_arrows': 0xe915,
-  'compass_calibration': 0xe57c,
-  'compost': 0xe761,
-  'compress': 0xe94d,
-  'computer': 0xe30a,
-  'confirmation_num': 0xe638,
-  'confirmation_number': 0xe638,
-  'connect_without_contact': 0xf223,
-  'connected_tv': 0xe998,
-  'connecting_airports': 0xe7c9,
-  'construction': 0xea3c,
-  'contact_emergency': 0xf8d1,
-  'contact_mail': 0xe0d0,
-  'contact_page': 0xf22e,
-  'contact_phone': 0xe0cf,
-  'contact_support': 0xe94c,
-  'contactless': 0xea71,
-  'contacts': 0xe0ba,
-  'content_copy': 0xe14d,
-  'content_cut': 0xe14e,
-  'content_paste': 0xe14f,
-  'content_paste_go': 0xea8e,
-  'content_paste_off': 0xe4f8,
-  'content_paste_search': 0xea9b,
-  'contrast': 0xeb37,
-  'control_camera': 0xe074,
-  'control_point': 0xe3ba,
-  'control_point_duplicate': 0xe3bb,
-  'conveyor_belt': 0xf867,
-  'cookie': 0xeaac,
-  'copy_all': 0xe2ec,
-  'copyright': 0xe90c,
-  'coronavirus': 0xf221,
-  'corporate_fare': 0xf1d0,
-  'cottage': 0xe587,
-  'countertops': 0xf1f7,
-  'create': 0xe150,
-  'create_new_folder': 0xe2cc,
-  'credit_card': 0xe870,
-  'credit_card_off': 0xe4f4,
-  'credit_score': 0xeff1,
-  'crib': 0xe588,
-  'crisis_alert': 0xebe9,
-  'crop': 0xe3be,
-  'crop_16_9': 0xe3bc,
-  'crop_3_2': 0xe3bd,
-  'crop_5_4': 0xe3bf,
-  'crop_7_5': 0xe3c0,
-  'crop_din': 0xe3c1,
-  'crop_free': 0xe3c2,
-  'crop_landscape': 0xe3c3,
-  'crop_original': 0xe3c4,
-  'crop_portrait': 0xe3c5,
-  'crop_rotate': 0xe437,
-  'crop_square': 0xe3c6,
-  'cruelty_free': 0xe799,
-  'css': 0xeb93,
-  'currency_bitcoin': 0xebc5,
-  'currency_exchange': 0xeb70,
-  'currency_franc': 0xeafa,
-  'currency_lira': 0xeaef,
-  'currency_pound': 0xeaf1,
-  'currency_ruble': 0xeaec,
-  'currency_rupee': 0xeaf7,
-  'currency_yen': 0xeafb,
-  'currency_yuan': 0xeaf9,
-  'curtains': 0xec1e,
-  'curtains_closed': 0xec1d,
-  'cyclone': 0xebd5,
-  'dangerous': 0xe99a,
-  'dark_mode': 0xe51c,
-  'dashboard': 0xe871,
-  'dashboard_customize': 0xe99b,
-  'data_array': 0xead1,
-  'data_exploration': 0xe76f,
-  'data_object': 0xead3,
-  'data_saver_off': 0xeff2,
-  'data_saver_on': 0xeff3,
-  'data_thresholding': 0xeb9f,
-  'data_usage': 0xe1af,
-  'dataset': 0xf8ee,
-  'dataset_linked': 0xf8ef,
-  'date_range': 0xe916,
-  'deblur': 0xeb77,
-  'deck': 0xea42,
-  'dehaze': 0xe3c7,
-  'delete': 0xe872,
-  'delete_forever': 0xe92b,
-  'delete_outline': 0xe92e,
-  'delete_sweep': 0xe16c,
-  'delivery_dining': 0xea72,
-  'density_large': 0xeba9,
-  'density_medium': 0xeb9e,
-  'density_small': 0xeba8,
-  'departure_board': 0xe576,
-  'description': 0xe873,
-  'deselect': 0xebb6,
-  'design_services': 0xf10a,
-  'desk': 0xf8f4,
-  'desktop_access_disabled': 0xe99d,
-  'desktop_mac': 0xe30b,
-  'desktop_windows': 0xe30c,
-  'details': 0xe3c8,
-  'developer_board': 0xe30d,
-  'developer_board_off': 0xe4ff,
-  'developer_mode': 0xe1b0,
-  'device_hub': 0xe335,
-  'device_thermostat': 0xe1ff,
-  'device_unknown': 0xe339,
-  'devices': 0xe1b1,
-  'devices_fold': 0xebde,
-  'devices_other': 0xe337,
-  'dew_point': 0xf879,
-  'dialer_sip': 0xe0bb,
-  'dialpad': 0xe0bc,
-  'diamond': 0xead5,
-  'difference': 0xeb7d,
-  'dining': 0xeff4,
-  'dinner_dining': 0xea57,
-  'directions': 0xe52e,
-  'directions_bike': 0xe52f,
-  'directions_boat': 0xe532,
-  'directions_boat_filled': 0xeff5,
-  'directions_bus': 0xe530,
-  'directions_bus_filled': 0xeff6,
-  'directions_car': 0xe531,
-  'directions_car_filled': 0xeff7,
-  'directions_ferry': 0xe532,
-  'directions_off': 0xf10f,
-  'directions_railway': 0xe534,
-  'directions_railway_filled': 0xeff8,
-  'directions_run': 0xe566,
-  'directions_subway': 0xe533,
-  'directions_subway_filled': 0xeff9,
-  'directions_train': 0xe534,
-  'directions_transit': 0xe535,
-  'directions_transit_filled': 0xeffa,
-  'directions_walk': 0xe536,
-  'dirty_lens': 0xef4b,
-  'disabled_by_default': 0xf230,
-  'disabled_visible': 0xe76e,
-  'disc_full': 0xe610,
-  'discord': 0xea6c,
-  'discount': 0xebc9,
-  'display_settings': 0xeb97,
-  'diversity_1': 0xf8d7,
-  'diversity_2': 0xf8d8,
-  'diversity_3': 0xf8d9,
-  'dnd_forwardslash': 0xe611,
-  'dns': 0xe875,
-  'do_disturb': 0xf08c,
-  'do_disturb_alt': 0xf08d,
-  'do_disturb_off': 0xf08e,
-  'do_disturb_on': 0xf08f,
-  'do_not_disturb': 0xe612,
-  'do_not_disturb_alt': 0xe611,
-  'do_not_disturb_off': 0xe643,
-  'do_not_disturb_on': 0xe644,
-  'do_not_disturb_on_total_silence': 0xeffb,
-  'do_not_step': 0xf19f,
-  'do_not_touch': 0xf1b0,
-  'dock': 0xe30e,
-  'document_scanner': 0xe5fa,
-  'domain': 0xe7ee,
-  'domain_add': 0xeb62,
-  'domain_disabled': 0xe0ef,
-  'domain_verification': 0xef4c,
-  'done': 0xe876,
-  'done_all': 0xe877,
-  'done_outline': 0xe92f,
-  'donut_large': 0xe917,
-  'donut_small': 0xe918,
-  'door_back': 0xeffc,
-  'door_front': 0xeffd,
-  'door_sliding': 0xeffe,
-  'doorbell': 0xefff,
-  'double_arrow': 0xea50,
-  'downhill_skiing': 0xe509,
-  'download': 0xf090,
-  'download_done': 0xf091,
-  'download_for_offline': 0xf000,
-  'downloading': 0xf001,
-  'drafts': 0xe151,
-  'drag_handle': 0xe25d,
-  'drag_indicator': 0xe945,
-  'draw': 0xe746,
-  'drive_eta': 0xe613,
-  'drive_file_move': 0xe675,
-  'drive_file_move_outline': 0xe9a1,
-  'drive_file_move_rtl': 0xe76d,
-  'drive_file_rename_outline': 0xe9a2,
-  'drive_folder_upload': 0xe9a3,
-  'dry': 0xf1b3,
-  'dry_cleaning': 0xea58,
-  'duo': 0xe9a5,
-  'dvr': 0xe1b2,
-  'dynamic_feed': 0xea14,
-  'dynamic_form': 0xf1bf,
-  'e_mobiledata': 0xf002,
-  'earbuds': 0xf003,
-  'earbuds_battery': 0xf004,
-  'east': 0xf1df,
-  'eco': 0xea35,
-  'edgesensor_high': 0xf005,
-  'edgesensor_low': 0xf006,
-  'edit': 0xe3c9,
-  'edit_attributes': 0xe578,
-  'edit_calendar': 0xe742,
-  'edit_document': 0xf88c,
-  'edit_location': 0xe568,
-  'edit_location_alt': 0xe1c5,
-  'edit_note': 0xe745,
-  'edit_notifications': 0xe525,
-  'edit_off': 0xe950,
-  'edit_road': 0xef4d,
-  'edit_square': 0xf88d,
-  'egg': 0xeacc,
-  'egg_alt': 0xeac8,
-  'eject': 0xe8fb,
-  'elderly': 0xf21a,
-  'elderly_woman': 0xeb69,
-  'electric_bike': 0xeb1b,
-  'electric_bolt': 0xec1c,
-  'electric_car': 0xeb1c,
-  'electric_meter': 0xec1b,
-  'electric_moped': 0xeb1d,
-  'electric_rickshaw': 0xeb1e,
-  'electric_scooter': 0xeb1f,
-  'electrical_services': 0xf102,
-  'elevator': 0xf1a0,
-  'email': 0xe0be,
-  'emergency': 0xe1eb,
-  'emergency_recording': 0xebf4,
-  'emergency_share': 0xebf6,
-  'emoji_emotions': 0xea22,
-  'emoji_events': 0xea23,
-  'emoji_flags': 0xea1a,
-  'emoji_food_beverage': 0xea1b,
-  'emoji_nature': 0xea1c,
-  'emoji_objects': 0xea24,
-  'emoji_people': 0xea1d,
-  'emoji_symbols': 0xea1e,
-  'emoji_transportation': 0xea1f,
-  'energy_savings_leaf': 0xec1a,
-  'engineering': 0xea3d,
-  'enhance_photo_translate': 0xe8fc,
-  'enhanced_encryption': 0xe63f,
-  'equalizer': 0xe01d,
-  'error': 0xe000,
-  'error_outline': 0xe001,
-  'escalator': 0xf1a1,
-  'escalator_warning': 0xf1ac,
-  'euro': 0xea15,
-  'euro_symbol': 0xe926,
-  'ev_station': 0xe56d,
-  'event': 0xe878,
-  'event_available': 0xe614,
-  'event_busy': 0xe615,
-  'event_note': 0xe616,
-  'event_repeat': 0xeb7b,
-  'event_seat': 0xe903,
-  'exit_to_app': 0xe879,
-  'expand': 0xe94f,
-  'expand_circle_down': 0xe7cd,
-  'expand_less': 0xe5ce,
-  'expand_more': 0xe5cf,
-  'explicit': 0xe01e,
-  'explore': 0xe87a,
-  'explore_off': 0xe9a8,
-  'exposure': 0xe3ca,
-  'exposure_minus_1': 0xe3cb,
-  'exposure_minus_2': 0xe3cc,
-  'exposure_neg_1': 0xe3cb,
-  'exposure_neg_2': 0xe3cc,
-  'exposure_plus_1': 0xe3cd,
-  'exposure_plus_2': 0xe3ce,
-  'exposure_zero': 0xe3cf,
-  'extension': 0xe87b,
-  'extension_off': 0xe4f5,
-  'face': 0xe87c,
-  'face_2': 0xf8da,
-  'face_3': 0xf8db,
-  'face_4': 0xf8dc,
-  'face_5': 0xf8dd,
-  'face_6': 0xf8de,
-  'face_retouching_natural': 0xef4e,
-  'face_retouching_off': 0xf007,
-  'facebook': 0xf234,
-  'fact_check': 0xf0c5,
-  'factory': 0xebbc,
-  'family_restroom': 0xf1a2,
-  'fast_forward': 0xe01f,
-  'fast_rewind': 0xe020,
-  'fastfood': 0xe57a,
-  'favorite': 0xe87d,
-  'favorite_border': 0xe87e,
-  'favorite_outline': 0xe87e,
-  'fax': 0xead8,
-  'featured_play_list': 0xe06d,
-  'featured_video': 0xe06e,
-  'feed': 0xf009,
-  'feedback': 0xe87f,
-  'female': 0xe590,
-  'fence': 0xf1f6,
-  'festival': 0xea68,
-  'fiber_dvr': 0xe05d,
-  'fiber_manual_record': 0xe061,
-  'fiber_new': 0xe05e,
-  'fiber_pin': 0xe06a,
-  'fiber_smart_record': 0xe062,
-  'file_copy': 0xe173,
-  'file_download': 0xe2c4,
-  'file_download_done': 0xe9aa,
-  'file_download_off': 0xe4fe,
-  'file_open': 0xeaf3,
-  'file_present': 0xea0e,
-  'file_upload': 0xe2c6,
-  'file_upload_off': 0xf886,
-  'filter': 0xe3d3,
-  'filter_1': 0xe3d0,
-  'filter_2': 0xe3d1,
-  'filter_3': 0xe3d2,
-  'filter_4': 0xe3d4,
-  'filter_5': 0xe3d5,
-  'filter_6': 0xe3d6,
-  'filter_7': 0xe3d7,
-  'filter_8': 0xe3d8,
-  'filter_9': 0xe3d9,
-  'filter_9_plus': 0xe3da,
-  'filter_alt': 0xef4f,
-  'filter_alt_off': 0xeb32,
-  'filter_b_and_w': 0xe3db,
-  'filter_center_focus': 0xe3dc,
-  'filter_drama': 0xe3dd,
-  'filter_frames': 0xe3de,
-  'filter_hdr': 0xe3df,
-  'filter_list': 0xe152,
-  'filter_list_alt': 0xe94e,
-  'filter_list_off': 0xeb57,
-  'filter_none': 0xe3e0,
-  'filter_tilt_shift': 0xe3e2,
-  'filter_vintage': 0xe3e3,
-  'find_in_page': 0xe880,
-  'find_replace': 0xe881,
-  'fingerprint': 0xe90d,
-  'fire_extinguisher': 0xf1d8,
-  'fire_hydrant': 0xf1a3,
-  'fire_hydrant_alt': 0xf8f1,
-  'fire_truck': 0xf8f2,
-  'fireplace': 0xea43,
-  'first_page': 0xe5dc,
-  'fit_screen': 0xea10,
-  'fitbit': 0xe82b,
-  'fitness_center': 0xeb43,
-  'flag': 0xe153,
-  'flag_circle': 0xeaf8,
-  'flaky': 0xef50,
-  'flare': 0xe3e4,
-  'flash_auto': 0xe3e5,
-  'flash_off': 0xe3e6,
-  'flash_on': 0xe3e7,
-  'flashlight_off': 0xf00a,
-  'flashlight_on': 0xf00b,
-  'flatware': 0xf00c,
-  'flight': 0xe539,
-  'flight_class': 0xe7cb,
-  'flight_land': 0xe904,
-  'flight_takeoff': 0xe905,
-  'flip': 0xe3e8,
-  'flip_camera_android': 0xea37,
-  'flip_camera_ios': 0xea38,
-  'flip_to_back': 0xe882,
-  'flip_to_front': 0xe883,
-  'flood': 0xebe6,
-  'flourescent': 0xec31,
-  'fluorescent': 0xec31,
-  'flutter_dash': 0xe00b,
-  'fmd_bad': 0xf00e,
-  'fmd_good': 0xf00f,
-  'foggy': 0xe818,
-  'folder': 0xe2c7,
-  'folder_copy': 0xebbd,
-  'folder_delete': 0xeb34,
-  'folder_off': 0xeb83,
-  'folder_open': 0xe2c8,
-  'folder_shared': 0xe2c9,
-  'folder_special': 0xe617,
-  'folder_zip': 0xeb2c,
-  'follow_the_signs': 0xf222,
-  'font_download': 0xe167,
-  'font_download_off': 0xe4f9,
-  'food_bank': 0xf1f2,
-  'forest': 0xea99,
-  'fork_left': 0xeba0,
-  'fork_right': 0xebac,
-  'forklift': 0xf868,
-  'format_align_center': 0xe234,
-  'format_align_justify': 0xe235,
-  'format_align_left': 0xe236,
-  'format_align_right': 0xe237,
-  'format_bold': 0xe238,
-  'format_clear': 0xe239,
-  'format_color_fill': 0xe23a,
-  'format_color_reset': 0xe23b,
-  'format_color_text': 0xe23c,
-  'format_indent_decrease': 0xe23d,
-  'format_indent_increase': 0xe23e,
-  'format_italic': 0xe23f,
-  'format_line_spacing': 0xe240,
-  'format_list_bulleted': 0xe241,
-  'format_list_bulleted_add': 0xf849,
-  'format_list_numbered': 0xe242,
-  'format_list_numbered_rtl': 0xe267,
-  'format_overline': 0xeb65,
-  'format_paint': 0xe243,
-  'format_quote': 0xe244,
-  'format_shapes': 0xe25e,
-  'format_size': 0xe245,
-  'format_strikethrough': 0xe246,
-  'format_textdirection_l_to_r': 0xe247,
-  'format_textdirection_r_to_l': 0xe248,
-  'format_underline': 0xe249,
-  'format_underlined': 0xe249,
-  'fort': 0xeaad,
-  'forum': 0xe0bf,
-  'forward': 0xe154,
-  'forward_10': 0xe056,
-  'forward_30': 0xe057,
-  'forward_5': 0xe058,
-  'forward_to_inbox': 0xf187,
-  'foundation': 0xf200,
-  'free_breakfast': 0xeb44,
-  'free_cancellation': 0xe748,
-  'front_hand': 0xe769,
-  'front_loader': 0xf869,
-  'fullscreen': 0xe5d0,
-  'fullscreen_exit': 0xe5d1,
-  'functions': 0xe24a,
-  'g_mobiledata': 0xf010,
-  'g_translate': 0xe927,
-  'gamepad': 0xe30f,
-  'games': 0xe021,
-  'garage': 0xf011,
-  'gas_meter': 0xec19,
-  'gavel': 0xe90e,
-  'generating_tokens': 0xe749,
-  'gesture': 0xe155,
-  'get_app': 0xe884,
-  'gif': 0xe908,
-  'gif_box': 0xe7a3,
-  'girl': 0xeb68,
-  'gite': 0xe58b,
-  'goat': 0x10fffd,
-  'golf_course': 0xeb45,
-  'gpp_bad': 0xf012,
-  'gpp_good': 0xf013,
-  'gpp_maybe': 0xf014,
-  'gps_fixed': 0xe1b3,
-  'gps_not_fixed': 0xe1b4,
-  'gps_off': 0xe1b5,
-  'grade': 0xe885,
-  'gradient': 0xe3e9,
-  'grading': 0xea4f,
-  'grain': 0xe3ea,
-  'graphic_eq': 0xe1b8,
-  'grass': 0xf205,
-  'grid_3x3': 0xf015,
-  'grid_4x4': 0xf016,
-  'grid_goldenratio': 0xf017,
-  'grid_off': 0xe3eb,
-  'grid_on': 0xe3ec,
-  'grid_view': 0xe9b0,
-  'group': 0xe7ef,
-  'group_add': 0xe7f0,
-  'group_off': 0xe747,
-  'group_remove': 0xe7ad,
-  'group_work': 0xe886,
-  'groups': 0xf233,
-  'groups_2': 0xf8df,
-  'groups_3': 0xf8e0,
-  'h_mobiledata': 0xf018,
-  'h_plus_mobiledata': 0xf019,
-  'hail': 0xe9b1,
-  'handshake': 0xebcb,
-  'handyman': 0xf10b,
-  'hardware': 0xea59,
-  'hd': 0xe052,
-  'hdr_auto': 0xf01a,
-  'hdr_auto_select': 0xf01b,
-  'hdr_enhanced_select': 0xef51,
-  'hdr_off': 0xe3ed,
-  'hdr_off_select': 0xf01c,
-  'hdr_on': 0xe3ee,
-  'hdr_on_select': 0xf01d,
-  'hdr_plus': 0xf01e,
-  'hdr_strong': 0xe3f1,
-  'hdr_weak': 0xe3f2,
-  'headphones': 0xf01f,
-  'headphones_battery': 0xf020,
-  'headset': 0xe310,
-  'headset_mic': 0xe311,
-  'headset_off': 0xe33a,
-  'healing': 0xe3f3,
-  'health_and_safety': 0xe1d5,
-  'hearing': 0xe023,
-  'hearing_disabled': 0xf104,
-  'heart_broken': 0xeac2,
-  'heat_pump': 0xec18,
-  'height': 0xea16,
-  'help': 0xe887,
-  'help_center': 0xf1c0,
-  'help_outline': 0xe8fd,
-  'hevc': 0xf021,
-  'hexagon': 0xeb39,
-  'hide_image': 0xf022,
-  'hide_source': 0xf023,
-  'high_quality': 0xe024,
-  'highlight': 0xe25f,
-  'highlight_alt': 0xef52,
-  'highlight_off': 0xe888,
-  'highlight_remove': 0xe888,
-  'hiking': 0xe50a,
-  'history': 0xe889,
-  'history_edu': 0xea3e,
-  'history_toggle_off': 0xf17d,
-  'hive': 0xeaa6,
-  'hls': 0xeb8a,
-  'hls_off': 0xeb8c,
-  'holiday_village': 0xe58a,
-  'home': 0xe88a,
-  'home_filled': 0xe9b2,
-  'home_max': 0xf024,
-  'home_mini': 0xf025,
-  'home_repair_service': 0xf100,
-  'home_work': 0xea09,
-  'horizontal_distribute': 0xe014,
-  'horizontal_rule': 0xf108,
-  'horizontal_split': 0xe947,
-  'hot_tub': 0xeb46,
-  'hotel': 0xe53a,
-  'hotel_class': 0xe743,
-  'hourglass_bottom': 0xea5c,
-  'hourglass_disabled': 0xef53,
-  'hourglass_empty': 0xe88b,
-  'hourglass_full': 0xe88c,
-  'hourglass_top': 0xea5b,
-  'house': 0xea44,
-  'house_siding': 0xf202,
-  'houseboat': 0xe584,
-  'how_to_reg': 0xe174,
-  'how_to_vote': 0xe175,
-  'html': 0xeb7e,
-  'http': 0xe902,
-  'https': 0xe88d,
-  'hub': 0xe9f4,
-  'hvac': 0xf10e,
-  'ice_skating': 0xe50b,
-  'icecream': 0xea69,
-  'image': 0xe3f4,
-  'image_aspect_ratio': 0xe3f5,
-  'image_not_supported': 0xf116,
-  'image_search': 0xe43f,
-  'imagesearch_roller': 0xe9b4,
-  'import_contacts': 0xe0e0,
-  'import_export': 0xe0c3,
-  'important_devices': 0xe912,
-  'inbox': 0xe156,
-  'incomplete_circle': 0xe79b,
-  'indeterminate_check_box': 0xe909,
-  'info': 0xe88e,
-  'info_outline': 0xe88f,
-  'input': 0xe890,
-  'insert_chart': 0xe24b,
-  'insert_chart_outlined': 0xe26a,
-  'insert_comment': 0xe24c,
-  'insert_drive_file': 0xe24d,
-  'insert_emoticon': 0xe24e,
-  'insert_invitation': 0xe24f,
-  'insert_link': 0xe250,
-  'insert_page_break': 0xeaca,
-  'insert_photo': 0xe251,
-  'insights': 0xf092,
-  'install_desktop': 0xeb71,
-  'install_mobile': 0xeb72,
-  'integration_instructions': 0xef54,
-  'interests': 0xe7c8,
-  'interpreter_mode': 0xe83b,
-  'inventory': 0xe179,
-  'inventory_2': 0xe1a1,
-  'invert_colors': 0xe891,
-  'invert_colors_off': 0xe0c4,
-  'invert_colors_on': 0xe891,
-  'ios_share': 0xe6b8,
-  'iron': 0xe583,
-  'iso': 0xe3f6,
-  'javascript': 0xeb7c,
-  'join_full': 0xeaeb,
-  'join_inner': 0xeaf4,
-  'join_left': 0xeaf2,
-  'join_right': 0xeaea,
-  'kayaking': 0xe50c,
-  'kebab_dining': 0xe842,
-  'key': 0xe73c,
-  'key_off': 0xeb84,
-  'keyboard': 0xe312,
-  'keyboard_alt': 0xf028,
-  'keyboard_arrow_down': 0xe313,
-  'keyboard_arrow_left': 0xe314,
-  'keyboard_arrow_right': 0xe315,
-  'keyboard_arrow_up': 0xe316,
-  'keyboard_backspace': 0xe317,
-  'keyboard_capslock': 0xe318,
-  'keyboard_command': 0xeae0,
-  'keyboard_command_key': 0xeae7,
-  'keyboard_control': 0xe5d3,
-  'keyboard_control_key': 0xeae6,
-  'keyboard_double_arrow_down': 0xead0,
-  'keyboard_double_arrow_left': 0xeac3,
-  'keyboard_double_arrow_right': 0xeac9,
-  'keyboard_double_arrow_up': 0xeacf,
-  'keyboard_hide': 0xe31a,
-  'keyboard_option': 0xeadf,
-  'keyboard_option_key': 0xeae8,
-  'keyboard_return': 0xe31b,
-  'keyboard_tab': 0xe31c,
-  'keyboard_voice': 0xe31d,
-  'king_bed': 0xea45,
-  'kitchen': 0xeb47,
-  'kitesurfing': 0xe50d,
-  'label': 0xe892,
-  'label_important': 0xe937,
-  'label_important_outline': 0xe948,
-  'label_off': 0xe9b6,
-  'label_outline': 0xe893,
-  'lan': 0xeb2f,
-  'landscape': 0xe3f7,
-  'landslide': 0xebd7,
-  'language': 0xe894,
-  'laptop': 0xe31e,
-  'laptop_chromebook': 0xe31f,
-  'laptop_mac': 0xe320,
-  'laptop_windows': 0xe321,
-  'last_page': 0xe5dd,
-  'launch': 0xe895,
-  'layers': 0xe53b,
-  'layers_clear': 0xe53c,
-  'leaderboard': 0xf20c,
-  'leak_add': 0xe3f8,
-  'leak_remove': 0xe3f9,
-  'leave_bags_at_home': 0xf21b,
-  'legend_toggle': 0xf11b,
-  'lens': 0xe3fa,
-  'lens_blur': 0xf029,
-  'library_add': 0xe02e,
-  'library_add_check': 0xe9b7,
-  'library_books': 0xe02f,
-  'library_music': 0xe030,
-  'light': 0xf02a,
-  'light_mode': 0xe518,
-  'lightbulb': 0xe0f0,
-  'lightbulb_circle': 0xebfe,
-  'lightbulb_outline': 0xe90f,
-  'line_axis': 0xea9a,
-  'line_style': 0xe919,
-  'line_weight': 0xe91a,
-  'linear_scale': 0xe260,
-  'link': 0xe157,
-  'link_off': 0xe16f,
-  'linked_camera': 0xe438,
-  'liquor': 0xea60,
-  'list': 0xe896,
-  'list_alt': 0xe0ee,
-  'live_help': 0xe0c6,
-  'live_tv': 0xe639,
-  'living': 0xf02b,
-  'local_activity': 0xe53f,
-  'local_airport': 0xe53d,
-  'local_atm': 0xe53e,
-  'local_attraction': 0xe53f,
-  'local_bar': 0xe540,
-  'local_cafe': 0xe541,
-  'local_car_wash': 0xe542,
-  'local_convenience_store': 0xe543,
-  'local_dining': 0xe556,
-  'local_drink': 0xe544,
-  'local_fire_department': 0xef55,
-  'local_florist': 0xe545,
-  'local_gas_station': 0xe546,
-  'local_grocery_store': 0xe547,
-  'local_hospital': 0xe548,
-  'local_hotel': 0xe549,
-  'local_laundry_service': 0xe54a,
-  'local_library': 0xe54b,
-  'local_mall': 0xe54c,
-  'local_movies': 0xe54d,
-  'local_offer': 0xe54e,
-  'local_parking': 0xe54f,
-  'local_pharmacy': 0xe550,
-  'local_phone': 0xe551,
-  'local_pizza': 0xe552,
-  'local_play': 0xe553,
-  'local_police': 0xef56,
-  'local_post_office': 0xe554,
-  'local_print_shop': 0xe555,
-  'local_printshop': 0xe555,
-  'local_restaurant': 0xe556,
-  'local_see': 0xe557,
-  'local_shipping': 0xe558,
-  'local_taxi': 0xe559,
-  'location_city': 0xe7f1,
-  'location_disabled': 0xe1b6,
-  'location_history': 0xe55a,
-  'location_off': 0xe0c7,
-  'location_on': 0xe0c8,
-  'location_pin': 0xf1db,
-  'location_searching': 0xe1b7,
-  'lock': 0xe897,
-  'lock_clock': 0xef57,
-  'lock_open': 0xe898,
-  'lock_outline': 0xe899,
-  'lock_person': 0xf8f3,
-  'lock_reset': 0xeade,
-  'login': 0xea77,
-  'logo_dev': 0xead6,
-  'logout': 0xe9ba,
-  'looks': 0xe3fc,
-  'looks_3': 0xe3fb,
-  'looks_4': 0xe3fd,
-  'looks_5': 0xe3fe,
-  'looks_6': 0xe3ff,
-  'looks_one': 0xe400,
-  'looks_two': 0xe401,
-  'loop': 0xe028,
-  'loupe': 0xe402,
-  'low_priority': 0xe16d,
-  'loyalty': 0xe89a,
-  'lte_mobiledata': 0xf02c,
-  'lte_plus_mobiledata': 0xf02d,
-  'luggage': 0xf235,
-  'lunch_dining': 0xea61,
-  'lyrics': 0xec0b,
-  'macro_off': 0xf8d2,
-  'mail': 0xe158,
-  'mail_lock': 0xec0a,
-  'mail_outline': 0xe0e1,
-  'male': 0xe58e,
-  'man': 0xe4eb,
-  'man_2': 0xf8e1,
-  'man_3': 0xf8e2,
-  'man_4': 0xf8e3,
-  'manage_accounts': 0xf02e,
-  'manage_history': 0xebe7,
-  'manage_search': 0xf02f,
-  'map': 0xe55b,
-  'maps_home_work': 0xf030,
-  'maps_ugc': 0xef58,
-  'margin': 0xe9bb,
-  'mark_as_unread': 0xe9bc,
-  'mark_chat_read': 0xf18b,
-  'mark_chat_unread': 0xf189,
-  'mark_email_read': 0xf18c,
-  'mark_email_unread': 0xf18a,
-  'mark_unread_chat_alt': 0xeb9d,
-  'markunread': 0xe159,
-  'markunread_mailbox': 0xe89b,
-  'masks': 0xf218,
-  'maximize': 0xe930,
-  'media_bluetooth_off': 0xf031,
-  'media_bluetooth_on': 0xf032,
-  'mediation': 0xefa7,
-  'medical_information': 0xebed,
-  'medical_services': 0xf109,
-  'medication': 0xf033,
-  'medication_liquid': 0xea87,
-  'meeting_room': 0xeb4f,
-  'memory': 0xe322,
-  'menu': 0xe5d2,
-  'menu_book': 0xea19,
-  'menu_open': 0xe9bd,
-  'merge': 0xeb98,
-  'merge_type': 0xe252,
-  'message': 0xe0c9,
-  'messenger': 0xe0ca,
-  'messenger_outline': 0xe0cb,
-  'mic': 0xe029,
-  'mic_external_off': 0xef59,
-  'mic_external_on': 0xef5a,
-  'mic_none': 0xe02a,
-  'mic_off': 0xe02b,
-  'microwave': 0xf204,
-  'military_tech': 0xea3f,
-  'minimize': 0xe931,
-  'minor_crash': 0xebf1,
-  'miscellaneous_services': 0xf10c,
-  'missed_video_call': 0xe073,
-  'mms': 0xe618,
-  'mobile_friendly': 0xe200,
-  'mobile_off': 0xe201,
-  'mobile_screen_share': 0xe0e7,
-  'mobiledata_off': 0xf034,
-  'mode': 0xf097,
-  'mode_comment': 0xe253,
-  'mode_edit': 0xe254,
-  'mode_edit_outline': 0xf035,
-  'mode_fan_off': 0xec17,
-  'mode_night': 0xf036,
-  'mode_of_travel': 0xe7ce,
-  'mode_standby': 0xf037,
-  'model_training': 0xf0cf,
-  'monetization_on': 0xe263,
-  'money': 0xe57d,
-  'money_off': 0xe25c,
-  'money_off_csred': 0xf038,
-  'monitor': 0xef5b,
-  'monitor_heart': 0xeaa2,
-  'monitor_weight': 0xf039,
-  'monochrome_photos': 0xe403,
-  'mood': 0xe7f2,
-  'mood_bad': 0xe7f3,
-  'moped': 0xeb28,
-  'more': 0xe619,
-  'more_horiz': 0xe5d3,
-  'more_time': 0xea5d,
-  'more_vert': 0xe5d4,
-  'mosque': 0xeab2,
-  'motion_photos_auto': 0xf03a,
-  'motion_photos_off': 0xe9c0,
-  'motion_photos_on': 0xe9c1,
-  'motion_photos_pause': 0xf227,
-  'motion_photos_paused': 0xe9c2,
-  'motorcycle': 0xe91b,
-  'mouse': 0xe323,
-  'move_down': 0xeb61,
-  'move_to_inbox': 0xe168,
-  'move_up': 0xeb64,
-  'movie': 0xe02c,
-  'movie_creation': 0xe404,
-  'movie_edit': 0xf840,
-  'movie_filter': 0xe43a,
-  'moving': 0xe501,
-  'mp': 0xe9c3,
-  'multiline_chart': 0xe6df,
-  'multiple_stop': 0xf1b9,
-  'multitrack_audio': 0xe1b8,
-  'museum': 0xea36,
-  'music_note': 0xe405,
-  'music_off': 0xe440,
-  'music_video': 0xe063,
-  'my_library_add': 0xe02e,
-  'my_library_books': 0xe02f,
-  'my_library_music': 0xe030,
-  'my_location': 0xe55c,
-  'nat': 0xef5c,
-  'nature': 0xe406,
-  'nature_people': 0xe407,
-  'navigate_before': 0xe408,
-  'navigate_next': 0xe409,
-  'navigation': 0xe55d,
-  'near_me': 0xe569,
-  'near_me_disabled': 0xf1ef,
-  'nearby_error': 0xf03b,
-  'nearby_off': 0xf03c,
-  'nest_cam_wired_stand': 0xec16,
-  'network_cell': 0xe1b9,
-  'network_check': 0xe640,
-  'network_locked': 0xe61a,
-  'network_ping': 0xebca,
-  'network_wifi': 0xe1ba,
-  'network_wifi_1_bar': 0xebe4,
-  'network_wifi_2_bar': 0xebd6,
-  'network_wifi_3_bar': 0xebe1,
-  'new_label': 0xe609,
-  'new_releases': 0xe031,
-  'newspaper': 0xeb81,
-  'next_plan': 0xef5d,
-  'next_week': 0xe16a,
-  'nfc': 0xe1bb,
-  'night_shelter': 0xf1f1,
-  'nightlife': 0xea62,
-  'nightlight': 0xf03d,
-  'nightlight_round': 0xef5e,
-  'nights_stay': 0xea46,
-  'no_accounts': 0xf03e,
-  'no_adult_content': 0xf8fe,
-  'no_backpack': 0xf237,
-  'no_cell': 0xf1a4,
-  'no_crash': 0xebf0,
-  'no_drinks': 0xf1a5,
-  'no_encryption': 0xe641,
-  'no_encryption_gmailerrorred': 0xf03f,
-  'no_flash': 0xf1a6,
-  'no_food': 0xf1a7,
-  'no_luggage': 0xf23b,
-  'no_meals': 0xf1d6,
-  'no_meals_ouline': 0xf229,
-  'no_meeting_room': 0xeb4e,
-  'no_photography': 0xf1a8,
-  'no_sim': 0xe0cc,
-  'no_stroller': 0xf1af,
-  'no_transfer': 0xf1d5,
-  'noise_aware': 0xebec,
-  'noise_control_off': 0xebf3,
-  'nordic_walking': 0xe50e,
-  'north': 0xf1e0,
-  'north_east': 0xf1e1,
-  'north_west': 0xf1e2,
-  'not_accessible': 0xf0fe,
-  'not_interested': 0xe033,
-  'not_listed_location': 0xe575,
-  'not_started': 0xf0d1,
-  'note': 0xe06f,
-  'note_add': 0xe89c,
-  'note_alt': 0xf040,
-  'notes': 0xe26c,
-  'notification_add': 0xe399,
-  'notification_important': 0xe004,
-  'notifications': 0xe7f4,
-  'notifications_active': 0xe7f7,
-  'notifications_none': 0xe7f5,
-  'notifications_off': 0xe7f6,
-  'notifications_on': 0xe7f7,
-  'notifications_paused': 0xe7f8,
-  'now_wallpaper': 0xe1bc,
-  'now_widgets': 0xe1bd,
-  'numbers': 0xeac7,
-  'offline_bolt': 0xe932,
-  'offline_pin': 0xe90a,
-  'offline_share': 0xe9c5,
-  'oil_barrel': 0xec15,
-  'on_device_training': 0xebfd,
-  'ondemand_video': 0xe63a,
-  'online_prediction': 0xf0eb,
-  'opacity': 0xe91c,
-  'open_in_browser': 0xe89d,
-  'open_in_full': 0xf1ce,
-  'open_in_new': 0xe89e,
-  'open_in_new_off': 0xe4f6,
-  'open_with': 0xe89f,
-  'other_houses': 0xe58c,
-  'outbond': 0xf228,
-  'outbound': 0xe1ca,
-  'outbox': 0xef5f,
-  'outdoor_grill': 0xea47,
-  'outgoing_mail': 0xf0d2,
-  'outlet': 0xf1d4,
-  'outlined_flag': 0xe16e,
-  'output': 0xebbe,
-  'padding': 0xe9c8,
-  'pages': 0xe7f9,
-  'pageview': 0xe8a0,
-  'paid': 0xf041,
-  'palette': 0xe40a,
-  'pallet': 0xf86a,
-  'pan_tool': 0xe925,
-  'pan_tool_alt': 0xebb9,
-  'panorama': 0xe40b,
-  'panorama_fish_eye': 0xe40c,
-  'panorama_fisheye': 0xe40c,
-  'panorama_horizontal': 0xe40d,
-  'panorama_horizontal_select': 0xef60,
-  'panorama_photosphere': 0xe9c9,
-  'panorama_photosphere_select': 0xe9ca,
-  'panorama_vertical': 0xe40e,
-  'panorama_vertical_select': 0xef61,
-  'panorama_wide_angle': 0xe40f,
-  'panorama_wide_angle_select': 0xef62,
-  'paragliding': 0xe50f,
-  'park': 0xea63,
-  'party_mode': 0xe7fa,
-  'password': 0xf042,
-  'pattern': 0xf043,
-  'pause': 0xe034,
-  'pause_circle': 0xe1a2,
-  'pause_circle_filled': 0xe035,
-  'pause_circle_outline': 0xe036,
-  'pause_presentation': 0xe0ea,
-  'payment': 0xe8a1,
-  'payments': 0xef63,
-  'paypal': 0xea8d,
-  'pedal_bike': 0xeb29,
-  'pending': 0xef64,
-  'pending_actions': 0xf1bb,
-  'pentagon': 0xeb50,
-  'people': 0xe7fb,
-  'people_alt': 0xea21,
-  'people_outline': 0xe7fc,
-  'percent': 0xeb58,
-  'perm_camera_mic': 0xe8a2,
-  'perm_contact_cal': 0xe8a3,
-  'perm_contact_calendar': 0xe8a3,
-  'perm_data_setting': 0xe8a4,
-  'perm_device_info': 0xe8a5,
-  'perm_device_information': 0xe8a5,
-  'perm_identity': 0xe8a6,
-  'perm_media': 0xe8a7,
-  'perm_phone_msg': 0xe8a8,
-  'perm_scan_wifi': 0xe8a9,
-  'person': 0xe7fd,
-  'person_2': 0xf8e4,
-  'person_3': 0xf8e5,
-  'person_4': 0xf8e6,
-  'person_add': 0xe7fe,
-  'person_add_alt': 0xea4d,
-  'person_add_alt_1': 0xef65,
-  'person_add_disabled': 0xe9cb,
-  'person_off': 0xe510,
-  'person_outline': 0xe7ff,
-  'person_pin': 0xe55a,
-  'person_pin_circle': 0xe56a,
-  'person_remove': 0xef66,
-  'person_remove_alt_1': 0xef67,
-  'person_search': 0xf106,
-  'personal_injury': 0xe6da,
-  'personal_video': 0xe63b,
-  'pest_control': 0xf0fa,
-  'pest_control_rodent': 0xf0fd,
-  'pets': 0xe91d,
-  'phishing': 0xead7,
-  'phone': 0xe0cd,
-  'phone_android': 0xe324,
-  'phone_bluetooth_speaker': 0xe61b,
-  'phone_callback': 0xe649,
-  'phone_disabled': 0xe9cc,
-  'phone_enabled': 0xe9cd,
-  'phone_forwarded': 0xe61c,
-  'phone_in_talk': 0xe61d,
-  'phone_iphone': 0xe325,
-  'phone_locked': 0xe61e,
-  'phone_missed': 0xe61f,
-  'phone_paused': 0xe620,
-  'phonelink': 0xe326,
-  'phonelink_erase': 0xe0db,
-  'phonelink_lock': 0xe0dc,
-  'phonelink_off': 0xe327,
-  'phonelink_ring': 0xe0dd,
-  'phonelink_setup': 0xe0de,
-  'photo': 0xe410,
-  'photo_album': 0xe411,
-  'photo_camera': 0xe412,
-  'photo_camera_back': 0xef68,
-  'photo_camera_front': 0xef69,
-  'photo_filter': 0xe43b,
-  'photo_library': 0xe413,
-  'photo_size_select_actual': 0xe432,
-  'photo_size_select_large': 0xe433,
-  'photo_size_select_small': 0xe434,
-  'php': 0xeb8f,
-  'piano': 0xe521,
-  'piano_off': 0xe520,
-  'picture_as_pdf': 0xe415,
-  'picture_in_picture': 0xe8aa,
-  'picture_in_picture_alt': 0xe911,
-  'pie_chart': 0xe6c4,
-  'pie_chart_outline': 0xf044,
-  'pie_chart_outlined': 0xe6c5,
-  'pin': 0xf045,
-  'pin_drop': 0xe55e,
-  'pin_end': 0xe767,
-  'pin_invoke': 0xe763,
-  'pinch': 0xeb38,
-  'pivot_table_chart': 0xe9ce,
-  'pix': 0xeaa3,
-  'place': 0xe55f,
-  'plagiarism': 0xea5a,
-  'play_arrow': 0xe037,
-  'play_circle': 0xe1c4,
-  'play_circle_fill': 0xe038,
-  'play_circle_filled': 0xe038,
-  'play_circle_outline': 0xe039,
-  'play_disabled': 0xef6a,
-  'play_for_work': 0xe906,
-  'play_lesson': 0xf047,
-  'playlist_add': 0xe03b,
-  'playlist_add_check': 0xe065,
-  'playlist_add_check_circle': 0xe7e6,
-  'playlist_add_circle': 0xe7e5,
-  'playlist_play': 0xe05f,
-  'playlist_remove': 0xeb80,
-  'plumbing': 0xf107,
-  'plus_one': 0xe800,
-  'podcasts': 0xf048,
-  'point_of_sale': 0xf17e,
-  'policy': 0xea17,
-  'poll': 0xe801,
-  'polyline': 0xebbb,
-  'polymer': 0xe8ab,
-  'pool': 0xeb48,
-  'portable_wifi_off': 0xe0ce,
-  'portrait': 0xe416,
-  'post_add': 0xea20,
-  'power': 0xe63c,
-  'power_input': 0xe336,
-  'power_off': 0xe646,
-  'power_settings_new': 0xe8ac,
-  'precision_manufacturing': 0xf049,
-  'pregnant_woman': 0xe91e,
-  'present_to_all': 0xe0df,
-  'preview': 0xf1c5,
-  'price_change': 0xf04a,
-  'price_check': 0xf04b,
-  'print': 0xe8ad,
-  'print_disabled': 0xe9cf,
-  'priority_high': 0xe645,
-  'privacy_tip': 0xf0dc,
-  'private_connectivity': 0xe744,
-  'production_quantity_limits': 0xe1d1,
-  'propane': 0xec14,
-  'propane_tank': 0xec13,
-  'psychology': 0xea4a,
-  'psychology_alt': 0xf8ea,
-  'public': 0xe80b,
-  'public_off': 0xf1ca,
-  'publish': 0xe255,
-  'published_with_changes': 0xf232,
-  'punch_clock': 0xeaa8,
-  'push_pin': 0xf10d,
-  'qr_code': 0xef6b,
-  'qr_code_2': 0xe00a,
-  'qr_code_scanner': 0xf206,
-  'query_builder': 0xe8ae,
-  'query_stats': 0xe4fc,
-  'question_answer': 0xe8af,
-  'question_mark': 0xeb8b,
-  'queue': 0xe03c,
-  'queue_music': 0xe03d,
-  'queue_play_next': 0xe066,
-  'quick_contacts_dialer': 0xe0cf,
-  'quick_contacts_mail': 0xe0d0,
-  'quickreply': 0xef6c,
-  'quiz': 0xf04c,
-  'quora': 0xea98,
-  'r_mobiledata': 0xf04d,
-  'radar': 0xf04e,
-  'radio': 0xe03e,
-  'radio_button_checked': 0xe837,
-  'radio_button_off': 0xe836,
-  'radio_button_on': 0xe837,
-  'radio_button_unchecked': 0xe836,
-  'railway_alert': 0xe9d1,
-  'ramen_dining': 0xea64,
-  'ramp_left': 0xeb9c,
-  'ramp_right': 0xeb96,
-  'rate_review': 0xe560,
-  'raw_off': 0xf04f,
-  'raw_on': 0xf050,
-  'read_more': 0xef6d,
-  'real_estate_agent': 0xe73a,
-  'rebase_edit': 0xf846,
-  'receipt': 0xe8b0,
-  'receipt_long': 0xef6e,
-  'recent_actors': 0xe03f,
-  'recommend': 0xe9d2,
-  'record_voice_over': 0xe91f,
-  'rectangle': 0xeb54,
-  'recycling': 0xe760,
-  'reddit': 0xeaa0,
-  'redeem': 0xe8b1,
-  'redo': 0xe15a,
-  'reduce_capacity': 0xf21c,
-  'refresh': 0xe5d5,
-  'remember_me': 0xf051,
-  'remove': 0xe15b,
-  'remove_circle': 0xe15c,
-  'remove_circle_outline': 0xe15d,
-  'remove_done': 0xe9d3,
-  'remove_from_queue': 0xe067,
-  'remove_moderator': 0xe9d4,
-  'remove_red_eye': 0xe417,
-  'remove_road': 0xebfc,
-  'remove_shopping_cart': 0xe928,
-  'reorder': 0xe8fe,
-  'repartition': 0xf8e8,
-  'repeat': 0xe040,
-  'repeat_on': 0xe9d6,
-  'repeat_one': 0xe041,
-  'repeat_one_on': 0xe9d7,
-  'replay': 0xe042,
-  'replay_10': 0xe059,
-  'replay_30': 0xe05a,
-  'replay_5': 0xe05b,
-  'replay_circle_filled': 0xe9d8,
-  'reply': 0xe15e,
-  'reply_all': 0xe15f,
-  'report': 0xe160,
-  'report_gmailerrorred': 0xf052,
-  'report_off': 0xe170,
-  'report_problem': 0xe8b2,
-  'request_page': 0xf22c,
-  'request_quote': 0xf1b6,
-  'reset_tv': 0xe9d9,
-  'restart_alt': 0xf053,
-  'restaurant': 0xe56c,
-  'restaurant_menu': 0xe561,
-  'restore': 0xe8b3,
-  'restore_from_trash': 0xe938,
-  'restore_page': 0xe929,
-  'reviews': 0xf054,
-  'rice_bowl': 0xf1f5,
-  'ring_volume': 0xe0d1,
-  'rocket': 0xeba5,
-  'rocket_launch': 0xeb9b,
-  'roller_shades': 0xec12,
-  'roller_shades_closed': 0xec11,
-  'roller_skating': 0xebcd,
-  'roofing': 0xf201,
-  'room': 0xe8b4,
-  'room_preferences': 0xf1b8,
-  'room_service': 0xeb49,
-  'rotate_90_degrees_ccw': 0xe418,
-  'rotate_90_degrees_cw': 0xeaab,
-  'rotate_left': 0xe419,
-  'rotate_right': 0xe41a,
-  'roundabout_left': 0xeb99,
-  'roundabout_right': 0xeba3,
-  'rounded_corner': 0xe920,
-  'route': 0xeacd,
-  'router': 0xe328,
-  'rowing': 0xe921,
-  'rss_feed': 0xe0e5,
-  'rsvp': 0xf055,
-  'rtt': 0xe9ad,
-  'rule': 0xf1c2,
-  'rule_folder': 0xf1c9,
-  'run_circle': 0xef6f,
-  'running_with_errors': 0xe51d,
-  'rv_hookup': 0xe642,
-  'safety_check': 0xebef,
-  'safety_divider': 0xe1cc,
-  'sailing': 0xe502,
-  'sanitizer': 0xf21d,
-  'satellite': 0xe562,
-  'satellite_alt': 0xeb3a,
-  'save': 0xe161,
-  'save_alt': 0xe171,
-  'save_as': 0xeb60,
-  'saved_search': 0xea11,
-  'savings': 0xe2eb,
-  'scale': 0xeb5f,
-  'scanner': 0xe329,
-  'scatter_plot': 0xe268,
-  'schedule': 0xe8b5,
-  'schedule_send': 0xea0a,
-  'schema': 0xe4fd,
-  'school': 0xe80c,
-  'science': 0xea4b,
-  'score': 0xe269,
-  'scoreboard': 0xebd0,
-  'screen_lock_landscape': 0xe1be,
-  'screen_lock_portrait': 0xe1bf,
-  'screen_lock_rotation': 0xe1c0,
-  'screen_rotation': 0xe1c1,
-  'screen_rotation_alt': 0xebee,
-  'screen_search_desktop': 0xef70,
-  'screen_share': 0xe0e2,
-  'screenshot': 0xf056,
-  'screenshot_monitor': 0xec08,
-  'scuba_diving': 0xebce,
-  'sd': 0xe9dd,
-  'sd_card': 0xe623,
-  'sd_card_alert': 0xf057,
-  'sd_storage': 0xe1c2,
-  'search': 0xe8b6,
-  'search_off': 0xea76,
-  'security': 0xe32a,
-  'security_update': 0xf058,
-  'security_update_good': 0xf059,
-  'security_update_warning': 0xf05a,
-  'segment': 0xe94b,
-  'select_all': 0xe162,
-  'self_improvement': 0xea78,
-  'sell': 0xf05b,
-  'send': 0xe163,
-  'send_and_archive': 0xea0c,
-  'send_time_extension': 0xeadb,
-  'send_to_mobile': 0xf05c,
-  'sensor_door': 0xf1b5,
-  'sensor_occupied': 0xec10,
-  'sensor_window': 0xf1b4,
-  'sensors': 0xe51e,
-  'sensors_off': 0xe51f,
-  'sentiment_dissatisfied': 0xe811,
-  'sentiment_neutral': 0xe812,
-  'sentiment_satisfied': 0xe813,
-  'sentiment_satisfied_alt': 0xe0ed,
-  'sentiment_very_dissatisfied': 0xe814,
-  'sentiment_very_satisfied': 0xe815,
-  'set_meal': 0xf1ea,
-  'settings': 0xe8b8,
-  'settings_accessibility': 0xf05d,
-  'settings_applications': 0xe8b9,
-  'settings_backup_restore': 0xe8ba,
-  'settings_bluetooth': 0xe8bb,
-  'settings_brightness': 0xe8bd,
-  'settings_cell': 0xe8bc,
-  'settings_display': 0xe8bd,
-  'settings_ethernet': 0xe8be,
-  'settings_input_antenna': 0xe8bf,
-  'settings_input_component': 0xe8c0,
-  'settings_input_composite': 0xe8c1,
-  'settings_input_hdmi': 0xe8c2,
-  'settings_input_svideo': 0xe8c3,
-  'settings_overscan': 0xe8c4,
-  'settings_phone': 0xe8c5,
-  'settings_power': 0xe8c6,
-  'settings_remote': 0xe8c7,
-  'settings_suggest': 0xf05e,
-  'settings_system_daydream': 0xe1c3,
-  'settings_voice': 0xe8c8,
-  'severe_cold': 0xebd3,
-  'shape_line': 0xf8d3,
-  'share': 0xe80d,
-  'share_arrival_time': 0xe524,
-  'share_location': 0xf05f,
-  'shelves': 0xf86e,
-  'shield': 0xe9e0,
-  'shield_moon': 0xeaa9,
-  'shop': 0xe8c9,
-  'shop_2': 0xe19e,
-  'shop_two': 0xe8ca,
-  'shopify': 0xea9d,
-  'shopping_bag': 0xf1cc,
-  'shopping_basket': 0xe8cb,
-  'shopping_cart': 0xe8cc,
-  'shopping_cart_checkout': 0xeb88,
-  'short_text': 0xe261,
-  'shortcut': 0xf060,
-  'show_chart': 0xe6e1,
-  'shower': 0xf061,
-  'shuffle': 0xe043,
-  'shuffle_on': 0xe9e1,
-  'shutter_speed': 0xe43d,
-  'sick': 0xf220,
-  'sign_language': 0xebe5,
-  'signal_cellular_0_bar': 0xf0a8,
-  'signal_cellular_4_bar': 0xe1c8,
-  'signal_cellular_alt': 0xe202,
-  'signal_cellular_alt_1_bar': 0xebdf,
-  'signal_cellular_alt_2_bar': 0xebe3,
-  'signal_cellular_connected_no_internet_0_bar': 0xf0ac,
-  'signal_cellular_connected_no_internet_4_bar': 0xe1cd,
-  'signal_cellular_no_sim': 0xe1ce,
-  'signal_cellular_nodata': 0xf062,
-  'signal_cellular_null': 0xe1cf,
-  'signal_cellular_off': 0xe1d0,
-  'signal_wifi_0_bar': 0xf0b0,
-  'signal_wifi_4_bar': 0xe1d8,
-  'signal_wifi_4_bar_lock': 0xe1d9,
-  'signal_wifi_bad': 0xf063,
-  'signal_wifi_connected_no_internet_4': 0xf064,
-  'signal_wifi_off': 0xe1da,
-  'signal_wifi_statusbar_4_bar': 0xf065,
-  'signal_wifi_statusbar_connected_no_internet_4': 0xf066,
-  'signal_wifi_statusbar_null': 0xf067,
-  'signpost': 0xeb91,
-  'sim_card': 0xe32b,
-  'sim_card_alert': 0xe624,
-  'sim_card_download': 0xf068,
-  'single_bed': 0xea48,
-  'sip': 0xf069,
-  'skateboarding': 0xe511,
-  'skip_next': 0xe044,
-  'skip_previous': 0xe045,
-  'sledding': 0xe512,
-  'slideshow': 0xe41b,
-  'slow_motion_video': 0xe068,
-  'smart_button': 0xf1c1,
-  'smart_display': 0xf06a,
-  'smart_screen': 0xf06b,
-  'smart_toy': 0xf06c,
-  'smartphone': 0xe32c,
-  'smoke_free': 0xeb4a,
-  'smoking_rooms': 0xeb4b,
-  'sms': 0xe625,
-  'sms_failed': 0xe626,
-  'snapchat': 0xea6e,
-  'snippet_folder': 0xf1c7,
-  'snooze': 0xe046,
-  'snowboarding': 0xe513,
-  'snowing': 0xe80f,
-  'snowmobile': 0xe503,
-  'snowshoeing': 0xe514,
-  'soap': 0xf1b2,
-  'social_distance': 0xe1cb,
-  'solar_power': 0xec0f,
-  'sort': 0xe164,
-  'sort_by_alpha': 0xe053,
-  'sos': 0xebf7,
-  'soup_kitchen': 0xe7d3,
-  'source': 0xf1c4,
-  'south': 0xf1e3,
-  'south_america': 0xe7e4,
-  'south_east': 0xf1e4,
-  'south_west': 0xf1e5,
-  'spa': 0xeb4c,
-  'space_bar': 0xe256,
-  'space_dashboard': 0xe66b,
-  'spatial_audio': 0xebeb,
-  'spatial_audio_off': 0xebe8,
-  'spatial_tracking': 0xebea,
-  'speaker': 0xe32d,
-  'speaker_group': 0xe32e,
-  'speaker_notes': 0xe8cd,
-  'speaker_notes_off': 0xe92a,
-  'speaker_phone': 0xe0d2,
-  'speed': 0xe9e4,
-  'spellcheck': 0xe8ce,
-  'splitscreen': 0xf06d,
-  'spoke': 0xe9a7,
-  'sports': 0xea30,
-  'sports_bar': 0xf1f3,
-  'sports_baseball': 0xea51,
-  'sports_basketball': 0xea26,
-  'sports_cricket': 0xea27,
-  'sports_esports': 0xea28,
-  'sports_football': 0xea29,
-  'sports_golf': 0xea2a,
-  'sports_gymnastics': 0xebc4,
-  'sports_handball': 0xea33,
-  'sports_hockey': 0xea2b,
-  'sports_kabaddi': 0xea34,
-  'sports_martial_arts': 0xeae9,
-  'sports_mma': 0xea2c,
-  'sports_motorsports': 0xea2d,
-  'sports_rugby': 0xea2e,
-  'sports_score': 0xf06e,
-  'sports_soccer': 0xea2f,
-  'sports_tennis': 0xea32,
-  'sports_volleyball': 0xea31,
-  'square': 0xeb36,
-  'square_foot': 0xea49,
-  'ssid_chart': 0xeb66,
-  'stacked_bar_chart': 0xe9e6,
-  'stacked_line_chart': 0xf22b,
-  'stadium': 0xeb90,
-  'stairs': 0xf1a9,
-  'star': 0xe838,
-  'star_border': 0xe83a,
-  'star_border_purple500': 0xf099,
-  'star_half': 0xe839,
-  'star_outline': 0xf06f,
-  'star_purple500': 0xf09a,
-  'star_rate': 0xf0ec,
-  'stars': 0xe8d0,
-  'start': 0xe089,
-  'stay_current_landscape': 0xe0d3,
-  'stay_current_portrait': 0xe0d4,
-  'stay_primary_landscape': 0xe0d5,
-  'stay_primary_portrait': 0xe0d6,
-  'sticky_note_2': 0xf1fc,
-  'stop': 0xe047,
-  'stop_circle': 0xef71,
-  'stop_screen_share': 0xe0e3,
-  'storage': 0xe1db,
-  'store': 0xe8d1,
-  'store_mall_directory': 0xe563,
-  'storefront': 0xea12,
-  'storm': 0xf070,
-  'straight': 0xeb95,
-  'straighten': 0xe41c,
-  'stream': 0xe9e9,
-  'streetview': 0xe56e,
-  'strikethrough_s': 0xe257,
-  'stroller': 0xf1ae,
-  'style': 0xe41d,
-  'subdirectory_arrow_left': 0xe5d9,
-  'subdirectory_arrow_right': 0xe5da,
-  'subject': 0xe8d2,
-  'subscript': 0xf111,
-  'subscriptions': 0xe064,
-  'subtitles': 0xe048,
-  'subtitles_off': 0xef72,
-  'subway': 0xe56f,
-  'summarize': 0xf071,
-  'sunny': 0xe81a,
-  'sunny_snowing': 0xe819,
-  'superscript': 0xf112,
-  'supervised_user_circle': 0xe939,
-  'supervisor_account': 0xe8d3,
-  'support': 0xef73,
-  'support_agent': 0xf0e2,
-  'surfing': 0xe515,
-  'surround_sound': 0xe049,
-  'swap_calls': 0xe0d7,
-  'swap_horiz': 0xe8d4,
-  'swap_horizontal_circle': 0xe933,
-  'swap_vert': 0xe8d5,
-  'swap_vert_circle': 0xe8d6,
-  'swap_vertical_circle': 0xe8d6,
-  'swipe': 0xe9ec,
-  'swipe_down': 0xeb53,
-  'swipe_down_alt': 0xeb30,
-  'swipe_left': 0xeb59,
-  'swipe_left_alt': 0xeb33,
-  'swipe_right': 0xeb52,
-  'swipe_right_alt': 0xeb56,
-  'swipe_up': 0xeb2e,
-  'swipe_up_alt': 0xeb35,
-  'swipe_vertical': 0xeb51,
-  'switch_access_shortcut': 0xe7e1,
-  'switch_access_shortcut_add': 0xe7e2,
-  'switch_account': 0xe9ed,
-  'switch_camera': 0xe41e,
-  'switch_left': 0xf1d1,
-  'switch_right': 0xf1d2,
-  'switch_video': 0xe41f,
-  'synagogue': 0xeab0,
-  'sync': 0xe627,
-  'sync_alt': 0xea18,
-  'sync_disabled': 0xe628,
-  'sync_lock': 0xeaee,
-  'sync_problem': 0xe629,
-  'system_security_update': 0xf072,
-  'system_security_update_good': 0xf073,
-  'system_security_update_warning': 0xf074,
-  'system_update': 0xe62a,
-  'system_update_alt': 0xe8d7,
-  'system_update_tv': 0xe8d7,
-  'tab': 0xe8d8,
-  'tab_unselected': 0xe8d9,
-  'table_bar': 0xead2,
-  'table_chart': 0xe265,
-  'table_restaurant': 0xeac6,
-  'table_rows': 0xf101,
-  'table_view': 0xf1be,
-  'tablet': 0xe32f,
-  'tablet_android': 0xe330,
-  'tablet_mac': 0xe331,
-  'tag': 0xe9ef,
-  'tag_faces': 0xe420,
-  'takeout_dining': 0xea74,
-  'tap_and_play': 0xe62b,
-  'tapas': 0xf1e9,
-  'task': 0xf075,
-  'task_alt': 0xe2e6,
-  'taxi_alert': 0xef74,
-  'telegram': 0xea6b,
-  'temple_buddhist': 0xeab3,
-  'temple_hindu': 0xeaaf,
-  'terminal': 0xeb8e,
-  'terrain': 0xe564,
-  'text_decrease': 0xeadd,
-  'text_fields': 0xe262,
-  'text_format': 0xe165,
-  'text_increase': 0xeae2,
-  'text_rotate_up': 0xe93a,
-  'text_rotate_vertical': 0xe93b,
-  'text_rotation_angledown': 0xe93c,
-  'text_rotation_angleup': 0xe93d,
-  'text_rotation_down': 0xe93e,
-  'text_rotation_none': 0xe93f,
-  'text_snippet': 0xf1c6,
-  'textsms': 0xe0d8,
-  'texture': 0xe421,
-  'theater_comedy': 0xea66,
-  'theaters': 0xe8da,
-  'thermostat': 0xf076,
-  'thermostat_auto': 0xf077,
-  'thumb_down': 0xe8db,
-  'thumb_down_alt': 0xe816,
-  'thumb_down_off_alt': 0xe9f2,
-  'thumb_up': 0xe8dc,
-  'thumb_up_alt': 0xe817,
-  'thumb_up_off_alt': 0xe9f3,
-  'thumbs_up_down': 0xe8dd,
-  'thunderstorm': 0xebdb,
-  'tiktok': 0xea7e,
-  'time_to_leave': 0xe62c,
-  'timelapse': 0xe422,
-  'timeline': 0xe922,
-  'timer': 0xe425,
-  'timer_10': 0xe423,
-  'timer_10_select': 0xf07a,
-  'timer_3': 0xe424,
-  'timer_3_select': 0xf07b,
-  'timer_off': 0xe426,
-  'tips_and_updates': 0xe79a,
-  'tire_repair': 0xebc8,
-  'title': 0xe264,
-  'toc': 0xe8de,
-  'today': 0xe8df,
-  'toggle_off': 0xe9f5,
-  'toggle_on': 0xe9f6,
-  'token': 0xea25,
-  'toll': 0xe8e0,
-  'tonality': 0xe427,
-  'topic': 0xf1c8,
-  'tornado': 0xe199,
-  'touch_app': 0xe913,
-  'tour': 0xef75,
-  'toys': 0xe332,
-  'track_changes': 0xe8e1,
-  'traffic': 0xe565,
-  'train': 0xe570,
-  'tram': 0xe571,
-  'transcribe': 0xf8ec,
-  'transfer_within_a_station': 0xe572,
-  'transform': 0xe428,
-  'transgender': 0xe58d,
-  'transit_enterexit': 0xe579,
-  'translate': 0xe8e2,
-  'travel_explore': 0xe2db,
-  'trending_down': 0xe8e3,
-  'trending_flat': 0xe8e4,
-  'trending_neutral': 0xe8e4,
-  'trending_up': 0xe8e5,
-  'trip_origin': 0xe57b,
-  'trolley': 0xf86b,
-  'troubleshoot': 0xe1d2,
-  'try': 0xf07c,
-  'tsunami': 0xebd8,
-  'tty': 0xf1aa,
-  'tune': 0xe429,
-  'tungsten': 0xf07d,
-  'turn_left': 0xeba6,
-  'turn_right': 0xebab,
-  'turn_sharp_left': 0xeba7,
-  'turn_sharp_right': 0xebaa,
-  'turn_slight_left': 0xeba4,
-  'turn_slight_right': 0xeb9a,
-  'turned_in': 0xe8e6,
-  'turned_in_not': 0xe8e7,
-  'tv': 0xe333,
-  'tv_off': 0xe647,
-  'two_wheeler': 0xe9f9,
-  'type_specimen': 0xf8f0,
-  'u_turn_left': 0xeba1,
-  'u_turn_right': 0xeba2,
-  'umbrella': 0xf1ad,
-  'unarchive': 0xe169,
-  'undo': 0xe166,
-  'unfold_less': 0xe5d6,
-  'unfold_less_double': 0xf8cf,
-  'unfold_more': 0xe5d7,
-  'unfold_more_double': 0xf8d0,
-  'unpublished': 0xf236,
-  'unsubscribe': 0xe0eb,
-  'upcoming': 0xf07e,
-  'update': 0xe923,
-  'update_disabled': 0xe075,
-  'upgrade': 0xf0fb,
-  'upload': 0xf09b,
-  'upload_file': 0xe9fc,
-  'usb': 0xe1e0,
-  'usb_off': 0xe4fa,
-  'vaccines': 0xe138,
-  'vape_free': 0xebc6,
-  'vaping_rooms': 0xebcf,
-  'verified': 0xef76,
-  'verified_user': 0xe8e8,
-  'vertical_align_bottom': 0xe258,
-  'vertical_align_center': 0xe259,
-  'vertical_align_top': 0xe25a,
-  'vertical_distribute': 0xe076,
-  'vertical_shades': 0xec0e,
-  'vertical_shades_closed': 0xec0d,
-  'vertical_split': 0xe949,
-  'vibration': 0xe62d,
-  'video_call': 0xe070,
-  'video_camera_back': 0xf07f,
-  'video_camera_front': 0xf080,
-  'video_chat': 0xf8a0,
-  'video_collection': 0xe04a,
-  'video_file': 0xeb87,
-  'video_label': 0xe071,
-  'video_library': 0xe04a,
-  'video_settings': 0xea75,
-  'video_stable': 0xf081,
-  'videocam': 0xe04b,
-  'videocam_off': 0xe04c,
-  'videogame_asset': 0xe338,
-  'videogame_asset_off': 0xe500,
-  'view_agenda': 0xe8e9,
-  'view_array': 0xe8ea,
-  'view_carousel': 0xe8eb,
-  'view_column': 0xe8ec,
-  'view_comfortable': 0xe42a,
-  'view_comfy': 0xe42a,
-  'view_comfy_alt': 0xeb73,
-  'view_compact': 0xe42b,
-  'view_compact_alt': 0xeb74,
-  'view_cozy': 0xeb75,
-  'view_day': 0xe8ed,
-  'view_headline': 0xe8ee,
-  'view_in_ar': 0xe9fe,
-  'view_kanban': 0xeb7f,
-  'view_list': 0xe8ef,
-  'view_module': 0xe8f0,
-  'view_quilt': 0xe8f1,
-  'view_sidebar': 0xf114,
-  'view_stream': 0xe8f2,
-  'view_timeline': 0xeb85,
-  'view_week': 0xe8f3,
-  'vignette': 0xe435,
-  'villa': 0xe586,
-  'visibility': 0xe8f4,
-  'visibility_off': 0xe8f5,
-  'voice_chat': 0xe62e,
-  'voice_over_off': 0xe94a,
-  'voicemail': 0xe0d9,
-  'volcano': 0xebda,
-  'volume_down': 0xe04d,
-  'volume_down_alt': 0xe79c,
-  'volume_mute': 0xe04e,
-  'volume_off': 0xe04f,
-  'volume_up': 0xe050,
-  'volunteer_activism': 0xea70,
-  'vpn_key': 0xe0da,
-  'vpn_key_off': 0xeb7a,
-  'vpn_lock': 0xe62f,
-  'vrpano': 0xf082,
-  'wallet': 0xf8ff,
-  'wallet_giftcard': 0xe8f6,
-  'wallet_membership': 0xe8f7,
-  'wallet_travel': 0xe8f8,
-  'wallpaper': 0xe1bc,
-  'warehouse': 0xebb8,
-  'warning': 0xe002,
-  'warning_amber': 0xf083,
-  'wash': 0xf1b1,
-  'watch': 0xe334,
-  'watch_later': 0xe924,
-  'watch_off': 0xeae3,
-  'water': 0xf084,
-  'water_damage': 0xf203,
-  'water_drop': 0xe798,
-  'waterfall_chart': 0xea00,
-  'waves': 0xe176,
-  'waving_hand': 0xe766,
-  'wb_auto': 0xe42c,
-  'wb_cloudy': 0xe42d,
-  'wb_incandescent': 0xe42e,
-  'wb_iridescent': 0xe436,
-  'wb_shade': 0xea01,
-  'wb_sunny': 0xe430,
-  'wb_twighlight': 0xea02,
-  'wb_twilight': 0xe1c6,
-  'wc': 0xe63d,
-  'web': 0xe051,
-  'web_asset': 0xe069,
-  'web_asset_off': 0xe4f7,
-  'web_stories': 0xe595,
-  'webhook': 0xeb92,
-  'wechat': 0xea81,
-  'weekend': 0xe16b,
-  'west': 0xf1e6,
-  'whatshot': 0xe80e,
-  'wheelchair_pickup': 0xf1ab,
-  'where_to_vote': 0xe177,
-  'widgets': 0xe1bd,
-  'width_full': 0xf8f5,
-  'width_normal': 0xf8f6,
-  'width_wide': 0xf8f7,
-  'wifi': 0xe63e,
-  'wifi_1_bar': 0xe4ca,
-  'wifi_2_bar': 0xe4d9,
-  'wifi_calling': 0xef77,
-  'wifi_calling_3': 0xf085,
-  'wifi_channel': 0xeb6a,
-  'wifi_find': 0xeb31,
-  'wifi_lock': 0xe1e1,
-  'wifi_off': 0xe648,
-  'wifi_password': 0xeb6b,
-  'wifi_protected_setup': 0xf0fc,
-  'wifi_tethering': 0xe1e2,
-  'wifi_tethering_error': 0xead9,
-  'wifi_tethering_error_rounded': 0xf086,
-  'wifi_tethering_off': 0xf087,
-  'wind_power': 0xec0c,
-  'window': 0xf088,
-  'wine_bar': 0xf1e8,
-  'woman': 0xe13e,
-  'woman_2': 0xf8e7,
-  'woo_commerce': 0xea6d,
-  'wordpress': 0xea9f,
-  'work': 0xe8f9,
-  'work_history': 0xec09,
-  'work_off': 0xe942,
-  'work_outline': 0xe943,
-  'workspace_premium': 0xe7af,
-  'workspaces': 0xe1a0,
-  'workspaces_filled': 0xea0d,
-  'workspaces_outline': 0xea0f,
-  'wrap_text': 0xe25b,
-  'wrong_location': 0xef78,
-  'wysiwyg': 0xf1c3,
-  'yard': 0xf089,
-  'youtube_searched_for': 0xe8fa,
-  'zoom_in': 0xe8ff,
-  'zoom_in_map': 0xeb2d,
-  'zoom_out': 0xe900,
-  'zoom_out_map': 0xe56b,
-};
-
-String lookupIcon(String iconName) => String.fromCharCode(_iconMappings[iconName] ?? 0);
+final class Icons {
+  static const n_10k = IconSpec(0xe951);
+  static const n_10mp = IconSpec(0xe952);
+  static const n_11mp = IconSpec(0xe953);
+  static const n_123 = IconSpec(0xeb8d);
+  static const n_12mp = IconSpec(0xe954);
+  static const n_13mp = IconSpec(0xe955);
+  static const n_14mp = IconSpec(0xe956);
+  static const n_15mp = IconSpec(0xe957);
+  static const n_16mp = IconSpec(0xe958);
+  static const n_17mp = IconSpec(0xe959);
+  static const n_18_up_rating = IconSpec(0xf8fd);
+  static const n_18mp = IconSpec(0xe95a);
+  static const n_19mp = IconSpec(0xe95b);
+  static const n_1k = IconSpec(0xe95c);
+  static const n_1k_plus = IconSpec(0xe95d);
+  static const n_1x_mobiledata = IconSpec(0xefcd);
+  static const n_1x_mobiledata_badge = IconSpec(0xf7f1);
+  static const n_20mp = IconSpec(0xe95e);
+  static const n_21mp = IconSpec(0xe95f);
+  static const n_22mp = IconSpec(0xe960);
+  static const n_23mp = IconSpec(0xe961);
+  static const n_24fps_select = IconSpec(0xf3f2);
+  static const n_24mp = IconSpec(0xe962);
+  static const n_2d = IconSpec(0xef37);
+  static const n_2k = IconSpec(0xe963);
+  static const n_2k_plus = IconSpec(0xe964);
+  static const n_2mp = IconSpec(0xe965);
+  static const n_30fps = IconSpec(0xefce);
+  static const n_30fps_select = IconSpec(0xefcf);
+  static const n_360 = IconSpec(0xe577);
+  static const n_3d_rotation = IconSpec(0xe84d);
+  static const n_3g_mobiledata = IconSpec(0xefd0);
+  static const n_3g_mobiledata_badge = IconSpec(0xf7f0);
+  static const n_3k = IconSpec(0xe966);
+  static const n_3k_plus = IconSpec(0xe967);
+  static const n_3mp = IconSpec(0xe968);
+  static const n_3p = IconSpec(0xefd1);
+  static const n_4g_mobiledata = IconSpec(0xefd2);
+  static const n_4g_mobiledata_badge = IconSpec(0xf7ef);
+  static const n_4g_plus_mobiledata = IconSpec(0xefd3);
+  static const n_4k = IconSpec(0xe072);
+  static const n_4k_plus = IconSpec(0xe969);
+  static const n_4mp = IconSpec(0xe96a);
+  static const n_50mp = IconSpec(0xf6f3);
+  static const n_5g = IconSpec(0xef38);
+  static const n_5g_mobiledata_badge = IconSpec(0xf7ee);
+  static const n_5k = IconSpec(0xe96b);
+  static const n_5k_plus = IconSpec(0xe96c);
+  static const n_5mp = IconSpec(0xe96d);
+  static const n_60fps = IconSpec(0xefd4);
+  static const n_60fps_select = IconSpec(0xefd5);
+  static const n_6_ft_apart = IconSpec(0xf21e);
+  static const n_6k = IconSpec(0xe96e);
+  static const n_6k_plus = IconSpec(0xe96f);
+  static const n_6mp = IconSpec(0xe970);
+  static const n_7k = IconSpec(0xe971);
+  static const n_7k_plus = IconSpec(0xe972);
+  static const n_7mp = IconSpec(0xe973);
+  static const n_8k = IconSpec(0xe974);
+  static const n_8k_plus = IconSpec(0xe975);
+  static const n_8mp = IconSpec(0xe976);
+  static const n_9k = IconSpec(0xe977);
+  static const n_9k_plus = IconSpec(0xe978);
+  static const n_9mp = IconSpec(0xe979);
+  static const abc = IconSpec(0xeb94);
+  static const ac_unit = IconSpec(0xeb3b);
+  static const access_alarm = IconSpec(0xe855);
+  static const access_alarms = IconSpec(0xe855);
+  static const access_time = IconSpec(0xefd6);
+  static const access_time_filled = IconSpec(0xefd6);
+  static const accessibility = IconSpec(0xe84e);
+  static const accessibility_new = IconSpec(0xe92c);
+  static const accessible = IconSpec(0xe914);
+  static const accessible_forward = IconSpec(0xe934);
+  static const accessible_menu = IconSpec(0xf34e);
+  static const account_balance = IconSpec(0xe84f);
+  static const account_balance_wallet = IconSpec(0xe850);
+  static const account_box = IconSpec(0xe851);
+  static const account_child = IconSpec(0xe852);
+  static const account_child_invert = IconSpec(0xe659);
+  static const account_circle = IconSpec(0xf20b);
+  static const account_circle_filled = IconSpec(0xf20b);
+  static const account_circle_off = IconSpec(0xf7b3);
+  static const account_tree = IconSpec(0xe97a);
+  static const action_key = IconSpec(0xf502);
+  static const activity_zone = IconSpec(0xe1e6);
+  static const acute = IconSpec(0xe4cb);
+  static const ad = IconSpec(0xe65a);
+  static const ad_group = IconSpec(0xe65b);
+  static const ad_group_off = IconSpec(0xeae5);
+  static const ad_off = IconSpec(0xf7b2);
+  static const ad_units = IconSpec(0xef39);
+  static const adaptive_audio_mic = IconSpec(0xf4cc);
+  static const adaptive_audio_mic_off = IconSpec(0xf4cb);
+  static const adb = IconSpec(0xe60e);
+  static const add = IconSpec(0xe145);
+  static const add_2 = IconSpec(0xf3dd);
+  static const add_a_photo = IconSpec(0xe439);
+  static const add_ad = IconSpec(0xe72a);
+  static const add_alarm = IconSpec(0xe856);
+  static const add_alert = IconSpec(0xe003);
+  static const add_box = IconSpec(0xe146);
+  static const add_business = IconSpec(0xe729);
+  static const add_call = IconSpec(0xf0b7);
+  static const add_card = IconSpec(0xeb86);
+  static const add_chart = IconSpec(0xef3c);
+  static const add_circle = IconSpec(0xe3ba);
+  static const add_circle_outline = IconSpec(0xe3ba);
+  static const add_column_left = IconSpec(0xf425);
+  static const add_column_right = IconSpec(0xf424);
+  static const add_comment = IconSpec(0xe266);
+  static const add_diamond = IconSpec(0xf49c);
+  static const add_home = IconSpec(0xf8eb);
+  static const add_home_work = IconSpec(0xf8ed);
+  static const add_ic_call = IconSpec(0xf0b7);
+  static const add_link = IconSpec(0xe178);
+  static const add_location = IconSpec(0xe567);
+  static const add_location_alt = IconSpec(0xef3a);
+  static const add_moderator = IconSpec(0xe97d);
+  static const add_notes = IconSpec(0xe091);
+  static const add_photo_alternate = IconSpec(0xe43e);
+  static const add_reaction = IconSpec(0xe1d3);
+  static const add_road = IconSpec(0xef3b);
+  static const add_row_above = IconSpec(0xf423);
+  static const add_row_below = IconSpec(0xf422);
+  static const add_shopping_cart = IconSpec(0xe854);
+  static const add_task = IconSpec(0xf23a);
+  static const add_to_drive = IconSpec(0xe65c);
+  static const add_to_home_screen = IconSpec(0xe1fe);
+  static const add_to_photos = IconSpec(0xe39d);
+  static const add_to_queue = IconSpec(0xe05c);
+  static const add_triangle = IconSpec(0xf48e);
+  static const addchart = IconSpec(0xef3c);
+  static const adf_scanner = IconSpec(0xeada);
+  static const adjust = IconSpec(0xe39e);
+  static const admin_meds = IconSpec(0xe48d);
+  static const admin_panel_settings = IconSpec(0xef3d);
+  static const ads_click = IconSpec(0xe762);
+  static const agender = IconSpec(0xf888);
+  static const agriculture = IconSpec(0xea79);
+  static const air = IconSpec(0xefd8);
+  static const air_freshener = IconSpec(0xe2ca);
+  static const air_purifier = IconSpec(0xe97e);
+  static const air_purifier_gen = IconSpec(0xe829);
+  static const airline_seat_flat = IconSpec(0xe630);
+  static const airline_seat_flat_angled = IconSpec(0xe631);
+  static const airline_seat_individual_suite = IconSpec(0xe632);
+  static const airline_seat_legroom_extra = IconSpec(0xe633);
+  static const airline_seat_legroom_normal = IconSpec(0xe634);
+  static const airline_seat_legroom_reduced = IconSpec(0xe635);
+  static const airline_seat_recline_extra = IconSpec(0xe636);
+  static const airline_seat_recline_normal = IconSpec(0xe637);
+  static const airline_stops = IconSpec(0xe7d0);
+  static const airlines = IconSpec(0xe7ca);
+  static const airplane_ticket = IconSpec(0xefd9);
+  static const airplanemode_active = IconSpec(0xe53d);
+  static const airplanemode_inactive = IconSpec(0xe194);
+  static const airplay = IconSpec(0xe055);
+  static const airport_shuttle = IconSpec(0xeb3c);
+  static const airware = IconSpec(0xf154);
+  static const airwave = IconSpec(0xf154);
+  static const alarm = IconSpec(0xe855);
+  static const alarm_add = IconSpec(0xe856);
+  static const alarm_off = IconSpec(0xe857);
+  static const alarm_on = IconSpec(0xe858);
+  static const alarm_pause = IconSpec(0xf35b);
+  static const alarm_smart_wake = IconSpec(0xf6b0);
+  static const album = IconSpec(0xe019);
+  static const align_center = IconSpec(0xe356);
+  static const align_end = IconSpec(0xf797);
+  static const align_flex_center = IconSpec(0xf796);
+  static const align_flex_end = IconSpec(0xf795);
+  static const align_flex_start = IconSpec(0xf794);
+  static const align_horizontal_center = IconSpec(0xe00f);
+  static const align_horizontal_left = IconSpec(0xe00d);
+  static const align_horizontal_right = IconSpec(0xe010);
+  static const align_items_stretch = IconSpec(0xf793);
+  static const align_justify_center = IconSpec(0xf792);
+  static const align_justify_flex_end = IconSpec(0xf791);
+  static const align_justify_flex_start = IconSpec(0xf790);
+  static const align_justify_space_around = IconSpec(0xf78f);
+  static const align_justify_space_between = IconSpec(0xf78e);
+  static const align_justify_space_even = IconSpec(0xf78d);
+  static const align_justify_stretch = IconSpec(0xf78c);
+  static const align_self_stretch = IconSpec(0xf78b);
+  static const align_space_around = IconSpec(0xf78a);
+  static const align_space_between = IconSpec(0xf789);
+  static const align_space_even = IconSpec(0xf788);
+  static const align_start = IconSpec(0xf787);
+  static const align_stretch = IconSpec(0xf786);
+  static const align_vertical_bottom = IconSpec(0xe015);
+  static const align_vertical_center = IconSpec(0xe011);
+  static const align_vertical_top = IconSpec(0xe00c);
+  static const all_inbox = IconSpec(0xe97f);
+  static const all_inclusive = IconSpec(0xeb3d);
+  static const all_match = IconSpec(0xe093);
+  static const all_out = IconSpec(0xe90b);
+  static const allergies = IconSpec(0xe094);
+  static const allergy = IconSpec(0xe64e);
+  static const alt_route = IconSpec(0xf184);
+  static const alternate_email = IconSpec(0xe0e6);
+  static const altitude = IconSpec(0xf873);
+  static const ambient_screen = IconSpec(0xf6c4);
+  static const ambulance = IconSpec(0xf803);
+  static const amend = IconSpec(0xf802);
+  static const amp_stories = IconSpec(0xea13);
+  static const analytics = IconSpec(0xef3e);
+  static const anchor = IconSpec(0xf1cd);
+  static const android = IconSpec(0xe859);
+  static const animated_images = IconSpec(0xf49a);
+  static const animation = IconSpec(0xe71c);
+  static const announcement = IconSpec(0xe87f);
+  static const aod = IconSpec(0xefda);
+  static const aod_tablet = IconSpec(0xf89f);
+  static const aod_watch = IconSpec(0xf6ac);
+  static const apartment = IconSpec(0xea40);
+  static const api = IconSpec(0xf1b7);
+  static const apk_document = IconSpec(0xf88e);
+  static const apk_install = IconSpec(0xf88f);
+  static const app_badging = IconSpec(0xf72f);
+  static const app_blocking = IconSpec(0xef3f);
+  static const app_promo = IconSpec(0xe981);
+  static const app_registration = IconSpec(0xef40);
+  static const app_settings_alt = IconSpec(0xef41);
+  static const app_shortcut = IconSpec(0xeae4);
+  static const apparel = IconSpec(0xef7b);
+  static const approval = IconSpec(0xe982);
+  static const approval_delegation = IconSpec(0xf84a);
+  static const apps = IconSpec(0xe5c3);
+  static const apps_outage = IconSpec(0xe7cc);
+  static const aq = IconSpec(0xf55a);
+  static const aq_indoor = IconSpec(0xf55b);
+  static const ar_on_you = IconSpec(0xef7c);
+  static const ar_stickers = IconSpec(0xe983);
+  static const architecture = IconSpec(0xea3b);
+  static const archive = IconSpec(0xe149);
+  static const area_chart = IconSpec(0xe770);
+  static const arming_countdown = IconSpec(0xe78a);
+  static const arrow_and_edge = IconSpec(0xf5d7);
+  static const arrow_back = IconSpec(0xe5c4);
+  static const arrow_back_2 = IconSpec(0xf43a);
+  static const arrow_back_ios = IconSpec(0xe5e0);
+  static const arrow_back_ios_new = IconSpec(0xe2ea);
+  static const arrow_circle_down = IconSpec(0xf181);
+  static const arrow_circle_left = IconSpec(0xeaa7);
+  static const arrow_circle_right = IconSpec(0xeaaa);
+  static const arrow_circle_up = IconSpec(0xf182);
+  static const arrow_cool_down = IconSpec(0xf4b6);
+  static const arrow_downward = IconSpec(0xe5db);
+  static const arrow_downward_alt = IconSpec(0xe984);
+  static const arrow_drop_down = IconSpec(0xe5c5);
+  static const arrow_drop_down_circle = IconSpec(0xe5c6);
+  static const arrow_drop_up = IconSpec(0xe5c7);
+  static const arrow_forward = IconSpec(0xe5c8);
+  static const arrow_forward_ios = IconSpec(0xe5e1);
+  static const arrow_insert = IconSpec(0xf837);
+  static const arrow_left = IconSpec(0xe5de);
+  static const arrow_left_alt = IconSpec(0xef7d);
+  static const arrow_menu_close = IconSpec(0xf3d3);
+  static const arrow_menu_open = IconSpec(0xf3d2);
+  static const arrow_or_edge = IconSpec(0xf5d6);
+  static const arrow_outward = IconSpec(0xf8ce);
+  static const arrow_range = IconSpec(0xf69b);
+  static const arrow_right = IconSpec(0xe5df);
+  static const arrow_right_alt = IconSpec(0xe941);
+  static const arrow_selector_tool = IconSpec(0xf82f);
+  static const arrow_split = IconSpec(0xea04);
+  static const arrow_top_left = IconSpec(0xf72e);
+  static const arrow_top_right = IconSpec(0xf72d);
+  static const arrow_upload_progress = IconSpec(0xf3f4);
+  static const arrow_upload_ready = IconSpec(0xf3f5);
+  static const arrow_upward = IconSpec(0xe5d8);
+  static const arrow_upward_alt = IconSpec(0xe986);
+  static const arrow_warm_up = IconSpec(0xf4b5);
+  static const arrows_input = IconSpec(0xf394);
+  static const arrows_more_down = IconSpec(0xf8ab);
+  static const arrows_more_up = IconSpec(0xf8ac);
+  static const arrows_output = IconSpec(0xf393);
+  static const arrows_outward = IconSpec(0xf72c);
+  static const art_track = IconSpec(0xe060);
+  static const article = IconSpec(0xef42);
+  static const article_person = IconSpec(0xf368);
+  static const article_shortcut = IconSpec(0xf587);
+  static const artist = IconSpec(0xe01a);
+  static const aspect_ratio = IconSpec(0xe85b);
+  static const assessment = IconSpec(0xf0cc);
+  static const assignment = IconSpec(0xe85d);
+  static const assignment_add = IconSpec(0xf848);
+  static const assignment_ind = IconSpec(0xe85e);
+  static const assignment_late = IconSpec(0xe85f);
+  static const assignment_return = IconSpec(0xe860);
+  static const assignment_returned = IconSpec(0xe861);
+  static const assignment_turned_in = IconSpec(0xe862);
+  static const assist_walker = IconSpec(0xf8d5);
+  static const assistant = IconSpec(0xe39f);
+  static const assistant_device = IconSpec(0xe987);
+  static const assistant_direction = IconSpec(0xe988);
+  static const assistant_navigation = IconSpec(0xe989);
+  static const assistant_on_hub = IconSpec(0xf6c1);
+  static const assistant_photo = IconSpec(0xf0c6);
+  static const assured_workload = IconSpec(0xeb6f);
+  static const asterisk = IconSpec(0xf525);
+  static const astrophotography_auto = IconSpec(0xf1d9);
+  static const astrophotography_off = IconSpec(0xf1da);
+  static const atm = IconSpec(0xe573);
+  static const atr = IconSpec(0xebc7);
+  static const attach_email = IconSpec(0xea5e);
+  static const attach_file = IconSpec(0xe226);
+  static const attach_file_add = IconSpec(0xf841);
+  static const attach_file_off = IconSpec(0xf4d9);
+  static const attach_money = IconSpec(0xe227);
+  static const attachment = IconSpec(0xe2bc);
+  static const attractions = IconSpec(0xea52);
+  static const attribution = IconSpec(0xefdb);
+  static const audio_description = IconSpec(0xf58c);
+  static const audio_file = IconSpec(0xeb82);
+  static const audio_video_receiver = IconSpec(0xf5d3);
+  static const audiotrack = IconSpec(0xe405);
+  static const auto_activity_zone = IconSpec(0xf8ad);
+  static const auto_awesome = IconSpec(0xe65f);
+  static const auto_awesome_mosaic = IconSpec(0xe660);
+  static const auto_awesome_motion = IconSpec(0xe661);
+  static const auto_delete = IconSpec(0xea4c);
+  static const auto_detect_voice = IconSpec(0xf83e);
+  static const auto_draw_solid = IconSpec(0xe98a);
+  static const auto_fix = IconSpec(0xe663);
+  static const auto_fix_high = IconSpec(0xe663);
+  static const auto_fix_normal = IconSpec(0xe664);
+  static const auto_fix_off = IconSpec(0xe665);
+  static const auto_graph = IconSpec(0xe4fb);
+  static const auto_label = IconSpec(0xf6be);
+  static const auto_meeting_room = IconSpec(0xf6bf);
+  static const auto_mode = IconSpec(0xec20);
+  static const auto_read_pause = IconSpec(0xf219);
+  static const auto_read_play = IconSpec(0xf216);
+  static const auto_schedule = IconSpec(0xe214);
+  static const auto_stories = IconSpec(0xe666);
+  static const auto_timer = IconSpec(0xef7f);
+  static const auto_towing = IconSpec(0xe71e);
+  static const auto_transmission = IconSpec(0xf53f);
+  static const auto_videocam = IconSpec(0xf6c0);
+  static const autofps_select = IconSpec(0xefdc);
+  static const automation = IconSpec(0xf421);
+  static const autopause = IconSpec(0xf6b6);
+  static const autopay = IconSpec(0xf84b);
+  static const autoplay = IconSpec(0xf6b5);
+  static const autorenew = IconSpec(0xe863);
+  static const autostop = IconSpec(0xf682);
+  static const av1 = IconSpec(0xf4b0);
+  static const av_timer = IconSpec(0xe01b);
+  static const avc = IconSpec(0xf4af);
+  static const avg_pace = IconSpec(0xf6bb);
+  static const avg_time = IconSpec(0xf813);
+  static const award_star = IconSpec(0xf612);
+  static const azm = IconSpec(0xf6ec);
+  static const baby_changing_station = IconSpec(0xf19b);
+  static const back_hand = IconSpec(0xe764);
+  static const back_to_tab = IconSpec(0xf72b);
+  static const background_dot_large = IconSpec(0xf79e);
+  static const background_dot_small = IconSpec(0xf514);
+  static const background_grid_small = IconSpec(0xf79d);
+  static const background_replace = IconSpec(0xf20a);
+  static const backlight_high = IconSpec(0xf7ed);
+  static const backlight_high_off = IconSpec(0xf4ef);
+  static const backlight_low = IconSpec(0xf7ec);
+  static const backpack = IconSpec(0xf19c);
+  static const backspace = IconSpec(0xe14a);
+  static const backup = IconSpec(0xe864);
+  static const backup_table = IconSpec(0xef43);
+  static const badge = IconSpec(0xea67);
+  static const badge_critical_battery = IconSpec(0xf156);
+  static const bakery_dining = IconSpec(0xea53);
+  static const balance = IconSpec(0xeaf6);
+  static const balcony = IconSpec(0xe58f);
+  static const ballot = IconSpec(0xe172);
+  static const bar_chart = IconSpec(0xe26b);
+  static const bar_chart_4_bars = IconSpec(0xf681);
+  static const bar_chart_off = IconSpec(0xf411);
+  static const barcode = IconSpec(0xe70b);
+  static const barcode_reader = IconSpec(0xf85c);
+  static const barcode_scanner = IconSpec(0xe70c);
+  static const barefoot = IconSpec(0xf871);
+  static const batch_prediction = IconSpec(0xf0f5);
+  static const bath_outdoor = IconSpec(0xf6fb);
+  static const bath_private = IconSpec(0xf6fa);
+  static const bath_public_large = IconSpec(0xf6f9);
+  static const bathroom = IconSpec(0xefdd);
+  static const bathtub = IconSpec(0xea41);
+  static const battery_0_bar = IconSpec(0xebdc);
+  static const battery_1_bar = IconSpec(0xf09c);
+  static const battery_20 = IconSpec(0xf09c);
+  static const battery_2_bar = IconSpec(0xf09d);
+  static const battery_30 = IconSpec(0xf09d);
+  static const battery_3_bar = IconSpec(0xf09e);
+  static const battery_4_bar = IconSpec(0xf09f);
+  static const battery_50 = IconSpec(0xf09e);
+  static const battery_5_bar = IconSpec(0xf0a0);
+  static const battery_60 = IconSpec(0xf09f);
+  static const battery_6_bar = IconSpec(0xf0a1);
+  static const battery_80 = IconSpec(0xf0a0);
+  static const battery_90 = IconSpec(0xf0a1);
+  static const battery_alert = IconSpec(0xe19c);
+  static const battery_change = IconSpec(0xf7eb);
+  static const battery_charging_20 = IconSpec(0xf0a2);
+  static const battery_charging_30 = IconSpec(0xf0a3);
+  static const battery_charging_50 = IconSpec(0xf0a4);
+  static const battery_charging_60 = IconSpec(0xf0a5);
+  static const battery_charging_80 = IconSpec(0xf0a6);
+  static const battery_charging_90 = IconSpec(0xf0a7);
+  static const battery_charging_full = IconSpec(0xe1a3);
+  static const battery_error = IconSpec(0xf7ea);
+  static const battery_full = IconSpec(0xe1a5);
+  static const battery_full_alt = IconSpec(0xf13b);
+  static const battery_horiz_000 = IconSpec(0xf8ae);
+  static const battery_horiz_050 = IconSpec(0xf8af);
+  static const battery_horiz_075 = IconSpec(0xf8b0);
+  static const battery_low = IconSpec(0xf155);
+  static const battery_plus = IconSpec(0xf7e9);
+  static const battery_profile = IconSpec(0xe206);
+  static const battery_saver = IconSpec(0xefde);
+  static const battery_share = IconSpec(0xf67e);
+  static const battery_status_good = IconSpec(0xf67d);
+  static const battery_std = IconSpec(0xe1a5);
+  static const battery_unknown = IconSpec(0xe1a6);
+  static const battery_vert_005 = IconSpec(0xf8b1);
+  static const battery_vert_020 = IconSpec(0xf8b2);
+  static const battery_vert_050 = IconSpec(0xf8b3);
+  static const battery_very_low = IconSpec(0xf156);
+  static const beach_access = IconSpec(0xeb3e);
+  static const bed = IconSpec(0xefdf);
+  static const bedroom_baby = IconSpec(0xefe0);
+  static const bedroom_child = IconSpec(0xefe1);
+  static const bedroom_parent = IconSpec(0xefe2);
+  static const bedtime = IconSpec(0xf159);
+  static const bedtime_off = IconSpec(0xeb76);
+  static const beenhere = IconSpec(0xe52d);
+  static const bento = IconSpec(0xf1f4);
+  static const bia = IconSpec(0xf6eb);
+  static const bid_landscape = IconSpec(0xe678);
+  static const bid_landscape_disabled = IconSpec(0xef81);
+  static const bigtop_updates = IconSpec(0xe669);
+  static const bike_dock = IconSpec(0xf47b);
+  static const bike_lane = IconSpec(0xf47a);
+  static const bike_scooter = IconSpec(0xef45);
+  static const biotech = IconSpec(0xea3a);
+  static const blanket = IconSpec(0xe828);
+  static const blender = IconSpec(0xefe3);
+  static const blind = IconSpec(0xf8d6);
+  static const blinds = IconSpec(0xe286);
+  static const blinds_closed = IconSpec(0xec1f);
+  static const block = IconSpec(0xf08c);
+  static const blood_pressure = IconSpec(0xe097);
+  static const bloodtype = IconSpec(0xefe4);
+  static const bluetooth = IconSpec(0xe1a7);
+  static const bluetooth_audio = IconSpec(0xe60f);
+  static const bluetooth_connected = IconSpec(0xe1a8);
+  static const bluetooth_disabled = IconSpec(0xe1a9);
+  static const bluetooth_drive = IconSpec(0xefe5);
+  static const bluetooth_searching = IconSpec(0xe60f);
+  static const blur_circular = IconSpec(0xe3a2);
+  static const blur_linear = IconSpec(0xe3a3);
+  static const blur_medium = IconSpec(0xe84c);
+  static const blur_off = IconSpec(0xe3a4);
+  static const blur_on = IconSpec(0xe3a5);
+  static const blur_short = IconSpec(0xe8cf);
+  static const boat_bus = IconSpec(0xf36d);
+  static const boat_railway = IconSpec(0xf36c);
+  static const body_fat = IconSpec(0xe098);
+  static const body_system = IconSpec(0xe099);
+  static const bolt = IconSpec(0xea0b);
+  static const bomb = IconSpec(0xf568);
+  static const book = IconSpec(0xe86e);
+  static const book_2 = IconSpec(0xf53e);
+  static const book_3 = IconSpec(0xf53d);
+  static const book_4 = IconSpec(0xf53c);
+  static const book_4_spark = IconSpec(0xf3e0);
+  static const book_5 = IconSpec(0xf53b);
+  static const book_6 = IconSpec(0xf3df);
+  static const book_online = IconSpec(0xf217);
+  static const book_ribbon = IconSpec(0xf3e7);
+  static const bookmark = IconSpec(0xe8e7);
+  static const bookmark_add = IconSpec(0xe598);
+  static const bookmark_added = IconSpec(0xe599);
+  static const bookmark_bag = IconSpec(0xf410);
+  static const bookmark_border = IconSpec(0xe8e7);
+  static const bookmark_check = IconSpec(0xf457);
+  static const bookmark_flag = IconSpec(0xf456);
+  static const bookmark_heart = IconSpec(0xf455);
+  static const bookmark_manager = IconSpec(0xf7b1);
+  static const bookmark_remove = IconSpec(0xe59a);
+  static const bookmark_star = IconSpec(0xf454);
+  static const bookmarks = IconSpec(0xe98b);
+  static const books_movies_and_music = IconSpec(0xef82);
+  static const border_all = IconSpec(0xe228);
+  static const border_bottom = IconSpec(0xe229);
+  static const border_clear = IconSpec(0xe22a);
+  static const border_color = IconSpec(0xe22b);
+  static const border_horizontal = IconSpec(0xe22c);
+  static const border_inner = IconSpec(0xe22d);
+  static const border_left = IconSpec(0xe22e);
+  static const border_outer = IconSpec(0xe22f);
+  static const border_right = IconSpec(0xe230);
+  static const border_style = IconSpec(0xe231);
+  static const border_top = IconSpec(0xe232);
+  static const border_vertical = IconSpec(0xe233);
+  static const borg = IconSpec(0xf40d);
+  static const bottom_app_bar = IconSpec(0xe730);
+  static const bottom_drawer = IconSpec(0xe72d);
+  static const bottom_navigation = IconSpec(0xe98c);
+  static const bottom_panel_close = IconSpec(0xf72a);
+  static const bottom_panel_open = IconSpec(0xf729);
+  static const bottom_right_click = IconSpec(0xf684);
+  static const bottom_sheets = IconSpec(0xe98d);
+  static const box = IconSpec(0xf5a4);
+  static const box_add = IconSpec(0xf5a5);
+  static const box_edit = IconSpec(0xf5a6);
+  static const boy = IconSpec(0xeb67);
+  static const brand_awareness = IconSpec(0xe98e);
+  static const brand_family = IconSpec(0xf4f1);
+  static const branding_watermark = IconSpec(0xe06b);
+  static const breakfast_dining = IconSpec(0xea54);
+  static const breaking_news = IconSpec(0xea08);
+  static const breaking_news_alt_1 = IconSpec(0xf0ba);
+  static const breastfeeding = IconSpec(0xf856);
+  static const brick = IconSpec(0xf388);
+  static const brightness_1 = IconSpec(0xe3fa);
+  static const brightness_2 = IconSpec(0xf036);
+  static const brightness_3 = IconSpec(0xe3a8);
+  static const brightness_4 = IconSpec(0xe3a9);
+  static const brightness_5 = IconSpec(0xe3aa);
+  static const brightness_6 = IconSpec(0xe3ab);
+  static const brightness_7 = IconSpec(0xe3ac);
+  static const brightness_alert = IconSpec(0xf5cf);
+  static const brightness_auto = IconSpec(0xe1ab);
+  static const brightness_empty = IconSpec(0xf7e8);
+  static const brightness_high = IconSpec(0xe1ac);
+  static const brightness_low = IconSpec(0xe1ad);
+  static const brightness_medium = IconSpec(0xe1ae);
+  static const bring_your_own_ip = IconSpec(0xe016);
+  static const broadcast_on_home = IconSpec(0xf8f8);
+  static const broadcast_on_personal = IconSpec(0xf8f9);
+  static const broken_image = IconSpec(0xe3ad);
+  static const browse = IconSpec(0xeb13);
+  static const browse_activity = IconSpec(0xf8a5);
+  static const browse_gallery = IconSpec(0xebd1);
+  static const browser_not_supported = IconSpec(0xef47);
+  static const browser_updated = IconSpec(0xe7cf);
+  static const brunch_dining = IconSpec(0xea73);
+  static const brush = IconSpec(0xe3ae);
+  static const bubble = IconSpec(0xef83);
+  static const bubble_chart = IconSpec(0xe6dd);
+  static const bubbles = IconSpec(0xf64e);
+  static const bug_report = IconSpec(0xe868);
+  static const build = IconSpec(0xf8cd);
+  static const build_circle = IconSpec(0xef48);
+  static const bungalow = IconSpec(0xe591);
+  static const burst_mode = IconSpec(0xe43c);
+  static const bus_alert = IconSpec(0xe98f);
+  static const bus_railway = IconSpec(0xf36b);
+  static const business = IconSpec(0xe7ee);
+  static const business_center = IconSpec(0xeb3f);
+  static const business_chip = IconSpec(0xf84c);
+  static const business_messages = IconSpec(0xef84);
+  static const buttons_alt = IconSpec(0xe72f);
+  static const cabin = IconSpec(0xe589);
+  static const cable = IconSpec(0xefe6);
+  static const cable_car = IconSpec(0xf479);
+  static const cached = IconSpec(0xe86a);
+  static const cadence = IconSpec(0xf4b4);
+  static const cake = IconSpec(0xe7e9);
+  static const cake_add = IconSpec(0xf85b);
+  static const calculate = IconSpec(0xea5f);
+  static const calendar_add_on = IconSpec(0xef85);
+  static const calendar_apps_script = IconSpec(0xf0bb);
+  static const calendar_clock = IconSpec(0xf540);
+  static const calendar_month = IconSpec(0xebcc);
+  static const calendar_today = IconSpec(0xe935);
+  static const calendar_view_day = IconSpec(0xe936);
+  static const calendar_view_month = IconSpec(0xefe7);
+  static const calendar_view_week = IconSpec(0xefe8);
+  static const call = IconSpec(0xf0d4);
+  static const call_end = IconSpec(0xf0bc);
+  static const call_end_alt = IconSpec(0xf0bc);
+  static const call_log = IconSpec(0xe08e);
+  static const call_made = IconSpec(0xe0b2);
+  static const call_merge = IconSpec(0xe0b3);
+  static const call_missed = IconSpec(0xe0b4);
+  static const call_missed_outgoing = IconSpec(0xe0e4);
+  static const call_quality = IconSpec(0xf652);
+  static const call_received = IconSpec(0xe0b5);
+  static const call_split = IconSpec(0xe0b6);
+  static const call_to_action = IconSpec(0xe06c);
+  static const camera = IconSpec(0xe3af);
+  static const camera_alt = IconSpec(0xe412);
+  static const camera_enhance = IconSpec(0xe8fc);
+  static const camera_front = IconSpec(0xe3b1);
+  static const camera_indoor = IconSpec(0xefe9);
+  static const camera_outdoor = IconSpec(0xefea);
+  static const camera_rear = IconSpec(0xe3b2);
+  static const camera_roll = IconSpec(0xe3b3);
+  static const camera_video = IconSpec(0xf7a6);
+  static const cameraswitch = IconSpec(0xefeb);
+  static const campaign = IconSpec(0xef49);
+  static const camping = IconSpec(0xf8a2);
+  static const cancel = IconSpec(0xe888);
+  static const cancel_presentation = IconSpec(0xe0e9);
+  static const cancel_schedule_send = IconSpec(0xea39);
+  static const candle = IconSpec(0xf588);
+  static const candlestick_chart = IconSpec(0xead4);
+  static const captive_portal = IconSpec(0xf728);
+  static const capture = IconSpec(0xf727);
+  static const car_crash = IconSpec(0xebf2);
+  static const car_defrost_left = IconSpec(0xf344);
+  static const car_defrost_low_left = IconSpec(0xf343);
+  static const car_defrost_low_right = IconSpec(0xf342);
+  static const car_defrost_mid_low_left = IconSpec(0xf341);
+  static const car_defrost_mid_right = IconSpec(0xf340);
+  static const car_defrost_right = IconSpec(0xf33f);
+  static const car_fan_low_left = IconSpec(0xf33e);
+  static const car_fan_low_mid_left = IconSpec(0xf33d);
+  static const car_fan_low_right = IconSpec(0xf33c);
+  static const car_fan_mid_left = IconSpec(0xf33b);
+  static const car_fan_mid_low_right = IconSpec(0xf33a);
+  static const car_fan_mid_right = IconSpec(0xf339);
+  static const car_fan_recirculate = IconSpec(0xf338);
+  static const car_gear = IconSpec(0xf337);
+  static const car_lock = IconSpec(0xf336);
+  static const car_mirror_heat = IconSpec(0xf335);
+  static const car_rental = IconSpec(0xea55);
+  static const car_repair = IconSpec(0xea56);
+  static const car_tag = IconSpec(0xf4e3);
+  static const card_giftcard = IconSpec(0xe8f6);
+  static const card_membership = IconSpec(0xe8f7);
+  static const card_travel = IconSpec(0xe8f8);
+  static const cardio_load = IconSpec(0xf4b9);
+  static const cardiology = IconSpec(0xe09c);
+  static const cards = IconSpec(0xe991);
+  static const cards_star = IconSpec(0xf375);
+  static const carpenter = IconSpec(0xf1f8);
+  static const carry_on_bag = IconSpec(0xeb08);
+  static const carry_on_bag_checked = IconSpec(0xeb0b);
+  static const carry_on_bag_inactive = IconSpec(0xeb0a);
+  static const carry_on_bag_question = IconSpec(0xeb09);
+  static const cases = IconSpec(0xe992);
+  static const casino = IconSpec(0xeb40);
+  static const cast = IconSpec(0xe307);
+  static const cast_connected = IconSpec(0xe308);
+  static const cast_for_education = IconSpec(0xefec);
+  static const cast_pause = IconSpec(0xf5f0);
+  static const cast_warning = IconSpec(0xf5ef);
+  static const castle = IconSpec(0xeab1);
+  static const category = IconSpec(0xe574);
+  static const category_search = IconSpec(0xf437);
+  static const celebration = IconSpec(0xea65);
+  static const cell_merge = IconSpec(0xf82e);
+  static const cell_tower = IconSpec(0xebba);
+  static const cell_wifi = IconSpec(0xe0ec);
+  static const center_focus_strong = IconSpec(0xe3b4);
+  static const center_focus_weak = IconSpec(0xe3b5);
+  static const chair = IconSpec(0xefed);
+  static const chair_alt = IconSpec(0xefee);
+  static const chalet = IconSpec(0xe585);
+  static const change_circle = IconSpec(0xe2e7);
+  static const change_history = IconSpec(0xe86b);
+  static const charger = IconSpec(0xe2ae);
+  static const charging_station = IconSpec(0xf19d);
+  static const chart_data = IconSpec(0xe473);
+  static const chat = IconSpec(0xe0c9);
+  static const chat_add_on = IconSpec(0xf0f3);
+  static const chat_apps_script = IconSpec(0xf0bd);
+  static const chat_bubble = IconSpec(0xe0cb);
+  static const chat_bubble_outline = IconSpec(0xe0cb);
+  static const chat_error = IconSpec(0xf7ac);
+  static const chat_info = IconSpec(0xf52b);
+  static const chat_paste_go = IconSpec(0xf6bd);
+  static const chat_paste_go_2 = IconSpec(0xf3cb);
+  static const check = IconSpec(0xe5ca);
+  static const check_box = IconSpec(0xe834);
+  static const check_box_outline_blank = IconSpec(0xe835);
+  static const check_circle = IconSpec(0xf0be);
+  static const check_circle_filled = IconSpec(0xf0be);
+  static const check_circle_outline = IconSpec(0xf0be);
+  static const check_in_out = IconSpec(0xf6f6);
+  static const check_indeterminate_small = IconSpec(0xf88a);
+  static const check_small = IconSpec(0xf88b);
+  static const checkbook = IconSpec(0xe70d);
+  static const checked_bag = IconSpec(0xeb0c);
+  static const checked_bag_question = IconSpec(0xeb0d);
+  static const checklist = IconSpec(0xe6b1);
+  static const checklist_rtl = IconSpec(0xe6b3);
+  static const checkroom = IconSpec(0xf19e);
+  static const cheer = IconSpec(0xf6a8);
+  static const chef_hat = IconSpec(0xf357);
+  static const chess = IconSpec(0xf5e7);
+  static const chess_pawn = IconSpec(0xf3b6);
+  static const chevron_backward = IconSpec(0xf46b);
+  static const chevron_forward = IconSpec(0xf46a);
+  static const chevron_left = IconSpec(0xe5cb);
+  static const chevron_right = IconSpec(0xe5cc);
+  static const child_care = IconSpec(0xeb41);
+  static const child_friendly = IconSpec(0xeb42);
+  static const chip_extraction = IconSpec(0xf821);
+  static const chips = IconSpec(0xe993);
+  static const chrome_reader_mode = IconSpec(0xe86d);
+  static const chromecast_2 = IconSpec(0xf17b);
+  static const chromecast_device = IconSpec(0xe83c);
+  static const chronic = IconSpec(0xebb2);
+  static const church = IconSpec(0xeaae);
+  static const cinematic_blur = IconSpec(0xf853);
+  static const circle = IconSpec(0xef4a);
+  static const circle_notifications = IconSpec(0xe994);
+  static const circles = IconSpec(0xe7ea);
+  static const circles_ext = IconSpec(0xe7ec);
+  static const clarify = IconSpec(0xf0bf);
+  static const k_class = IconSpec(0xe86e);
+  static const clean_hands = IconSpec(0xf21f);
+  static const cleaning = IconSpec(0xe995);
+  static const cleaning_bucket = IconSpec(0xf8b4);
+  static const cleaning_services = IconSpec(0xf0ff);
+  static const clear = IconSpec(0xe5cd);
+  static const clear_all = IconSpec(0xe0b8);
+  static const clear_day = IconSpec(0xf157);
+  static const clear_night = IconSpec(0xf159);
+  static const climate_mini_split = IconSpec(0xf8b5);
+  static const clinical_notes = IconSpec(0xe09e);
+  static const clock_arrow_down = IconSpec(0xf382);
+  static const clock_arrow_up = IconSpec(0xf381);
+  static const clock_loader_10 = IconSpec(0xf726);
+  static const clock_loader_20 = IconSpec(0xf725);
+  static const clock_loader_40 = IconSpec(0xf724);
+  static const clock_loader_60 = IconSpec(0xf723);
+  static const clock_loader_80 = IconSpec(0xf722);
+  static const clock_loader_90 = IconSpec(0xf721);
+  static const close = IconSpec(0xe5cd);
+  static const close_fullscreen = IconSpec(0xf1cf);
+  static const close_small = IconSpec(0xf508);
+  static const closed_caption = IconSpec(0xe996);
+  static const closed_caption_add = IconSpec(0xf4ae);
+  static const closed_caption_disabled = IconSpec(0xf1dc);
+  static const closed_caption_off = IconSpec(0xe996);
+  static const cloud = IconSpec(0xf15c);
+  static const cloud_alert = IconSpec(0xf3cc);
+  static const cloud_circle = IconSpec(0xe2be);
+  static const cloud_done = IconSpec(0xe2bf);
+  static const cloud_download = IconSpec(0xe2c0);
+  static const cloud_lock = IconSpec(0xf386);
+  static const cloud_off = IconSpec(0xe2c1);
+  static const cloud_queue = IconSpec(0xf15c);
+  static const cloud_sync = IconSpec(0xeb5a);
+  static const cloud_upload = IconSpec(0xe2c3);
+  static const cloudy = IconSpec(0xf15c);
+  static const cloudy_filled = IconSpec(0xf15c);
+  static const cloudy_snowing = IconSpec(0xe810);
+  static const co2 = IconSpec(0xe7b0);
+  static const co_present = IconSpec(0xeaf0);
+  static const code = IconSpec(0xe86f);
+  static const code_blocks = IconSpec(0xf84d);
+  static const code_off = IconSpec(0xe4f3);
+  static const coffee = IconSpec(0xefef);
+  static const coffee_maker = IconSpec(0xeff0);
+  static const cognition = IconSpec(0xe09f);
+  static const cognition_2 = IconSpec(0xf3b5);
+  static const collapse_all = IconSpec(0xe944);
+  static const collapse_content = IconSpec(0xf507);
+  static const collections = IconSpec(0xe3d3);
+  static const collections_bookmark = IconSpec(0xe431);
+  static const color_lens = IconSpec(0xe40a);
+  static const colorize = IconSpec(0xe3b8);
+  static const colors = IconSpec(0xe997);
+  static const combine_columns = IconSpec(0xf420);
+  static const comedy_mask = IconSpec(0xf4d6);
+  static const comic_bubble = IconSpec(0xf5dd);
+  static const comment = IconSpec(0xe24c);
+  static const comment_bank = IconSpec(0xea4e);
+  static const comments_disabled = IconSpec(0xe7a2);
+  static const commit = IconSpec(0xeaf5);
+  static const communication = IconSpec(0xe27c);
+  static const communities = IconSpec(0xeb16);
+  static const communities_filled = IconSpec(0xeb16);
+  static const commute = IconSpec(0xe940);
+  static const compare = IconSpec(0xe3b9);
+  static const compare_arrows = IconSpec(0xe915);
+  static const compass_calibration = IconSpec(0xe57c);
+  static const component_exchange = IconSpec(0xf1e7);
+  static const compost = IconSpec(0xe761);
+  static const compress = IconSpec(0xe94d);
+  static const computer = IconSpec(0xe31e);
+  static const concierge = IconSpec(0xf561);
+  static const conditions = IconSpec(0xe0a0);
+  static const confirmation_number = IconSpec(0xe638);
+  static const congenital = IconSpec(0xe0a1);
+  static const connect_without_contact = IconSpec(0xf223);
+  static const connected_tv = IconSpec(0xe998);
+  static const connecting_airports = IconSpec(0xe7c9);
+  static const construction = IconSpec(0xea3c);
+  static const contact_emergency = IconSpec(0xf8d1);
+  static const contact_mail = IconSpec(0xe0d0);
+  static const contact_page = IconSpec(0xf22e);
+  static const contact_phone = IconSpec(0xf0c0);
+  static const contact_phone_filled = IconSpec(0xf0c0);
+  static const contact_support = IconSpec(0xe94c);
+  static const contactless = IconSpec(0xea71);
+  static const contactless_off = IconSpec(0xf858);
+  static const contacts = IconSpec(0xe0ba);
+  static const contacts_product = IconSpec(0xe999);
+  static const content_copy = IconSpec(0xe14d);
+  static const content_cut = IconSpec(0xe14e);
+  static const content_paste = IconSpec(0xe14f);
+  static const content_paste_go = IconSpec(0xea8e);
+  static const content_paste_off = IconSpec(0xe4f8);
+  static const content_paste_search = IconSpec(0xea9b);
+  static const contextual_token = IconSpec(0xf486);
+  static const contextual_token_add = IconSpec(0xf485);
+  static const contract = IconSpec(0xf5a0);
+  static const contract_delete = IconSpec(0xf5a2);
+  static const contract_edit = IconSpec(0xf5a1);
+  static const contrast = IconSpec(0xeb37);
+  static const contrast_circle = IconSpec(0xf49f);
+  static const contrast_rtl_off = IconSpec(0xec72);
+  static const contrast_square = IconSpec(0xf4a0);
+  static const control_camera = IconSpec(0xe074);
+  static const control_point = IconSpec(0xe3ba);
+  static const control_point_duplicate = IconSpec(0xe3bb);
+  static const controller_gen = IconSpec(0xe83d);
+  static const conversion_path = IconSpec(0xf0c1);
+  static const conversion_path_off = IconSpec(0xf7b4);
+  static const convert_to_text = IconSpec(0xf41f);
+  static const conveyor_belt = IconSpec(0xf867);
+  static const cookie = IconSpec(0xeaac);
+  static const cookie_off = IconSpec(0xf79a);
+  static const cooking = IconSpec(0xe2b6);
+  static const cool_to_dry = IconSpec(0xe276);
+  static const copy_all = IconSpec(0xe2ec);
+  static const copyright = IconSpec(0xe90c);
+  static const coronavirus = IconSpec(0xf221);
+  static const corporate_fare = IconSpec(0xf1d0);
+  static const cottage = IconSpec(0xe587);
+  static const counter_0 = IconSpec(0xf785);
+  static const counter_1 = IconSpec(0xf784);
+  static const counter_2 = IconSpec(0xf783);
+  static const counter_3 = IconSpec(0xf782);
+  static const counter_4 = IconSpec(0xf781);
+  static const counter_5 = IconSpec(0xf780);
+  static const counter_6 = IconSpec(0xf77f);
+  static const counter_7 = IconSpec(0xf77e);
+  static const counter_8 = IconSpec(0xf77d);
+  static const counter_9 = IconSpec(0xf77c);
+  static const countertops = IconSpec(0xf1f7);
+  static const create = IconSpec(0xf097);
+  static const create_new_folder = IconSpec(0xe2cc);
+  static const credit_card = IconSpec(0xe8a1);
+  static const credit_card_clock = IconSpec(0xf438);
+  static const credit_card_gear = IconSpec(0xf52d);
+  static const credit_card_heart = IconSpec(0xf52c);
+  static const credit_card_off = IconSpec(0xe4f4);
+  static const credit_score = IconSpec(0xeff1);
+  static const crib = IconSpec(0xe588);
+  static const crisis_alert = IconSpec(0xebe9);
+  static const crop = IconSpec(0xe3be);
+  static const crop_16_9 = IconSpec(0xe3bc);
+  static const crop_3_2 = IconSpec(0xe3bd);
+  static const crop_5_4 = IconSpec(0xe3bf);
+  static const crop_7_5 = IconSpec(0xe3c0);
+  static const crop_9_16 = IconSpec(0xf549);
+  static const crop_din = IconSpec(0xe3c6);
+  static const crop_free = IconSpec(0xe3c2);
+  static const crop_landscape = IconSpec(0xe3c3);
+  static const crop_original = IconSpec(0xe3f4);
+  static const crop_portrait = IconSpec(0xe3c5);
+  static const crop_rotate = IconSpec(0xe437);
+  static const crop_square = IconSpec(0xe3c6);
+  static const crossword = IconSpec(0xf5e5);
+  static const crowdsource = IconSpec(0xeb18);
+  static const crown = IconSpec(0xecb3);
+  static const cruelty_free = IconSpec(0xe799);
+  static const css = IconSpec(0xeb93);
+  static const csv = IconSpec(0xe6cf);
+  static const currency_bitcoin = IconSpec(0xebc5);
+  static const currency_exchange = IconSpec(0xeb70);
+  static const currency_franc = IconSpec(0xeafa);
+  static const currency_lira = IconSpec(0xeaef);
+  static const currency_pound = IconSpec(0xeaf1);
+  static const currency_ruble = IconSpec(0xeaec);
+  static const currency_rupee = IconSpec(0xeaf7);
+  static const currency_rupee_circle = IconSpec(0xf460);
+  static const currency_yen = IconSpec(0xeafb);
+  static const currency_yuan = IconSpec(0xeaf9);
+  static const curtains = IconSpec(0xec1e);
+  static const curtains_closed = IconSpec(0xec1d);
+  static const custom_typography = IconSpec(0xe732);
+  static const cut = IconSpec(0xf08b);
+  static const cycle = IconSpec(0xf854);
+  static const cyclone = IconSpec(0xebd5);
+  static const dangerous = IconSpec(0xe99a);
+  static const dark_mode = IconSpec(0xe51c);
+  static const dashboard = IconSpec(0xe871);
+  static const dashboard_2 = IconSpec(0xf3ea);
+  static const dashboard_customize = IconSpec(0xe99b);
+  static const data_alert = IconSpec(0xf7f6);
+  static const data_array = IconSpec(0xead1);
+  static const data_check = IconSpec(0xf7f2);
+  static const data_exploration = IconSpec(0xe76f);
+  static const data_info_alert = IconSpec(0xf7f5);
+  static const data_loss_prevention = IconSpec(0xe2dc);
+  static const data_object = IconSpec(0xead3);
+  static const data_saver_off = IconSpec(0xeff2);
+  static const data_saver_on = IconSpec(0xeff3);
+  static const data_table = IconSpec(0xe99c);
+  static const data_thresholding = IconSpec(0xeb9f);
+  static const data_usage = IconSpec(0xeff2);
+  static const database = IconSpec(0xf20e);
+  static const database_off = IconSpec(0xf414);
+  static const database_search = IconSpec(0xf38e);
+  static const database_upload = IconSpec(0xf3dc);
+  static const dataset = IconSpec(0xf8ee);
+  static const dataset_linked = IconSpec(0xf8ef);
+  static const date_range = IconSpec(0xe916);
+  static const deblur = IconSpec(0xeb77);
+  static const deceased = IconSpec(0xe0a5);
+  static const decimal_decrease = IconSpec(0xf82d);
+  static const decimal_increase = IconSpec(0xf82c);
+  static const deck = IconSpec(0xea42);
+  static const dehaze = IconSpec(0xe3c7);
+  static const delete = IconSpec(0xe92e);
+  static const delete_forever = IconSpec(0xe92b);
+  static const delete_history = IconSpec(0xf518);
+  static const delete_outline = IconSpec(0xe92e);
+  static const delete_sweep = IconSpec(0xe16c);
+  static const delivery_dining = IconSpec(0xeb28);
+  static const delivery_truck_bolt = IconSpec(0xf3a2);
+  static const delivery_truck_speed = IconSpec(0xf3a1);
+  static const demography = IconSpec(0xe489);
+  static const density_large = IconSpec(0xeba9);
+  static const density_medium = IconSpec(0xeb9e);
+  static const density_small = IconSpec(0xeba8);
+  static const dentistry = IconSpec(0xe0a6);
+  static const departure_board = IconSpec(0xe576);
+  static const deployed_code = IconSpec(0xf720);
+  static const deployed_code_account = IconSpec(0xf51b);
+  static const deployed_code_alert = IconSpec(0xf5f2);
+  static const deployed_code_history = IconSpec(0xf5f3);
+  static const deployed_code_update = IconSpec(0xf5f4);
+  static const dermatology = IconSpec(0xe0a7);
+  static const description = IconSpec(0xe873);
+  static const deselect = IconSpec(0xebb6);
+  static const design_services = IconSpec(0xf10a);
+  static const desk = IconSpec(0xf8f4);
+  static const deskphone = IconSpec(0xf7fa);
+  static const desktop_access_disabled = IconSpec(0xe99d);
+  static const desktop_cloud = IconSpec(0xf3db);
+  static const desktop_cloud_stack = IconSpec(0xf3be);
+  static const desktop_landscape = IconSpec(0xf45e);
+  static const desktop_landscape_add = IconSpec(0xf439);
+  static const desktop_mac = IconSpec(0xe30b);
+  static const desktop_portrait = IconSpec(0xf45d);
+  static const desktop_windows = IconSpec(0xe30c);
+  static const destruction = IconSpec(0xf585);
+  static const details = IconSpec(0xe3c8);
+  static const detection_and_zone = IconSpec(0xe29f);
+  static const detector = IconSpec(0xe282);
+  static const detector_alarm = IconSpec(0xe1f7);
+  static const detector_battery = IconSpec(0xe204);
+  static const detector_co = IconSpec(0xe2af);
+  static const detector_offline = IconSpec(0xe223);
+  static const detector_smoke = IconSpec(0xe285);
+  static const detector_status = IconSpec(0xe1e8);
+  static const developer_board = IconSpec(0xe30d);
+  static const developer_board_off = IconSpec(0xe4ff);
+  static const developer_guide = IconSpec(0xe99e);
+  static const developer_mode = IconSpec(0xe1b0);
+  static const developer_mode_tv = IconSpec(0xe874);
+  static const device_hub = IconSpec(0xe335);
+  static const device_reset = IconSpec(0xe8b3);
+  static const device_thermostat = IconSpec(0xe1ff);
+  static const device_unknown = IconSpec(0xe339);
+  static const devices = IconSpec(0xe326);
+  static const devices_fold = IconSpec(0xebde);
+  static const devices_fold_2 = IconSpec(0xf406);
+  static const devices_off = IconSpec(0xf7a5);
+  static const devices_other = IconSpec(0xe337);
+  static const devices_wearables = IconSpec(0xf6ab);
+  static const dew_point = IconSpec(0xf879);
+  static const diagnosis = IconSpec(0xe0a8);
+  static const diagonal_line = IconSpec(0xf41e);
+  static const dialer_sip = IconSpec(0xe0bb);
+  static const dialogs = IconSpec(0xe99f);
+  static const dialpad = IconSpec(0xe0bc);
+  static const diamond = IconSpec(0xead5);
+  static const dictionary = IconSpec(0xf539);
+  static const difference = IconSpec(0xeb7d);
+  static const digital_out_of_home = IconSpec(0xf1de);
+  static const digital_wellbeing = IconSpec(0xef86);
+  static const dining = IconSpec(0xeff4);
+  static const dinner_dining = IconSpec(0xea57);
+  static const directions = IconSpec(0xe52e);
+  static const directions_alt = IconSpec(0xf880);
+  static const directions_alt_off = IconSpec(0xf881);
+  static const directions_bike = IconSpec(0xe52f);
+  static const directions_boat = IconSpec(0xeff5);
+  static const directions_boat_filled = IconSpec(0xeff5);
+  static const directions_bus = IconSpec(0xeff6);
+  static const directions_bus_filled = IconSpec(0xeff6);
+  static const directions_car = IconSpec(0xeff7);
+  static const directions_car_filled = IconSpec(0xeff7);
+  static const directions_off = IconSpec(0xf10f);
+  static const directions_railway = IconSpec(0xeff8);
+  static const directions_railway_2 = IconSpec(0xf462);
+  static const directions_railway_filled = IconSpec(0xeff8);
+  static const directions_run = IconSpec(0xe566);
+  static const directions_subway = IconSpec(0xeffa);
+  static const directions_subway_filled = IconSpec(0xeffa);
+  static const directions_transit = IconSpec(0xeffa);
+  static const directions_transit_filled = IconSpec(0xeffa);
+  static const directions_walk = IconSpec(0xe536);
+  static const directory_sync = IconSpec(0xe394);
+  static const dirty_lens = IconSpec(0xef4b);
+  static const disabled_by_default = IconSpec(0xf230);
+  static const disabled_visible = IconSpec(0xe76e);
+  static const disc_full = IconSpec(0xe610);
+  static const discover_tune = IconSpec(0xe018);
+  static const dishwasher = IconSpec(0xe9a0);
+  static const dishwasher_gen = IconSpec(0xe832);
+  static const display_external_input = IconSpec(0xf7e7);
+  static const display_settings = IconSpec(0xeb97);
+  static const distance = IconSpec(0xf6ea);
+  static const diversity_1 = IconSpec(0xf8d7);
+  static const diversity_2 = IconSpec(0xf8d8);
+  static const diversity_3 = IconSpec(0xf8d9);
+  static const diversity_4 = IconSpec(0xf857);
+  static const dns = IconSpec(0xe875);
+  static const do_disturb = IconSpec(0xf08c);
+  static const do_disturb_alt = IconSpec(0xf08d);
+  static const do_disturb_off = IconSpec(0xf08e);
+  static const do_disturb_on = IconSpec(0xf08f);
+  static const do_not_disturb = IconSpec(0xf08d);
+  static const do_not_disturb_alt = IconSpec(0xf08c);
+  static const do_not_disturb_off = IconSpec(0xf08e);
+  static const do_not_disturb_on = IconSpec(0xf08f);
+  static const do_not_disturb_on_total_silence = IconSpec(0xeffb);
+  static const do_not_step = IconSpec(0xf19f);
+  static const do_not_touch = IconSpec(0xf1b0);
+  static const dock = IconSpec(0xe30e);
+  static const dock_to_bottom = IconSpec(0xf7e6);
+  static const dock_to_left = IconSpec(0xf7e5);
+  static const dock_to_right = IconSpec(0xf7e4);
+  static const docs = IconSpec(0xea7d);
+  static const docs_add_on = IconSpec(0xf0c2);
+  static const docs_apps_script = IconSpec(0xf0c3);
+  static const document_scanner = IconSpec(0xe5fa);
+  static const document_search = IconSpec(0xf385);
+  static const domain = IconSpec(0xe7ee);
+  static const domain_add = IconSpec(0xeb62);
+  static const domain_disabled = IconSpec(0xe0ef);
+  static const domain_verification = IconSpec(0xef4c);
+  static const domain_verification_off = IconSpec(0xf7b0);
+  static const domino_mask = IconSpec(0xf5e4);
+  static const done = IconSpec(0xe876);
+  static const done_all = IconSpec(0xe877);
+  static const done_outline = IconSpec(0xe92f);
+  static const donut_large = IconSpec(0xe917);
+  static const donut_small = IconSpec(0xe918);
+  static const door_back = IconSpec(0xeffc);
+  static const door_front = IconSpec(0xeffd);
+  static const door_open = IconSpec(0xe77c);
+  static const door_sensor = IconSpec(0xe28a);
+  static const door_sliding = IconSpec(0xeffe);
+  static const doorbell = IconSpec(0xefff);
+  static const doorbell_3p = IconSpec(0xe1e7);
+  static const doorbell_chime = IconSpec(0xe1f3);
+  static const double_arrow = IconSpec(0xea50);
+  static const downhill_skiing = IconSpec(0xe509);
+  static const download = IconSpec(0xf090);
+  static const download_2 = IconSpec(0xf523);
+  static const download_done = IconSpec(0xf091);
+  static const download_for_offline = IconSpec(0xf000);
+  static const downloading = IconSpec(0xf001);
+  static const draft = IconSpec(0xe66d);
+  static const draft_orders = IconSpec(0xe7b3);
+  static const drafts = IconSpec(0xe151);
+  static const drag_click = IconSpec(0xf71f);
+  static const drag_handle = IconSpec(0xe25d);
+  static const drag_indicator = IconSpec(0xe945);
+  static const drag_pan = IconSpec(0xf71e);
+  static const draw = IconSpec(0xe746);
+  static const draw_abstract = IconSpec(0xf7f8);
+  static const draw_collage = IconSpec(0xf7f7);
+  static const drawing_recognition = IconSpec(0xeb00);
+  static const dresser = IconSpec(0xe210);
+  static const drive_eta = IconSpec(0xeff7);
+  static const drive_export = IconSpec(0xf41d);
+  static const drive_file_move = IconSpec(0xe9a1);
+  static const drive_file_move_outline = IconSpec(0xe9a1);
+  static const drive_file_move_rtl = IconSpec(0xe9a1);
+  static const drive_file_rename_outline = IconSpec(0xe9a2);
+  static const drive_folder_upload = IconSpec(0xe9a3);
+  static const drive_fusiontable = IconSpec(0xe678);
+  static const dropdown = IconSpec(0xe9a4);
+  static const dropper_eye = IconSpec(0xf351);
+  static const dry = IconSpec(0xf1b3);
+  static const dry_cleaning = IconSpec(0xea58);
+  static const dual_screen = IconSpec(0xf6cf);
+  static const duo = IconSpec(0xe9a5);
+  static const dvr = IconSpec(0xe1b2);
+  static const dynamic_feed = IconSpec(0xea14);
+  static const dynamic_form = IconSpec(0xf1bf);
+  static const e911_avatar = IconSpec(0xf11a);
+  static const e911_emergency = IconSpec(0xf119);
+  static const e_mobiledata = IconSpec(0xf002);
+  static const e_mobiledata_badge = IconSpec(0xf7e3);
+  static const ear_sound = IconSpec(0xf356);
+  static const earbud_case = IconSpec(0xf327);
+  static const earbud_left = IconSpec(0xf326);
+  static const earbud_right = IconSpec(0xf325);
+  static const earbuds = IconSpec(0xf003);
+  static const earbuds_2 = IconSpec(0xf324);
+  static const earbuds_battery = IconSpec(0xf004);
+  static const early_on = IconSpec(0xe2ba);
+  static const earthquake = IconSpec(0xf64f);
+  static const east = IconSpec(0xf1df);
+  static const ecg = IconSpec(0xf80f);
+  static const ecg_heart = IconSpec(0xf6e9);
+  static const eco = IconSpec(0xea35);
+  static const eda = IconSpec(0xf6e8);
+  static const edgesensor_high = IconSpec(0xf005);
+  static const edgesensor_low = IconSpec(0xf006);
+  static const edit = IconSpec(0xf097);
+  static const edit_arrow_down = IconSpec(0xf380);
+  static const edit_arrow_up = IconSpec(0xf37f);
+  static const edit_attributes = IconSpec(0xe578);
+  static const edit_audio = IconSpec(0xf42d);
+  static const edit_calendar = IconSpec(0xe742);
+  static const edit_document = IconSpec(0xf88c);
+  static const edit_location = IconSpec(0xe568);
+  static const edit_location_alt = IconSpec(0xe1c5);
+  static const edit_note = IconSpec(0xe745);
+  static const edit_notifications = IconSpec(0xe525);
+  static const edit_off = IconSpec(0xe950);
+  static const edit_road = IconSpec(0xef4d);
+  static const edit_square = IconSpec(0xf88d);
+  static const editor_choice = IconSpec(0xf528);
+  static const egg = IconSpec(0xeacc);
+  static const egg_alt = IconSpec(0xeac8);
+  static const eject = IconSpec(0xe8fb);
+  static const elderly = IconSpec(0xf21a);
+  static const elderly_woman = IconSpec(0xeb69);
+  static const electric_bike = IconSpec(0xeb1b);
+  static const electric_bolt = IconSpec(0xec1c);
+  static const electric_car = IconSpec(0xeb1c);
+  static const electric_meter = IconSpec(0xec1b);
+  static const electric_moped = IconSpec(0xeb1d);
+  static const electric_rickshaw = IconSpec(0xeb1e);
+  static const electric_scooter = IconSpec(0xeb1f);
+  static const electrical_services = IconSpec(0xf102);
+  static const elevation = IconSpec(0xf6e7);
+  static const elevator = IconSpec(0xf1a0);
+  static const email = IconSpec(0xe159);
+  static const emergency = IconSpec(0xe1eb);
+  static const emergency_heat = IconSpec(0xf15d);
+  static const emergency_heat_2 = IconSpec(0xf4e5);
+  static const emergency_home = IconSpec(0xe82a);
+  static const emergency_recording = IconSpec(0xebf4);
+  static const emergency_share = IconSpec(0xebf6);
+  static const emergency_share_off = IconSpec(0xf59e);
+  static const emoji_emotions = IconSpec(0xea22);
+  static const emoji_events = IconSpec(0xea23);
+  static const emoji_flags = IconSpec(0xf0c6);
+  static const emoji_food_beverage = IconSpec(0xea1b);
+  static const emoji_language = IconSpec(0xf4cd);
+  static const emoji_nature = IconSpec(0xea1c);
+  static const emoji_objects = IconSpec(0xea24);
+  static const emoji_people = IconSpec(0xea1d);
+  static const emoji_symbols = IconSpec(0xea1e);
+  static const emoji_transportation = IconSpec(0xea1f);
+  static const emoticon = IconSpec(0xe5f3);
+  static const empty_dashboard = IconSpec(0xf844);
+  static const enable = IconSpec(0xf188);
+  static const encrypted = IconSpec(0xe593);
+  static const encrypted_add = IconSpec(0xf429);
+  static const encrypted_add_circle = IconSpec(0xf42a);
+  static const encrypted_minus_circle = IconSpec(0xf428);
+  static const encrypted_off = IconSpec(0xf427);
+  static const endocrinology = IconSpec(0xe0a9);
+  static const energy = IconSpec(0xe9a6);
+  static const energy_program_saving = IconSpec(0xf15f);
+  static const energy_program_time_used = IconSpec(0xf161);
+  static const energy_savings_leaf = IconSpec(0xec1a);
+  static const engineering = IconSpec(0xea3d);
+  static const enhanced_encryption = IconSpec(0xe63f);
+  static const ent = IconSpec(0xe0aa);
+  static const enterprise = IconSpec(0xe70e);
+  static const enterprise_off = IconSpec(0xeb4d);
+  static const equal = IconSpec(0xf77b);
+  static const equalizer = IconSpec(0xe01d);
+  static const eraser_size_1 = IconSpec(0xf3fc);
+  static const eraser_size_2 = IconSpec(0xf3fb);
+  static const eraser_size_3 = IconSpec(0xf3fa);
+  static const eraser_size_4 = IconSpec(0xf3f9);
+  static const eraser_size_5 = IconSpec(0xf3f8);
+  static const error = IconSpec(0xf8b6);
+  static const error_circle_rounded = IconSpec(0xf8b6);
+  static const error_med = IconSpec(0xe49b);
+  static const error_outline = IconSpec(0xf8b6);
+  static const escalator = IconSpec(0xf1a1);
+  static const escalator_warning = IconSpec(0xf1ac);
+  static const euro = IconSpec(0xea15);
+  static const euro_symbol = IconSpec(0xe926);
+  static const ev_charger = IconSpec(0xe56d);
+  static const ev_mobiledata_badge = IconSpec(0xf7e2);
+  static const ev_shadow = IconSpec(0xef8f);
+  static const ev_shadow_add = IconSpec(0xf580);
+  static const ev_shadow_minus = IconSpec(0xf57f);
+  static const ev_station = IconSpec(0xe56d);
+  static const event = IconSpec(0xe878);
+  static const event_available = IconSpec(0xe614);
+  static const event_busy = IconSpec(0xe615);
+  static const event_list = IconSpec(0xf683);
+  static const event_note = IconSpec(0xe616);
+  static const event_repeat = IconSpec(0xeb7b);
+  static const event_seat = IconSpec(0xe903);
+  static const event_upcoming = IconSpec(0xf238);
+  static const exclamation = IconSpec(0xf22f);
+  static const exercise = IconSpec(0xf6e6);
+  static const exit_to_app = IconSpec(0xe879);
+  static const expand = IconSpec(0xe94f);
+  static const expand_all = IconSpec(0xe946);
+  static const expand_circle_down = IconSpec(0xe7cd);
+  static const expand_circle_right = IconSpec(0xf591);
+  static const expand_circle_up = IconSpec(0xf5d2);
+  static const expand_content = IconSpec(0xf830);
+  static const expand_less = IconSpec(0xe5ce);
+  static const expand_more = IconSpec(0xe5cf);
+  static const expansion_panels = IconSpec(0xef90);
+  static const expension_panels = IconSpec(0xef90);
+  static const experiment = IconSpec(0xe686);
+  static const explicit = IconSpec(0xe01e);
+  static const explore = IconSpec(0xe87a);
+  static const explore_nearby = IconSpec(0xe538);
+  static const explore_off = IconSpec(0xe9a8);
+  static const explosion = IconSpec(0xf685);
+  static const export_notes = IconSpec(0xe0ac);
+  static const exposure = IconSpec(0xe3f6);
+  static const exposure_neg_1 = IconSpec(0xe3cb);
+  static const exposure_neg_2 = IconSpec(0xe3cc);
+  static const exposure_plus_1 = IconSpec(0xe800);
+  static const exposure_plus_2 = IconSpec(0xe3ce);
+  static const exposure_zero = IconSpec(0xe3cf);
+  static const extension = IconSpec(0xe87b);
+  static const extension_off = IconSpec(0xe4f5);
+  static const eye_tracking = IconSpec(0xf4c9);
+  static const eyeglasses = IconSpec(0xf6ee);
+  static const face = IconSpec(0xf008);
+  static const face_2 = IconSpec(0xf8da);
+  static const face_3 = IconSpec(0xf8db);
+  static const face_4 = IconSpec(0xf8dc);
+  static const face_5 = IconSpec(0xf8dd);
+  static const face_6 = IconSpec(0xf8de);
+  static const face_down = IconSpec(0xf402);
+  static const face_left = IconSpec(0xf401);
+  static const face_nod = IconSpec(0xf400);
+  static const face_retouching_natural = IconSpec(0xef4e);
+  static const face_retouching_off = IconSpec(0xf007);
+  static const face_right = IconSpec(0xf3ff);
+  static const face_shake = IconSpec(0xf3fe);
+  static const face_unlock = IconSpec(0xf008);
+  static const face_up = IconSpec(0xf3fd);
+  static const fact_check = IconSpec(0xf0c5);
+  static const factory = IconSpec(0xebbc);
+  static const falling = IconSpec(0xf60d);
+  static const familiar_face_and_zone = IconSpec(0xe21c);
+  static const family_history = IconSpec(0xe0ad);
+  static const family_home = IconSpec(0xeb26);
+  static const family_link = IconSpec(0xeb19);
+  static const family_restroom = IconSpec(0xf1a2);
+  static const family_star = IconSpec(0xf527);
+  static const fan_focus = IconSpec(0xf334);
+  static const fan_indirect = IconSpec(0xf333);
+  static const farsight_digital = IconSpec(0xf559);
+  static const fast_forward = IconSpec(0xe01f);
+  static const fast_rewind = IconSpec(0xe020);
+  static const fastfood = IconSpec(0xe57a);
+  static const faucet = IconSpec(0xe278);
+  static const favorite = IconSpec(0xe87e);
+  static const favorite_border = IconSpec(0xe87e);
+  static const fax = IconSpec(0xead8);
+  static const feature_search = IconSpec(0xe9a9);
+  static const featured_play_list = IconSpec(0xe06d);
+  static const featured_seasonal_and_gifts = IconSpec(0xef91);
+  static const featured_video = IconSpec(0xe06e);
+  static const feed = IconSpec(0xf009);
+  static const feedback = IconSpec(0xe87f);
+  static const female = IconSpec(0xe590);
+  static const femur = IconSpec(0xf891);
+  static const femur_alt = IconSpec(0xf892);
+  static const fence = IconSpec(0xf1f6);
+  static const fertile = IconSpec(0xf6e5);
+  static const festival = IconSpec(0xea68);
+  static const fiber_dvr = IconSpec(0xe05d);
+  static const fiber_manual_record = IconSpec(0xe061);
+  static const fiber_new = IconSpec(0xe05e);
+  static const fiber_pin = IconSpec(0xe06a);
+  static const fiber_smart_record = IconSpec(0xe062);
+  static const file_copy = IconSpec(0xe173);
+  static const file_copy_off = IconSpec(0xf4d8);
+  static const file_download = IconSpec(0xf090);
+  static const file_download_done = IconSpec(0xf091);
+  static const file_download_off = IconSpec(0xe4fe);
+  static const file_export = IconSpec(0xf3b2);
+  static const file_json = IconSpec(0xf3bb);
+  static const file_map = IconSpec(0xe2c5);
+  static const file_map_stack = IconSpec(0xf3e2);
+  static const file_open = IconSpec(0xeaf3);
+  static const file_png = IconSpec(0xf3bc);
+  static const file_present = IconSpec(0xea0e);
+  static const file_save = IconSpec(0xf17f);
+  static const file_save_off = IconSpec(0xe505);
+  static const file_upload = IconSpec(0xf09b);
+  static const file_upload_off = IconSpec(0xf886);
+  static const files = IconSpec(0xea85);
+  static const filter = IconSpec(0xe3d3);
+  static const filter_1 = IconSpec(0xe3d0);
+  static const filter_2 = IconSpec(0xe3d1);
+  static const filter_3 = IconSpec(0xe3d2);
+  static const filter_4 = IconSpec(0xe3d4);
+  static const filter_5 = IconSpec(0xe3d5);
+  static const filter_6 = IconSpec(0xe3d6);
+  static const filter_7 = IconSpec(0xe3d7);
+  static const filter_8 = IconSpec(0xe3d8);
+  static const filter_9 = IconSpec(0xe3d9);
+  static const filter_9_plus = IconSpec(0xe3da);
+  static const filter_alt = IconSpec(0xef4f);
+  static const filter_alt_off = IconSpec(0xeb32);
+  static const filter_arrow_right = IconSpec(0xf3d1);
+  static const filter_b_and_w = IconSpec(0xe3db);
+  static const filter_center_focus = IconSpec(0xe3dc);
+  static const filter_drama = IconSpec(0xe3dd);
+  static const filter_frames = IconSpec(0xe3de);
+  static const filter_hdr = IconSpec(0xe3df);
+  static const filter_list = IconSpec(0xe152);
+  static const filter_list_alt = IconSpec(0xe94e);
+  static const filter_list_off = IconSpec(0xeb57);
+  static const filter_none = IconSpec(0xe3e0);
+  static const filter_retrolux = IconSpec(0xe3e1);
+  static const filter_tilt_shift = IconSpec(0xe3e2);
+  static const filter_vintage = IconSpec(0xe3e3);
+  static const finance = IconSpec(0xe6bf);
+  static const finance_chip = IconSpec(0xf84e);
+  static const finance_mode = IconSpec(0xef92);
+  static const find_in_page = IconSpec(0xe880);
+  static const find_replace = IconSpec(0xe881);
+  static const fingerprint = IconSpec(0xe90d);
+  static const fingerprint_off = IconSpec(0xf49d);
+  static const fire_extinguisher = IconSpec(0xf1d8);
+  static const fire_hydrant = IconSpec(0xf1a3);
+  static const fire_truck = IconSpec(0xf8f2);
+  static const fireplace = IconSpec(0xea43);
+  static const first_page = IconSpec(0xe5dc);
+  static const fit_page = IconSpec(0xf77a);
+  static const fit_page_height = IconSpec(0xf397);
+  static const fit_page_width = IconSpec(0xf396);
+  static const fit_screen = IconSpec(0xea10);
+  static const fit_width = IconSpec(0xf779);
+  static const fitness_center = IconSpec(0xeb43);
+  static const fitness_tracker = IconSpec(0xf463);
+  static const flag = IconSpec(0xf0c6);
+  static const flag_2 = IconSpec(0xf40f);
+  static const flag_check = IconSpec(0xf3d8);
+  static const flag_circle = IconSpec(0xeaf8);
+  static const flag_filled = IconSpec(0xf0c6);
+  static const flaky = IconSpec(0xef50);
+  static const flare = IconSpec(0xe3e4);
+  static const flash_auto = IconSpec(0xe3e5);
+  static const flash_off = IconSpec(0xe3e6);
+  static const flash_on = IconSpec(0xe3e7);
+  static const flashlight_off = IconSpec(0xf00a);
+  static const flashlight_on = IconSpec(0xf00b);
+  static const flatware = IconSpec(0xf00c);
+  static const flex_direction = IconSpec(0xf778);
+  static const flex_no_wrap = IconSpec(0xf777);
+  static const flex_wrap = IconSpec(0xf776);
+  static const flight = IconSpec(0xe539);
+  static const flight_class = IconSpec(0xe7cb);
+  static const flight_land = IconSpec(0xe904);
+  static const flight_takeoff = IconSpec(0xe905);
+  static const flights_and_hotels = IconSpec(0xe9ab);
+  static const flightsmode = IconSpec(0xef93);
+  static const flip = IconSpec(0xe3e8);
+  static const flip_camera_android = IconSpec(0xea37);
+  static const flip_camera_ios = IconSpec(0xea38);
+  static const flip_to_back = IconSpec(0xe882);
+  static const flip_to_front = IconSpec(0xe883);
+  static const float_landscape_2 = IconSpec(0xf45c);
+  static const float_portrait_2 = IconSpec(0xf45b);
+  static const flood = IconSpec(0xebe6);
+  static const floor = IconSpec(0xf6e4);
+  static const floor_lamp = IconSpec(0xe21e);
+  static const flourescent = IconSpec(0xf07d);
+  static const flowchart = IconSpec(0xf38d);
+  static const flowsheet = IconSpec(0xe0ae);
+  static const fluid = IconSpec(0xe483);
+  static const fluid_balance = IconSpec(0xf80d);
+  static const fluid_med = IconSpec(0xf80c);
+  static const fluorescent = IconSpec(0xf07d);
+  static const flutter = IconSpec(0xf1dd);
+  static const flutter_dash = IconSpec(0xe00b);
+  static const flyover = IconSpec(0xf478);
+  static const fmd_bad = IconSpec(0xf00e);
+  static const fmd_good = IconSpec(0xf1db);
+  static const foggy = IconSpec(0xe818);
+  static const folded_hands = IconSpec(0xf5ed);
+  static const folder = IconSpec(0xe2c7);
+  static const folder_check = IconSpec(0xf3d7);
+  static const folder_check_2 = IconSpec(0xf3d6);
+  static const folder_code = IconSpec(0xf3c8);
+  static const folder_copy = IconSpec(0xebbd);
+  static const folder_data = IconSpec(0xf586);
+  static const folder_delete = IconSpec(0xeb34);
+  static const folder_eye = IconSpec(0xf3d5);
+  static const folder_info = IconSpec(0xf395);
+  static const folder_limited = IconSpec(0xf4e4);
+  static const folder_managed = IconSpec(0xf775);
+  static const folder_match = IconSpec(0xf3d4);
+  static const folder_off = IconSpec(0xeb83);
+  static const folder_open = IconSpec(0xe2c8);
+  static const folder_shared = IconSpec(0xe2c9);
+  static const folder_special = IconSpec(0xe617);
+  static const folder_supervised = IconSpec(0xf774);
+  static const folder_zip = IconSpec(0xeb2c);
+  static const follow_the_signs = IconSpec(0xf222);
+  static const font_download = IconSpec(0xe167);
+  static const font_download_off = IconSpec(0xe4f9);
+  static const food_bank = IconSpec(0xf1f2);
+  static const foot_bones = IconSpec(0xf893);
+  static const footprint = IconSpec(0xf87d);
+  static const for_you = IconSpec(0xe9ac);
+  static const forest = IconSpec(0xea99);
+  static const fork_left = IconSpec(0xeba0);
+  static const fork_right = IconSpec(0xebac);
+  static const fork_spoon = IconSpec(0xf3e4);
+  static const forklift = IconSpec(0xf868);
+  static const format_align_center = IconSpec(0xe234);
+  static const format_align_justify = IconSpec(0xe235);
+  static const format_align_left = IconSpec(0xe236);
+  static const format_align_right = IconSpec(0xe237);
+  static const format_bold = IconSpec(0xe238);
+  static const format_clear = IconSpec(0xe239);
+  static const format_color_fill = IconSpec(0xe23a);
+  static const format_color_reset = IconSpec(0xe23b);
+  static const format_color_text = IconSpec(0xe23c);
+  static const format_h1 = IconSpec(0xf85d);
+  static const format_h2 = IconSpec(0xf85e);
+  static const format_h3 = IconSpec(0xf85f);
+  static const format_h4 = IconSpec(0xf860);
+  static const format_h5 = IconSpec(0xf861);
+  static const format_h6 = IconSpec(0xf862);
+  static const format_image_left = IconSpec(0xf863);
+  static const format_image_right = IconSpec(0xf864);
+  static const format_indent_decrease = IconSpec(0xe23d);
+  static const format_indent_increase = IconSpec(0xe23e);
+  static const format_ink_highlighter = IconSpec(0xf82b);
+  static const format_italic = IconSpec(0xe23f);
+  static const format_letter_spacing = IconSpec(0xf773);
+  static const format_letter_spacing_2 = IconSpec(0xf618);
+  static const format_letter_spacing_standard = IconSpec(0xf617);
+  static const format_letter_spacing_wide = IconSpec(0xf616);
+  static const format_letter_spacing_wider = IconSpec(0xf615);
+  static const format_line_spacing = IconSpec(0xe240);
+  static const format_list_bulleted = IconSpec(0xe241);
+  static const format_list_bulleted_add = IconSpec(0xf849);
+  static const format_list_numbered = IconSpec(0xe242);
+  static const format_list_numbered_rtl = IconSpec(0xe267);
+  static const format_overline = IconSpec(0xeb65);
+  static const format_paint = IconSpec(0xe243);
+  static const format_paragraph = IconSpec(0xf865);
+  static const format_quote = IconSpec(0xe244);
+  static const format_quote_off = IconSpec(0xf413);
+  static const format_shapes = IconSpec(0xe25e);
+  static const format_size = IconSpec(0xe245);
+  static const format_strikethrough = IconSpec(0xe246);
+  static const format_text_clip = IconSpec(0xf82a);
+  static const format_text_overflow = IconSpec(0xf829);
+  static const format_text_wrap = IconSpec(0xf828);
+  static const format_textdirection_l_to_r = IconSpec(0xe247);
+  static const format_textdirection_r_to_l = IconSpec(0xe248);
+  static const format_textdirection_vertical = IconSpec(0xf4b8);
+  static const format_underlined = IconSpec(0xe249);
+  static const format_underlined_squiggle = IconSpec(0xf885);
+  static const forms_add_on = IconSpec(0xf0c7);
+  static const forms_apps_script = IconSpec(0xf0c8);
+  static const fort = IconSpec(0xeaad);
+  static const forum = IconSpec(0xe8af);
+  static const forward = IconSpec(0xf57a);
+  static const forward_10 = IconSpec(0xe056);
+  static const forward_30 = IconSpec(0xe057);
+  static const forward_5 = IconSpec(0xe058);
+  static const forward_circle = IconSpec(0xf6f5);
+  static const forward_media = IconSpec(0xf6f4);
+  static const forward_to_inbox = IconSpec(0xf187);
+  static const foundation = IconSpec(0xf200);
+  static const fragrance = IconSpec(0xf345);
+  static const frame_inspect = IconSpec(0xf772);
+  static const frame_person = IconSpec(0xf8a6);
+  static const frame_person_mic = IconSpec(0xf4d5);
+  static const frame_person_off = IconSpec(0xf7d1);
+  static const frame_reload = IconSpec(0xf771);
+  static const frame_source = IconSpec(0xf770);
+  static const free_breakfast = IconSpec(0xeb44);
+  static const free_cancellation = IconSpec(0xe748);
+  static const front_hand = IconSpec(0xe769);
+  static const front_loader = IconSpec(0xf869);
+  static const full_coverage = IconSpec(0xeb12);
+  static const full_hd = IconSpec(0xf58b);
+  static const full_stacked_bar_chart = IconSpec(0xf212);
+  static const fullscreen = IconSpec(0xe5d0);
+  static const fullscreen_exit = IconSpec(0xe5d1);
+  static const fullscreen_portrait = IconSpec(0xf45a);
+  static const function = IconSpec(0xf866);
+  static const functions = IconSpec(0xe24a);
+  static const funicular = IconSpec(0xf477);
+  static const g_mobiledata = IconSpec(0xf010);
+  static const g_mobiledata_badge = IconSpec(0xf7e1);
+  static const g_translate = IconSpec(0xe927);
+  static const gallery_thumbnail = IconSpec(0xf86f);
+  static const gamepad = IconSpec(0xe30f);
+  static const games = IconSpec(0xe30f);
+  static const garage = IconSpec(0xf011);
+  static const garage_door = IconSpec(0xe714);
+  static const garage_home = IconSpec(0xe82d);
+  static const garden_cart = IconSpec(0xf8a9);
+  static const gas_meter = IconSpec(0xec19);
+  static const gastroenterology = IconSpec(0xe0f1);
+  static const gate = IconSpec(0xe277);
+  static const gavel = IconSpec(0xe90e);
+  static const general_device = IconSpec(0xe6de);
+  static const generating_tokens = IconSpec(0xe749);
+  static const genetics = IconSpec(0xe0f3);
+  static const genres = IconSpec(0xe6ee);
+  static const gesture = IconSpec(0xe155);
+  static const gesture_select = IconSpec(0xf657);
+  static const get_app = IconSpec(0xf090);
+  static const gif = IconSpec(0xe908);
+  static const gif_2 = IconSpec(0xf40e);
+  static const gif_box = IconSpec(0xe7a3);
+  static const girl = IconSpec(0xeb68);
+  static const gite = IconSpec(0xe58b);
+  static const glass_cup = IconSpec(0xf6e3);
+  static const globe = IconSpec(0xe64c);
+  static const globe_asia = IconSpec(0xf799);
+  static const globe_book = IconSpec(0xf3c9);
+  static const globe_location_pin = IconSpec(0xf35d);
+  static const globe_uk = IconSpec(0xf798);
+  static const glucose = IconSpec(0xe4a0);
+  static const glyphs = IconSpec(0xf8a3);
+  static const go_to_line = IconSpec(0xf71d);
+  static const golf_course = IconSpec(0xeb45);
+  static const gondola_lift = IconSpec(0xf476);
+  static const google_home_devices = IconSpec(0xe715);
+  static const google_plus_reshare = IconSpec(0xf57a);
+  static const google_tv_remote = IconSpec(0xf5db);
+  static const google_wifi = IconSpec(0xf579);
+  static const gpp_bad = IconSpec(0xf012);
+  static const gpp_good = IconSpec(0xf013);
+  static const gpp_maybe = IconSpec(0xf014);
+  static const gps_fixed = IconSpec(0xe55c);
+  static const gps_not_fixed = IconSpec(0xe1b7);
+  static const gps_off = IconSpec(0xe1b6);
+  static const grade = IconSpec(0xf09a);
+  static const gradient = IconSpec(0xe3e9);
+  static const grading = IconSpec(0xea4f);
+  static const grain = IconSpec(0xe3ea);
+  static const graph_1 = IconSpec(0xf3a0);
+  static const graph_2 = IconSpec(0xf39f);
+  static const graph_3 = IconSpec(0xf39e);
+  static const graph_4 = IconSpec(0xf39d);
+  static const graph_5 = IconSpec(0xf39c);
+  static const graph_6 = IconSpec(0xf39b);
+  static const graph_7 = IconSpec(0xf346);
+  static const graphic_eq = IconSpec(0xe1b8);
+  static const grass = IconSpec(0xf205);
+  static const grid_3x3 = IconSpec(0xf015);
+  static const grid_3x3_off = IconSpec(0xf67c);
+  static const grid_4x4 = IconSpec(0xf016);
+  static const grid_goldenratio = IconSpec(0xf017);
+  static const grid_guides = IconSpec(0xf76f);
+  static const grid_off = IconSpec(0xe3eb);
+  static const grid_on = IconSpec(0xe3ec);
+  static const grid_view = IconSpec(0xe9b0);
+  static const grocery = IconSpec(0xef97);
+  static const group = IconSpec(0xea21);
+  static const group_add = IconSpec(0xe7f0);
+  static const group_off = IconSpec(0xe747);
+  static const group_remove = IconSpec(0xe7ad);
+  static const group_search = IconSpec(0xf3ce);
+  static const group_work = IconSpec(0xe886);
+  static const grouped_bar_chart = IconSpec(0xf211);
+  static const groups = IconSpec(0xf233);
+  static const groups_2 = IconSpec(0xf8df);
+  static const groups_3 = IconSpec(0xf8e0);
+  static const guardian = IconSpec(0xf4c1);
+  static const gynecology = IconSpec(0xe0f4);
+  static const h_mobiledata = IconSpec(0xf018);
+  static const h_mobiledata_badge = IconSpec(0xf7e0);
+  static const h_plus_mobiledata = IconSpec(0xf019);
+  static const h_plus_mobiledata_badge = IconSpec(0xf7df);
+  static const hail = IconSpec(0xe9b1);
+  static const hallway = IconSpec(0xe6f8);
+  static const hand_bones = IconSpec(0xf894);
+  static const hand_gesture = IconSpec(0xef9c);
+  static const hand_gesture_off = IconSpec(0xf3f3);
+  static const handheld_controller = IconSpec(0xf4c6);
+  static const handshake = IconSpec(0xebcb);
+  static const handwriting_recognition = IconSpec(0xeb02);
+  static const handyman = IconSpec(0xf10b);
+  static const hangout_video = IconSpec(0xe0c1);
+  static const hangout_video_off = IconSpec(0xe0c2);
+  static const hard_disk = IconSpec(0xf3da);
+  static const hard_drive = IconSpec(0xf80e);
+  static const hard_drive_2 = IconSpec(0xf7a4);
+  static const hardware = IconSpec(0xea59);
+  static const hd = IconSpec(0xe052);
+  static const hdr_auto = IconSpec(0xf01a);
+  static const hdr_auto_select = IconSpec(0xf01b);
+  static const hdr_enhanced_select = IconSpec(0xef51);
+  static const hdr_off = IconSpec(0xe3ed);
+  static const hdr_off_select = IconSpec(0xf01c);
+  static const hdr_on = IconSpec(0xe3ee);
+  static const hdr_on_select = IconSpec(0xf01d);
+  static const hdr_plus = IconSpec(0xf01e);
+  static const hdr_plus_off = IconSpec(0xe3ef);
+  static const hdr_strong = IconSpec(0xe3f1);
+  static const hdr_weak = IconSpec(0xe3f2);
+  static const head_mounted_device = IconSpec(0xf4c5);
+  static const headphones = IconSpec(0xf01f);
+  static const headphones_battery = IconSpec(0xf020);
+  static const headset = IconSpec(0xf01f);
+  static const headset_mic = IconSpec(0xe311);
+  static const headset_off = IconSpec(0xe33a);
+  static const healing = IconSpec(0xe3f3);
+  static const health_and_beauty = IconSpec(0xef9d);
+  static const health_and_safety = IconSpec(0xe1d5);
+  static const health_metrics = IconSpec(0xf6e2);
+  static const heap_snapshot_large = IconSpec(0xf76e);
+  static const heap_snapshot_multiple = IconSpec(0xf76d);
+  static const heap_snapshot_thumbnail = IconSpec(0xf76c);
+  static const hearing = IconSpec(0xe023);
+  static const hearing_aid = IconSpec(0xf464);
+  static const hearing_aid_disabled = IconSpec(0xf3b0);
+  static const hearing_disabled = IconSpec(0xf104);
+  static const heart_broken = IconSpec(0xeac2);
+  static const heart_check = IconSpec(0xf60a);
+  static const heart_minus = IconSpec(0xf883);
+  static const heart_plus = IconSpec(0xf884);
+  static const heat = IconSpec(0xf537);
+  static const heat_pump = IconSpec(0xec18);
+  static const heat_pump_balance = IconSpec(0xe27e);
+  static const height = IconSpec(0xea16);
+  static const helicopter = IconSpec(0xf60c);
+  static const help = IconSpec(0xe8fd);
+  static const help_center = IconSpec(0xf1c0);
+  static const help_clinic = IconSpec(0xf810);
+  static const help_outline = IconSpec(0xe8fd);
+  static const hematology = IconSpec(0xe0f6);
+  static const hevc = IconSpec(0xf021);
+  static const hexagon = IconSpec(0xeb39);
+  static const hide = IconSpec(0xef9e);
+  static const hide_image = IconSpec(0xf022);
+  static const hide_source = IconSpec(0xf023);
+  static const high_density = IconSpec(0xf79c);
+  static const high_quality = IconSpec(0xe024);
+  static const high_res = IconSpec(0xf54b);
+  static const highlight = IconSpec(0xe25f);
+  static const highlight_alt = IconSpec(0xef52);
+  static const highlight_keyboard_focus = IconSpec(0xf510);
+  static const highlight_mouse_cursor = IconSpec(0xf511);
+  static const highlight_off = IconSpec(0xe888);
+  static const highlight_text_cursor = IconSpec(0xf512);
+  static const highlighter_size_1 = IconSpec(0xf76b);
+  static const highlighter_size_2 = IconSpec(0xf76a);
+  static const highlighter_size_3 = IconSpec(0xf769);
+  static const highlighter_size_4 = IconSpec(0xf768);
+  static const highlighter_size_5 = IconSpec(0xf767);
+  static const hiking = IconSpec(0xe50a);
+  static const history = IconSpec(0xe8b3);
+  static const history_2 = IconSpec(0xf3e6);
+  static const history_edu = IconSpec(0xea3e);
+  static const history_off = IconSpec(0xf4da);
+  static const history_toggle_off = IconSpec(0xf17d);
+  static const hive = IconSpec(0xeaa6);
+  static const hls = IconSpec(0xeb8a);
+  static const hls_off = IconSpec(0xeb8c);
+  static const holiday_village = IconSpec(0xe58a);
+  static const home = IconSpec(0xe9b2);
+  static const home_and_garden = IconSpec(0xef9f);
+  static const home_app_logo = IconSpec(0xe295);
+  static const home_filled = IconSpec(0xe9b2);
+  static const home_health = IconSpec(0xe4b9);
+  static const home_improvement_and_tools = IconSpec(0xefa0);
+  static const home_iot_device = IconSpec(0xe283);
+  static const home_max = IconSpec(0xf024);
+  static const home_max_dots = IconSpec(0xe849);
+  static const home_mini = IconSpec(0xf025);
+  static const home_pin = IconSpec(0xf14d);
+  static const home_repair_service = IconSpec(0xf100);
+  static const home_speaker = IconSpec(0xf11c);
+  static const home_storage = IconSpec(0xf86c);
+  static const home_work = IconSpec(0xf030);
+  static const horizontal_distribute = IconSpec(0xe014);
+  static const horizontal_rule = IconSpec(0xf108);
+  static const horizontal_split = IconSpec(0xe947);
+  static const host = IconSpec(0xf3d9);
+  static const hot_tub = IconSpec(0xeb46);
+  static const hotel = IconSpec(0xe549);
+  static const hotel_class = IconSpec(0xe743);
+  static const hourglass = IconSpec(0xebff);
+  static const hourglass_arrow_down = IconSpec(0xf37e);
+  static const hourglass_arrow_up = IconSpec(0xf37d);
+  static const hourglass_bottom = IconSpec(0xea5c);
+  static const hourglass_disabled = IconSpec(0xef53);
+  static const hourglass_empty = IconSpec(0xe88b);
+  static const hourglass_full = IconSpec(0xe88c);
+  static const hourglass_pause = IconSpec(0xf38c);
+  static const hourglass_top = IconSpec(0xea5b);
+  static const house = IconSpec(0xea44);
+  static const house_siding = IconSpec(0xf202);
+  static const house_with_shield = IconSpec(0xe786);
+  static const houseboat = IconSpec(0xe584);
+  static const household_supplies = IconSpec(0xefa1);
+  static const hov = IconSpec(0xf475);
+  static const how_to_reg = IconSpec(0xe174);
+  static const how_to_vote = IconSpec(0xe175);
+  static const hr_resting = IconSpec(0xf6ba);
+  static const html = IconSpec(0xeb7e);
+  static const http = IconSpec(0xe902);
+  static const https = IconSpec(0xe899);
+  static const hub = IconSpec(0xe9f4);
+  static const humerus = IconSpec(0xf895);
+  static const humerus_alt = IconSpec(0xf896);
+  static const humidity_high = IconSpec(0xf163);
+  static const humidity_indoor = IconSpec(0xf558);
+  static const humidity_low = IconSpec(0xf164);
+  static const humidity_mid = IconSpec(0xf165);
+  static const humidity_percentage = IconSpec(0xf87e);
+  static const hvac = IconSpec(0xf10e);
+  static const hvac_max_defrost = IconSpec(0xf332);
+  static const ice_skating = IconSpec(0xe50b);
+  static const icecream = IconSpec(0xea69);
+  static const id_card = IconSpec(0xf4ca);
+  static const identity_aware_proxy = IconSpec(0xe2dd);
+  static const identity_platform = IconSpec(0xebb7);
+  static const ifl = IconSpec(0xe025);
+  static const iframe = IconSpec(0xf71b);
+  static const iframe_off = IconSpec(0xf71c);
+  static const image = IconSpec(0xe3f4);
+  static const image_arrow_up = IconSpec(0xf317);
+  static const image_aspect_ratio = IconSpec(0xe3f5);
+  static const image_not_supported = IconSpec(0xf116);
+  static const image_search = IconSpec(0xe43f);
+  static const imagesearch_roller = IconSpec(0xe9b4);
+  static const imagesmode = IconSpec(0xefa2);
+  static const immunology = IconSpec(0xe0fb);
+  static const import_contacts = IconSpec(0xe0e0);
+  static const import_export = IconSpec(0xe8d5);
+  static const important_devices = IconSpec(0xe912);
+  static const in_home_mode = IconSpec(0xe833);
+  static const inactive_order = IconSpec(0xe0fc);
+  static const inbox = IconSpec(0xe156);
+  static const inbox_customize = IconSpec(0xf859);
+  static const inbox_text = IconSpec(0xf399);
+  static const inbox_text_asterisk = IconSpec(0xf360);
+  static const inbox_text_person = IconSpec(0xf35e);
+  static const inbox_text_share = IconSpec(0xf35c);
+  static const incomplete_circle = IconSpec(0xe79b);
+  static const indeterminate_check_box = IconSpec(0xe909);
+  static const indeterminate_question_box = IconSpec(0xf56d);
+  static const info = IconSpec(0xe88e);
+  static const info_i = IconSpec(0xf59b);
+  static const infrared = IconSpec(0xf87c);
+  static const ink_eraser = IconSpec(0xe6d0);
+  static const ink_eraser_off = IconSpec(0xe7e3);
+  static const ink_highlighter = IconSpec(0xe6d1);
+  static const ink_highlighter_move = IconSpec(0xf524);
+  static const ink_marker = IconSpec(0xe6d2);
+  static const ink_pen = IconSpec(0xe6d3);
+  static const ink_selection = IconSpec(0xef52);
+  static const inpatient = IconSpec(0xe0fe);
+  static const input = IconSpec(0xe890);
+  static const input_circle = IconSpec(0xf71a);
+  static const insert_chart = IconSpec(0xf0cc);
+  static const insert_chart_filled = IconSpec(0xf0cc);
+  static const insert_chart_outlined = IconSpec(0xf0cc);
+  static const insert_comment = IconSpec(0xe24c);
+  static const insert_drive_file = IconSpec(0xe66d);
+  static const insert_emoticon = IconSpec(0xea22);
+  static const insert_invitation = IconSpec(0xe878);
+  static const insert_link = IconSpec(0xe250);
+  static const insert_page_break = IconSpec(0xeaca);
+  static const insert_photo = IconSpec(0xe3f4);
+  static const insert_text = IconSpec(0xf827);
+  static const insights = IconSpec(0xf092);
+  static const install_desktop = IconSpec(0xeb71);
+  static const install_mobile = IconSpec(0xeb72);
+  static const instant_mix = IconSpec(0xe026);
+  static const integration_instructions = IconSpec(0xef54);
+  static const interactive_space = IconSpec(0xf7ff);
+  static const interests = IconSpec(0xe7c8);
+  static const interpreter_mode = IconSpec(0xe83b);
+  static const inventory = IconSpec(0xe179);
+  static const inventory_2 = IconSpec(0xe1a1);
+  static const invert_colors = IconSpec(0xe891);
+  static const invert_colors_off = IconSpec(0xe0c4);
+  static const ios = IconSpec(0xe027);
+  static const ios_share = IconSpec(0xe6b8);
+  static const iron = IconSpec(0xe583);
+  static const iso = IconSpec(0xe3f6);
+  static const jamboard_kiosk = IconSpec(0xe9b5);
+  static const javascript = IconSpec(0xeb7c);
+  static const join = IconSpec(0xf84f);
+  static const join_full = IconSpec(0xf84f);
+  static const join_inner = IconSpec(0xeaf4);
+  static const join_left = IconSpec(0xeaf2);
+  static const join_right = IconSpec(0xeaea);
+  static const joystick = IconSpec(0xf5ee);
+  static const jump_to_element = IconSpec(0xf719);
+  static const kayaking = IconSpec(0xe50c);
+  static const kebab_dining = IconSpec(0xe842);
+  static const keep = IconSpec(0xf026);
+  static const keep_off = IconSpec(0xe6f9);
+  static const keep_pin = IconSpec(0xf026);
+  static const keep_public = IconSpec(0xf56f);
+  static const kettle = IconSpec(0xe2b9);
+  static const key = IconSpec(0xe73c);
+  static const key_off = IconSpec(0xeb84);
+  static const key_vertical = IconSpec(0xf51a);
+  static const key_visualizer = IconSpec(0xf199);
+  static const keyboard = IconSpec(0xe312);
+  static const keyboard_alt = IconSpec(0xf028);
+  static const keyboard_arrow_down = IconSpec(0xe313);
+  static const keyboard_arrow_left = IconSpec(0xe314);
+  static const keyboard_arrow_right = IconSpec(0xe315);
+  static const keyboard_arrow_up = IconSpec(0xe316);
+  static const keyboard_backspace = IconSpec(0xe317);
+  static const keyboard_capslock = IconSpec(0xe318);
+  static const keyboard_capslock_badge = IconSpec(0xf7de);
+  static const keyboard_command_key = IconSpec(0xeae7);
+  static const keyboard_control_key = IconSpec(0xeae6);
+  static const keyboard_double_arrow_down = IconSpec(0xead0);
+  static const keyboard_double_arrow_left = IconSpec(0xeac3);
+  static const keyboard_double_arrow_right = IconSpec(0xeac9);
+  static const keyboard_double_arrow_up = IconSpec(0xeacf);
+  static const keyboard_external_input = IconSpec(0xf7dd);
+  static const keyboard_full = IconSpec(0xf7dc);
+  static const keyboard_hide = IconSpec(0xe31a);
+  static const keyboard_keys = IconSpec(0xf67b);
+  static const keyboard_lock = IconSpec(0xf492);
+  static const keyboard_lock_off = IconSpec(0xf491);
+  static const keyboard_off = IconSpec(0xf67a);
+  static const keyboard_onscreen = IconSpec(0xf7db);
+  static const keyboard_option_key = IconSpec(0xeae8);
+  static const keyboard_previous_language = IconSpec(0xf7da);
+  static const keyboard_return = IconSpec(0xe31b);
+  static const keyboard_tab = IconSpec(0xe31c);
+  static const keyboard_tab_rtl = IconSpec(0xec73);
+  static const keyboard_voice = IconSpec(0xe31d);
+  static const kid_star = IconSpec(0xf526);
+  static const king_bed = IconSpec(0xea45);
+  static const kitchen = IconSpec(0xeb47);
+  static const kitesurfing = IconSpec(0xe50d);
+  static const lab_panel = IconSpec(0xe103);
+  static const lab_profile = IconSpec(0xe104);
+  static const lab_research = IconSpec(0xf80b);
+  static const label = IconSpec(0xe893);
+  static const label_important = IconSpec(0xe948);
+  static const label_important_outline = IconSpec(0xe948);
+  static const label_off = IconSpec(0xe9b6);
+  static const label_outline = IconSpec(0xe893);
+  static const labs = IconSpec(0xe105);
+  static const lan = IconSpec(0xeb2f);
+  static const landscape = IconSpec(0xe564);
+  static const landscape_2 = IconSpec(0xf4c4);
+  static const landscape_2_off = IconSpec(0xf4c3);
+  static const landslide = IconSpec(0xebd7);
+  static const language = IconSpec(0xe894);
+  static const language_chinese_array = IconSpec(0xf766);
+  static const language_chinese_cangjie = IconSpec(0xf765);
+  static const language_chinese_dayi = IconSpec(0xf764);
+  static const language_chinese_pinyin = IconSpec(0xf763);
+  static const language_chinese_quick = IconSpec(0xf762);
+  static const language_chinese_wubi = IconSpec(0xf761);
+  static const language_french = IconSpec(0xf760);
+  static const language_gb_english = IconSpec(0xf75f);
+  static const language_international = IconSpec(0xf75e);
+  static const language_japanese_kana = IconSpec(0xf513);
+  static const language_korean_latin = IconSpec(0xf75d);
+  static const language_pinyin = IconSpec(0xf75c);
+  static const language_spanish = IconSpec(0xf5e9);
+  static const language_us = IconSpec(0xf759);
+  static const language_us_colemak = IconSpec(0xf75b);
+  static const language_us_dvorak = IconSpec(0xf75a);
+  static const laps = IconSpec(0xf6b9);
+  static const laptop = IconSpec(0xe31e);
+  static const laptop_car = IconSpec(0xf3cd);
+  static const laptop_chromebook = IconSpec(0xe31f);
+  static const laptop_mac = IconSpec(0xe320);
+  static const laptop_windows = IconSpec(0xe321);
+  static const lasso_select = IconSpec(0xeb03);
+  static const last_page = IconSpec(0xe5dd);
+  static const launch = IconSpec(0xe89e);
+  static const laundry = IconSpec(0xe2a8);
+  static const layers = IconSpec(0xe53b);
+  static const layers_clear = IconSpec(0xe53c);
+  static const lda = IconSpec(0xe106);
+  static const leaderboard = IconSpec(0xf20c);
+  static const leak_add = IconSpec(0xe3f8);
+  static const leak_remove = IconSpec(0xe3f9);
+  static const left_click = IconSpec(0xf718);
+  static const left_panel_close = IconSpec(0xf717);
+  static const left_panel_open = IconSpec(0xf716);
+  static const legend_toggle = IconSpec(0xf11b);
+  static const lens = IconSpec(0xe3fa);
+  static const lens_blur = IconSpec(0xf029);
+  static const letter_switch = IconSpec(0xf758);
+  static const library_add = IconSpec(0xe03c);
+  static const library_add_check = IconSpec(0xe9b7);
+  static const library_books = IconSpec(0xe02f);
+  static const library_music = IconSpec(0xe030);
+  static const license = IconSpec(0xeb04);
+  static const lift_to_talk = IconSpec(0xefa3);
+  static const light = IconSpec(0xf02a);
+  static const light_group = IconSpec(0xe28b);
+  static const light_mode = IconSpec(0xe518);
+  static const light_off = IconSpec(0xe9b8);
+  static const lightbulb = IconSpec(0xe90f);
+  static const lightbulb_2 = IconSpec(0xf3e3);
+  static const lightbulb_circle = IconSpec(0xebfe);
+  static const lightbulb_outline = IconSpec(0xe90f);
+  static const lightning_stand = IconSpec(0xefa4);
+  static const line_axis = IconSpec(0xea9a);
+  static const line_curve = IconSpec(0xf757);
+  static const line_end = IconSpec(0xf826);
+  static const line_end_arrow = IconSpec(0xf81d);
+  static const line_end_arrow_notch = IconSpec(0xf81c);
+  static const line_end_circle = IconSpec(0xf81b);
+  static const line_end_diamond = IconSpec(0xf81a);
+  static const line_end_square = IconSpec(0xf819);
+  static const line_start = IconSpec(0xf825);
+  static const line_start_arrow = IconSpec(0xf818);
+  static const line_start_arrow_notch = IconSpec(0xf817);
+  static const line_start_circle = IconSpec(0xf816);
+  static const line_start_diamond = IconSpec(0xf815);
+  static const line_start_square = IconSpec(0xf814);
+  static const line_style = IconSpec(0xe919);
+  static const line_weight = IconSpec(0xe91a);
+  static const linear_scale = IconSpec(0xe260);
+  static const link = IconSpec(0xe250);
+  static const link_off = IconSpec(0xe16f);
+  static const linked_camera = IconSpec(0xe438);
+  static const linked_services = IconSpec(0xf535);
+  static const liquor = IconSpec(0xea60);
+  static const list = IconSpec(0xe896);
+  static const list_alt = IconSpec(0xe0ee);
+  static const list_alt_add = IconSpec(0xf756);
+  static const list_alt_check = IconSpec(0xf3de);
+  static const lists = IconSpec(0xe9b9);
+  static const live_help = IconSpec(0xe0c6);
+  static const live_tv = IconSpec(0xe63a);
+  static const living = IconSpec(0xf02b);
+  static const local_activity = IconSpec(0xe553);
+  static const local_airport = IconSpec(0xe53d);
+  static const local_atm = IconSpec(0xe53e);
+  static const local_bar = IconSpec(0xe540);
+  static const local_cafe = IconSpec(0xeb44);
+  static const local_car_wash = IconSpec(0xe542);
+  static const local_convenience_store = IconSpec(0xe543);
+  static const local_dining = IconSpec(0xe561);
+  static const local_drink = IconSpec(0xe544);
+  static const local_fire_department = IconSpec(0xef55);
+  static const local_florist = IconSpec(0xe545);
+  static const local_gas_station = IconSpec(0xe546);
+  static const local_grocery_store = IconSpec(0xe8cc);
+  static const local_hospital = IconSpec(0xe548);
+  static const local_hotel = IconSpec(0xe549);
+  static const local_laundry_service = IconSpec(0xe54a);
+  static const local_library = IconSpec(0xe54b);
+  static const local_mall = IconSpec(0xe54c);
+  static const local_movies = IconSpec(0xe8da);
+  static const local_offer = IconSpec(0xf05b);
+  static const local_parking = IconSpec(0xe54f);
+  static const local_pharmacy = IconSpec(0xe550);
+  static const local_phone = IconSpec(0xf0d4);
+  static const local_pizza = IconSpec(0xe552);
+  static const local_play = IconSpec(0xe553);
+  static const local_police = IconSpec(0xef56);
+  static const local_post_office = IconSpec(0xe554);
+  static const local_printshop = IconSpec(0xe8ad);
+  static const local_see = IconSpec(0xe557);
+  static const local_shipping = IconSpec(0xe558);
+  static const local_taxi = IconSpec(0xe559);
+  static const location_automation = IconSpec(0xf14f);
+  static const location_away = IconSpec(0xf150);
+  static const location_chip = IconSpec(0xf850);
+  static const location_city = IconSpec(0xe7f1);
+  static const location_disabled = IconSpec(0xe1b6);
+  static const location_home = IconSpec(0xf152);
+  static const location_off = IconSpec(0xe0c7);
+  static const location_on = IconSpec(0xf1db);
+  static const location_pin = IconSpec(0xf1db);
+  static const location_searching = IconSpec(0xe1b7);
+  static const locator_tag = IconSpec(0xf8c1);
+  static const lock = IconSpec(0xe899);
+  static const lock_clock = IconSpec(0xef57);
+  static const lock_open = IconSpec(0xe898);
+  static const lock_open_circle = IconSpec(0xf361);
+  static const lock_open_right = IconSpec(0xf656);
+  static const lock_outline = IconSpec(0xe899);
+  static const lock_person = IconSpec(0xf8f3);
+  static const lock_reset = IconSpec(0xeade);
+  static const login = IconSpec(0xea77);
+  static const logo_dev = IconSpec(0xead6);
+  static const logout = IconSpec(0xe9ba);
+  static const looks = IconSpec(0xe3fc);
+  static const looks_3 = IconSpec(0xe3fb);
+  static const looks_4 = IconSpec(0xe3fd);
+  static const looks_5 = IconSpec(0xe3fe);
+  static const looks_6 = IconSpec(0xe3ff);
+  static const looks_one = IconSpec(0xe400);
+  static const looks_two = IconSpec(0xe401);
+  static const loop = IconSpec(0xe863);
+  static const loupe = IconSpec(0xe402);
+  static const low_density = IconSpec(0xf79b);
+  static const low_priority = IconSpec(0xe16d);
+  static const lowercase = IconSpec(0xf48a);
+  static const loyalty = IconSpec(0xe89a);
+  static const lte_mobiledata = IconSpec(0xf02c);
+  static const lte_mobiledata_badge = IconSpec(0xf7d9);
+  static const lte_plus_mobiledata = IconSpec(0xf02d);
+  static const lte_plus_mobiledata_badge = IconSpec(0xf7d8);
+  static const luggage = IconSpec(0xf235);
+  static const lunch_dining = IconSpec(0xea61);
+  static const lyrics = IconSpec(0xec0b);
+  static const macro_auto = IconSpec(0xf6f2);
+  static const macro_off = IconSpec(0xf8d2);
+  static const magic_button = IconSpec(0xf136);
+  static const magic_exchange = IconSpec(0xf7f4);
+  static const magic_tether = IconSpec(0xf7d7);
+  static const magnification_large = IconSpec(0xf83d);
+  static const magnification_small = IconSpec(0xf83c);
+  static const magnify_docked = IconSpec(0xf7d6);
+  static const magnify_fullscreen = IconSpec(0xf7d5);
+  static const mail = IconSpec(0xe159);
+  static const mail_lock = IconSpec(0xec0a);
+  static const mail_off = IconSpec(0xf48b);
+  static const mail_outline = IconSpec(0xe159);
+  static const male = IconSpec(0xe58e);
+  static const man = IconSpec(0xe4eb);
+  static const man_2 = IconSpec(0xf8e1);
+  static const man_3 = IconSpec(0xf8e2);
+  static const man_4 = IconSpec(0xf8e3);
+  static const manage_accounts = IconSpec(0xf02e);
+  static const manage_history = IconSpec(0xebe7);
+  static const manage_search = IconSpec(0xf02f);
+  static const manga = IconSpec(0xf5e3);
+  static const manufacturing = IconSpec(0xe726);
+  static const map = IconSpec(0xe55b);
+  static const map_search = IconSpec(0xf3ca);
+  static const maps_home_work = IconSpec(0xf030);
+  static const maps_ugc = IconSpec(0xef58);
+  static const margin = IconSpec(0xe9bb);
+  static const mark_as_unread = IconSpec(0xe9bc);
+  static const mark_chat_read = IconSpec(0xf18b);
+  static const mark_chat_unread = IconSpec(0xf189);
+  static const mark_email_read = IconSpec(0xf18c);
+  static const mark_email_unread = IconSpec(0xf18a);
+  static const mark_unread_chat_alt = IconSpec(0xeb9d);
+  static const markdown = IconSpec(0xf552);
+  static const markdown_copy = IconSpec(0xf553);
+  static const markdown_paste = IconSpec(0xf554);
+  static const markunread = IconSpec(0xe159);
+  static const markunread_mailbox = IconSpec(0xe89b);
+  static const masked_transitions = IconSpec(0xe72e);
+  static const masked_transitions_add = IconSpec(0xf42b);
+  static const masks = IconSpec(0xf218);
+  static const match_case = IconSpec(0xf6f1);
+  static const match_case_off = IconSpec(0xf36f);
+  static const match_word = IconSpec(0xf6f0);
+  static const matter = IconSpec(0xe907);
+  static const maximize = IconSpec(0xe930);
+  static const measuring_tape = IconSpec(0xf6af);
+  static const media_bluetooth_off = IconSpec(0xf031);
+  static const media_bluetooth_on = IconSpec(0xf032);
+  static const media_link = IconSpec(0xf83f);
+  static const media_output = IconSpec(0xf4f2);
+  static const media_output_off = IconSpec(0xf4f3);
+  static const mediation = IconSpec(0xefa7);
+  static const medical_information = IconSpec(0xebed);
+  static const medical_mask = IconSpec(0xf80a);
+  static const medical_services = IconSpec(0xf109);
+  static const medication = IconSpec(0xf033);
+  static const medication_liquid = IconSpec(0xea87);
+  static const meeting_room = IconSpec(0xeb4f);
+  static const memory = IconSpec(0xe322);
+  static const memory_alt = IconSpec(0xf7a3);
+  static const menstrual_health = IconSpec(0xf6e1);
+  static const menu = IconSpec(0xe5d2);
+  static const menu_book = IconSpec(0xea19);
+  static const menu_open = IconSpec(0xe9bd);
+  static const merge = IconSpec(0xeb98);
+  static const merge_type = IconSpec(0xe252);
+  static const message = IconSpec(0xe0c9);
+  static const metabolism = IconSpec(0xe10b);
+  static const metro = IconSpec(0xf474);
+  static const mfg_nest_yale_lock = IconSpec(0xf11d);
+  static const mic = IconSpec(0xe31d);
+  static const mic_alert = IconSpec(0xf392);
+  static const mic_double = IconSpec(0xf5d1);
+  static const mic_external_off = IconSpec(0xef59);
+  static const mic_external_on = IconSpec(0xef5a);
+  static const mic_none = IconSpec(0xe31d);
+  static const mic_off = IconSpec(0xe02b);
+  static const microbiology = IconSpec(0xe10c);
+  static const microwave = IconSpec(0xf204);
+  static const microwave_gen = IconSpec(0xe847);
+  static const military_tech = IconSpec(0xea3f);
+  static const mimo = IconSpec(0xe9be);
+  static const mimo_disconnect = IconSpec(0xe9bf);
+  static const mindfulness = IconSpec(0xf6e0);
+  static const minimize = IconSpec(0xe931);
+  static const minor_crash = IconSpec(0xebf1);
+  static const mintmark = IconSpec(0xefa9);
+  static const missed_video_call = IconSpec(0xf0ce);
+  static const missed_video_call_filled = IconSpec(0xf0ce);
+  static const missing_controller = IconSpec(0xe701);
+  static const mist = IconSpec(0xe188);
+  static const mitre = IconSpec(0xf547);
+  static const mixture_med = IconSpec(0xe4c8);
+  static const mms = IconSpec(0xe618);
+  static const mobile_friendly = IconSpec(0xe200);
+  static const mobile_hand = IconSpec(0xf323);
+  static const mobile_loupe = IconSpec(0xf322);
+  static const mobile_off = IconSpec(0xe201);
+  static const mobile_screen_share = IconSpec(0xe0e7);
+  static const mobile_screensaver = IconSpec(0xf321);
+  static const mobile_sound_2 = IconSpec(0xf318);
+  static const mobile_speaker = IconSpec(0xf320);
+  static const mobiledata_off = IconSpec(0xf034);
+  static const mode = IconSpec(0xf097);
+  static const mode_comment = IconSpec(0xe253);
+  static const mode_cool = IconSpec(0xf166);
+  static const mode_cool_off = IconSpec(0xf167);
+  static const mode_dual = IconSpec(0xf557);
+  static const mode_edit = IconSpec(0xf097);
+  static const mode_edit_outline = IconSpec(0xf097);
+  static const mode_fan = IconSpec(0xf168);
+  static const mode_fan_off = IconSpec(0xec17);
+  static const mode_heat = IconSpec(0xf16a);
+  static const mode_heat_cool = IconSpec(0xf16b);
+  static const mode_heat_off = IconSpec(0xf16d);
+  static const mode_night = IconSpec(0xf036);
+  static const mode_of_travel = IconSpec(0xe7ce);
+  static const mode_off_on = IconSpec(0xf16f);
+  static const mode_standby = IconSpec(0xf037);
+  static const model_training = IconSpec(0xf0cf);
+  static const modeling = IconSpec(0xf3aa);
+  static const monetization_on = IconSpec(0xe263);
+  static const money = IconSpec(0xe57d);
+  static const money_bag = IconSpec(0xf3ee);
+  static const money_off = IconSpec(0xf038);
+  static const money_off_csred = IconSpec(0xf038);
+  static const monitor = IconSpec(0xef5b);
+  static const monitor_heart = IconSpec(0xeaa2);
+  static const monitor_weight = IconSpec(0xf039);
+  static const monitor_weight_gain = IconSpec(0xf6df);
+  static const monitor_weight_loss = IconSpec(0xf6de);
+  static const monitoring = IconSpec(0xf190);
+  static const monochrome_photos = IconSpec(0xe403);
+  static const monorail = IconSpec(0xf473);
+  static const mood = IconSpec(0xea22);
+  static const mood_bad = IconSpec(0xe7f3);
+  static const moon_stars = IconSpec(0xf34f);
+  static const mop = IconSpec(0xe28d);
+  static const moped = IconSpec(0xeb28);
+  static const more = IconSpec(0xe619);
+  static const more_down = IconSpec(0xf196);
+  static const more_horiz = IconSpec(0xe5d3);
+  static const more_time = IconSpec(0xea5d);
+  static const more_up = IconSpec(0xf197);
+  static const more_vert = IconSpec(0xe5d4);
+  static const mosque = IconSpec(0xeab2);
+  static const motion_blur = IconSpec(0xf0d0);
+  static const motion_mode = IconSpec(0xf842);
+  static const motion_photos_auto = IconSpec(0xf03a);
+  static const motion_photos_off = IconSpec(0xe9c0);
+  static const motion_photos_on = IconSpec(0xe9c1);
+  static const motion_photos_pause = IconSpec(0xf227);
+  static const motion_photos_paused = IconSpec(0xf227);
+  static const motion_play = IconSpec(0xf40b);
+  static const motion_sensor_active = IconSpec(0xe792);
+  static const motion_sensor_alert = IconSpec(0xe784);
+  static const motion_sensor_idle = IconSpec(0xe783);
+  static const motion_sensor_urgent = IconSpec(0xe78e);
+  static const motorcycle = IconSpec(0xe91b);
+  static const mountain_flag = IconSpec(0xf5e2);
+  static const mouse = IconSpec(0xe323);
+  static const mouse_lock = IconSpec(0xf490);
+  static const mouse_lock_off = IconSpec(0xf48f);
+  static const move = IconSpec(0xe740);
+  static const move_down = IconSpec(0xeb61);
+  static const move_group = IconSpec(0xf715);
+  static const move_item = IconSpec(0xf1ff);
+  static const move_location = IconSpec(0xe741);
+  static const move_selection_down = IconSpec(0xf714);
+  static const move_selection_left = IconSpec(0xf713);
+  static const move_selection_right = IconSpec(0xf712);
+  static const move_selection_up = IconSpec(0xf711);
+  static const move_to_inbox = IconSpec(0xe168);
+  static const move_up = IconSpec(0xeb64);
+  static const moved_location = IconSpec(0xe594);
+  static const movie = IconSpec(0xe404);
+  static const movie_creation = IconSpec(0xe404);
+  static const movie_edit = IconSpec(0xf840);
+  static const movie_filter = IconSpec(0xe43a);
+  static const movie_info = IconSpec(0xe02d);
+  static const movie_off = IconSpec(0xf499);
+  static const moving = IconSpec(0xe501);
+  static const moving_beds = IconSpec(0xe73d);
+  static const moving_ministry = IconSpec(0xe73e);
+  static const mp = IconSpec(0xe9c3);
+  static const multicooker = IconSpec(0xe293);
+  static const multiline_chart = IconSpec(0xe6df);
+  static const multimodal_hand_eye = IconSpec(0xf41b);
+  static const multiple_airports = IconSpec(0xefab);
+  static const multiple_stop = IconSpec(0xf1b9);
+  static const museum = IconSpec(0xea36);
+  static const music_cast = IconSpec(0xeb1a);
+  static const music_note = IconSpec(0xe405);
+  static const music_note_add = IconSpec(0xf391);
+  static const music_off = IconSpec(0xe440);
+  static const music_video = IconSpec(0xe063);
+  static const my_location = IconSpec(0xe55c);
+  static const mystery = IconSpec(0xf5e1);
+  static const nat = IconSpec(0xef5c);
+  static const nature = IconSpec(0xe406);
+  static const nature_people = IconSpec(0xe407);
+  static const navigate_before = IconSpec(0xe5cb);
+  static const navigate_next = IconSpec(0xe5cc);
+  static const navigation = IconSpec(0xe55d);
+  static const near_me = IconSpec(0xe569);
+  static const near_me_disabled = IconSpec(0xf1ef);
+  static const nearby = IconSpec(0xe6b7);
+  static const nearby_error = IconSpec(0xf03b);
+  static const nearby_off = IconSpec(0xf03c);
+  static const nephrology = IconSpec(0xe10d);
+  static const nest_audio = IconSpec(0xebbf);
+  static const nest_cam_floodlight = IconSpec(0xf8b7);
+  static const nest_cam_indoor = IconSpec(0xf11e);
+  static const nest_cam_iq = IconSpec(0xf11f);
+  static const nest_cam_iq_outdoor = IconSpec(0xf120);
+  static const nest_cam_magnet_mount = IconSpec(0xf8b8);
+  static const nest_cam_outdoor = IconSpec(0xf121);
+  static const nest_cam_stand = IconSpec(0xf8b9);
+  static const nest_cam_wall_mount = IconSpec(0xf8ba);
+  static const nest_cam_wired_stand = IconSpec(0xec16);
+  static const nest_clock_farsight_analog = IconSpec(0xf8bb);
+  static const nest_clock_farsight_digital = IconSpec(0xf8bc);
+  static const nest_connect = IconSpec(0xf122);
+  static const nest_detect = IconSpec(0xf123);
+  static const nest_display = IconSpec(0xf124);
+  static const nest_display_max = IconSpec(0xf125);
+  static const nest_doorbell_visitor = IconSpec(0xf8bd);
+  static const nest_eco_leaf = IconSpec(0xf8be);
+  static const nest_farsight_weather = IconSpec(0xf8bf);
+  static const nest_found_savings = IconSpec(0xf8c0);
+  static const nest_gale_wifi = IconSpec(0xf579);
+  static const nest_heat_link_e = IconSpec(0xf126);
+  static const nest_heat_link_gen_3 = IconSpec(0xf127);
+  static const nest_hello_doorbell = IconSpec(0xe82c);
+  static const nest_locator_tag = IconSpec(0xf8c1);
+  static const nest_mini = IconSpec(0xe789);
+  static const nest_multi_room = IconSpec(0xf8c2);
+  static const nest_protect = IconSpec(0xe68e);
+  static const nest_remote = IconSpec(0xf5db);
+  static const nest_remote_comfort_sensor = IconSpec(0xf12a);
+  static const nest_secure_alarm = IconSpec(0xf12b);
+  static const nest_sunblock = IconSpec(0xf8c3);
+  static const nest_tag = IconSpec(0xf8c1);
+  static const nest_thermostat = IconSpec(0xe68f);
+  static const nest_thermostat_e_eu = IconSpec(0xf12d);
+  static const nest_thermostat_gen_3 = IconSpec(0xf12e);
+  static const nest_thermostat_sensor = IconSpec(0xf12f);
+  static const nest_thermostat_sensor_eu = IconSpec(0xf130);
+  static const nest_thermostat_zirconium_eu = IconSpec(0xf131);
+  static const nest_true_radiant = IconSpec(0xf8c4);
+  static const nest_wake_on_approach = IconSpec(0xf8c5);
+  static const nest_wake_on_press = IconSpec(0xf8c6);
+  static const nest_wifi_gale = IconSpec(0xf132);
+  static const nest_wifi_mistral = IconSpec(0xf133);
+  static const nest_wifi_point = IconSpec(0xf134);
+  static const nest_wifi_point_vento = IconSpec(0xf134);
+  static const nest_wifi_pro = IconSpec(0xf56b);
+  static const nest_wifi_pro_2 = IconSpec(0xf56a);
+  static const nest_wifi_router = IconSpec(0xf133);
+  static const network_cell = IconSpec(0xe1b9);
+  static const network_check = IconSpec(0xe640);
+  static const network_intel_node = IconSpec(0xf371);
+  static const network_intelligence = IconSpec(0xefac);
+  static const network_intelligence_history = IconSpec(0xf5f6);
+  static const network_intelligence_update = IconSpec(0xf5f5);
+  static const network_locked = IconSpec(0xe61a);
+  static const network_manage = IconSpec(0xf7ab);
+  static const network_node = IconSpec(0xf56e);
+  static const network_ping = IconSpec(0xebca);
+  static const network_wifi = IconSpec(0xe1ba);
+  static const network_wifi_1_bar = IconSpec(0xebe4);
+  static const network_wifi_1_bar_locked = IconSpec(0xf58f);
+  static const network_wifi_2_bar = IconSpec(0xebd6);
+  static const network_wifi_2_bar_locked = IconSpec(0xf58e);
+  static const network_wifi_3_bar = IconSpec(0xebe1);
+  static const network_wifi_3_bar_locked = IconSpec(0xf58d);
+  static const network_wifi_locked = IconSpec(0xf532);
+  static const neurology = IconSpec(0xe10e);
+  static const new_label = IconSpec(0xe609);
+  static const new_releases = IconSpec(0xef76);
+  static const new_window = IconSpec(0xf710);
+  static const news = IconSpec(0xe032);
+  static const newsmode = IconSpec(0xefad);
+  static const newspaper = IconSpec(0xeb81);
+  static const newsstand = IconSpec(0xe9c4);
+  static const next_plan = IconSpec(0xef5d);
+  static const next_week = IconSpec(0xe16a);
+  static const nfc = IconSpec(0xe1bb);
+  static const nfc_off = IconSpec(0xf369);
+  static const night_shelter = IconSpec(0xf1f1);
+  static const night_sight_auto = IconSpec(0xf1d7);
+  static const night_sight_auto_off = IconSpec(0xf1f9);
+  static const night_sight_max = IconSpec(0xf6c3);
+  static const nightlife = IconSpec(0xea62);
+  static const nightlight = IconSpec(0xf03d);
+  static const nightlight_round = IconSpec(0xf03d);
+  static const nights_stay = IconSpec(0xea46);
+  static const no_accounts = IconSpec(0xf03e);
+  static const no_adult_content = IconSpec(0xf8fe);
+  static const no_backpack = IconSpec(0xf237);
+  static const no_crash = IconSpec(0xebf0);
+  static const no_drinks = IconSpec(0xf1a5);
+  static const no_encryption = IconSpec(0xf03f);
+  static const no_encryption_gmailerrorred = IconSpec(0xf03f);
+  static const no_flash = IconSpec(0xf1a6);
+  static const no_food = IconSpec(0xf1a7);
+  static const no_luggage = IconSpec(0xf23b);
+  static const no_meals = IconSpec(0xf1d6);
+  static const no_meeting_room = IconSpec(0xeb4e);
+  static const no_photography = IconSpec(0xf1a8);
+  static const no_sim = IconSpec(0xe1ce);
+  static const no_sound = IconSpec(0xe710);
+  static const no_stroller = IconSpec(0xf1af);
+  static const no_transfer = IconSpec(0xf1d5);
+  static const noise_aware = IconSpec(0xebec);
+  static const noise_control_off = IconSpec(0xebf3);
+  static const noise_control_on = IconSpec(0xf8a8);
+  static const nordic_walking = IconSpec(0xe50e);
+  static const north = IconSpec(0xf1e0);
+  static const north_east = IconSpec(0xf1e1);
+  static const north_west = IconSpec(0xf1e2);
+  static const not_accessible = IconSpec(0xf0fe);
+  static const not_accessible_forward = IconSpec(0xf54a);
+  static const not_interested = IconSpec(0xf08c);
+  static const not_listed_location = IconSpec(0xe575);
+  static const not_started = IconSpec(0xf0d1);
+  static const note = IconSpec(0xe66d);
+  static const note_add = IconSpec(0xe89c);
+  static const note_alt = IconSpec(0xf040);
+  static const note_stack = IconSpec(0xf562);
+  static const note_stack_add = IconSpec(0xf563);
+  static const notes = IconSpec(0xe26c);
+  static const notification_add = IconSpec(0xe399);
+  static const notification_important = IconSpec(0xe004);
+  static const notification_multiple = IconSpec(0xe6c2);
+  static const notification_settings = IconSpec(0xf367);
+  static const notification_sound = IconSpec(0xf353);
+  static const notifications = IconSpec(0xe7f5);
+  static const notifications_active = IconSpec(0xe7f7);
+  static const notifications_none = IconSpec(0xe7f5);
+  static const notifications_off = IconSpec(0xe7f6);
+  static const notifications_paused = IconSpec(0xe7f8);
+  static const notifications_unread = IconSpec(0xf4fe);
+  static const numbers = IconSpec(0xeac7);
+  static const nutrition = IconSpec(0xe110);
+  static const ods = IconSpec(0xe6e8);
+  static const odt = IconSpec(0xe6e9);
+  static const offline_bolt = IconSpec(0xe932);
+  static const offline_pin = IconSpec(0xe90a);
+  static const offline_pin_off = IconSpec(0xf4d0);
+  static const offline_share = IconSpec(0xe9c5);
+  static const oil_barrel = IconSpec(0xec15);
+  static const on_device_training = IconSpec(0xebfd);
+  static const on_hub_device = IconSpec(0xe6c3);
+  static const oncology = IconSpec(0xe114);
+  static const ondemand_video = IconSpec(0xe63a);
+  static const online_prediction = IconSpec(0xf0eb);
+  static const onsen = IconSpec(0xf6f8);
+  static const opacity = IconSpec(0xe91c);
+  static const open_in_browser = IconSpec(0xe89d);
+  static const open_in_full = IconSpec(0xf1ce);
+  static const open_in_new = IconSpec(0xe89e);
+  static const open_in_new_down = IconSpec(0xf70f);
+  static const open_in_new_off = IconSpec(0xe4f6);
+  static const open_in_phone = IconSpec(0xe702);
+  static const open_jam = IconSpec(0xefae);
+  static const open_run = IconSpec(0xf4b7);
+  static const open_with = IconSpec(0xe89f);
+  static const ophthalmology = IconSpec(0xe115);
+  static const oral_disease = IconSpec(0xe116);
+  static const orbit = IconSpec(0xf426);
+  static const order_approve = IconSpec(0xf812);
+  static const order_play = IconSpec(0xf811);
+  static const orders = IconSpec(0xeb14);
+  static const orthopedics = IconSpec(0xf897);
+  static const other_admission = IconSpec(0xe47b);
+  static const other_houses = IconSpec(0xe58c);
+  static const outbound = IconSpec(0xe1ca);
+  static const outbox = IconSpec(0xef5f);
+  static const outbox_alt = IconSpec(0xeb17);
+  static const outdoor_garden = IconSpec(0xe205);
+  static const outdoor_grill = IconSpec(0xea47);
+  static const outgoing_mail = IconSpec(0xf0d2);
+  static const outlet = IconSpec(0xf1d4);
+  static const outlined_flag = IconSpec(0xf0c6);
+  static const outpatient = IconSpec(0xe118);
+  static const outpatient_med = IconSpec(0xe119);
+  static const output = IconSpec(0xebbe);
+  static const output_circle = IconSpec(0xf70e);
+  static const oven = IconSpec(0xe9c7);
+  static const oven_gen = IconSpec(0xe843);
+  static const overview = IconSpec(0xe4a7);
+  static const overview_key = IconSpec(0xf7d4);
+  static const owl = IconSpec(0xf3b4);
+  static const oxygen_saturation = IconSpec(0xe4de);
+  static const p2p = IconSpec(0xf52a);
+  static const pace = IconSpec(0xf6b8);
+  static const pacemaker = IconSpec(0xe656);
+  static const package = IconSpec(0xe48f);
+  static const package_2 = IconSpec(0xf569);
+  static const padding = IconSpec(0xe9c8);
+  static const page_control = IconSpec(0xe731);
+  static const page_footer = IconSpec(0xf383);
+  static const page_header = IconSpec(0xf384);
+  static const page_info = IconSpec(0xf614);
+  static const pageless = IconSpec(0xf509);
+  static const pages = IconSpec(0xe7f9);
+  static const pageview = IconSpec(0xe8a0);
+  static const paid = IconSpec(0xf041);
+  static const palette = IconSpec(0xe40a);
+  static const pallet = IconSpec(0xf86a);
+  static const pan_tool = IconSpec(0xe925);
+  static const pan_tool_alt = IconSpec(0xebb9);
+  static const pan_zoom = IconSpec(0xf655);
+  static const panorama = IconSpec(0xe40b);
+  static const panorama_fish_eye = IconSpec(0xe40c);
+  static const panorama_horizontal = IconSpec(0xe40d);
+  static const panorama_photosphere = IconSpec(0xe9c9);
+  static const panorama_vertical = IconSpec(0xe40e);
+  static const panorama_wide_angle = IconSpec(0xe40f);
+  static const paragliding = IconSpec(0xe50f);
+  static const park = IconSpec(0xea63);
+  static const partly_cloudy_day = IconSpec(0xf172);
+  static const partly_cloudy_night = IconSpec(0xf174);
+  static const partner_exchange = IconSpec(0xf7f9);
+  static const partner_reports = IconSpec(0xefaf);
+  static const party_mode = IconSpec(0xe7fa);
+  static const passkey = IconSpec(0xf87f);
+  static const password = IconSpec(0xf042);
+  static const password_2 = IconSpec(0xf4a9);
+  static const password_2_off = IconSpec(0xf4a8);
+  static const patient_list = IconSpec(0xe653);
+  static const pattern = IconSpec(0xf043);
+  static const pause = IconSpec(0xe034);
+  static const pause_circle = IconSpec(0xe1a2);
+  static const pause_circle_filled = IconSpec(0xe1a2);
+  static const pause_circle_outline = IconSpec(0xe1a2);
+  static const pause_presentation = IconSpec(0xe0ea);
+  static const payment = IconSpec(0xe8a1);
+  static const payments = IconSpec(0xef63);
+  static const pedal_bike = IconSpec(0xeb29);
+  static const pediatrics = IconSpec(0xe11d);
+  static const pen_size_1 = IconSpec(0xf755);
+  static const pen_size_2 = IconSpec(0xf754);
+  static const pen_size_3 = IconSpec(0xf753);
+  static const pen_size_4 = IconSpec(0xf752);
+  static const pen_size_5 = IconSpec(0xf751);
+  static const pending = IconSpec(0xef64);
+  static const pending_actions = IconSpec(0xf1bb);
+  static const pentagon = IconSpec(0xeb50);
+  static const people = IconSpec(0xea21);
+  static const people_alt = IconSpec(0xea21);
+  static const people_outline = IconSpec(0xea21);
+  static const percent = IconSpec(0xeb58);
+  static const performance_max = IconSpec(0xe51a);
+  static const pergola = IconSpec(0xe203);
+  static const perm_camera_mic = IconSpec(0xe8a2);
+  static const perm_contact_calendar = IconSpec(0xe8a3);
+  static const perm_data_setting = IconSpec(0xe8a4);
+  static const perm_device_information = IconSpec(0xe8a5);
+  static const perm_identity = IconSpec(0xf0d3);
+  static const perm_media = IconSpec(0xe8a7);
+  static const perm_phone_msg = IconSpec(0xe8a8);
+  static const perm_scan_wifi = IconSpec(0xe8a9);
+  static const person = IconSpec(0xf0d3);
+  static const person_2 = IconSpec(0xf8e4);
+  static const person_3 = IconSpec(0xf8e5);
+  static const person_4 = IconSpec(0xf8e6);
+  static const person_add = IconSpec(0xea4d);
+  static const person_add_alt = IconSpec(0xea4d);
+  static const person_add_disabled = IconSpec(0xe9cb);
+  static const person_alert = IconSpec(0xf567);
+  static const person_apron = IconSpec(0xf5a3);
+  static const person_book = IconSpec(0xf5e8);
+  static const person_cancel = IconSpec(0xf566);
+  static const person_celebrate = IconSpec(0xf7fe);
+  static const person_check = IconSpec(0xf565);
+  static const person_edit = IconSpec(0xf4fa);
+  static const person_filled = IconSpec(0xf0d3);
+  static const person_off = IconSpec(0xe510);
+  static const person_outline = IconSpec(0xf0d3);
+  static const person_pin = IconSpec(0xe55a);
+  static const person_pin_circle = IconSpec(0xe56a);
+  static const person_play = IconSpec(0xf7fd);
+  static const person_raised_hand = IconSpec(0xf59a);
+  static const person_remove = IconSpec(0xef66);
+  static const person_search = IconSpec(0xf106);
+  static const person_shield = IconSpec(0xe384);
+  static const personal_bag = IconSpec(0xeb0e);
+  static const personal_bag_off = IconSpec(0xeb0f);
+  static const personal_bag_question = IconSpec(0xeb10);
+  static const personal_injury = IconSpec(0xe6da);
+  static const personal_places = IconSpec(0xe703);
+  static const personal_video = IconSpec(0xe63b);
+  static const pest_control = IconSpec(0xf0fa);
+  static const pest_control_rodent = IconSpec(0xf0fd);
+  static const pet_supplies = IconSpec(0xefb1);
+  static const pets = IconSpec(0xe91d);
+  static const phishing = IconSpec(0xead7);
+  static const phone = IconSpec(0xf0d4);
+  static const phone_alt = IconSpec(0xf0d4);
+  static const phone_android = IconSpec(0xe324);
+  static const phone_bluetooth_speaker = IconSpec(0xe61b);
+  static const phone_callback = IconSpec(0xe649);
+  static const phone_disabled = IconSpec(0xe9cc);
+  static const phone_enabled = IconSpec(0xe9cd);
+  static const phone_forwarded = IconSpec(0xe61c);
+  static const phone_in_talk = IconSpec(0xe61d);
+  static const phone_iphone = IconSpec(0xe325);
+  static const phone_locked = IconSpec(0xe61e);
+  static const phone_missed = IconSpec(0xe61f);
+  static const phone_paused = IconSpec(0xe620);
+  static const phonelink = IconSpec(0xe326);
+  static const phonelink_erase = IconSpec(0xe0db);
+  static const phonelink_lock = IconSpec(0xe0dc);
+  static const phonelink_off = IconSpec(0xe327);
+  static const phonelink_ring = IconSpec(0xe0dd);
+  static const phonelink_ring_off = IconSpec(0xf7aa);
+  static const phonelink_setup = IconSpec(0xef41);
+  static const photo = IconSpec(0xe432);
+  static const photo_album = IconSpec(0xe411);
+  static const photo_auto_merge = IconSpec(0xf530);
+  static const photo_camera = IconSpec(0xe412);
+  static const photo_camera_back = IconSpec(0xef68);
+  static const photo_camera_front = IconSpec(0xef69);
+  static const photo_filter = IconSpec(0xe43b);
+  static const photo_frame = IconSpec(0xf0d9);
+  static const photo_library = IconSpec(0xe413);
+  static const photo_prints = IconSpec(0xefb2);
+  static const photo_size_select_actual = IconSpec(0xe432);
+  static const photo_size_select_large = IconSpec(0xe433);
+  static const photo_size_select_small = IconSpec(0xe434);
+  static const php = IconSpec(0xeb8f);
+  static const physical_therapy = IconSpec(0xe11e);
+  static const piano = IconSpec(0xe521);
+  static const piano_off = IconSpec(0xe520);
+  static const picture_as_pdf = IconSpec(0xe415);
+  static const picture_in_picture = IconSpec(0xe8aa);
+  static const picture_in_picture_alt = IconSpec(0xe911);
+  static const picture_in_picture_center = IconSpec(0xf550);
+  static const picture_in_picture_large = IconSpec(0xf54f);
+  static const picture_in_picture_medium = IconSpec(0xf54e);
+  static const picture_in_picture_mobile = IconSpec(0xf517);
+  static const picture_in_picture_off = IconSpec(0xf52f);
+  static const picture_in_picture_small = IconSpec(0xf54d);
+  static const pie_chart = IconSpec(0xf0da);
+  static const pie_chart_filled = IconSpec(0xf0da);
+  static const pie_chart_outline = IconSpec(0xf0da);
+  static const pie_chart_outlined = IconSpec(0xf0da);
+  static const pill = IconSpec(0xe11f);
+  static const pill_off = IconSpec(0xf809);
+  static const pin = IconSpec(0xf045);
+  static const pin_drop = IconSpec(0xe55e);
+  static const pin_end = IconSpec(0xe767);
+  static const pin_invoke = IconSpec(0xe763);
+  static const pinboard = IconSpec(0xf3ab);
+  static const pinboard_unread = IconSpec(0xf3ac);
+  static const pinch = IconSpec(0xeb38);
+  static const pinch_zoom_in = IconSpec(0xf1fa);
+  static const pinch_zoom_out = IconSpec(0xf1fb);
+  static const pip = IconSpec(0xf64d);
+  static const pip_exit = IconSpec(0xf70d);
+  static const pivot_table_chart = IconSpec(0xe9ce);
+  static const place = IconSpec(0xf1db);
+  static const place_item = IconSpec(0xf1f0);
+  static const plagiarism = IconSpec(0xea5a);
+  static const planet = IconSpec(0xf387);
+  static const planner_banner_ad_pt = IconSpec(0xe692);
+  static const planner_review = IconSpec(0xe694);
+  static const play_arrow = IconSpec(0xe037);
+  static const play_circle = IconSpec(0xe1c4);
+  static const play_disabled = IconSpec(0xef6a);
+  static const play_for_work = IconSpec(0xe906);
+  static const play_lesson = IconSpec(0xf047);
+  static const play_music = IconSpec(0xe6ee);
+  static const play_pause = IconSpec(0xf137);
+  static const play_shapes = IconSpec(0xf7fc);
+  static const playing_cards = IconSpec(0xf5dc);
+  static const playlist_add = IconSpec(0xe03b);
+  static const playlist_add_check = IconSpec(0xe065);
+  static const playlist_add_check_circle = IconSpec(0xe7e6);
+  static const playlist_add_circle = IconSpec(0xe7e5);
+  static const playlist_play = IconSpec(0xe05f);
+  static const playlist_remove = IconSpec(0xeb80);
+  static const plug_connect = IconSpec(0xf35a);
+  static const plumbing = IconSpec(0xf107);
+  static const plus_one = IconSpec(0xe800);
+  static const podcasts = IconSpec(0xf048);
+  static const podiatry = IconSpec(0xe120);
+  static const podium = IconSpec(0xf7fb);
+  static const point_of_sale = IconSpec(0xf17e);
+  static const point_scan = IconSpec(0xf70c);
+  static const poker_chip = IconSpec(0xf49b);
+  static const policy = IconSpec(0xea17);
+  static const policy_alert = IconSpec(0xf407);
+  static const poll = IconSpec(0xf0cc);
+  static const polyline = IconSpec(0xebbb);
+  static const polymer = IconSpec(0xe8ab);
+  static const pool = IconSpec(0xeb48);
+  static const portable_wifi_off = IconSpec(0xf087);
+  static const portrait = IconSpec(0xe851);
+  static const position_bottom_left = IconSpec(0xf70b);
+  static const position_bottom_right = IconSpec(0xf70a);
+  static const position_top_right = IconSpec(0xf709);
+  static const post = IconSpec(0xe705);
+  static const post_add = IconSpec(0xea20);
+  static const potted_plant = IconSpec(0xf8aa);
+  static const power = IconSpec(0xe63c);
+  static const power_input = IconSpec(0xe336);
+  static const power_off = IconSpec(0xe646);
+  static const power_rounded = IconSpec(0xf8c7);
+  static const power_settings_circle = IconSpec(0xf418);
+  static const power_settings_new = IconSpec(0xf8c7);
+  static const prayer_times = IconSpec(0xf838);
+  static const precision_manufacturing = IconSpec(0xf049);
+  static const pregnancy = IconSpec(0xf5f1);
+  static const pregnant_woman = IconSpec(0xf5f1);
+  static const preliminary = IconSpec(0xe7d8);
+  static const prescriptions = IconSpec(0xe121);
+  static const present_to_all = IconSpec(0xe0df);
+  static const preview = IconSpec(0xf1c5);
+  static const preview_off = IconSpec(0xf7af);
+  static const price_change = IconSpec(0xf04a);
+  static const price_check = IconSpec(0xf04b);
+  static const print = IconSpec(0xe8ad);
+  static const print_add = IconSpec(0xf7a2);
+  static const print_connect = IconSpec(0xf7a1);
+  static const print_disabled = IconSpec(0xe9cf);
+  static const print_error = IconSpec(0xf7a0);
+  static const print_lock = IconSpec(0xf651);
+  static const priority = IconSpec(0xe19f);
+  static const priority_high = IconSpec(0xe645);
+  static const privacy = IconSpec(0xf148);
+  static const privacy_tip = IconSpec(0xf0dc);
+  static const private_connectivity = IconSpec(0xe744);
+  static const problem = IconSpec(0xe122);
+  static const procedure = IconSpec(0xe651);
+  static const process_chart = IconSpec(0xf855);
+  static const production_quantity_limits = IconSpec(0xe1d1);
+  static const productivity = IconSpec(0xe296);
+  static const progress_activity = IconSpec(0xe9d0);
+  static const prompt_suggestion = IconSpec(0xf4f6);
+  static const propane = IconSpec(0xec14);
+  static const propane_tank = IconSpec(0xec13);
+  static const psychiatry = IconSpec(0xe123);
+  static const psychology = IconSpec(0xea4a);
+  static const psychology_alt = IconSpec(0xf8ea);
+  static const public = IconSpec(0xe80b);
+  static const public_off = IconSpec(0xf1ca);
+  static const publish = IconSpec(0xe255);
+  static const published_with_changes = IconSpec(0xf232);
+  static const pulmonology = IconSpec(0xe124);
+  static const pulse_alert = IconSpec(0xf501);
+  static const punch_clock = IconSpec(0xeaa8);
+  static const push_pin = IconSpec(0xf10d);
+  static const qr_code = IconSpec(0xef6b);
+  static const qr_code_2 = IconSpec(0xe00a);
+  static const qr_code_2_add = IconSpec(0xf658);
+  static const qr_code_scanner = IconSpec(0xf206);
+  static const query_builder = IconSpec(0xefd6);
+  static const query_stats = IconSpec(0xe4fc);
+  static const question_answer = IconSpec(0xe8af);
+  static const question_exchange = IconSpec(0xf7f3);
+  static const question_mark = IconSpec(0xeb8b);
+  static const queue = IconSpec(0xe03c);
+  static const queue_music = IconSpec(0xe03d);
+  static const queue_play_next = IconSpec(0xe066);
+  static const quick_phrases = IconSpec(0xe7d1);
+  static const quick_reference = IconSpec(0xe46e);
+  static const quick_reference_all = IconSpec(0xf801);
+  static const quick_reorder = IconSpec(0xeb15);
+  static const quickreply = IconSpec(0xef6c);
+  static const quiet_time = IconSpec(0xf159);
+  static const quiet_time_active = IconSpec(0xeb76);
+  static const quiz = IconSpec(0xf04c);
+  static const r_mobiledata = IconSpec(0xf04d);
+  static const radar = IconSpec(0xf04e);
+  static const radio = IconSpec(0xe03e);
+  static const radio_button_checked = IconSpec(0xe837);
+  static const radio_button_partial = IconSpec(0xf560);
+  static const radio_button_unchecked = IconSpec(0xe836);
+  static const radiology = IconSpec(0xe125);
+  static const railway_alert = IconSpec(0xe9d1);
+  static const railway_alert_2 = IconSpec(0xf461);
+  static const rainy = IconSpec(0xf176);
+  static const rainy_heavy = IconSpec(0xf61f);
+  static const rainy_light = IconSpec(0xf61e);
+  static const rainy_snow = IconSpec(0xf61d);
+  static const ramen_dining = IconSpec(0xea64);
+  static const ramp_left = IconSpec(0xeb9c);
+  static const ramp_right = IconSpec(0xeb96);
+  static const range_hood = IconSpec(0xe1ea);
+  static const rate_review = IconSpec(0xe560);
+  static const rate_review_rtl = IconSpec(0xe706);
+  static const raven = IconSpec(0xf555);
+  static const raw_off = IconSpec(0xf04f);
+  static const raw_on = IconSpec(0xf050);
+  static const read_more = IconSpec(0xef6d);
+  static const readiness_score = IconSpec(0xf6dd);
+  static const real_estate_agent = IconSpec(0xe73a);
+  static const rear_camera = IconSpec(0xf6c2);
+  static const rebase = IconSpec(0xf845);
+  static const rebase_edit = IconSpec(0xf846);
+  static const receipt = IconSpec(0xe8b0);
+  static const receipt_long = IconSpec(0xef6e);
+  static const receipt_long_off = IconSpec(0xf40a);
+  static const recent_actors = IconSpec(0xe03f);
+  static const recent_patient = IconSpec(0xf808);
+  static const recenter = IconSpec(0xf4c0);
+  static const recommend = IconSpec(0xe9d2);
+  static const record_voice_over = IconSpec(0xe91f);
+  static const rectangle = IconSpec(0xeb54);
+  static const recycling = IconSpec(0xe760);
+  static const redeem = IconSpec(0xe8f6);
+  static const redo = IconSpec(0xe15a);
+  static const reduce_capacity = IconSpec(0xf21c);
+  static const refresh = IconSpec(0xe5d5);
+  static const regular_expression = IconSpec(0xf750);
+  static const relax = IconSpec(0xf6dc);
+  static const release_alert = IconSpec(0xf654);
+  static const remember_me = IconSpec(0xf051);
+  static const reminder = IconSpec(0xe6c6);
+  static const reminders_alt = IconSpec(0xe6c6);
+  static const remote_gen = IconSpec(0xe83e);
+  static const remove = IconSpec(0xe15b);
+  static const remove_circle = IconSpec(0xf08f);
+  static const remove_circle_outline = IconSpec(0xf08f);
+  static const remove_done = IconSpec(0xe9d3);
+  static const remove_from_queue = IconSpec(0xe067);
+  static const remove_moderator = IconSpec(0xe9d4);
+  static const remove_red_eye = IconSpec(0xe8f4);
+  static const remove_road = IconSpec(0xebfc);
+  static const remove_selection = IconSpec(0xe9d5);
+  static const remove_shopping_cart = IconSpec(0xe928);
+  static const reopen_window = IconSpec(0xf708);
+  static const reorder = IconSpec(0xe8fe);
+  static const repartition = IconSpec(0xf8e8);
+  static const repeat = IconSpec(0xe040);
+  static const repeat_on = IconSpec(0xe9d6);
+  static const repeat_one = IconSpec(0xe041);
+  static const repeat_one_on = IconSpec(0xe9d7);
+  static const replace_audio = IconSpec(0xf451);
+  static const replace_image = IconSpec(0xf450);
+  static const replace_video = IconSpec(0xf44f);
+  static const replay = IconSpec(0xe042);
+  static const replay_10 = IconSpec(0xe059);
+  static const replay_30 = IconSpec(0xe05a);
+  static const replay_5 = IconSpec(0xe05b);
+  static const replay_circle_filled = IconSpec(0xe9d8);
+  static const reply = IconSpec(0xe15e);
+  static const reply_all = IconSpec(0xe15f);
+  static const report = IconSpec(0xf052);
+  static const report_gmailerrorred = IconSpec(0xf052);
+  static const report_off = IconSpec(0xe170);
+  static const report_problem = IconSpec(0xf083);
+  static const request_page = IconSpec(0xf22c);
+  static const request_quote = IconSpec(0xf1b6);
+  static const reset_brightness = IconSpec(0xf482);
+  static const reset_focus = IconSpec(0xf481);
+  static const reset_image = IconSpec(0xf824);
+  static const reset_iso = IconSpec(0xf480);
+  static const reset_settings = IconSpec(0xf47f);
+  static const reset_shadow = IconSpec(0xf47e);
+  static const reset_shutter_speed = IconSpec(0xf47d);
+  static const reset_tv = IconSpec(0xe9d9);
+  static const reset_white_balance = IconSpec(0xf47c);
+  static const reset_wrench = IconSpec(0xf56c);
+  static const resize = IconSpec(0xf707);
+  static const respiratory_rate = IconSpec(0xe127);
+  static const responsive_layout = IconSpec(0xe9da);
+  static const restart_alt = IconSpec(0xf053);
+  static const restaurant = IconSpec(0xe56c);
+  static const restaurant_menu = IconSpec(0xe561);
+  static const restore = IconSpec(0xe8b3);
+  static const restore_from_trash = IconSpec(0xe938);
+  static const restore_page = IconSpec(0xe929);
+  static const resume = IconSpec(0xf7d0);
+  static const reviews = IconSpec(0xf07c);
+  static const rewarded_ads = IconSpec(0xefb6);
+  static const rheumatology = IconSpec(0xe128);
+  static const rib_cage = IconSpec(0xf898);
+  static const rice_bowl = IconSpec(0xf1f5);
+  static const right_click = IconSpec(0xf706);
+  static const right_panel_close = IconSpec(0xf705);
+  static const right_panel_open = IconSpec(0xf704);
+  static const ring_volume = IconSpec(0xf0dd);
+  static const ring_volume_filled = IconSpec(0xf0dd);
+  static const ripples = IconSpec(0xe9db);
+  static const road = IconSpec(0xf472);
+  static const robot = IconSpec(0xf882);
+  static const robot_2 = IconSpec(0xf5d0);
+  static const rocket = IconSpec(0xeba5);
+  static const rocket_launch = IconSpec(0xeb9b);
+  static const roller_shades = IconSpec(0xec12);
+  static const roller_shades_closed = IconSpec(0xec11);
+  static const roller_skating = IconSpec(0xebcd);
+  static const roofing = IconSpec(0xf201);
+  static const room = IconSpec(0xf1db);
+  static const room_preferences = IconSpec(0xf1b8);
+  static const room_service = IconSpec(0xeb49);
+  static const rotate_90_degrees_ccw = IconSpec(0xe418);
+  static const rotate_90_degrees_cw = IconSpec(0xeaab);
+  static const rotate_auto = IconSpec(0xf417);
+  static const rotate_left = IconSpec(0xe419);
+  static const rotate_right = IconSpec(0xe41a);
+  static const roundabout_left = IconSpec(0xeb99);
+  static const roundabout_right = IconSpec(0xeba3);
+  static const rounded_corner = IconSpec(0xe920);
+  static const route = IconSpec(0xeacd);
+  static const router = IconSpec(0xe328);
+  static const routine = IconSpec(0xe20c);
+  static const rowing = IconSpec(0xe921);
+  static const rss_feed = IconSpec(0xe0e5);
+  static const rsvp = IconSpec(0xf055);
+  static const rtt = IconSpec(0xe9ad);
+  static const rubric = IconSpec(0xeb27);
+  static const rule = IconSpec(0xf1c2);
+  static const rule_folder = IconSpec(0xf1c9);
+  static const rule_settings = IconSpec(0xf64c);
+  static const run_circle = IconSpec(0xef6f);
+  static const running_with_errors = IconSpec(0xe51d);
+  static const rv_hookup = IconSpec(0xe642);
+  static const safety_check = IconSpec(0xebef);
+  static const safety_check_off = IconSpec(0xf59d);
+  static const safety_divider = IconSpec(0xe1cc);
+  static const sailing = IconSpec(0xe502);
+  static const salinity = IconSpec(0xf876);
+  static const sanitizer = IconSpec(0xf21d);
+  static const satellite = IconSpec(0xe562);
+  static const satellite_alt = IconSpec(0xeb3a);
+  static const sauna = IconSpec(0xf6f7);
+  static const save = IconSpec(0xe161);
+  static const save_alt = IconSpec(0xf090);
+  static const save_as = IconSpec(0xeb60);
+  static const save_clock = IconSpec(0xf398);
+  static const saved_search = IconSpec(0xea11);
+  static const savings = IconSpec(0xe2eb);
+  static const scale = IconSpec(0xeb5f);
+  static const scan = IconSpec(0xf74e);
+  static const scan_delete = IconSpec(0xf74f);
+  static const scanner = IconSpec(0xe329);
+  static const scatter_plot = IconSpec(0xe268);
+  static const scene = IconSpec(0xe2a7);
+  static const schedule = IconSpec(0xefd6);
+  static const schedule_send = IconSpec(0xea0a);
+  static const schema = IconSpec(0xe4fd);
+  static const school = IconSpec(0xe80c);
+  static const science = IconSpec(0xea4b);
+  static const science_off = IconSpec(0xf542);
+  static const scooter = IconSpec(0xf471);
+  static const score = IconSpec(0xe269);
+  static const scoreboard = IconSpec(0xebd0);
+  static const screen_lock_landscape = IconSpec(0xe1be);
+  static const screen_lock_portrait = IconSpec(0xe1bf);
+  static const screen_lock_rotation = IconSpec(0xe1c0);
+  static const screen_record = IconSpec(0xf679);
+  static const screen_rotation = IconSpec(0xe1c1);
+  static const screen_rotation_alt = IconSpec(0xebee);
+  static const screen_rotation_up = IconSpec(0xf678);
+  static const screen_search_desktop = IconSpec(0xef70);
+  static const screen_share = IconSpec(0xe0e2);
+  static const screenshot = IconSpec(0xf056);
+  static const screenshot_frame = IconSpec(0xf677);
+  static const screenshot_frame_2 = IconSpec(0xf374);
+  static const screenshot_keyboard = IconSpec(0xf7d3);
+  static const screenshot_monitor = IconSpec(0xec08);
+  static const screenshot_region = IconSpec(0xf7d2);
+  static const screenshot_tablet = IconSpec(0xf697);
+  static const script = IconSpec(0xf45f);
+  static const scrollable_header = IconSpec(0xe9dc);
+  static const scuba_diving = IconSpec(0xebce);
+  static const sd = IconSpec(0xe9dd);
+  static const sd_card = IconSpec(0xe623);
+  static const sd_card_alert = IconSpec(0xf057);
+  static const sd_storage = IconSpec(0xe623);
+  static const sdk = IconSpec(0xe720);
+  static const search = IconSpec(0xe8b6);
+  static const search_activity = IconSpec(0xf3e5);
+  static const search_check = IconSpec(0xf800);
+  static const search_check_2 = IconSpec(0xf469);
+  static const search_hands_free = IconSpec(0xe696);
+  static const search_insights = IconSpec(0xf4bc);
+  static const search_off = IconSpec(0xea76);
+  static const seat_cool_left = IconSpec(0xf331);
+  static const seat_cool_right = IconSpec(0xf330);
+  static const seat_heat_left = IconSpec(0xf32f);
+  static const seat_heat_right = IconSpec(0xf32e);
+  static const seat_vent_left = IconSpec(0xf32d);
+  static const seat_vent_right = IconSpec(0xf32c);
+  static const security = IconSpec(0xe32a);
+  static const security_key = IconSpec(0xf503);
+  static const security_update = IconSpec(0xf072);
+  static const security_update_good = IconSpec(0xf073);
+  static const security_update_warning = IconSpec(0xf074);
+  static const segment = IconSpec(0xe94b);
+  static const select = IconSpec(0xf74d);
+  static const select_all = IconSpec(0xe162);
+  static const select_check_box = IconSpec(0xf1fe);
+  static const select_to_speak = IconSpec(0xf7cf);
+  static const select_window = IconSpec(0xe6fa);
+  static const select_window_2 = IconSpec(0xf4c8);
+  static const select_window_off = IconSpec(0xe506);
+  static const self_care = IconSpec(0xf86d);
+  static const self_improvement = IconSpec(0xea78);
+  static const sell = IconSpec(0xf05b);
+  static const send = IconSpec(0xe163);
+  static const send_and_archive = IconSpec(0xea0c);
+  static const send_money = IconSpec(0xe8b7);
+  static const send_time_extension = IconSpec(0xeadb);
+  static const send_to_mobile = IconSpec(0xf05c);
+  static const sensor_door = IconSpec(0xf1b5);
+  static const sensor_occupied = IconSpec(0xec10);
+  static const sensor_window = IconSpec(0xf1b4);
+  static const sensors = IconSpec(0xe51e);
+  static const sensors_krx = IconSpec(0xf556);
+  static const sensors_krx_off = IconSpec(0xf515);
+  static const sensors_off = IconSpec(0xe51f);
+  static const sentiment_calm = IconSpec(0xf6a7);
+  static const sentiment_content = IconSpec(0xf6a6);
+  static const sentiment_dissatisfied = IconSpec(0xe811);
+  static const sentiment_excited = IconSpec(0xf6a5);
+  static const sentiment_extremely_dissatisfied = IconSpec(0xf194);
+  static const sentiment_frustrated = IconSpec(0xf6a4);
+  static const sentiment_neutral = IconSpec(0xe812);
+  static const sentiment_sad = IconSpec(0xf6a3);
+  static const sentiment_satisfied = IconSpec(0xe813);
+  static const sentiment_satisfied_alt = IconSpec(0xe813);
+  static const sentiment_stressed = IconSpec(0xf6a2);
+  static const sentiment_very_dissatisfied = IconSpec(0xe814);
+  static const sentiment_very_satisfied = IconSpec(0xe815);
+  static const sentiment_worried = IconSpec(0xf6a1);
+  static const serif = IconSpec(0xf4ac);
+  static const server_person = IconSpec(0xf3bd);
+  static const service_toolbox = IconSpec(0xe717);
+  static const set_meal = IconSpec(0xf1ea);
+  static const settings = IconSpec(0xe8b8);
+  static const settings_accessibility = IconSpec(0xf05d);
+  static const settings_account_box = IconSpec(0xf835);
+  static const settings_alert = IconSpec(0xf143);
+  static const settings_applications = IconSpec(0xe8b9);
+  static const settings_b_roll = IconSpec(0xf625);
+  static const settings_backup_restore = IconSpec(0xe8ba);
+  static const settings_bluetooth = IconSpec(0xe8bb);
+  static const settings_brightness = IconSpec(0xe8bd);
+  static const settings_cell = IconSpec(0xe8bc);
+  static const settings_cinematic_blur = IconSpec(0xf624);
+  static const settings_ethernet = IconSpec(0xe8be);
+  static const settings_heart = IconSpec(0xf522);
+  static const settings_input_antenna = IconSpec(0xe8bf);
+  static const settings_input_component = IconSpec(0xe8c1);
+  static const settings_input_composite = IconSpec(0xe8c1);
+  static const settings_input_hdmi = IconSpec(0xe8c2);
+  static const settings_input_svideo = IconSpec(0xe8c3);
+  static const settings_motion_mode = IconSpec(0xf833);
+  static const settings_night_sight = IconSpec(0xf832);
+  static const settings_overscan = IconSpec(0xe8c4);
+  static const settings_panorama = IconSpec(0xf831);
+  static const settings_phone = IconSpec(0xe8c5);
+  static const settings_photo_camera = IconSpec(0xf834);
+  static const settings_power = IconSpec(0xe8c6);
+  static const settings_remote = IconSpec(0xe8c7);
+  static const settings_slow_motion = IconSpec(0xf623);
+  static const settings_suggest = IconSpec(0xf05e);
+  static const settings_system_daydream = IconSpec(0xe1c3);
+  static const settings_timelapse = IconSpec(0xf622);
+  static const settings_video_camera = IconSpec(0xf621);
+  static const settings_voice = IconSpec(0xe8c8);
+  static const settop_component = IconSpec(0xe2ac);
+  static const severe_cold = IconSpec(0xebd3);
+  static const shadow = IconSpec(0xe9df);
+  static const shadow_add = IconSpec(0xf584);
+  static const shadow_minus = IconSpec(0xf583);
+  static const shape_line = IconSpec(0xf8d3);
+  static const shape_recognition = IconSpec(0xeb01);
+  static const shapes = IconSpec(0xe602);
+  static const share = IconSpec(0xe80d);
+  static const share_eta = IconSpec(0xe5f7);
+  static const share_location = IconSpec(0xf05f);
+  static const share_off = IconSpec(0xf6cb);
+  static const share_reviews = IconSpec(0xf8a4);
+  static const share_windows = IconSpec(0xf613);
+  static const sheets_rtl = IconSpec(0xf823);
+  static const shelf_auto_hide = IconSpec(0xf703);
+  static const shelf_position = IconSpec(0xf702);
+  static const shelves = IconSpec(0xf86e);
+  static const shield = IconSpec(0xe9e0);
+  static const shield_lock = IconSpec(0xf686);
+  static const shield_locked = IconSpec(0xf592);
+  static const shield_moon = IconSpec(0xeaa9);
+  static const shield_person = IconSpec(0xf650);
+  static const shield_question = IconSpec(0xf529);
+  static const shield_with_heart = IconSpec(0xe78f);
+  static const shield_with_house = IconSpec(0xe78d);
+  static const shift = IconSpec(0xe5f2);
+  static const shift_lock = IconSpec(0xf7ae);
+  static const shift_lock_off = IconSpec(0xf483);
+  static const shop = IconSpec(0xe8c9);
+  static const shop_2 = IconSpec(0xe8ca);
+  static const shop_two = IconSpec(0xe8ca);
+  static const shopping_bag = IconSpec(0xf1cc);
+  static const shopping_bag_speed = IconSpec(0xf39a);
+  static const shopping_basket = IconSpec(0xe8cb);
+  static const shopping_cart = IconSpec(0xe8cc);
+  static const shopping_cart_checkout = IconSpec(0xeb88);
+  static const shopping_cart_off = IconSpec(0xf4f7);
+  static const shoppingmode = IconSpec(0xefb7);
+  static const short_stay = IconSpec(0xe4d0);
+  static const short_text = IconSpec(0xe261);
+  static const shortcut = IconSpec(0xf57a);
+  static const show_chart = IconSpec(0xe6e1);
+  static const shower = IconSpec(0xf061);
+  static const shuffle = IconSpec(0xe043);
+  static const shuffle_on = IconSpec(0xe9e1);
+  static const shutter_speed = IconSpec(0xe43d);
+  static const shutter_speed_add = IconSpec(0xf57e);
+  static const shutter_speed_minus = IconSpec(0xf57d);
+  static const sick = IconSpec(0xf220);
+  static const side_navigation = IconSpec(0xe9e2);
+  static const sign_language = IconSpec(0xebe5);
+  static const signal_cellular_0_bar = IconSpec(0xf0a8);
+  static const signal_cellular_1_bar = IconSpec(0xf0a9);
+  static const signal_cellular_2_bar = IconSpec(0xf0aa);
+  static const signal_cellular_3_bar = IconSpec(0xf0ab);
+  static const signal_cellular_4_bar = IconSpec(0xe1c8);
+  static const signal_cellular_add = IconSpec(0xf7a9);
+  static const signal_cellular_alt = IconSpec(0xe202);
+  static const signal_cellular_alt_1_bar = IconSpec(0xebdf);
+  static const signal_cellular_alt_2_bar = IconSpec(0xebe3);
+  static const signal_cellular_connected_no_internet_0_bar = IconSpec(0xf0ac);
+  static const signal_cellular_connected_no_internet_4_bar = IconSpec(0xe1cd);
+  static const signal_cellular_no_sim = IconSpec(0xe1ce);
+  static const signal_cellular_nodata = IconSpec(0xf062);
+  static const signal_cellular_null = IconSpec(0xe1cf);
+  static const signal_cellular_off = IconSpec(0xe1d0);
+  static const signal_cellular_pause = IconSpec(0xf5a7);
+  static const signal_disconnected = IconSpec(0xf239);
+  static const signal_wifi_0_bar = IconSpec(0xf0b0);
+  static const signal_wifi_4_bar = IconSpec(0xf065);
+  static const signal_wifi_4_bar_lock = IconSpec(0xe1e1);
+  static const signal_wifi_bad = IconSpec(0xf064);
+  static const signal_wifi_connected_no_internet_4 = IconSpec(0xf064);
+  static const signal_wifi_off = IconSpec(0xe1da);
+  static const signal_wifi_statusbar_4_bar = IconSpec(0xf065);
+  static const signal_wifi_statusbar_not_connected = IconSpec(0xf0ef);
+  static const signal_wifi_statusbar_null = IconSpec(0xf067);
+  static const signature = IconSpec(0xf74c);
+  static const signpost = IconSpec(0xeb91);
+  static const sim_card = IconSpec(0xe32b);
+  static const sim_card_alert = IconSpec(0xf057);
+  static const sim_card_download = IconSpec(0xf068);
+  static const simulation = IconSpec(0xf3e1);
+  static const single_bed = IconSpec(0xea48);
+  static const sip = IconSpec(0xf069);
+  static const siren = IconSpec(0xf3a7);
+  static const siren_check = IconSpec(0xf3a6);
+  static const siren_open = IconSpec(0xf3a5);
+  static const siren_question = IconSpec(0xf3a4);
+  static const skateboarding = IconSpec(0xe511);
+  static const skeleton = IconSpec(0xf899);
+  static const skillet = IconSpec(0xf543);
+  static const skillet_cooktop = IconSpec(0xf544);
+  static const skip_next = IconSpec(0xe044);
+  static const skip_previous = IconSpec(0xe045);
+  static const skull = IconSpec(0xf89a);
+  static const skull_list = IconSpec(0xf370);
+  static const slab_serif = IconSpec(0xf4ab);
+  static const sledding = IconSpec(0xe512);
+  static const sleep = IconSpec(0xe213);
+  static const sleep_score = IconSpec(0xf6b7);
+  static const slide_library = IconSpec(0xf822);
+  static const sliders = IconSpec(0xe9e3);
+  static const slideshow = IconSpec(0xe41b);
+  static const slow_motion_video = IconSpec(0xe068);
+  static const smart_button = IconSpec(0xf1c1);
+  static const smart_card_reader = IconSpec(0xf4a5);
+  static const smart_card_reader_off = IconSpec(0xf4a6);
+  static const smart_display = IconSpec(0xf06a);
+  static const smart_outlet = IconSpec(0xe844);
+  static const smart_screen = IconSpec(0xf06b);
+  static const smart_toy = IconSpec(0xf06c);
+  static const smartphone = IconSpec(0xe32c);
+  static const smartphone_camera = IconSpec(0xf44e);
+  static const smb_share = IconSpec(0xf74b);
+  static const smoke_free = IconSpec(0xeb4a);
+  static const smoking_rooms = IconSpec(0xeb4b);
+  static const sms = IconSpec(0xe625);
+  static const sms_failed = IconSpec(0xe87f);
+  static const snippet_folder = IconSpec(0xf1c7);
+  static const snooze = IconSpec(0xe046);
+  static const snowboarding = IconSpec(0xe513);
+  static const snowing = IconSpec(0xe80f);
+  static const snowing_heavy = IconSpec(0xf61c);
+  static const snowmobile = IconSpec(0xe503);
+  static const snowshoeing = IconSpec(0xe514);
+  static const soap = IconSpec(0xf1b2);
+  static const social_distance = IconSpec(0xe1cb);
+  static const social_leaderboard = IconSpec(0xf6a0);
+  static const solar_power = IconSpec(0xec0f);
+  static const sort = IconSpec(0xe164);
+  static const sort_by_alpha = IconSpec(0xe053);
+  static const sos = IconSpec(0xebf7);
+  static const sound_detection_dog_barking = IconSpec(0xf149);
+  static const sound_detection_glass_break = IconSpec(0xf14a);
+  static const sound_detection_loud_sound = IconSpec(0xf14b);
+  static const sound_sampler = IconSpec(0xf6b4);
+  static const soup_kitchen = IconSpec(0xe7d3);
+  static const source = IconSpec(0xf1c8);
+  static const source_environment = IconSpec(0xe527);
+  static const source_notes = IconSpec(0xe12d);
+  static const south = IconSpec(0xf1e3);
+  static const south_america = IconSpec(0xe7e4);
+  static const south_east = IconSpec(0xf1e4);
+  static const south_west = IconSpec(0xf1e5);
+  static const spa = IconSpec(0xeb4c);
+  static const space_bar = IconSpec(0xe256);
+  static const space_dashboard = IconSpec(0xe66b);
+  static const spatial_audio = IconSpec(0xebeb);
+  static const spatial_audio_off = IconSpec(0xebe8);
+  static const spatial_speaker = IconSpec(0xf4cf);
+  static const spatial_tracking = IconSpec(0xebea);
+  static const speaker = IconSpec(0xe32d);
+  static const speaker_group = IconSpec(0xe32e);
+  static const speaker_notes = IconSpec(0xe8cd);
+  static const speaker_notes_off = IconSpec(0xe92a);
+  static const speaker_phone = IconSpec(0xe0d2);
+  static const special_character = IconSpec(0xf74a);
+  static const specific_gravity = IconSpec(0xf872);
+  static const speech_to_text = IconSpec(0xf8a7);
+  static const speed = IconSpec(0xe9e4);
+  static const speed_0_25 = IconSpec(0xf4d4);
+  static const speed_0_2x = IconSpec(0xf498);
+  static const speed_0_5 = IconSpec(0xf4e2);
+  static const speed_0_5x = IconSpec(0xf497);
+  static const speed_0_75 = IconSpec(0xf4d3);
+  static const speed_0_7x = IconSpec(0xf496);
+  static const speed_1_2 = IconSpec(0xf4e1);
+  static const speed_1_25 = IconSpec(0xf4d2);
+  static const speed_1_2x = IconSpec(0xf495);
+  static const speed_1_5 = IconSpec(0xf4e0);
+  static const speed_1_5x = IconSpec(0xf494);
+  static const speed_1_75 = IconSpec(0xf4d1);
+  static const speed_1_7x = IconSpec(0xf493);
+  static const speed_2x = IconSpec(0xf4eb);
+  static const speed_camera = IconSpec(0xf470);
+  static const spellcheck = IconSpec(0xe8ce);
+  static const split_scene = IconSpec(0xf3bf);
+  static const splitscreen = IconSpec(0xf06d);
+  static const splitscreen_add = IconSpec(0xf4fd);
+  static const splitscreen_bottom = IconSpec(0xf676);
+  static const splitscreen_landscape = IconSpec(0xf459);
+  static const splitscreen_left = IconSpec(0xf675);
+  static const splitscreen_portrait = IconSpec(0xf458);
+  static const splitscreen_right = IconSpec(0xf674);
+  static const splitscreen_top = IconSpec(0xf673);
+  static const splitscreen_vertical_add = IconSpec(0xf4fc);
+  static const spo2 = IconSpec(0xf6db);
+  static const spoke = IconSpec(0xe9a7);
+  static const sports = IconSpec(0xea30);
+  static const sports_and_outdoors = IconSpec(0xefb8);
+  static const sports_bar = IconSpec(0xf1f3);
+  static const sports_baseball = IconSpec(0xea51);
+  static const sports_basketball = IconSpec(0xea26);
+  static const sports_cricket = IconSpec(0xea27);
+  static const sports_esports = IconSpec(0xea28);
+  static const sports_football = IconSpec(0xea29);
+  static const sports_golf = IconSpec(0xea2a);
+  static const sports_gymnastics = IconSpec(0xebc4);
+  static const sports_handball = IconSpec(0xea33);
+  static const sports_hockey = IconSpec(0xea2b);
+  static const sports_kabaddi = IconSpec(0xea34);
+  static const sports_martial_arts = IconSpec(0xeae9);
+  static const sports_mma = IconSpec(0xea2c);
+  static const sports_motorsports = IconSpec(0xea2d);
+  static const sports_rugby = IconSpec(0xea2e);
+  static const sports_score = IconSpec(0xf06e);
+  static const sports_soccer = IconSpec(0xea2f);
+  static const sports_tennis = IconSpec(0xea32);
+  static const sports_volleyball = IconSpec(0xea31);
+  static const sprinkler = IconSpec(0xe29a);
+  static const sprint = IconSpec(0xf81f);
+  static const square = IconSpec(0xeb36);
+  static const square_dot = IconSpec(0xf3b3);
+  static const square_foot = IconSpec(0xea49);
+  static const ssid_chart = IconSpec(0xeb66);
+  static const stack = IconSpec(0xf609);
+  static const stack_group = IconSpec(0xf359);
+  static const stack_hexagon = IconSpec(0xf41c);
+  static const stack_off = IconSpec(0xf608);
+  static const stack_star = IconSpec(0xf607);
+  static const stacked_bar_chart = IconSpec(0xe9e6);
+  static const stacked_email = IconSpec(0xe6c7);
+  static const stacked_inbox = IconSpec(0xe6c9);
+  static const stacked_line_chart = IconSpec(0xf22b);
+  static const stacks = IconSpec(0xf500);
+  static const stadia_controller = IconSpec(0xf135);
+  static const stadium = IconSpec(0xeb90);
+  static const stairs = IconSpec(0xf1a9);
+  static const stairs_2 = IconSpec(0xf46c);
+  static const star = IconSpec(0xf09a);
+  static const star_border = IconSpec(0xf09a);
+  static const star_border_purple500 = IconSpec(0xf09a);
+  static const star_half = IconSpec(0xe839);
+  static const star_outline = IconSpec(0xf09a);
+  static const star_purple500 = IconSpec(0xf09a);
+  static const star_rate = IconSpec(0xf0ec);
+  static const star_rate_half = IconSpec(0xec45);
+  static const star_shine = IconSpec(0xf31d);
+  static const stars = IconSpec(0xe8d0);
+  static const stars_2 = IconSpec(0xf31c);
+  static const start = IconSpec(0xe089);
+  static const stat_0 = IconSpec(0xe697);
+  static const stat_1 = IconSpec(0xe698);
+  static const stat_2 = IconSpec(0xe699);
+  static const stat_3 = IconSpec(0xe69a);
+  static const stat_minus_1 = IconSpec(0xe69b);
+  static const stat_minus_2 = IconSpec(0xe69c);
+  static const stat_minus_3 = IconSpec(0xe69d);
+  static const stay_current_landscape = IconSpec(0xe0d3);
+  static const stay_current_portrait = IconSpec(0xe0d4);
+  static const stay_primary_landscape = IconSpec(0xe0d5);
+  static const stay_primary_portrait = IconSpec(0xe0d6);
+  static const steering_wheel_heat = IconSpec(0xf32b);
+  static const step = IconSpec(0xf6fe);
+  static const step_into = IconSpec(0xf701);
+  static const step_out = IconSpec(0xf700);
+  static const step_over = IconSpec(0xf6ff);
+  static const steppers = IconSpec(0xe9e7);
+  static const steps = IconSpec(0xf6da);
+  static const stethoscope = IconSpec(0xf805);
+  static const stethoscope_arrow = IconSpec(0xf807);
+  static const stethoscope_check = IconSpec(0xf806);
+  static const sticky_note = IconSpec(0xe9e8);
+  static const sticky_note_2 = IconSpec(0xf1fc);
+  static const stock_media = IconSpec(0xf570);
+  static const stockpot = IconSpec(0xf545);
+  static const stop = IconSpec(0xe047);
+  static const stop_circle = IconSpec(0xef71);
+  static const stop_screen_share = IconSpec(0xe0e3);
+  static const storage = IconSpec(0xe1db);
+  static const store = IconSpec(0xe8d1);
+  static const store_mall_directory = IconSpec(0xe8d1);
+  static const storefront = IconSpec(0xea12);
+  static const storm = IconSpec(0xf070);
+  static const straight = IconSpec(0xeb95);
+  static const straighten = IconSpec(0xe41c);
+  static const strategy = IconSpec(0xf5df);
+  static const stream = IconSpec(0xe9e9);
+  static const stream_apps = IconSpec(0xf79f);
+  static const streetview = IconSpec(0xe56e);
+  static const stress_management = IconSpec(0xf6d9);
+  static const strikethrough_s = IconSpec(0xe257);
+  static const stroke_full = IconSpec(0xf749);
+  static const stroke_partial = IconSpec(0xf748);
+  static const stroller = IconSpec(0xf1ae);
+  static const style = IconSpec(0xe41d);
+  static const styler = IconSpec(0xe273);
+  static const stylus = IconSpec(0xf604);
+  static const stylus_brush = IconSpec(0xf366);
+  static const stylus_fountain_pen = IconSpec(0xf365);
+  static const stylus_highlighter = IconSpec(0xf364);
+  static const stylus_laser_pointer = IconSpec(0xf747);
+  static const stylus_note = IconSpec(0xf603);
+  static const stylus_pen = IconSpec(0xf363);
+  static const stylus_pencil = IconSpec(0xf362);
+  static const subdirectory_arrow_left = IconSpec(0xe5d9);
+  static const subdirectory_arrow_right = IconSpec(0xe5da);
+  static const subheader = IconSpec(0xe9ea);
+  static const subject = IconSpec(0xe8d2);
+  static const subscript = IconSpec(0xf111);
+  static const subscriptions = IconSpec(0xe064);
+  static const subtitles = IconSpec(0xe048);
+  static const subtitles_gear = IconSpec(0xf355);
+  static const subtitles_off = IconSpec(0xef72);
+  static const subway = IconSpec(0xe56f);
+  static const summarize = IconSpec(0xf071);
+  static const sunny = IconSpec(0xe81a);
+  static const sunny_snowing = IconSpec(0xe819);
+  static const superscript = IconSpec(0xf112);
+  static const supervised_user_circle = IconSpec(0xe939);
+  static const supervised_user_circle_off = IconSpec(0xf60e);
+  static const supervisor_account = IconSpec(0xe8d3);
+  static const support = IconSpec(0xef73);
+  static const support_agent = IconSpec(0xf0e2);
+  static const surfing = IconSpec(0xe515);
+  static const surgical = IconSpec(0xe131);
+  static const surround_sound = IconSpec(0xe049);
+  static const swap_calls = IconSpec(0xe0d7);
+  static const swap_driving_apps = IconSpec(0xe69e);
+  static const swap_driving_apps_wheel = IconSpec(0xe69f);
+  static const swap_horiz = IconSpec(0xe8d4);
+  static const swap_horizontal_circle = IconSpec(0xe933);
+  static const swap_vert = IconSpec(0xe8d5);
+  static const swap_vertical_circle = IconSpec(0xe8d6);
+  static const sweep = IconSpec(0xe6ac);
+  static const swipe = IconSpec(0xe9ec);
+  static const swipe_down = IconSpec(0xeb53);
+  static const swipe_down_alt = IconSpec(0xeb30);
+  static const swipe_left = IconSpec(0xeb59);
+  static const swipe_left_alt = IconSpec(0xeb33);
+  static const swipe_right = IconSpec(0xeb52);
+  static const swipe_right_alt = IconSpec(0xeb56);
+  static const swipe_up = IconSpec(0xeb2e);
+  static const swipe_up_alt = IconSpec(0xeb35);
+  static const swipe_vertical = IconSpec(0xeb51);
+  static const k_switch = IconSpec(0xe1f4);
+  static const switch_access = IconSpec(0xf6fd);
+  static const switch_access_2 = IconSpec(0xf506);
+  static const switch_access_3 = IconSpec(0xf34d);
+  static const switch_access_shortcut = IconSpec(0xe7e1);
+  static const switch_access_shortcut_add = IconSpec(0xe7e2);
+  static const switch_account = IconSpec(0xe9ed);
+  static const switch_camera = IconSpec(0xe41e);
+  static const switch_left = IconSpec(0xf1d1);
+  static const switch_right = IconSpec(0xf1d2);
+  static const switch_video = IconSpec(0xe41f);
+  static const switches = IconSpec(0xe733);
+  static const sword_rose = IconSpec(0xf5de);
+  static const swords = IconSpec(0xf889);
+  static const symptoms = IconSpec(0xe132);
+  static const synagogue = IconSpec(0xeab0);
+  static const sync = IconSpec(0xe627);
+  static const sync_alt = IconSpec(0xea18);
+  static const sync_arrow_down = IconSpec(0xf37c);
+  static const sync_arrow_up = IconSpec(0xf37b);
+  static const sync_desktop = IconSpec(0xf41a);
+  static const sync_disabled = IconSpec(0xe628);
+  static const sync_lock = IconSpec(0xeaee);
+  static const sync_problem = IconSpec(0xe629);
+  static const sync_saved_locally = IconSpec(0xf820);
+  static const syringe = IconSpec(0xe133);
+  static const system_security_update = IconSpec(0xf072);
+  static const system_security_update_good = IconSpec(0xf073);
+  static const system_security_update_warning = IconSpec(0xf074);
+  static const system_update = IconSpec(0xf072);
+  static const system_update_alt = IconSpec(0xe8d7);
+  static const tab = IconSpec(0xe8d8);
+  static const tab_close = IconSpec(0xf745);
+  static const tab_close_inactive = IconSpec(0xf3d0);
+  static const tab_close_right = IconSpec(0xf746);
+  static const tab_duplicate = IconSpec(0xf744);
+  static const tab_group = IconSpec(0xf743);
+  static const tab_inactive = IconSpec(0xf43b);
+  static const tab_move = IconSpec(0xf742);
+  static const tab_new_right = IconSpec(0xf741);
+  static const tab_recent = IconSpec(0xf740);
+  static const tab_unselected = IconSpec(0xe8d9);
+  static const table = IconSpec(0xf191);
+  static const table_bar = IconSpec(0xead2);
+  static const table_chart = IconSpec(0xe265);
+  static const table_chart_view = IconSpec(0xf6ef);
+  static const table_convert = IconSpec(0xf3c7);
+  static const table_edit = IconSpec(0xf3c6);
+  static const table_eye = IconSpec(0xf466);
+  static const table_lamp = IconSpec(0xe1f2);
+  static const table_restaurant = IconSpec(0xeac6);
+  static const table_rows = IconSpec(0xf101);
+  static const table_rows_narrow = IconSpec(0xf73f);
+  static const table_view = IconSpec(0xf1be);
+  static const tablet = IconSpec(0xe32f);
+  static const tablet_android = IconSpec(0xe330);
+  static const tablet_camera = IconSpec(0xf44d);
+  static const tablet_mac = IconSpec(0xe331);
+  static const tabs = IconSpec(0xe9ee);
+  static const tactic = IconSpec(0xf564);
+  static const tag = IconSpec(0xe9ef);
+  static const tag_faces = IconSpec(0xea22);
+  static const takeout_dining = IconSpec(0xea74);
+  static const tamper_detection_off = IconSpec(0xe82e);
+  static const tamper_detection_on = IconSpec(0xf8c8);
+  static const tap_and_play = IconSpec(0xe62b);
+  static const tapas = IconSpec(0xf1e9);
+  static const target = IconSpec(0xe719);
+  static const task = IconSpec(0xf075);
+  static const task_alt = IconSpec(0xe2e6);
+  static const taunt = IconSpec(0xf69f);
+  static const taxi_alert = IconSpec(0xef74);
+  static const team_dashboard = IconSpec(0xe013);
+  static const temp_preferences_custom = IconSpec(0xf8c9);
+  static const temp_preferences_eco = IconSpec(0xf8ca);
+  static const temple_buddhist = IconSpec(0xeab3);
+  static const temple_hindu = IconSpec(0xeaaf);
+  static const tenancy = IconSpec(0xf0e3);
+  static const terminal = IconSpec(0xeb8e);
+  static const terrain = IconSpec(0xe564);
+  static const text_ad = IconSpec(0xe728);
+  static const text_compare = IconSpec(0xf3c5);
+  static const text_decrease = IconSpec(0xeadd);
+  static const text_fields = IconSpec(0xe262);
+  static const text_fields_alt = IconSpec(0xe9f1);
+  static const text_format = IconSpec(0xe165);
+  static const text_increase = IconSpec(0xeae2);
+  static const text_rotate_up = IconSpec(0xe93a);
+  static const text_rotate_vertical = IconSpec(0xe93b);
+  static const text_rotation_angledown = IconSpec(0xe93c);
+  static const text_rotation_angleup = IconSpec(0xe93d);
+  static const text_rotation_down = IconSpec(0xe93e);
+  static const text_rotation_none = IconSpec(0xe93f);
+  static const text_select_end = IconSpec(0xf73e);
+  static const text_select_jump_to_beginning = IconSpec(0xf73d);
+  static const text_select_jump_to_end = IconSpec(0xf73c);
+  static const text_select_move_back_character = IconSpec(0xf73b);
+  static const text_select_move_back_word = IconSpec(0xf73a);
+  static const text_select_move_down = IconSpec(0xf739);
+  static const text_select_move_forward_character = IconSpec(0xf738);
+  static const text_select_move_forward_word = IconSpec(0xf737);
+  static const text_select_move_up = IconSpec(0xf736);
+  static const text_select_start = IconSpec(0xf735);
+  static const text_snippet = IconSpec(0xf1c6);
+  static const text_to_speech = IconSpec(0xf1bc);
+  static const text_up = IconSpec(0xf49e);
+  static const textsms = IconSpec(0xe625);
+  static const texture = IconSpec(0xe421);
+  static const texture_add = IconSpec(0xf57c);
+  static const texture_minus = IconSpec(0xf57b);
+  static const theater_comedy = IconSpec(0xea66);
+  static const theaters = IconSpec(0xe8da);
+  static const thermometer = IconSpec(0xe846);
+  static const thermometer_add = IconSpec(0xf582);
+  static const thermometer_gain = IconSpec(0xf6d8);
+  static const thermometer_loss = IconSpec(0xf6d7);
+  static const thermometer_minus = IconSpec(0xf581);
+  static const thermostat = IconSpec(0xf076);
+  static const thermostat_arrow_down = IconSpec(0xf37a);
+  static const thermostat_arrow_up = IconSpec(0xf379);
+  static const thermostat_auto = IconSpec(0xf077);
+  static const thermostat_carbon = IconSpec(0xf178);
+  static const things_to_do = IconSpec(0xeb2a);
+  static const thread_unread = IconSpec(0xf4f9);
+  static const threat_intelligence = IconSpec(0xeaed);
+  static const thumb_down = IconSpec(0xf578);
+  static const thumb_down_alt = IconSpec(0xf578);
+  static const thumb_down_filled = IconSpec(0xf578);
+  static const thumb_down_off = IconSpec(0xf578);
+  static const thumb_down_off_alt = IconSpec(0xf578);
+  static const thumb_up = IconSpec(0xf577);
+  static const thumb_up_alt = IconSpec(0xf577);
+  static const thumb_up_filled = IconSpec(0xf577);
+  static const thumb_up_off = IconSpec(0xf577);
+  static const thumb_up_off_alt = IconSpec(0xf577);
+  static const thumbnail_bar = IconSpec(0xf734);
+  static const thumbs_up_down = IconSpec(0xe8dd);
+  static const thunderstorm = IconSpec(0xebdb);
+  static const tibia = IconSpec(0xf89b);
+  static const tibia_alt = IconSpec(0xf89c);
+  static const tile_large = IconSpec(0xf3c3);
+  static const tile_medium = IconSpec(0xf3c2);
+  static const tile_small = IconSpec(0xf3c1);
+  static const time_auto = IconSpec(0xf0e4);
+  static const time_to_leave = IconSpec(0xeff7);
+  static const timelapse = IconSpec(0xe422);
+  static const timeline = IconSpec(0xe922);
+  static const timer = IconSpec(0xe425);
+  static const timer_10 = IconSpec(0xe423);
+  static const timer_10_alt_1 = IconSpec(0xefbf);
+  static const timer_10_select = IconSpec(0xf07a);
+  static const timer_3 = IconSpec(0xe424);
+  static const timer_3_alt_1 = IconSpec(0xefc0);
+  static const timer_3_select = IconSpec(0xf07b);
+  static const timer_5 = IconSpec(0xf4b1);
+  static const timer_5_shutter = IconSpec(0xf4b2);
+  static const timer_arrow_down = IconSpec(0xf378);
+  static const timer_arrow_up = IconSpec(0xf377);
+  static const timer_off = IconSpec(0xe426);
+  static const timer_pause = IconSpec(0xf4bb);
+  static const timer_play = IconSpec(0xf4ba);
+  static const tips_and_updates = IconSpec(0xe79a);
+  static const tire_repair = IconSpec(0xebc8);
+  static const title = IconSpec(0xe264);
+  static const titlecase = IconSpec(0xf489);
+  static const toast = IconSpec(0xefc1);
+  static const toc = IconSpec(0xe8de);
+  static const today = IconSpec(0xe8df);
+  static const toggle_off = IconSpec(0xe9f5);
+  static const toggle_on = IconSpec(0xe9f6);
+  static const token = IconSpec(0xea25);
+  static const toll = IconSpec(0xe8e0);
+  static const tonality = IconSpec(0xe427);
+  static const toolbar = IconSpec(0xe9f7);
+  static const tools_flat_head = IconSpec(0xf8cb);
+  static const tools_installation_kit = IconSpec(0xe2ab);
+  static const tools_ladder = IconSpec(0xe2cb);
+  static const tools_level = IconSpec(0xe77b);
+  static const tools_phillips = IconSpec(0xf8cc);
+  static const tools_pliers_wire_stripper = IconSpec(0xe2aa);
+  static const tools_power_drill = IconSpec(0xe1e9);
+  static const tools_wrench = IconSpec(0xf8cd);
+  static const tooltip = IconSpec(0xe9f8);
+  static const tooltip_2 = IconSpec(0xf3ed);
+  static const top_panel_close = IconSpec(0xf733);
+  static const top_panel_open = IconSpec(0xf732);
+  static const topic = IconSpec(0xf1c8);
+  static const tornado = IconSpec(0xe199);
+  static const total_dissolved_solids = IconSpec(0xf877);
+  static const touch_app = IconSpec(0xe913);
+  static const touch_double = IconSpec(0xf38b);
+  static const touch_long = IconSpec(0xf38a);
+  static const touch_triple = IconSpec(0xf389);
+  static const touchpad_mouse = IconSpec(0xf687);
+  static const touchpad_mouse_off = IconSpec(0xf4e6);
+  static const tour = IconSpec(0xef75);
+  static const toys = IconSpec(0xe332);
+  static const toys_and_games = IconSpec(0xefc2);
+  static const toys_fan = IconSpec(0xf887);
+  static const track_changes = IconSpec(0xe8e1);
+  static const trackpad_input = IconSpec(0xf4c7);
+  static const trackpad_input_2 = IconSpec(0xf409);
+  static const trackpad_input_3 = IconSpec(0xf408);
+  static const traffic = IconSpec(0xe565);
+  static const traffic_jam = IconSpec(0xf46f);
+  static const trail_length = IconSpec(0xeb5e);
+  static const trail_length_medium = IconSpec(0xeb63);
+  static const trail_length_short = IconSpec(0xeb6d);
+  static const train = IconSpec(0xe570);
+  static const tram = IconSpec(0xe571);
+  static const transcribe = IconSpec(0xf8ec);
+  static const transfer_within_a_station = IconSpec(0xe572);
+  static const transform = IconSpec(0xe428);
+  static const transgender = IconSpec(0xe58d);
+  static const transit_enterexit = IconSpec(0xe579);
+  static const transit_ticket = IconSpec(0xf3f1);
+  static const transition_chop = IconSpec(0xf50e);
+  static const transition_dissolve = IconSpec(0xf50d);
+  static const transition_fade = IconSpec(0xf50c);
+  static const transition_push = IconSpec(0xf50b);
+  static const transition_slide = IconSpec(0xf50a);
+  static const translate = IconSpec(0xe8e2);
+  static const transportation = IconSpec(0xe21d);
+  static const travel = IconSpec(0xef93);
+  static const travel_explore = IconSpec(0xe2db);
+  static const travel_luggage_and_bags = IconSpec(0xefc3);
+  static const trending_down = IconSpec(0xe8e3);
+  static const trending_flat = IconSpec(0xe8e4);
+  static const trending_up = IconSpec(0xe8e5);
+  static const trip = IconSpec(0xe6fb);
+  static const trip_origin = IconSpec(0xe57b);
+  static const trolley = IconSpec(0xf86b);
+  static const trolley_cable_car = IconSpec(0xf46e);
+  static const trophy = IconSpec(0xea23);
+  static const troubleshoot = IconSpec(0xe1d2);
+  static const k_try = IconSpec(0xf07c);
+  static const tsunami = IconSpec(0xebd8);
+  static const tsv = IconSpec(0xe6d6);
+  static const tty = IconSpec(0xf1aa);
+  static const tune = IconSpec(0xe429);
+  static const tungsten = IconSpec(0xf07d);
+  static const turn_left = IconSpec(0xeba6);
+  static const turn_right = IconSpec(0xebab);
+  static const turn_sharp_left = IconSpec(0xeba7);
+  static const turn_sharp_right = IconSpec(0xebaa);
+  static const turn_slight_left = IconSpec(0xeba4);
+  static const turn_slight_right = IconSpec(0xeb9a);
+  static const turned_in = IconSpec(0xe8e7);
+  static const turned_in_not = IconSpec(0xe8e7);
+  static const tv = IconSpec(0xe63b);
+  static const tv_displays = IconSpec(0xf3ec);
+  static const tv_gen = IconSpec(0xe830);
+  static const tv_guide = IconSpec(0xe1dc);
+  static const tv_next = IconSpec(0xf3eb);
+  static const tv_off = IconSpec(0xe647);
+  static const tv_options_edit_channels = IconSpec(0xe1dd);
+  static const tv_options_input_settings = IconSpec(0xe1de);
+  static const tv_remote = IconSpec(0xf5d9);
+  static const tv_signin = IconSpec(0xe71b);
+  static const tv_with_assistant = IconSpec(0xe785);
+  static const two_pager = IconSpec(0xf51f);
+  static const two_pager_store = IconSpec(0xf3c4);
+  static const two_wheeler = IconSpec(0xe9f9);
+  static const type_specimen = IconSpec(0xf8f0);
+  static const u_turn_left = IconSpec(0xeba1);
+  static const u_turn_right = IconSpec(0xeba2);
+  static const ulna_radius = IconSpec(0xf89d);
+  static const ulna_radius_alt = IconSpec(0xf89e);
+  static const umbrella = IconSpec(0xf1ad);
+  static const unarchive = IconSpec(0xe169);
+  static const undo = IconSpec(0xe166);
+  static const unfold_less = IconSpec(0xe5d6);
+  static const unfold_less_double = IconSpec(0xf8cf);
+  static const unfold_more = IconSpec(0xe5d7);
+  static const unfold_more_double = IconSpec(0xf8d0);
+  static const ungroup = IconSpec(0xf731);
+  static const universal_currency = IconSpec(0xe9fa);
+  static const universal_currency_alt = IconSpec(0xe734);
+  static const universal_local = IconSpec(0xe9fb);
+  static const unknown_2 = IconSpec(0xf49f);
+  static const unknown_5 = IconSpec(0xe6a5);
+  static const unknown_7 = IconSpec(0xf49e);
+  static const unknown_document = IconSpec(0xf804);
+  static const unknown_med = IconSpec(0xeabd);
+  static const unlicense = IconSpec(0xeb05);
+  static const unpaved_road = IconSpec(0xf46d);
+  static const unpin = IconSpec(0xe6f9);
+  static const unpublished = IconSpec(0xf236);
+  static const unsubscribe = IconSpec(0xe0eb);
+  static const upcoming = IconSpec(0xf07e);
+  static const update = IconSpec(0xe923);
+  static const update_disabled = IconSpec(0xe075);
+  static const upgrade = IconSpec(0xf0fb);
+  static const upi_pay = IconSpec(0xf3cf);
+  static const upload = IconSpec(0xf09b);
+  static const upload_2 = IconSpec(0xf521);
+  static const upload_file = IconSpec(0xe9fc);
+  static const uppercase = IconSpec(0xf488);
+  static const urology = IconSpec(0xe137);
+  static const usb = IconSpec(0xe1e0);
+  static const usb_off = IconSpec(0xe4fa);
+  static const user_attributes = IconSpec(0xe708);
+  static const vaccines = IconSpec(0xe138);
+  static const vacuum = IconSpec(0xefc5);
+  static const valve = IconSpec(0xe224);
+  static const vape_free = IconSpec(0xebc6);
+  static const vaping_rooms = IconSpec(0xebcf);
+  static const variable_add = IconSpec(0xf51e);
+  static const variable_insert = IconSpec(0xf51d);
+  static const variable_remove = IconSpec(0xf51c);
+  static const variables = IconSpec(0xf851);
+  static const ventilator = IconSpec(0xe139);
+  static const verified = IconSpec(0xef76);
+  static const verified_user = IconSpec(0xf013);
+  static const vertical_align_bottom = IconSpec(0xe258);
+  static const vertical_align_center = IconSpec(0xe259);
+  static const vertical_align_top = IconSpec(0xe25a);
+  static const vertical_distribute = IconSpec(0xe076);
+  static const vertical_shades = IconSpec(0xec0e);
+  static const vertical_shades_closed = IconSpec(0xec0d);
+  static const vertical_split = IconSpec(0xe949);
+  static const vibration = IconSpec(0xe62d);
+  static const video_call = IconSpec(0xe070);
+  static const video_camera_back = IconSpec(0xf07f);
+  static const video_camera_back_add = IconSpec(0xf40c);
+  static const video_camera_front = IconSpec(0xf080);
+  static const video_camera_front_off = IconSpec(0xf83b);
+  static const video_chat = IconSpec(0xf8a0);
+  static const video_file = IconSpec(0xeb87);
+  static const video_label = IconSpec(0xe071);
+  static const video_library = IconSpec(0xe04a);
+  static const video_search = IconSpec(0xefc6);
+  static const video_settings = IconSpec(0xea75);
+  static const video_stable = IconSpec(0xf081);
+  static const videocam = IconSpec(0xe04b);
+  static const videocam_alert = IconSpec(0xf390);
+  static const videocam_off = IconSpec(0xe04c);
+  static const videogame_asset = IconSpec(0xe338);
+  static const videogame_asset_off = IconSpec(0xe500);
+  static const view_agenda = IconSpec(0xe8e9);
+  static const view_apps = IconSpec(0xf376);
+  static const view_array = IconSpec(0xe8ea);
+  static const view_carousel = IconSpec(0xe8eb);
+  static const view_column = IconSpec(0xe8ec);
+  static const view_column_2 = IconSpec(0xf847);
+  static const view_comfy = IconSpec(0xe42a);
+  static const view_comfy_alt = IconSpec(0xeb73);
+  static const view_compact = IconSpec(0xe42b);
+  static const view_compact_alt = IconSpec(0xeb74);
+  static const view_cozy = IconSpec(0xeb75);
+  static const view_day = IconSpec(0xe8ed);
+  static const view_headline = IconSpec(0xe8ee);
+  static const view_in_ar = IconSpec(0xefc9);
+  static const view_in_ar_new = IconSpec(0xefc9);
+  static const view_in_ar_off = IconSpec(0xf61b);
+  static const view_kanban = IconSpec(0xeb7f);
+  static const view_list = IconSpec(0xe8ef);
+  static const view_module = IconSpec(0xe8f0);
+  static const view_object_track = IconSpec(0xf432);
+  static const view_quilt = IconSpec(0xe8f1);
+  static const view_real_size = IconSpec(0xf4c2);
+  static const view_sidebar = IconSpec(0xf114);
+  static const view_stream = IconSpec(0xe8f2);
+  static const view_timeline = IconSpec(0xeb85);
+  static const view_week = IconSpec(0xe8f3);
+  static const vignette = IconSpec(0xe435);
+  static const villa = IconSpec(0xe586);
+  static const visibility = IconSpec(0xe8f4);
+  static const visibility_lock = IconSpec(0xf653);
+  static const visibility_off = IconSpec(0xe8f5);
+  static const vital_signs = IconSpec(0xe650);
+  static const vitals = IconSpec(0xe13b);
+  static const vo2_max = IconSpec(0xf4aa);
+  static const voice_chat = IconSpec(0xe62e);
+  static const voice_over_off = IconSpec(0xe94a);
+  static const voice_selection = IconSpec(0xf58a);
+  static const voice_selection_off = IconSpec(0xf42c);
+  static const voicemail = IconSpec(0xe0d9);
+  static const voicemail_2 = IconSpec(0xf352);
+  static const volcano = IconSpec(0xebda);
+  static const volume_down = IconSpec(0xe04d);
+  static const volume_down_alt = IconSpec(0xe79c);
+  static const volume_mute = IconSpec(0xe04e);
+  static const volume_off = IconSpec(0xe04f);
+  static const volume_up = IconSpec(0xe050);
+  static const volunteer_activism = IconSpec(0xea70);
+  static const voting_chip = IconSpec(0xf852);
+  static const vpn_key = IconSpec(0xe0da);
+  static const vpn_key_alert = IconSpec(0xf6cc);
+  static const vpn_key_off = IconSpec(0xeb7a);
+  static const vpn_lock = IconSpec(0xe62f);
+  static const vpn_lock_2 = IconSpec(0xf350);
+  static const vr180_create2d = IconSpec(0xefca);
+  static const vr180_create2d_off = IconSpec(0xf571);
+  static const vrpano = IconSpec(0xf082);
+  static const wall_art = IconSpec(0xefcb);
+  static const wall_lamp = IconSpec(0xe2b4);
+  static const wallet = IconSpec(0xf8ff);
+  static const wallpaper = IconSpec(0xe1bc);
+  static const wallpaper_slideshow = IconSpec(0xf672);
+  static const wand_shine = IconSpec(0xf31f);
+  static const wand_stars = IconSpec(0xf31e);
+  static const ward = IconSpec(0xe13c);
+  static const warehouse = IconSpec(0xebb8);
+  static const warning = IconSpec(0xf083);
+  static const warning_amber = IconSpec(0xf083);
+  static const warning_off = IconSpec(0xf7ad);
+  static const wash = IconSpec(0xf1b1);
+  static const watch = IconSpec(0xe334);
+  static const watch_button_press = IconSpec(0xf6aa);
+  static const watch_check = IconSpec(0xf468);
+  static const watch_later = IconSpec(0xefd6);
+  static const watch_off = IconSpec(0xeae3);
+  static const watch_screentime = IconSpec(0xf6ae);
+  static const watch_vibration = IconSpec(0xf467);
+  static const watch_wake = IconSpec(0xf6a9);
+  static const water = IconSpec(0xf084);
+  static const water_bottle = IconSpec(0xf69d);
+  static const water_bottle_large = IconSpec(0xf69e);
+  static const water_damage = IconSpec(0xf203);
+  static const water_do = IconSpec(0xf870);
+  static const water_drop = IconSpec(0xe798);
+  static const water_ec = IconSpec(0xf875);
+  static const water_full = IconSpec(0xf6d6);
+  static const water_heater = IconSpec(0xe284);
+  static const water_lock = IconSpec(0xf6ad);
+  static const water_loss = IconSpec(0xf6d5);
+  static const water_lux = IconSpec(0xf874);
+  static const water_medium = IconSpec(0xf6d4);
+  static const water_orp = IconSpec(0xf878);
+  static const water_ph = IconSpec(0xf87a);
+  static const water_pump = IconSpec(0xf5d8);
+  static const water_voc = IconSpec(0xf87b);
+  static const waterfall_chart = IconSpec(0xea00);
+  static const waves = IconSpec(0xe176);
+  static const waving_hand = IconSpec(0xe766);
+  static const wb_auto = IconSpec(0xe42c);
+  static const wb_cloudy = IconSpec(0xf15c);
+  static const wb_incandescent = IconSpec(0xe42e);
+  static const wb_iridescent = IconSpec(0xf07d);
+  static const wb_shade = IconSpec(0xea01);
+  static const wb_sunny = IconSpec(0xe430);
+  static const wb_twilight = IconSpec(0xe1c6);
+  static const wc = IconSpec(0xe63d);
+  static const weather_hail = IconSpec(0xf67f);
+  static const weather_mix = IconSpec(0xf60b);
+  static const weather_snowy = IconSpec(0xe2cd);
+  static const web = IconSpec(0xe051);
+  static const web_asset = IconSpec(0xe069);
+  static const web_asset_off = IconSpec(0xef47);
+  static const web_stories = IconSpec(0xe595);
+  static const web_traffic = IconSpec(0xea03);
+  static const webhook = IconSpec(0xeb92);
+  static const weekend = IconSpec(0xe16b);
+  static const weight = IconSpec(0xe13d);
+  static const west = IconSpec(0xf1e6);
+  static const whatshot = IconSpec(0xe80e);
+  static const wheelchair_pickup = IconSpec(0xf1ab);
+  static const where_to_vote = IconSpec(0xe177);
+  static const widget_medium = IconSpec(0xf3ba);
+  static const widget_small = IconSpec(0xf3b9);
+  static const widget_width = IconSpec(0xf3b8);
+  static const widgets = IconSpec(0xe1bd);
+  static const width = IconSpec(0xf730);
+  static const width_full = IconSpec(0xf8f5);
+  static const width_normal = IconSpec(0xf8f6);
+  static const width_wide = IconSpec(0xf8f7);
+  static const wifi = IconSpec(0xe63e);
+  static const wifi_1_bar = IconSpec(0xe4ca);
+  static const wifi_2_bar = IconSpec(0xe4d9);
+  static const wifi_add = IconSpec(0xf7a8);
+  static const wifi_calling = IconSpec(0xef77);
+  static const wifi_calling_1 = IconSpec(0xf0e7);
+  static const wifi_calling_2 = IconSpec(0xf0f6);
+  static const wifi_calling_3 = IconSpec(0xf0e7);
+  static const wifi_calling_bar_1 = IconSpec(0xf44c);
+  static const wifi_calling_bar_2 = IconSpec(0xf44b);
+  static const wifi_calling_bar_3 = IconSpec(0xf44a);
+  static const wifi_channel = IconSpec(0xeb6a);
+  static const wifi_find = IconSpec(0xeb31);
+  static const wifi_home = IconSpec(0xf671);
+  static const wifi_lock = IconSpec(0xe1e1);
+  static const wifi_notification = IconSpec(0xf670);
+  static const wifi_off = IconSpec(0xe648);
+  static const wifi_password = IconSpec(0xeb6b);
+  static const wifi_protected_setup = IconSpec(0xf0fc);
+  static const wifi_proxy = IconSpec(0xf7a7);
+  static const wifi_tethering = IconSpec(0xe1e2);
+  static const wifi_tethering_error = IconSpec(0xead9);
+  static const wifi_tethering_off = IconSpec(0xf087);
+  static const wind_power = IconSpec(0xec0c);
+  static const window = IconSpec(0xf088);
+  static const window_closed = IconSpec(0xe77e);
+  static const window_open = IconSpec(0xe78c);
+  static const window_sensor = IconSpec(0xe2bb);
+  static const windshield_defrost_front = IconSpec(0xf32a);
+  static const windshield_defrost_rear = IconSpec(0xf329);
+  static const windshield_heat_front = IconSpec(0xf328);
+  static const wine_bar = IconSpec(0xf1e8);
+  static const woman = IconSpec(0xe13e);
+  static const woman_2 = IconSpec(0xf8e7);
+  static const work = IconSpec(0xe943);
+  static const work_alert = IconSpec(0xf5f7);
+  static const work_history = IconSpec(0xec09);
+  static const work_off = IconSpec(0xe942);
+  static const work_outline = IconSpec(0xe943);
+  static const work_update = IconSpec(0xf5f8);
+  static const workflow = IconSpec(0xea04);
+  static const workspace_premium = IconSpec(0xe7af);
+  static const workspaces = IconSpec(0xea0f);
+  static const workspaces_outline = IconSpec(0xea0f);
+  static const wounds_injuries = IconSpec(0xe13f);
+  static const wrap_text = IconSpec(0xe25b);
+  static const wrist = IconSpec(0xf69c);
+  static const wrong_location = IconSpec(0xef78);
+  static const wysiwyg = IconSpec(0xf1c3);
+  static const yard = IconSpec(0xf089);
+  static const your_trips = IconSpec(0xeb2b);
+  static const youtube_activity = IconSpec(0xf85a);
+  static const youtube_searched_for = IconSpec(0xe8fa);
+  static const zone_person_alert = IconSpec(0xe781);
+  static const zone_person_idle = IconSpec(0xe77a);
+  static const zone_person_urgent = IconSpec(0xe788);
+  static const zoom_in = IconSpec(0xe8ff);
+  static const zoom_in_map = IconSpec(0xeb2d);
+  static const zoom_out = IconSpec(0xe900);
+  static const zoom_out_map = IconSpec(0xe56b);
+}
 
 // ---
 
@@ -2302,3 +3927,4 @@ class _BakedAssetError extends Error {
   @override
   String toString() => 'baked asset error: $message';
 }
+

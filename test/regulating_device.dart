@@ -1,6 +1,8 @@
 import 'package:braid_ui/braid_ui.dart';
+import 'package:braid_ui/src/baked_assets.g.dart';
 import 'package:braid_ui/src/framework/widget.dart';
 import 'package:braid_ui/src/widgets/basic.dart';
+import 'package:braid_ui/src/widgets/icon.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:logging/logging.dart';
 
@@ -34,7 +36,7 @@ class RegulatingDeviceApp extends StatelessWidget {
         hoveredColor: Color.rgb(0xaeb7f3),
         // textColor: Color.rgb(0x222c61),
         padding: Insets.axis(horizontal: 25.0, vertical: 15.0),
-        cornerRadius: CornerRadius.all(25.0),
+        cornerRadius: CornerRadius.all(27.5),
       ),
 
       child: Panel(
@@ -57,7 +59,7 @@ class RegulatingDeviceApp extends StatelessWidget {
               child: Flex(
                 mainAxis: LayoutAxis.vertical,
                 children: [
-                  buttonPanel(Icon("settings"), "Settings", [
+                  buttonPanel(Icon(icon: Icons.settings), "Settings", [
                     Button.text(text: "On", onClick: () => ()),
                     Button.text(text: "Off", onClick: () => ()),
                   ]),
@@ -89,7 +91,7 @@ Widget buttonPanel(Icon icon, String name, List<Widget> buttons) {
                     mainAxis: LayoutAxis.horizontal,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Label.text(text: Text([icon])),
+                      icon,
                       Padding(insets: const Insets.all(10.0)),
                       Label.text(text: Text.string(name), style: LabelStyle(fontSize: 18.0)),
                     ],

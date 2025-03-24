@@ -1,14 +1,21 @@
+import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:braid_ui/braid_ui.dart';
 import 'package:braid_ui/src/animation/lerp.dart';
+import 'package:braid_ui/src/baked_assets.g.dart';
 import 'package:braid_ui/src/framework/proxy.dart';
 import 'package:braid_ui/src/framework/widget.dart';
 import 'package:braid_ui/src/widgets/basic.dart';
 import 'package:braid_ui/src/widgets/drag_arena.dart';
+import 'package:braid_ui/src/widgets/icon.dart';
 import 'package:braid_ui/src/widgets/slider.dart';
 import 'package:braid_ui/src/widgets/stack.dart';
-import 'package:diamond_gl/diamond_gl.dart';
+import 'package:braid_ui/src/widgets/window.dart';
+import 'package:diamond_gl/diamond_gl.dart' hide Window;
+import 'package:endec/endec.dart';
+import 'package:endec_json/endec_json.dart';
 import 'package:image/image.dart' hide Color;
 import 'package:logging/logging.dart';
 
@@ -78,7 +85,33 @@ class AppBody extends StatefulWidget {
 }
 
 class _AppBodyState extends WidgetState<AppBody> {
-  final List<String> windows = [];
+  static final _windowEndec = structEndec<(String, WindowController)>().with2Fields(
+    Endec.string.fieldOf('title', (struct) => struct.$1),
+    structEndec<WindowController>()
+        .with4Fields(
+          Endec.f32.fieldOf('x', (struct) => struct.x),
+          Endec.f32.fieldOf('y', (struct) => struct.y),
+          structEndec<Size>()
+              .with2Fields(
+                Endec.f32.fieldOf('width', (struct) => struct.width),
+                Endec.f32.fieldOf('height', (struct) => struct.height),
+                (f1, f2) => Size(f1, f2),
+              )
+              .fieldOf('size', (struct) => struct.size),
+          Endec.bool.fieldOf('expanded', (struct) => struct.expanded),
+          (x, y, size, expanded) => WindowController(x: x, y: y, size: size, expanded: expanded),
+        )
+        .flatFieldOf((struct) => struct.$2),
+    (f1, f2) => (f1, f2),
+  );
+
+  final List<(String, WindowController)> windows = [];
+
+  @override
+  void init() {
+    super.init();
+    _loadWindowState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -139,6 +172,7 @@ class _AppBodyState extends WidgetState<AppBody> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           const Padding(insets: Insets(right: 5), child: DebugToggle()),
                           Label(text: 'Draw instance outlines'),
@@ -147,21 +181,27 @@ class _AppBodyState extends WidgetState<AppBody> {
                       Flexible(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Button.text(
+                              text: 'Spawn window',
                               onClick: () {
                                 setState(() {
-                                  windows.add(Random().nextInt(10000000).toRadixString(16));
+                                  windows.add((
+                                    Random().nextInt(10000000).toRadixString(16),
+                                    WindowController(size: const Size(400, 300)),
+                                  ));
                                 });
                               },
-                              text: 'Spawn window',
                             ),
                           ],
                         ),
                       ),
                       Button.text(onClick: () {}, text: 'Unavailable', enabled: false),
                       Padding(insets: const Insets.axis(horizontal: 5)),
-                      Button.text(onClick: () {}, text: 'Save'),
+                      Button.text(onClick: _saveWindowState, text: 'Save'),
+                      Padding(insets: const Insets.axis(horizontal: 5)),
+                      Button.text(onClick: _loadWindowState, text: 'Load'),
                       Padding(insets: const Insets.axis(horizontal: 5)),
                       Button.text(onClick: () => app!.scheduleShutdown(), text: 'Quit'),
                     ],
@@ -174,23 +214,20 @@ class _AppBodyState extends WidgetState<AppBody> {
             children: [
               for (final window in windows)
                 Window(
-                  key: Key(window),
-                  initialSize: const Size(400, 300),
-                  title: 'window $window',
+                  key: Key(window.$1),
+                  controller: window.$2,
+                  title: 'window ${window.$1}',
+                  onClose: () {
+                    setState(() {
+                      windows.remove(window);
+                    });
+                  },
                   content: Align(
                     alignment: Alignment.topLeft,
                     child: Column(
                       children: [
                         Button.text(onClick: () {}, text: 'bruh'),
                         ColorSlider(from: Color.white, to: Color.black),
-                        Button.text(
-                          onClick: () {
-                            setState(() {
-                              windows.remove(window);
-                            });
-                          },
-                          text: 'close',
-                        ),
                       ],
                     ),
                   ),
@@ -200,6 +237,21 @@ class _AppBodyState extends WidgetState<AppBody> {
         ],
       ),
     );
+  }
+
+  void _saveWindowState() {
+    final endec = _windowEndec.listOf();
+    File('window_state.json').writeAsString(const JsonEncoder.withIndent('  ').convert(toJson(endec, windows)));
+  }
+
+  void _loadWindowState() async {
+    final endec = _windowEndec.listOf();
+    final state = fromJson(endec, jsonDecode(await File('window_state.json').readAsString()));
+
+    setState(() {
+      windows.clear();
+      windows.addAll(state);
+    });
   }
 }
 
@@ -308,151 +360,9 @@ class _CheckboxState extends WidgetState<Checkbox> {
                   : const Color.rgb(0xb1aebb),
           cornerRadius: const CornerRadius.all(5),
           outlineThickness: !widget.checked ? .5 : null,
-          child: widget.checked ? Label.text(text: Text([Icon('close')])) : null,
+          child: widget.checked ? const Icon(icon: Icons.close, size: 16) : null,
         ),
       ),
     );
   }
 }
-
-class Window extends StatefulWidget {
-  final Size initialSize;
-  final ({double x, double y}) initialPosition;
-  final bool collapsible;
-  final String title;
-  final Widget content;
-
-  const Window({
-    super.key,
-    required this.initialSize,
-    this.initialPosition = (x: 0, y: 0),
-    this.collapsible = true,
-    required this.title,
-    required this.content,
-  });
-
-  @override
-  WidgetState<Window> createState() => _WindowState();
-}
-
-class _WindowState extends WidgetState<Window> {
-  late double x;
-  late double y;
-  late Size size;
-
-  bool expanded = true;
-  Set<_WindowEdge>? draggingEdges;
-
-  @override
-  void init() {
-    super.init();
-    x = widget.initialPosition.x;
-    y = widget.initialPosition.y;
-    size = widget.initialSize;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return DragArenaElement(
-      x: x,
-      y: y,
-      child: MouseArea(
-        cursorStyleSupplier:
-            (x, y) => switch (_edgesAt(x, y).toList()) {
-              [_WindowEdge.top] || [_WindowEdge.bottom] => CursorStyle.verticalResize,
-              [_WindowEdge.left] || [_WindowEdge.right] => CursorStyle.horizontalResize,
-              [_WindowEdge.top, _WindowEdge.left] || [_WindowEdge.bottom, _WindowEdge.right] => CursorStyle.nwseResize,
-              [_WindowEdge.bottom, _WindowEdge.left] || [_WindowEdge.top, _WindowEdge.right] => CursorStyle.neswResize,
-              _ => null,
-            },
-        clickCallback: (x, y) => draggingEdges = _edgesAt(x, y),
-        dragCallback: (x, y, dx, dy) => setState(() => _resize(dx, dy)),
-        dragEndCallback: () => draggingEdges = null,
-        child: Padding(
-          insets: const Insets.all(10),
-          child: HitTestOccluder(
-            child: MouseArea(
-              dragCallback:
-                  (_, _, dx, dy) => setState(() {
-                    x += dx;
-                    y += dy;
-                  }),
-              child: Column(
-                children: [
-                  Sized(
-                    width: size.width,
-                    height: 25,
-                    child: Panel(
-                      color: const Color.rgb(0x5f43b2),
-                      cornerRadius: expanded ? const CornerRadius.top(10.0) : const CornerRadius.all(10.0),
-                      child: Padding(
-                        insets: const Insets.axis(horizontal: 5),
-                        child: Row(
-                          children: [
-                            Label(text: widget.title, style: LabelStyle(fontSize: 14.0, bold: true)),
-                            Flexible(child: Padding(insets: Insets.zero)),
-                            if (widget.collapsible)
-                              MouseArea(
-                                cursorStyle: CursorStyle.hand,
-                                clickCallback:
-                                    (_, _) => setState(() {
-                                      expanded = !expanded;
-                                    }),
-                                child: Label.text(text: Text([Icon(expanded ? 'arrow_drop_up' : 'arrow_drop_down')])),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Visibility(
-                    visible: expanded,
-                    child: Panel(
-                      color: const Color(0xbb161616),
-                      cornerRadius: const CornerRadius.bottom(10.0),
-                      child: Sized(
-                        width: size.width,
-                        height: size.height,
-                        child: Clip(child: Padding(insets: const Insets.all(10), child: widget.content)),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Set<_WindowEdge> _edgesAt(double x, double y) {
-    final result = <_WindowEdge>{};
-
-    if (y < 10) result.add(_WindowEdge.top);
-    if (y > size.height + 10) result.add(_WindowEdge.bottom);
-
-    if (x < 10) result.add(_WindowEdge.left);
-    if (x > size.width + 10) result.add(_WindowEdge.right);
-
-    return result;
-  }
-
-  void _resize(double dx, double dy) {
-    if (draggingEdges!.contains(_WindowEdge.top)) {
-      size = size.copy(height: size.height - dy);
-      y += dy;
-    } else if (draggingEdges!.contains(_WindowEdge.bottom)) {
-      size = size.copy(height: size.height + dy);
-    }
-
-    if (draggingEdges!.contains(_WindowEdge.left)) {
-      size = size.copy(width: size.width - dx);
-      x += dx;
-    } else if (draggingEdges!.contains(_WindowEdge.right)) {
-      size = size.copy(width: size.width + dx);
-    }
-  }
-}
-
-enum _WindowEdge { top, left, right, bottom }

@@ -137,6 +137,22 @@ packages:
       url: "https://pub.wispforest.io"
     source: hosted
     version: "0.1.3"
+  endec:
+    dependency: "direct dev"
+    description:
+      name: endec
+      sha256: "05797835234bae739308f75413b4986ca64170c135b1a12bf9434d755ebd0875"
+      url: "https://pub.wispforest.io"
+    source: hosted
+    version: "0.1.0"
+  endec_json:
+    dependency: "direct dev"
+    description:
+      name: endec_json
+      sha256: "94d72d236698952c3502ec85aece52ebb2ae7d9f0127548dd83e2cd2a87ccc39"
+      url: "https://pub.wispforest.io"
+    source: hosted
+    version: "0.1.0"
   ffi:
     dependency: "direct main"
     description:

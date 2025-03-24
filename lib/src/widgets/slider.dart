@@ -68,31 +68,33 @@ class RawSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return MouseArea(
-          cursorStyle: CursorStyle.hand,
-          clickCallback: (x, y) => _updateForInput(constraints, x, y),
-          dragCallback: (x, y, dx, dy) => _updateForInput(constraints, x, y),
-          child: Stack(
-            alignment: Alignment.left,
-            children: [
-              Sized(
-                width: constraints.maxWidth,
-                height: 3,
-                child: Padding(
-                  insets: const Insets.axis(horizontal: _handleRadius),
-                  child: Panel(cornerRadius: const CornerRadius.all(2), color: Color.rgb(0xb1aebb)),
+    return Center(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return MouseArea(
+            cursorStyle: CursorStyle.hand,
+            clickCallback: (x, y) => _updateForInput(constraints, x, y),
+            dragCallback: (x, y, dx, dy) => _updateForInput(constraints, x, y),
+            child: Stack(
+              alignment: Alignment.left,
+              children: [
+                Sized(
+                  width: constraints.maxWidth,
+                  height: 3,
+                  child: Padding(
+                    insets: const Insets.axis(horizontal: _handleRadius),
+                    child: Panel(cornerRadius: const CornerRadius.all(2), color: Color.rgb(0xb1aebb)),
+                  ),
                 ),
-              ),
-              Padding(
-                insets: Insets(left: normalizedValue * (constraints.maxWidth - _handleRadius * 2)),
-                child: Sized(width: _handleRadius * 2, height: _handleRadius * 2, child: handle),
-              ),
-            ],
-          ),
-        );
-      },
+                Padding(
+                  insets: Insets(left: normalizedValue * (constraints.maxWidth - _handleRadius * 2)),
+                  child: Sized(width: _handleRadius * 2, height: _handleRadius * 2, child: handle),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 

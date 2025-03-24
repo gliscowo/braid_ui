@@ -6,6 +6,9 @@ import 'package:source_helper/source_helper.dart';
 
 Future<void> main(List<String> args) async {
   final out = File('lib/src/baked_assets.g.dart').openWrite();
+  out.writeln('''
+// ignore_for_file: constant_identifier_names
+''');
 
   final segments = await Future.wait(segmentBuilders.map((builder) => builder()));
 
@@ -129,7 +132,7 @@ class BakedAssetResources implements BraidResources {
   },
   () async {
     final lines = await openAsset('icon_mappings.codepoints').readAsLines();
-    final result = StringBuffer()..writeln('const _iconMappings = {');
+    final result = StringBuffer()..writeln('final class Icons {');
     final mappedIconNames = <String>{};
 
     for (final line in lines) {
@@ -138,16 +141,21 @@ class BakedAssetResources implements BraidResources {
       if (mappedIconNames.contains(name)) continue;
       mappedIconNames.add(name);
 
-      result.writeln('${name.quoted}: 0x$codepoint,');
+      var safeName = name;
+      if (safeName.startsWith(RegExp(r'\d'))) {
+        safeName = 'n_$safeName';
+      }
+
+      if (const {'try', 'switch', 'class'}.contains(safeName)) {
+        safeName = 'k_$safeName';
+      }
+
+      result.writeln('  static const $safeName = IconSpec(0x$codepoint);');
     }
 
-    result.write('''
-};
+    result.writeln('}');
 
-String lookupIcon(String iconName) => String.fromCharCode(_iconMappings[iconName] ?? 0);
-''');
-
-    return (imports: const <String>[], code: result.toString());
+    return (imports: const <String>['widgets/icon.dart'], code: result.toString());
   },
 ];
 
