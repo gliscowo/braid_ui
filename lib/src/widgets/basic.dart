@@ -73,15 +73,15 @@ class Flexible extends VisitorWidget {
   VisitorProxy proxy() => VisitorProxy<Flexible>(this, _visitor);
 }
 
-class HitTestOccluder extends VisitorWidget {
-  const HitTestOccluder({super.key, required super.child});
+class HitTestTrap extends VisitorWidget {
+  const HitTestTrap({super.key, required super.child});
 
-  static void _visitor(HitTestOccluder _, WidgetInstance instance) {
+  static void _visitor(HitTestTrap _, WidgetInstance instance) {
     instance.flags += InstanceFlags.hitTestBoundary;
   }
 
   @override
-  VisitorProxy proxy() => VisitorProxy<HitTestOccluder>(this, _visitor);
+  VisitorProxy proxy() => VisitorProxy<HitTestTrap>(this, _visitor);
 }
 
 // ---
@@ -588,8 +588,8 @@ class ClipInstance extends SingleChildWidgetInstance<Clip> with ShrinkWrapLayout
 
 // ---
 
-class StencipClip extends SingleChildInstanceWidget {
-  const StencipClip({super.key, required super.child});
+class StencilClip extends SingleChildInstanceWidget {
+  const StencilClip({super.key, required super.child});
 
   @override
   StencilClipInstance instantiate() => StencilClipInstance(widget: this);

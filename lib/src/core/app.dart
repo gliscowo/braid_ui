@@ -112,7 +112,7 @@ Future<AppState> createBraidApp({
   }
 
   final renderContext = RenderContext(braidWindow);
-  final programs = Stream.fromFutures([
+  await Stream.fromFutures([
     _vertFragProgram(resources, 'blit', 'blit', 'blit'),
     _vertFragProgram(resources, 'text', 'text', 'text'),
     _vertFragProgram(resources, 'solid_fill', 'pos', 'solid_fill'),
@@ -121,11 +121,7 @@ Future<AppState> createBraidApp({
     _vertFragProgram(resources, 'rounded_rect_outline', 'pos', 'rounded_rect_outline'),
     _vertFragProgram(resources, 'circle_solid', 'pos', 'circle_solid'),
     _vertFragProgram(resources, 'gradient_fill', 'pos_uv', 'gradient_fill'),
-  ]);
-
-  await for (final program in programs) {
-    renderContext.addProgram(program);
-  }
+  ]).forEach(renderContext.addProgram);
 
   final (notoSans, materialSymbols) =
       await (FontFamily.load(resources, 'NotoSans'), FontFamily.load(resources, 'MaterialSymbols')).wait;

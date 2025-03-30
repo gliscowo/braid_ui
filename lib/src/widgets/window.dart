@@ -77,7 +77,7 @@ class _WindowState extends WidgetState<Window> {
         dragEndCallback: () => draggingEdges = null,
         child: Padding(
           insets: const Insets.all(10),
-          child: HitTestOccluder(
+          child: HitTestTrap(
             child: MouseArea(
               dragCallback:
                   (_, _, dx, dy) => setState(() {

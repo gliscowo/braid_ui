@@ -20,6 +20,7 @@ import 'package:image/image.dart' hide Color;
 import 'package:logging/logging.dart';
 
 AppState? app;
+CursorStyle? cursor;
 
 Future<void> main() async {
   Logger.root.onRecord.listen((event) {
@@ -37,6 +38,7 @@ Future<void> main() async {
   );
 
   app!.window.setIcon((await icon)!);
+  cursor = CursorStyle.custom((await icon)!, 32, 32);
   await app!.loadFontFamily('CascadiaCode', 'cascadia');
 
   runBraidApp(app: app!, experimentalReloadHook: true);
@@ -124,44 +126,54 @@ class _AppBodyState extends WidgetState<AppBody> {
               children: [
                 Flexible(
                   child: Center(
-                    child: Column(
+                    child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Constrain(
-                          constraints: Constraints.only(maxWidth: 150),
-                          child: ColorSlider(from: const Color.rgb(0x5f43b2), to: const Color.rgb(0x1bd664)),
-                        ),
-                        const Padding(insets: Insets.axis(vertical: 25)),
-                        for (final color in const [
-                          Color.rgb(0x5f43b2),
-                          Color.rgb(0xfefdfd),
-                          Color.rgb(0xb1aebb),
-                          Color.rgb(0x3a3135),
-                        ])
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              ToggleBox(),
-                              Padding(
-                                insets: const Insets.all(10).copy(left: 15),
-                                child: Constrain(
-                                  constraints: Constraints.tight(const Size(65, 35)),
-                                  child: Panel(color: color, cornerRadius: const CornerRadius.all(5)),
-                                ),
-                              ),
-                              Panel(
-                                color: Color.rgb(0x161616),
-                                cornerRadius: const CornerRadius.all(5),
-                                child: Padding(
-                                  insets: const Insets.all(5),
-                                  child: Label(
-                                    text: '0x${color.toHexString(false)}',
-                                    style: LabelStyle(fontSize: 14, fontFamily: 'cascadia'),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Constrain(
+                              constraints: Constraints.only(maxWidth: 150),
+                              child: ColorSlider(from: const Color.rgb(0x5f43b2), to: const Color.rgb(0x1bd664)),
+                            ),
+                            const Padding(insets: Insets.axis(vertical: 25)),
+                            for (final color in const [
+                              Color.rgb(0x5f43b2),
+                              Color.rgb(0xfefdfd),
+                              Color.rgb(0xb1aebb),
+                              Color.rgb(0x3a3135),
+                            ])
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  ToggleBox(),
+                                  Padding(
+                                    insets: const Insets.all(10).copy(left: 15),
+                                    child: Constrain(
+                                      constraints: Constraints.tight(const Size(65, 35)),
+                                      child: Panel(color: color, cornerRadius: const CornerRadius.all(5)),
+                                    ),
                                   ),
-                                ),
+                                  Panel(
+                                    color: Color.rgb(0x161616),
+                                    cornerRadius: const CornerRadius.all(5),
+                                    child: Padding(
+                                      insets: const Insets.all(5),
+                                      child: Label(
+                                        text: '0x${color.toHexString(false)}',
+                                        style: LabelStyle(fontSize: 14, fontFamily: 'cascadia'),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
+                          ],
+                        ),
+                        Sized(
+                          width: 100,
+                          height: 100,
+                          child: MouseArea(cursorStyle: cursor, child: Panel(color: Color.white)),
+                        ),
                       ],
                     ),
                   ),
