@@ -55,7 +55,7 @@ class ClockApp extends StatelessWidget {
             child: Center(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [TimeText(), Button.text(onClick: () => print('yup'), text: 'a')],
+                children: [TimeText(), Button(onClick: () => print('yup'), text: 'a')],
               ),
             ),
           ),
@@ -123,7 +123,7 @@ class DependencyTestState extends WidgetState<DependencyTest> {
       color: color,
       child: Row(
         children: [
-          Button.text(
+          Button(
             onClick:
                 () => setState(() {
                   color = color == Color.red ? Color.green : Color.red;
@@ -167,9 +167,9 @@ class TimeTextState extends WidgetState<TimeText> {
 
   @override
   Widget build(BuildContext context) {
-    return Label(
+    return Text(
       text: '${DateFormat('Hms').format(_time)}:${_time.millisecond}',
-      style: LabelStyle(fontSize: 80.0, bold: true, textColor: Color.ofHsv(_time.second / 60.0, 1.0, 1.0)),
+      style: TextStyle(fontSize: 80.0, bold: true, color: Color.ofHsv(_time.second / 60.0, 1.0, 1.0)),
     );
   }
 }

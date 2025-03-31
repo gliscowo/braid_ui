@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 
 import '../context.dart';
@@ -6,36 +7,30 @@ import '../framework/instance.dart';
 import '../framework/widget.dart';
 import '../text/text.dart';
 
-class LabelStyle {
-  static const empty = LabelStyle();
+class TextStyle {
+  static const empty = TextStyle();
 
-  final Color? textColor;
+  final Color? color;
   final double? fontSize;
   final String? fontFamily;
   final bool? bold;
   final bool? italic;
   final double? lineHeight;
 
-  const LabelStyle({this.textColor, this.fontSize, this.fontFamily, this.bold, this.italic, this.lineHeight});
+  const TextStyle({this.color, this.fontSize, this.fontFamily, this.bold, this.italic, this.lineHeight});
 
-  LabelStyle copy({
-    Color? textColor,
-    double? fontSize,
-    String? fontFamily,
-    bool? bold,
-    bool? italic,
-    double? lineHeight,
-  }) => LabelStyle(
-    textColor: textColor ?? this.textColor,
-    fontSize: fontSize ?? this.fontSize,
-    fontFamily: fontFamily ?? this.fontFamily,
-    bold: bold ?? this.bold,
-    italic: italic ?? this.italic,
-    lineHeight: lineHeight ?? this.lineHeight,
-  );
+  TextStyle copy({Color? color, double? fontSize, String? fontFamily, bool? bold, bool? italic, double? lineHeight}) =>
+      TextStyle(
+        color: color ?? this.color,
+        fontSize: fontSize ?? this.fontSize,
+        fontFamily: fontFamily ?? this.fontFamily,
+        bold: bold ?? this.bold,
+        italic: italic ?? this.italic,
+        lineHeight: lineHeight ?? this.lineHeight,
+      );
 
-  LabelStyle overriding(LabelStyle other) => LabelStyle(
-    textColor: textColor ?? other.textColor,
+  TextStyle overriding(TextStyle other) => TextStyle(
+    color: color ?? other.color,
     fontSize: fontSize ?? other.fontSize,
     fontFamily: fontFamily ?? other.fontFamily,
     bold: bold ?? other.bold,
@@ -43,56 +38,74 @@ class LabelStyle {
     lineHeight: lineHeight ?? other.lineHeight,
   );
 
+  SpanStyle _toSpanStyle() => SpanStyle(
+    color: color ?? _defaultTextColor,
+    fontSize: fontSize ?? _defaultFontSize,
+    fontFamily: fontFamily ?? 'Noto Sans',
+    bold: bold ?? false,
+    italic: italic ?? false,
+    lineHeight: lineHeight,
+  );
+
+  // --- TEMPORARY ---
+  static final _defaultFontSize = 16.0;
+  static final _defaultTextColor = Color.white;
+  // -----------------
+
   // for now we'll leave it at this, since it's a lot nicer to implement and shorter.
   // however, quick benchmarks indicate that this is ~4x slower than a full manual
   // impl so we might change it in the future should it ever becomer relevant
-  get _props => (textColor, fontSize, fontFamily, bold, italic, lineHeight);
+  get _props => (color, fontSize, fontFamily, bold, italic, lineHeight);
 
   @override
   int get hashCode => _props.hashCode;
 
   @override
-  bool operator ==(Object other) => other is LabelStyle && other._props == _props;
+  bool operator ==(Object other) => other is TextStyle && other._props == _props;
 }
 
-// class LabelStyleHost extends SingleChildWidgetInstance with ShrinkWrapLayout {
-//   LabelStyle style;
-
-//   LabelStyleHost({
-//     required super.child,
-//     required this.style,
-//   });
-// }
-
-class Label extends LeafInstanceWidget {
-  final Text text;
-  final LabelStyle style;
-
-  Label({super.key, required String text, this.style = LabelStyle.empty}) : text = Text.string(text);
-
-  Label.text({super.key, required this.text, this.style = LabelStyle.empty});
+class DefaultTextStyle extends InheritedWidget {
+  final TextStyle style;
+  const DefaultTextStyle({super.key, required this.style, required super.child});
 
   @override
-  LabelInstance instantiate() => LabelInstance(widget: this);
+  bool mustRebuildDependents(DefaultTextStyle newWidget) => newWidget.style != style;
+
+  static TextStyle? maybeOf(BuildContext context) => context.dependOnAncestor<DefaultTextStyle>()?.style;
 }
 
-class LabelInstance extends LeafWidgetInstance<Label> {
-  late Text _styledText;
-  LabelStyle? _contextStyle;
+class Text extends StatelessWidget {
+  final String text;
+  final TextStyle style;
 
-  LabelInstance({required super.widget}) {
-    _computeStyledText();
+  const Text({super.key, required this.text, this.style = TextStyle.empty});
+
+  @override
+  Widget build(BuildContext context) {
+    final contextStyle = DefaultTextStyle.maybeOf(context);
+    final computedStyle = contextStyle != null ? style.overriding(contextStyle) : style;
+
+    return RawText(spans: [Span(text, computedStyle._toSpanStyle())]);
   }
+}
+
+class RawText extends LeafInstanceWidget {
+  final List<Span> spans;
+
+  const RawText({super.key, required this.spans});
+
+  @override
+  RawTextInstance instantiate() => RawTextInstance(widget: this);
+}
+
+class RawTextInstance extends LeafWidgetInstance<RawText> {
+  Paragraph _styledText;
+
+  RawTextInstance({required super.widget}) : _styledText = Paragraph(widget.spans);
 
   @override
   void draw(DrawContext ctx) {
-    final style = _computedStyle;
-
-    final textSize = ctx.textRenderer.sizeOf(
-      _styledText,
-      style.fontSize ?? _defaultFontSize,
-      lineHeightOverride: style.lineHeight,
-    );
+    final textSize = ctx.textRenderer.sizeOf(_styledText);
 
     final xOffset = (transform.width - textSize.width) ~/ 2;
     final yOffset = (transform.height - textSize.height) ~/ 2;
@@ -101,11 +114,8 @@ class LabelInstance extends LeafWidgetInstance<Label> {
       mat4.translate(xOffset.toDouble(), yOffset.toDouble());
       ctx.textRenderer.drawText(
         _styledText,
-        style.fontSize ?? _defaultFontSize,
-        style.textColor ?? _defaultTextColor,
         mat4,
         ctx.projection,
-        lineHeightOverride: style.lineHeight,
         // debugCtx: ctx,
       );
     });
@@ -113,70 +123,18 @@ class LabelInstance extends LeafWidgetInstance<Label> {
 
   @override
   void doLayout(Constraints constraints) {
-    // if (ancestorOfType<LabelStyleHost>() case var styleHost?) {
-    //   _contextStyle = styleHost.style;
-    //   _computeStyledText();
-    // }
-
-    final style = _computedStyle;
-    final size = host!.textRenderer
-        .sizeOf(_styledText, style.fontSize ?? _defaultFontSize, lineHeightOverride: style.lineHeight)
-        .constrained(constraints);
+    final size = host!.textRenderer.sizeOf(_styledText).constrained(constraints);
 
     transform.setSize(size.ceil());
   }
 
-  LabelStyle get _computedStyle => _contextStyle != null ? widget.style.overriding(_contextStyle!) : widget.style;
-
-  void _computeStyledText() {
-    final style = _computedStyle;
-    _styledText = widget.text.copy(
-      style: TextStyle(
-        fontFamily: style.fontFamily,
-        color: style.textColor,
-        bold: style.bold,
-        italic: style.italic,
-      ).overriding(widget.text.style),
-    );
-  }
-
   @override
-  set widget(Label value) {
-    if (widget.text == value.text && widget.style == value.style) return;
+  set widget(RawText value) {
+    if (const ListEquality<Span>().equals(widget.spans, value.spans)) return;
 
     super.widget = value;
-    _computeStyledText();
+    _styledText = Paragraph(widget.spans);
 
     markNeedsLayout();
   }
-
-  // LabelStyle get style => _style;
-  // set style(LabelStyle value) {
-  //   if (_style == value) return;
-
-  //   _style = value;
-  //   _computeStyledText();
-  //   markNeedsLayout();
-  // }
-
-  // Text get text => _text;
-  // set text(Text value) {
-  //   if (_text == value) return;
-
-  //   _text = value;
-  //   _computeStyledText();
-  //   markNeedsLayout();
-  // }
-
-  // set string(String value) {
-  //   _text = Text.string(value);
-
-  //   _computeStyledText();
-  //   markNeedsLayout();
-  // }
-
-  // ---
-
-  static final _defaultFontSize = 16.0;
-  static final _defaultTextColor = Color.white;
 }

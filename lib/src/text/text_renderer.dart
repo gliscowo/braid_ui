@@ -47,7 +47,7 @@ class FontFamily {
     );
   }
 
-  Font fontForStyle(TextStyle style) {
+  Font fontForStyle(SpanStyle style) {
     final (bold, italic) = (style.bold ?? false, style.italic ?? false);
 
     if (bold && !italic) return boldFont;
@@ -286,41 +286,40 @@ class TextRenderer {
 
   // ---
 
-  Size sizeOf(Text text, double size, {double? lineHeightOverride}) {
-    _ensureShaped(text, size);
-    if (text.glyphs.isEmpty) return Size(0, size);
+  Size sizeOf(Paragraph text) {
+    _ensureShaped(text);
+    // TODO: this is likely not a safe assumption
+    if (text.glyphs.isEmpty) return Size(0, text.spans.first.style.fontSize);
 
-    final lineHeight = lineHeightOverride ?? text.glyphs.fold<double>(0.0, (acc, e) => max(acc, e.font.lineHeight));
+    final lineHeight = text.glyphs.fold<double>(
+      0.0,
+      (acc, e) => max(acc, (e.style.lineHeight ?? e.font.lineHeight) * e.style.fontSize),
+    );
 
     return Size(
-      text.glyphs.map((e) => _hbToPixels(e.position.x + e.advance.x) * Font.compensateForGlyphSize(size)).reduce(max),
-      size * lineHeight,
+      text.glyphs
+          .map((e) => _hbToPixels(e.position.x + e.advance.x) * Font.compensateForGlyphSize(e.style.fontSize))
+          .reduce(max),
+      lineHeight,
     );
   }
 
   // TODO potentially include size in text style, actually do text layout :dies:
-  void drawText(
-    Text text,
-    double size,
-    Color color,
-    Matrix4 transform,
-    Matrix4 projection, {
-    double? lineHeightOverride,
-    DrawContext? debugCtx,
-  }) {
-    _ensureShaped(text, size);
+  void drawText(Paragraph text, Matrix4 transform, Matrix4 projection, {DrawContext? debugCtx}) {
+    _ensureShaped(text);
 
-    int baselineY = (text.glyphs.first.font.ascender * size).floor();
+    final size = text.glyphs.first.style.fontSize;
+    var baselineY = (text.glyphs.first.font.ascender * size).floor();
 
-    if (lineHeightOverride != null) {
+    if (text.glyphs.first.style.lineHeight != null) {
       // TODO: this might benefit from some caching. then again, once actual paragraph
       // layout and rendering is implemented, the relevant datastructures are likely
       // gonna change anyways soooo
-      baselineY += ((lineHeightOverride - text.glyphs.first.font.lineHeight) * .5 * size).ceil();
+      baselineY += ((text.glyphs.first.style.lineHeight! - text.glyphs.first.font.lineHeight) * .5 * size).ceil();
     }
 
     if (debugCtx != null) {
-      final textSize = sizeOf(text, size, lineHeightOverride: lineHeightOverride);
+      final textSize = sizeOf(text);
       debugCtx.primitives.rect(textSize.width, textSize.height, Color.black.copyWith(a: .25), transform, projection);
 
       debugCtx.transform.scope((mat4) {
@@ -343,15 +342,15 @@ class TextRenderer {
 
     for (final shapedGlyph in text.glyphs) {
       final glyph = shapedGlyph.font.getGlyph(shapedGlyph.index, size);
-      final glyphColor = shapedGlyph.style.color ?? color;
+      final glyphColor = shapedGlyph.style.color;
 
-      final scale = Font.compensateForGlyphSize(size), glyphScale = shapedGlyph.style.scale ?? 1;
+      final renderScale = Font.compensateForGlyphSize(size);
 
-      final xPos = _hbToPixels(shapedGlyph.position.x) * scale + glyph.bearingX * scale;
-      final yPos = _hbToPixels(shapedGlyph.position.y) * scale + baselineY - glyph.bearingY * scale * glyphScale;
+      final xPos = _hbToPixels(shapedGlyph.position.x) * renderScale + glyph.bearingX * renderScale;
+      final yPos = _hbToPixels(shapedGlyph.position.y) * renderScale + baselineY - glyph.bearingY * renderScale;
 
-      final width = glyph.width * scale * glyphScale;
-      final height = glyph.height * scale * glyphScale;
+      final width = glyph.width * renderScale;
+      final height = glyph.height * renderScale;
 
       final u0 = (glyph.u / Font.atlasSize), u1 = u0 + (glyph.width / Font.atlasSize);
       final v0 = (glyph.v / Font.atlasSize), v1 = v0 + (glyph.height / Font.atlasSize);
@@ -377,9 +376,9 @@ class TextRenderer {
     gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
   }
 
-  void _ensureShaped(Text text, double size) {
-    if (text.isShapingCacheValid(size, _fontStorageGeneration)) return;
-    text.shape(getFamily, size, _fontStorageGeneration);
+  void _ensureShaped(Paragraph text) {
+    if (text.isShapingCacheValid(_fontStorageGeneration)) return;
+    text.shape(getFamily, _fontStorageGeneration);
   }
 
   // ---

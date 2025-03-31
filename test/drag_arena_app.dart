@@ -39,7 +39,7 @@ class DragArenaApp extends StatelessWidget {
           child: Panel(
             color: Color.green,
             cornerRadius: const CornerRadius.all(5),
-            child: Padding(insets: const Insets.all(10), child: Button.text(onClick: () {}, text: 'a funny button')),
+            child: Padding(insets: const Insets.all(10), child: Button(onClick: () {}, text: 'a funny button')),
           ),
         ),
         const FunnyDraggable(

@@ -12,48 +12,41 @@ typedef FontLookup = FontFamily Function(String? fontFamily);
 
 // ---
 
-class TextStyle {
-  static const empty = TextStyle();
+class SpanStyle {
+  final Color color;
+  final double fontSize;
+  final String fontFamily;
+  final bool bold;
+  final bool italic;
+  final double? lineHeight;
 
-  final Color? color;
-  final String? fontFamily;
-  final bool? bold;
-  final bool? italic;
-  final double? scale;
+  const SpanStyle({
+    required this.color,
+    required this.fontSize,
+    required this.fontFamily,
+    required this.bold,
+    required this.italic,
+    this.lineHeight,
+  });
 
-  const TextStyle({this.color, this.fontFamily, this.bold, this.italic, this.scale});
-
-  TextStyle copy({Color? color, String? fontFamily, bool? bold, bool? italic, double? scale}) => TextStyle(
-    color: color ?? this.color,
-    fontFamily: fontFamily ?? this.fontFamily,
-    bold: bold ?? this.bold,
-    italic: italic ?? this.italic,
-    scale: scale ?? this.scale,
-  );
-
-  TextStyle overriding(TextStyle other) => TextStyle(
-    color: color ?? other.color,
-    fontFamily: fontFamily ?? other.fontFamily,
-    bold: bold ?? other.bold,
-    italic: italic ?? other.italic,
-    scale: scale ?? other.scale,
-  );
-
-  get _props => (color, fontFamily, bold, italic, scale);
+  // for now we'll leave it at this, since it's a lot nicer to implement and shorter.
+  // however, quick benchmarks indicate that this is ~4x slower than a full manual
+  // impl so we might change it in the future should it ever becomer relevant
+  get _props => (color, fontSize, fontFamily, bold, italic, lineHeight);
 
   @override
   int get hashCode => _props.hashCode;
 
   @override
-  bool operator ==(Object other) => other is TextStyle && other._props == _props;
+  bool operator ==(Object other) => other is SpanStyle && other._props == _props;
 }
 
 // ---
 
 class Span {
   final String content;
-  final TextStyle style;
-  const Span(this.content, {this.style = const TextStyle()});
+  final SpanStyle style;
+  const Span(this.content, this.style);
 
   @override
   int get hashCode => Object.hash(content, style);
@@ -62,28 +55,24 @@ class Span {
   bool operator ==(Object other) => other is Span && other.content == content && other.style == style;
 }
 
-class Text {
+class Paragraph {
   final List<Span> _spans;
   final List<ShapedGlyph> _shapedGlyphs = [];
-  final TextStyle style;
 
-  (int, int)? _lastShapingKey;
+  int? _lastShapingKey;
 
-  Text.string(String value, {TextStyle style = TextStyle.empty}) : this([Span(value)], style: style);
-
-  Text(this._spans, {this.style = TextStyle.empty}) {
-    if (_spans.isEmpty) throw ArgumentError('Text must have at least one span');
+  Paragraph(this._spans) {
+    assert(_spans.isNotEmpty, 'each paragraph must have at least one span');
   }
 
-  Text copy({TextStyle? style}) => Text(_spans, style: style ?? this.style);
-
-  List<ShapedGlyph> get glyphs => _shapedGlyphs;
-
-  @internal
-  bool isShapingCacheValid(double size, int generation) => (Font.toPixelSize(size), generation) == _lastShapingKey;
+  List<Span> get spans => UnmodifiableListView(_spans);
+  List<ShapedGlyph> get glyphs => UnmodifiableListView(_shapedGlyphs);
 
   @internal
-  void shape(FontLookup fontLookup, double size, int generation) {
+  bool isShapingCacheValid(int generation) => generation == _lastShapingKey;
+
+  @internal
+  void shape(FontLookup fontLookup, int generation) {
     _shapedGlyphs.clear();
     int cursorX = 0, cursorY = 0;
 
@@ -91,9 +80,8 @@ class Text {
     'calt on'.withAsNative((flag) => harfbuzz.feature_from_string(flag.cast(), -1, features));
 
     for (final span in _spans) {
-      final spanStyle = span.style.overriding(style);
-      final spanScale = spanStyle.scale ?? 1;
-      final spanFontFamily = fontLookup(spanStyle.fontFamily);
+      final spanSize = span.style.fontSize;
+      final spanFontFamily = fontLookup(span.style.fontFamily);
 
       final buffer = harfbuzz.buffer_create();
 
@@ -103,7 +91,7 @@ class Text {
 
       harfbuzz.buffer_guess_segment_properties(buffer);
       harfbuzz.buffer_set_cluster_level(buffer, hb_buffer_cluster_level.HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
-      harfbuzz.shape(spanFontFamily.fontForStyle(spanStyle).getHbFont(size), buffer, features, 1);
+      harfbuzz.shape(spanFontFamily.fontForStyle(span.style).getHbFont(spanSize), buffer, features, 1);
 
       final glpyhCount = malloc<UnsignedInt>();
       final glyphInfo = harfbuzz.buffer_get_glyph_infos(buffer, glpyhCount);
@@ -115,35 +103,31 @@ class Text {
       for (var i = 0; i < glyphs; i++) {
         _shapedGlyphs.add(
           ShapedGlyph._(
-            spanFontFamily.fontForStyle(spanStyle),
+            spanFontFamily.fontForStyle(span.style),
             glyphInfo[i].codepoint,
-            (
-              x: cursorX + glyphPos[i].x_offset.toDouble() * spanScale,
-              y: cursorY + glyphPos[i].y_offset.toDouble() * spanScale,
-            ),
+            (x: cursorX + glyphPos[i].x_offset.toDouble(), y: cursorY + glyphPos[i].y_offset.toDouble()),
             (x: glyphPos[i].x_advance.toDouble(), y: glyphPos[i].y_advance.toDouble()),
-            spanStyle,
+            span.style,
             glyphInfo[i].cluster,
           ),
         );
 
-        cursorX += (glyphPos[i].x_advance * spanScale).round();
-        cursorY += (glyphPos[i].y_advance * spanScale).round();
+        cursorX += (glyphPos[i].x_advance).round();
+        cursorY += (glyphPos[i].y_advance).round();
       }
 
       harfbuzz.buffer_destroy(buffer);
     }
 
     malloc.free(features);
-    _lastShapingKey = (Font.toPixelSize(size), generation);
+    _lastShapingKey = generation;
   }
 
   @override
-  int get hashCode => Object.hash(style.hashCode, const ListEquality().hash(_spans));
+  int get hashCode => const ListEquality<Span>().hash(_spans);
 
   @override
-  bool operator ==(Object other) =>
-      other is Text && other.style == style && (const ListEquality().equals(other._spans, _spans));
+  bool operator ==(Object other) => other is Paragraph && const ListEquality<Span>().equals(other._spans, _spans);
 }
 
 class ShapedGlyph {
@@ -151,7 +135,7 @@ class ShapedGlyph {
   final int index;
   final ({double x, double y}) position;
   final ({double x, double y}) advance;
-  final TextStyle style;
+  final SpanStyle style;
   final int cluster;
   ShapedGlyph._(this.font, this.index, this.position, this.advance, this.style, this.cluster);
 }

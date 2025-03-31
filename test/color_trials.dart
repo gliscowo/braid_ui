@@ -67,7 +67,7 @@ class ColorApp extends StatelessWidget {
                 insets: const Insets.all(10).copy(left: 15),
                 child: Align(
                   alignment: Alignment.left,
-                  child: Label(text: 'cool & based colors test :o', style: LabelStyle(bold: true)),
+                  child: Text(text: 'cool & based colors test :o', style: TextStyle(bold: true)),
                 ),
               ),
             ),
@@ -159,9 +159,9 @@ class _AppBodyState extends WidgetState<AppBody> {
                                     cornerRadius: const CornerRadius.all(5),
                                     child: Padding(
                                       insets: const Insets.all(5),
-                                      child: Label(
+                                      child: Text(
                                         text: '0x${color.toHexString(false)}',
-                                        style: LabelStyle(fontSize: 14, fontFamily: 'cascadia'),
+                                        style: TextStyle(fontSize: 14, fontFamily: 'cascadia'),
                                       ),
                                     ),
                                   ),
@@ -187,7 +187,7 @@ class _AppBodyState extends WidgetState<AppBody> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           const Padding(insets: Insets(right: 5), child: DebugToggle()),
-                          Label(text: 'Draw instance outlines'),
+                          Text(text: 'Draw instance outlines'),
                         ],
                       ),
                       Flexible(
@@ -195,7 +195,7 @@ class _AppBodyState extends WidgetState<AppBody> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Button.text(
+                            Button(
                               text: 'Spawn window',
                               onClick: () {
                                 setState(() {
@@ -209,13 +209,13 @@ class _AppBodyState extends WidgetState<AppBody> {
                           ],
                         ),
                       ),
-                      Button.text(onClick: () {}, text: 'Unavailable', enabled: false),
+                      Button(onClick: () {}, text: 'Unavailable', enabled: false),
                       Padding(insets: const Insets.axis(horizontal: 5)),
-                      Button.text(onClick: _saveWindowState, text: 'Save'),
+                      Button(onClick: _saveWindowState, text: 'Save'),
                       Padding(insets: const Insets.axis(horizontal: 5)),
-                      Button.text(onClick: _loadWindowState, text: 'Load'),
+                      Button(onClick: _loadWindowState, text: 'Load'),
                       Padding(insets: const Insets.axis(horizontal: 5)),
-                      Button.text(onClick: () => app!.scheduleShutdown(), text: 'Quit'),
+                      Button(onClick: () => app!.scheduleShutdown(), text: 'Quit'),
                     ],
                   ),
                 ),
@@ -237,10 +237,7 @@ class _AppBodyState extends WidgetState<AppBody> {
                   content: Align(
                     alignment: Alignment.topLeft,
                     child: Column(
-                      children: [
-                        Button.text(onClick: () {}, text: 'bruh'),
-                        ColorSlider(from: Color.white, to: Color.black),
-                      ],
+                      children: [Button(onClick: () {}, text: 'bruh'), ColorSlider(from: Color.white, to: Color.black)],
                     ),
                   ),
                 ),

@@ -47,11 +47,9 @@ class RegulatingDeviceApp extends StatelessWidget {
           children: [
             Padding(
               insets: const Insets.all(15.0).copy(bottom: 25.0),
-              child: Label.text(
-                text: Text.string(
-                  "Regulating Device",
-                  style: TextStyle(bold: true, fontFamily: "Nunito", color: Color.white),
-                ),
+              child: Text(
+                text: "Regulating Device",
+                style: TextStyle(bold: true, fontFamily: "Nunito", color: Color.white),
               ),
             ),
             Padding(
@@ -60,8 +58,8 @@ class RegulatingDeviceApp extends StatelessWidget {
                 mainAxis: LayoutAxis.vertical,
                 children: [
                   buttonPanel(Icon(icon: Icons.settings), "Settings", [
-                    Button.text(text: "On", onClick: () => ()),
-                    Button.text(text: "Off", onClick: () => ()),
+                    Button(text: "On", onClick: () => ()),
+                    Button(text: "Off", onClick: () => ()),
                   ]),
                 ],
               ),
@@ -93,7 +91,7 @@ Widget buttonPanel(Icon icon, String name, List<Widget> buttons) {
                     children: [
                       icon,
                       Padding(insets: const Insets.all(10.0)),
-                      Label.text(text: Text.string(name), style: LabelStyle(fontSize: 18.0)),
+                      Text(text: name, style: TextStyle(fontSize: 18.0)),
                     ],
                   ),
                   Padding(

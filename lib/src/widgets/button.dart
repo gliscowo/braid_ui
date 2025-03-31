@@ -64,40 +64,38 @@ class ButtonStyle {
       other.cornerRadius == cornerRadius;
 }
 
-class Button extends StatefulWidget {
-  final void Function() onClick;
+class Button extends StatelessWidget {
   final ButtonStyle style;
   final bool enabled;
+  final void Function() onClick;
+  final String text;
+
+  Button({super.key, this.style = ButtonStyle.empty, this.enabled = true, required this.onClick, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return RawButton(
+      style: style,
+      enabled: enabled,
+      onClick: onClick,
+      child: Text(text: text, style: TextStyle(fontSize: 14, bold: true)),
+    );
+  }
+}
+
+class RawButton extends StatefulWidget {
+  final ButtonStyle style;
+  final bool enabled;
+  final void Function() onClick;
   final Widget child;
 
-  const Button({
-    super.key,
-    this.style = ButtonStyle.empty,
-    this.enabled = true,
-    required this.onClick,
-    required this.child,
-  });
-
-  Button.text({
-    Key? key,
-    ButtonStyle style = ButtonStyle.empty,
-    bool enabled = true,
-    required void Function() onClick,
-    required String text,
-  }) : this(
-         key: key,
-         style: style,
-         enabled: enabled,
-         onClick: onClick,
-         // TODO: allow customizing this through the button style
-         child: Label(text: text, style: LabelStyle(fontSize: 14, bold: true)),
-       );
+  const RawButton({super.key, required this.style, required this.enabled, required this.onClick, required this.child});
 
   @override
   WidgetState createState() => ButtonState();
 }
 
-class ButtonState extends WidgetState<Button> {
+class ButtonState extends WidgetState<RawButton> {
   bool _hovered = false;
 
   @override

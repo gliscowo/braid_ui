@@ -16,9 +16,9 @@ class Icon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Label(
+    return Text(
       text: icon.asString(),
-      style: LabelStyle(fontFamily: 'MaterialSymbols', fontSize: size, lineHeight: 1.0, textColor: color),
+      style: TextStyle(fontFamily: 'MaterialSymbols', fontSize: size, lineHeight: 1.0, color: color),
     );
   }
 }

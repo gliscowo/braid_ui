@@ -105,7 +105,7 @@ class _WindowState extends WidgetState<Window> {
                                     }),
                                 child: Icon(icon: controller.expanded ? Icons.arrow_drop_up : Icons.arrow_drop_down),
                               ),
-                            Label(text: widget.title, style: LabelStyle(fontSize: 14.0, bold: true)),
+                            Text(text: widget.title, style: TextStyle(fontSize: 14.0, bold: true)),
                             Flexible(child: Padding(insets: Insets.zero)),
                             MouseArea(
                               cursorStyle: CursorStyle.hand,

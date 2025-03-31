@@ -62,10 +62,7 @@ class TextSizesApp extends StatelessWidget {
 
 Widget _testLabel(double size, [String fontFamily = 'Noto Sans']) => Padding(
   insets: const Insets.all(10),
-  child: Label(
-    text: 'bruhve ${size}px',
-    style: LabelStyle(fontSize: size, textColor: Color.black, fontFamily: fontFamily),
-  ),
+  child: Text(text: 'bruhve ${size}px', style: TextStyle(fontSize: size, color: Color.black, fontFamily: fontFamily)),
 );
 
 // class TextField extends SingleChildWidgetInstance with ShrinkWrapLayout {
