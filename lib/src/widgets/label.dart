@@ -5,7 +5,7 @@ import '../context.dart';
 import '../core/constraints.dart';
 import '../framework/instance.dart';
 import '../framework/widget.dart';
-import '../text/text.dart';
+import '../text/text_layout.dart';
 
 class TextStyle {
   static const empty = TextStyle();
@@ -105,7 +105,7 @@ class RawTextInstance extends LeafWidgetInstance<RawText> {
 
   @override
   void draw(DrawContext ctx) {
-    final textSize = ctx.textRenderer.sizeOf(_styledText);
+    final textSize = ctx.textRenderer.metricsOf(_styledText);
 
     final xOffset = (transform.width - textSize.width) ~/ 2;
     final yOffset = (transform.height - textSize.height) ~/ 2;
@@ -123,8 +123,7 @@ class RawTextInstance extends LeafWidgetInstance<RawText> {
 
   @override
   void doLayout(Constraints constraints) {
-    final size = host!.textRenderer.sizeOf(_styledText).constrained(constraints);
-
+    final size = host!.textRenderer.metricsOf(_styledText).size.constrained(constraints);
     transform.setSize(size.ceil());
   }
 

@@ -11,18 +11,20 @@ import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math.dart';
 
 import '../context.dart';
-import '../core/math.dart';
 import '../native/freetype.dart';
 import '../native/harfbuzz.dart';
 import '../resources.dart';
 import '../vertex_descriptors.dart';
-import 'text.dart';
+import 'text_layout.dart';
 
 final freetype = FreetypeLibrary(BraidNatives.activeLibraries.freetype);
 final harfbuzz = HarfbuzzLibrary(BraidNatives.activeLibraries.harfbuzz);
 
 final Logger _logger = Logger('cutesy.text_handler');
 const _hbScale = 64;
+
+@internal
+int hbToPixels(num hbUnits) => (hbUnits / _hbScale).round();
 
 class FontFamily {
   final Font defaultFont;
@@ -48,7 +50,7 @@ class FontFamily {
   }
 
   Font fontForStyle(SpanStyle style) {
-    final (bold, italic) = (style.bold ?? false, style.italic ?? false);
+    final (bold, italic) = (style.bold, style.italic);
 
     if (bold && !italic) return boldFont;
     if (!bold && italic) return italicFont;
@@ -286,22 +288,9 @@ class TextRenderer {
 
   // ---
 
-  Size sizeOf(Paragraph text) {
+  ParagraphMetrics metricsOf(Paragraph text) {
     _ensureShaped(text);
-    // TODO: this is likely not a safe assumption
-    if (text.glyphs.isEmpty) return Size(0, text.spans.first.style.fontSize);
-
-    final lineHeight = text.glyphs.fold<double>(
-      0.0,
-      (acc, e) => max(acc, (e.style.lineHeight ?? e.font.lineHeight) * e.style.fontSize),
-    );
-
-    return Size(
-      text.glyphs
-          .map((e) => _hbToPixels(e.position.x + e.advance.x) * Font.compensateForGlyphSize(e.style.fontSize))
-          .reduce(max),
-      lineHeight,
-    );
+    return text.metrics;
   }
 
   // TODO potentially include size in text style, actually do text layout :dies:
@@ -309,17 +298,10 @@ class TextRenderer {
     _ensureShaped(text);
 
     final size = text.glyphs.first.style.fontSize;
-    var baselineY = (text.glyphs.first.font.ascender * size).floor();
-
-    if (text.glyphs.first.style.lineHeight != null) {
-      // TODO: this might benefit from some caching. then again, once actual paragraph
-      // layout and rendering is implemented, the relevant datastructures are likely
-      // gonna change anyways soooo
-      baselineY += ((text.glyphs.first.style.lineHeight! - text.glyphs.first.font.lineHeight) * .5 * size).ceil();
-    }
+    final baselineY = metricsOf(text).lineMetrics.first.baselineY;
 
     if (debugCtx != null) {
-      final textSize = sizeOf(text);
+      final textSize = metricsOf(text);
       debugCtx.primitives.rect(textSize.width, textSize.height, Color.black.copyWith(a: .25), transform, projection);
 
       debugCtx.transform.scope((mat4) {
@@ -346,8 +328,8 @@ class TextRenderer {
 
       final renderScale = Font.compensateForGlyphSize(size);
 
-      final xPos = _hbToPixels(shapedGlyph.position.x) * renderScale + glyph.bearingX * renderScale;
-      final yPos = _hbToPixels(shapedGlyph.position.y) * renderScale + baselineY - glyph.bearingY * renderScale;
+      final xPos = shapedGlyph.position.x * renderScale + glyph.bearingX * renderScale;
+      final yPos = shapedGlyph.position.y * renderScale + baselineY - glyph.bearingY * renderScale;
 
       final width = glyph.width * renderScale;
       final height = glyph.height * renderScale;
@@ -376,12 +358,9 @@ class TextRenderer {
     gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
   }
 
+  // TODO: ideally make the client decide when shaping happens
   void _ensureShaped(Paragraph text) {
     if (text.isShapingCacheValid(_fontStorageGeneration)) return;
     text.shape(getFamily, _fontStorageGeneration);
   }
-
-  // ---
-
-  static int _hbToPixels(double hbUnits) => (hbUnits / _hbScale).round();
 }
