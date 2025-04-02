@@ -71,13 +71,14 @@ class CursorController {
 
   set style(CursorStyle style) {
     if (_disposed || _lastCursorStyle == style) return;
-    if (!_cursors.containsKey(style)) {
-      _cursors[style] = style.allocate();
-    }
 
     if (style == CursorStyle.none) {
       glfw.setCursor(_window.handle, nullptr);
     } else {
+      if (!_cursors.containsKey(style)) {
+        _cursors[style] = style.allocate();
+      }
+
       glfw.setCursor(_window.handle, _cursors[style]!);
     }
 
