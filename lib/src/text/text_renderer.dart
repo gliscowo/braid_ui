@@ -288,24 +288,25 @@ class TextRenderer {
 
   // ---
 
-  ParagraphMetrics metricsOf(Paragraph text) {
-    _ensureShaped(text);
+  ParagraphMetrics layout(Paragraph text, double maxWidth) {
+    if (!text.isShapingCacheValid(_fontStorageGeneration, maxWidth)) {
+      text.layout(getFamily, maxWidth, _fontStorageGeneration);
+    }
+
     return text.metrics;
   }
 
   // TODO potentially include size in text style, actually do text layout :dies:
   void drawText(Paragraph text, Matrix4 transform, Matrix4 projection, {DrawContext? debugCtx}) {
-    _ensureShaped(text);
-
     final size = text.glyphs.first.style.fontSize;
-    final baselineY = metricsOf(text).lineMetrics.first.baselineY;
+    final initialBaselineY = text.metrics.initialBaselineY.floor();
 
     if (debugCtx != null) {
-      final textSize = metricsOf(text);
+      final textSize = text.metrics;
       debugCtx.primitives.rect(textSize.width, textSize.height, Color.black.copyWith(a: .25), transform, projection);
 
       debugCtx.transform.scope((mat4) {
-        mat4.translate(0.0, baselineY.toDouble());
+        mat4.translate(0.0, initialBaselineY.toDouble());
         debugCtx.primitives.rect(textSize.width, 1, Color.red, mat4, projection);
       });
     }
@@ -329,7 +330,7 @@ class TextRenderer {
       final renderScale = Font.compensateForGlyphSize(size);
 
       final xPos = shapedGlyph.position.x * renderScale + glyph.bearingX * renderScale;
-      final yPos = shapedGlyph.position.y * renderScale + baselineY - glyph.bearingY * renderScale;
+      final yPos = shapedGlyph.position.y * renderScale + initialBaselineY - glyph.bearingY * renderScale;
 
       final width = glyph.width * renderScale;
       final height = glyph.height * renderScale;
@@ -356,11 +357,5 @@ class TextRenderer {
     });
 
     gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
-  }
-
-  // TODO: ideally make the client decide when shaping happens
-  void _ensureShaped(Paragraph text) {
-    if (text.isShapingCacheValid(_fontStorageGeneration)) return;
-    text.shape(getFamily, _fontStorageGeneration);
   }
 }

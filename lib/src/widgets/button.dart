@@ -5,7 +5,7 @@ import '../core/math.dart';
 import '../framework/proxy.dart';
 import '../framework/widget.dart';
 import 'basic.dart';
-import 'label.dart';
+import 'text.dart';
 
 class DefaultButtonStyle extends InheritedWidget {
   final ButtonStyle style;

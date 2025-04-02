@@ -174,6 +174,21 @@ class _AppBodyState extends WidgetState<AppBody> {
                           height: 100,
                           child: MouseArea(cursorStyle: cursor, child: Panel(color: Color.white)),
                         ),
+                        Sized(
+                          width: 100,
+                          height: 100,
+                          child: Panel(
+                            color: Color.green,
+                            child: RawText(
+                              spans: [
+                                Span('THIS', TextStyle.empty.toSpanStyle()),
+                                Span(' is ', TextStyle(bold: true).toSpanStyle()),
+                                Span('a looooooo', TextStyle.empty.toSpanStyle()),
+                                Span('oooooong word', TextStyle(color: Color.blue).toSpanStyle()),
+                              ],
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),

@@ -9,7 +9,7 @@ import 'basic.dart';
 import 'drag_arena.dart';
 import 'flex.dart';
 import 'icon.dart';
-import 'label.dart';
+import 'text.dart';
 
 class Window extends StatefulWidget {
   final bool collapsible;

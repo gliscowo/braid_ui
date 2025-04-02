@@ -1,7 +1,7 @@
 import 'package:diamond_gl/diamond_gl.dart';
 
 import '../framework/widget.dart';
-import 'label.dart';
+import 'text.dart';
 
 extension type const IconSpec(int _codepoint) {
   String asString() => String.fromCharCode(_codepoint);

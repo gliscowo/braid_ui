@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:ffi' hide Size;
 import 'dart:math';
 
@@ -45,10 +46,15 @@ class SpanStyle {
 
 // ---
 
-class Span {
+final class Span {
   final String content;
   final SpanStyle style;
   const Span(this.content, this.style);
+
+  (Span, Span) _split(int at, {bool keepSplitChar = true}) => (
+    Span(content.substring(0, at), style),
+    Span(content.substring(keepSplitChar ? at : at + 1), style),
+  );
 
   @override
   int get hashCode => Object.hash(content, style);
@@ -61,7 +67,7 @@ class Paragraph {
   final List<Span> _spans;
   final List<ShapedGlyph> _shapedGlyphs = [];
 
-  int? _lastShapingKey;
+  (int, double)? _lastShapingKey;
   ParagraphMetrics? _metrics;
 
   Paragraph(this._spans) {
@@ -78,82 +84,233 @@ class Paragraph {
   }
 
   @internal
-  bool isShapingCacheValid(int generation) => generation == _lastShapingKey;
+  bool isShapingCacheValid(int generation, double maxWidth) => (generation, maxWidth) == _lastShapingKey;
+
+  // ---
+  static const _newline = 0xa;
+  static const _space = 0x20;
+  static const _zwsp = 0x200b;
+  // ---
 
   @internal
-  void shape(FontLookup fontLookup, int generation) {
+  void layout(FontLookup fontLookup, double maxWidth, int generation) {
     _shapedGlyphs.clear();
-    int cursorX = 0, cursorY = 0;
 
     final features = malloc<hb_feature>();
     'calt on'.withAsNative((flag) => harfbuzz.feature_from_string(flag.cast(), -1, features));
 
-    var width = 0.0, height = 0.0;
+    final session = _LayoutSession(features, fontLookup, maxWidth);
+    final spansForShaping = Queue.of(spans);
 
-    // per-line metrics
-    var baselineY = 0.0;
+    while (spansForShaping.isNotEmpty) {
+      var spanToShape = spansForShaping.removeFirst();
 
-    for (final span in _spans) {
-      final spanSize = span.style.fontSize;
-      final spanFont = fontLookup(span.style.fontFamily).fontForStyle(span.style);
+      final breakPoints = Queue<int>();
+      var goToNextLine = false;
 
-      final buffer = harfbuzz.buffer_create();
+      for (final (index, codeUnit) in spanToShape.content.codeUnits.indexed) {
+        if (codeUnit == _space || codeUnit == _zwsp) {
+          breakPoints.addLast(index);
+        } else if (codeUnit == _newline) {
+          final (left, right) = spanToShape._split(index, keepSplitChar: false);
 
-      final bufferContent = /*String.fromCharCodes(logicalToVisual(*/ span.content /*))*/ .toNativeUtf16();
-      harfbuzz.buffer_add_utf16(buffer, bufferContent.cast(), -1, 0, -1);
-      malloc.free(bufferContent);
+          spanToShape = left;
+          spansForShaping.addFirst(right);
+          goToNextLine = true;
 
-      harfbuzz.buffer_guess_segment_properties(buffer);
-      harfbuzz.buffer_set_cluster_level(buffer, hb_buffer_cluster_level.HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
-      harfbuzz.shape(spanFont.getHbFont(spanSize), buffer, features, 1);
-
-      final glpyhCount = malloc<UnsignedInt>();
-      final glyphInfo = harfbuzz.buffer_get_glyph_infos(buffer, glpyhCount);
-      final glyphPos = harfbuzz.buffer_get_glyph_positions(buffer, glpyhCount);
-
-      final glyphs = glpyhCount.value;
-      malloc.free(glpyhCount);
-
-      for (var i = 0; i < glyphs; i++) {
-        _shapedGlyphs.add(
-          ShapedGlyph._(
-            spanFont,
-            glyphInfo[i].codepoint,
-            (
-              x: cursorX + hbToPixels(glyphPos[i].x_offset).toDouble(),
-              y: cursorY + hbToPixels(glyphPos[i].y_offset).toDouble(),
-            ),
-            (x: hbToPixels(glyphPos[i].x_advance).toDouble(), y: hbToPixels(glyphPos[i].y_advance).toDouble()),
-            span.style,
-            glyphInfo[i].cluster,
-          ),
-        );
-
-        cursorX += hbToPixels(glyphPos[i].x_advance);
-        cursorY += hbToPixels(glyphPos[i].y_advance);
+          break;
+        }
       }
 
-      var spanBaselineY = spanFont.ascender * spanSize;
-
-      if (span.style.lineHeight != null) {
-        spanBaselineY += ((span.style.lineHeight! - spanFont.lineHeight) * .5 * spanSize).ceil();
+      final shapedSpan = _ShapedSpan(spanToShape, breakPoints, session.state.copy());
+      session.shapedSpans.addLast(shapedSpan);
+      if (breakPoints.isNotEmpty) {
+        session.lastSpanWithBreakPoint = shapedSpan;
       }
 
-      baselineY = spanBaselineY;
+      if (!_shapeSpan(session, shapedSpan)) {
+        ({_ShapedSpan span, int index})? breakPoint;
+        if (session.lastSpanWithBreakPoint != null) {
+          while (session.shapedSpans.last != session.lastSpanWithBreakPoint) {
+            session.shapedSpans.removeLast();
+          }
 
-      width = max(width, cursorX.toDouble());
-      height = max(height, (span.style.lineHeight ?? spanFont.lineHeight) * spanSize);
+          while (session.lastSpanWithBreakPoint!.possibleBreakIndices.isNotEmpty) {
+            final (index, position) = (
+              session.lastSpanWithBreakPoint!.possibleBreakIndices.removeLast(),
+              session.lastSpanWithBreakPoint!.possibleBreakPositions.removeLast(),
+            );
+            if (position <= session.maxWidth) {
+              breakPoint = (span: session.lastSpanWithBreakPoint!, index: index);
+              break;
+            }
+          }
+        }
 
-      harfbuzz.buffer_destroy(buffer);
+        if (breakPoint == null) {
+          breakSearch:
+          while (session.shapedSpans.isNotEmpty) {
+            final span = session.shapedSpans.last;
+
+            for (final glyph in span.shapedGlyphs.reversed) {
+              if (glyph.position.x + glyph.advance.x < session.maxWidth) {
+                breakPoint = (span: span, index: glyph.cluster);
+                break breakSearch;
+              }
+            }
+
+            session.shapedSpans.removeLast();
+          }
+        }
+
+        if (breakPoint != null) {
+          session.state.setFrom(breakPoint.span.stateBeforeShaping);
+          final (left, right) = breakPoint.span.split(breakPoint.index, keepSplitChar: false);
+
+          spansForShaping.addFirst(right);
+
+          session.shapedSpans.removeLast();
+          session.lastSpanWithBreakPoint = null;
+
+          session.shapedSpans.add(left);
+          if (left.possibleBreakIndices.isNotEmpty) {
+            session.lastSpanWithBreakPoint = left;
+          }
+
+          assert(_shapeSpan(session, left), 'span must fit after breaking');
+
+          _insertLineBreak(session);
+          continue;
+        } else {
+          // if we got here it means that the first glyph of the shaped text is too wide
+          // to fit in our max width restriction. at this point there is really nothing
+          // to do but give up, so that's what we do
+        }
+      }
+
+      if (goToNextLine) {
+        _insertLineBreak(session);
+      }
+    }
+
+    if (session.state.currentLineWidth != 0 || session.state.currentLineHeight != 0) {
+      session.lineMetrics.add(
+        LineMetrics(width: session.state.currentLineWidth, height: session.state.currentLineHeight),
+      );
     }
 
     malloc.free(features);
-    _lastShapingKey = generation;
+    _lastShapingKey = (generation, maxWidth);
     _metrics = ParagraphMetrics(
-      width: width,
-      height: height,
-      lineMetrics: [LineMetrics(width: width, height: height, baselineY: baselineY.floorToDouble())],
+      width: session.paragraphWidth ?? session.state.currentLineWidth,
+      height: (session.paragraphHeight ?? 0) + session.state.currentLineHeight,
+      initialBaselineY: session.initialBaselineY ?? session.state.currentLineBaseline,
+      lineMetrics: session.lineMetrics,
     );
+  }
+
+  bool _shapeSpan(_LayoutSession session, _ShapedSpan shapedSpan) {
+    final state = session.state;
+    final span = shapedSpan.span;
+
+    final spanSize = span.style.fontSize;
+    final spanFont = session.fontLookup(span.style.fontFamily).fontForStyle(span.style);
+
+    final buffer = harfbuzz.buffer_create();
+
+    final bufferContent = /*String.fromCharCodes(logicalToVisual(*/ span.content /*))*/ .toNativeUtf16();
+    harfbuzz.buffer_add_utf16(buffer, bufferContent.cast(), -1, 0, -1);
+    malloc.free(bufferContent);
+
+    harfbuzz.buffer_guess_segment_properties(buffer);
+    harfbuzz.buffer_set_cluster_level(buffer, hb_buffer_cluster_level.HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
+    harfbuzz.shape(spanFont.getHbFont(spanSize), buffer, session.features, 1);
+
+    final glpyhCount = malloc<UnsignedInt>();
+    final glyphInfo = harfbuzz.buffer_get_glyph_infos(buffer, glpyhCount);
+    final glyphPos = harfbuzz.buffer_get_glyph_positions(buffer, glpyhCount);
+
+    final glyphs = glpyhCount.value;
+    malloc.free(glpyhCount);
+
+    final shapedGlyphs = <ShapedGlyph>[];
+
+    for (var i = 0; i < glyphs; i++) {
+      shapedGlyphs.add(
+        ShapedGlyph._(
+          spanFont,
+          glyphInfo[i].codepoint,
+          (
+            x: state.cursorX + hbToPixels(glyphPos[i].x_offset).toDouble(),
+            y: state.cursorY + hbToPixels(glyphPos[i].y_offset).toDouble(),
+          ),
+          (x: hbToPixels(glyphPos[i].x_advance).toDouble(), y: hbToPixels(glyphPos[i].y_advance).toDouble()),
+          span.style,
+          glyphInfo[i].cluster,
+        ),
+      );
+
+      state.cursorX += hbToPixels(glyphPos[i].x_advance);
+      state.cursorY += hbToPixels(glyphPos[i].y_advance);
+    }
+
+    harfbuzz.buffer_destroy(buffer);
+
+    shapedSpan.shapedGlyphs = shapedGlyphs;
+    for (final breakPosition in shapedSpan.possibleBreakIndices) {
+      shapedSpan.possibleBreakPositions.add(
+        shapedSpan.stateBeforeShaping.cursorX + _charIdxToClusterPos(shapedGlyphs, breakPosition),
+      );
+    }
+
+    if (state.cursorX > session.maxWidth) {
+      return false;
+    }
+
+    _shapedGlyphs.addAll(shapedGlyphs);
+
+    var spanBaselineY = spanFont.ascender * spanSize;
+
+    if (span.style.lineHeight != null) {
+      spanBaselineY += ((span.style.lineHeight! - spanFont.lineHeight) * .5 * spanSize).ceil();
+    }
+
+    state.currentLineBaseline = max(state.currentLineBaseline, spanBaselineY);
+
+    state.currentLineWidth = max(state.currentLineWidth, state.cursorX.toDouble());
+    state.currentLineHeight = max(state.currentLineHeight, (span.style.lineHeight ?? spanFont.lineHeight) * spanSize);
+
+    return true;
+  }
+
+  void _insertLineBreak(_LayoutSession session) {
+    final state = session.state;
+
+    state.cursorX = 0;
+    state.cursorY += state.currentLineHeight.ceil();
+
+    session.initialBaselineY ??= state.currentLineBaseline;
+    session.paragraphWidth = max(session.paragraphWidth ?? 0, state.currentLineWidth);
+    session.paragraphHeight = (session.paragraphHeight ?? 0) + state.currentLineHeight;
+
+    session.lineMetrics.add(LineMetrics(width: state.currentLineWidth, height: state.currentLineHeight));
+
+    state.currentLineWidth = 0;
+    state.currentLineHeight = 0;
+    state.currentLineBaseline = 0;
+  }
+
+  double _charIdxToClusterPos(List<ShapedGlyph> glyphs, int charIdx) {
+    if (glyphs.isEmpty || charIdx == 0) return 0;
+
+    var pos = 0.0;
+
+    for (var glyphIdx = 0; glyphIdx < glyphs.length && glyphs[glyphIdx].cluster < charIdx; glyphIdx++) {
+      var glyph = glyphs[glyphIdx];
+      pos += glyph.advance.x;
+    }
+
+    return pos;
   }
 
   @override
@@ -161,6 +318,73 @@ class Paragraph {
 
   @override
   bool operator ==(Object other) => other is Paragraph && const ListEquality<Span>().equals(other._spans, _spans);
+}
+
+class _LayoutSession {
+  final Pointer<hb_feature> features;
+  final FontLookup fontLookup;
+  final double maxWidth;
+
+  final Queue<_ShapedSpan> shapedSpans = Queue();
+  _ShapedSpan? lastSpanWithBreakPoint;
+
+  final _LayoutState state = _LayoutState();
+
+  final List<LineMetrics> lineMetrics = [];
+  double? paragraphWidth, paragraphHeight;
+  double? initialBaselineY;
+
+  _LayoutSession(this.features, this.fontLookup, this.maxWidth);
+}
+
+class _LayoutState {
+  double cursorX, cursorY;
+
+  double currentLineWidth;
+  double currentLineHeight;
+  double currentLineBaseline;
+
+  _LayoutState({
+    this.cursorX = 0,
+    this.cursorY = 0,
+    this.currentLineWidth = 0,
+    this.currentLineHeight = 0,
+    this.currentLineBaseline = 0,
+  });
+
+  void setFrom(_LayoutState source) {
+    cursorX = source.cursorX;
+    cursorY = source.cursorY;
+    currentLineWidth = source.currentLineWidth;
+    currentLineHeight = source.currentLineHeight;
+    currentLineBaseline = source.currentLineBaseline;
+  }
+
+  _LayoutState copy() => _LayoutState(
+    cursorX: cursorX,
+    cursorY: cursorY,
+    currentLineWidth: currentLineWidth,
+    currentLineHeight: currentLineHeight,
+    currentLineBaseline: currentLineBaseline,
+  );
+}
+
+class _ShapedSpan {
+  final Span span;
+  final Queue<int> possibleBreakIndices;
+  final Queue<double> possibleBreakPositions = Queue();
+  final _LayoutState stateBeforeShaping;
+
+  late List<ShapedGlyph> shapedGlyphs;
+
+  (_ShapedSpan, Span) split(int at, {bool keepSplitChar = true}) {
+    final (leftSpan, rightSpan) = span._split(at, keepSplitChar: keepSplitChar);
+    final leftIndices = Queue.of(possibleBreakIndices.takeWhile((value) => value < at));
+
+    return (_ShapedSpan(leftSpan, leftIndices, stateBeforeShaping), rightSpan);
+  }
+
+  _ShapedSpan(this.span, this.possibleBreakIndices, this.stateBeforeShaping);
 }
 
 class ShapedGlyph {
@@ -175,22 +399,27 @@ class ShapedGlyph {
 
 class ParagraphMetrics {
   final double width, height;
+  final double initialBaselineY;
   final List<LineMetrics> lineMetrics;
 
-  ParagraphMetrics({required this.width, required this.height, required this.lineMetrics});
+  ParagraphMetrics({
+    required this.width,
+    required this.height,
+    required this.initialBaselineY,
+    required this.lineMetrics,
+  });
 
   Size get size => Size(width, height);
 
   @override
-  String toString() => 'ParagraphMetrics(width=$width, height=$height, lineMetrics=$lineMetrics)';
+  String toString() =>
+      'ParagraphMetrics(width=$width, height=$height, initialBaselineY=$initialBaselineY, lineMetrics=$lineMetrics)';
 }
 
 class LineMetrics {
   final double width, height;
-  final double baselineY;
-
-  LineMetrics({required this.width, required this.height, required this.baselineY});
+  LineMetrics({required this.width, required this.height});
 
   @override
-  String toString() => 'LineMetrics(width=$width, height=$height, baselineY=$baselineY)';
+  String toString() => 'LineMetrics(width=$width, height=$height)';
 }

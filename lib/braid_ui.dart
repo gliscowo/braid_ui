@@ -13,4 +13,4 @@ export 'src/text/text_layout.dart';
 export 'src/text/text_renderer.dart' hide hbToPixels;
 export 'src/widgets/button.dart';
 export 'src/widgets/flex.dart';
-export 'src/widgets/label.dart';
+export 'src/widgets/text.dart';

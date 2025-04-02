@@ -38,7 +38,7 @@ class TextStyle {
     lineHeight: lineHeight ?? other.lineHeight,
   );
 
-  SpanStyle _toSpanStyle() => SpanStyle(
+  SpanStyle toSpanStyle() => SpanStyle(
     color: color ?? _defaultTextColor,
     fontSize: fontSize ?? _defaultFontSize,
     fontFamily: fontFamily ?? 'Noto Sans',
@@ -85,7 +85,7 @@ class Text extends StatelessWidget {
     final contextStyle = DefaultTextStyle.maybeOf(context);
     final computedStyle = contextStyle != null ? style.overriding(contextStyle) : style;
 
-    return RawText(spans: [Span(text, computedStyle._toSpanStyle())]);
+    return RawText(spans: [Span(text, computedStyle.toSpanStyle())]);
   }
 }
 
@@ -100,15 +100,14 @@ class RawText extends LeafInstanceWidget {
 
 class RawTextInstance extends LeafWidgetInstance<RawText> {
   Paragraph _styledText;
+  late ParagraphMetrics _textMetrics;
 
   RawTextInstance({required super.widget}) : _styledText = Paragraph(widget.spans);
 
   @override
   void draw(DrawContext ctx) {
-    final textSize = ctx.textRenderer.metricsOf(_styledText);
-
-    final xOffset = (transform.width - textSize.width) ~/ 2;
-    final yOffset = (transform.height - textSize.height) ~/ 2;
+    final xOffset = ((transform.width - _textMetrics.width) / 2).floor();
+    final yOffset = ((transform.height - _textMetrics.height) / 2).floor();
 
     ctx.transform.scope((mat4) {
       mat4.translate(xOffset.toDouble(), yOffset.toDouble());
@@ -123,7 +122,11 @@ class RawTextInstance extends LeafWidgetInstance<RawText> {
 
   @override
   void doLayout(Constraints constraints) {
-    final size = host!.textRenderer.metricsOf(_styledText).size.constrained(constraints);
+    final size = (_textMetrics = host!.textRenderer.layout(_styledText, constraints.maxWidth)).size.constrained(
+      constraints,
+    );
+
+    // print(_textMetrics);
     transform.setSize(size.ceil());
   }
 
