@@ -122,9 +122,8 @@ class RawTextInstance extends LeafWidgetInstance<RawText> {
 
   @override
   void doLayout(Constraints constraints) {
-    final size = (_textMetrics = host!.textRenderer.layout(_styledText, constraints.maxWidth)).size.constrained(
-      constraints,
-    );
+    final size = (_textMetrics = host!.textRenderer.layoutParagraph(_styledText, constraints.maxWidth)).size
+        .constrained(constraints);
 
     // print(_textMetrics);
     transform.setSize(size.ceil());

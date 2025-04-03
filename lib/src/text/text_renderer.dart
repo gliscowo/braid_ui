@@ -269,11 +269,21 @@ class TextRenderer {
     : _textProgram = context.findProgram('text'),
       _fontStorage = fontStorage;
 
+  /// Fetch the font family stored under [familyName], or return
+  /// the default font if no such family exists
   FontFamily getFamily(String? familyName) =>
       familyName == null ? _defaultFont : _fontStorage[familyName] ?? _defaultFont;
 
-  // TODO: not only shaping caches, also label and other widget layouts need
-  // to invalidate when this happens :dies:
+  /// Add [family] to this renderer's repository of fonts
+  /// and register it under [name].
+  ///
+  /// {@template braid.text.layout_invalidation}
+  /// **This method can potentially invalidate the layout and
+  /// shaping caches of paragraphs laid out using this renderer.**
+  /// Thus, to prevent seeing outdated fonts in the application, it
+  /// is important that all relevant paragraphs are subsequently
+  /// updated using [layoutParagraph].
+  /// {@endtemplate}
   void addFamily(String name, FontFamily family) {
     if (_fontStorage.containsKey(name)) throw ArgumentError.value(name, 'name', 'duplicate font name');
 
@@ -281,6 +291,9 @@ class TextRenderer {
     _fontStorageGeneration++;
   }
 
+  /// Update the default font of this text renderer
+  ///
+  /// {@macro braid.text.layout_invalidation}
   set defaultFont(FontFamily family) {
     _defaultFont = family;
     _fontStorageGeneration++;
@@ -288,17 +301,21 @@ class TextRenderer {
 
   // ---
 
-  ParagraphMetrics layout(Paragraph text, double maxWidth) {
-    if (!text.isShapingCacheValid(_fontStorageGeneration, maxWidth)) {
+  /// Lay out (and thus prepare for rendering) [text], wrapping lines
+  /// longer than [maxWidth]. If infinite max width is given, only hard
+  /// line breaks in the input text are wrapped.
+  ///
+  /// The returned [ParagraphMetrics] describe the computed size
+  /// and baseline metrics
+  ParagraphMetrics layoutParagraph(Paragraph text, double maxWidth) {
+    if (!text.isLayoutCacheValid(_fontStorageGeneration, maxWidth)) {
       text.layout(getFamily, maxWidth, _fontStorageGeneration);
     }
 
     return text.metrics;
   }
 
-  // TODO potentially include size in text style, actually do text layout :dies:
   void drawText(Paragraph text, Matrix4 transform, Matrix4 projection, {DrawContext? debugCtx}) {
-    final size = text.glyphs.first.style.fontSize;
     final initialBaselineY = text.metrics.initialBaselineY.floor();
 
     if (debugCtx != null) {
@@ -324,10 +341,10 @@ class TextRenderer {
     }
 
     for (final shapedGlyph in text.glyphs) {
-      final glyph = shapedGlyph.font.getGlyph(shapedGlyph.index, size);
+      final glyph = shapedGlyph.font.getGlyph(shapedGlyph.index, shapedGlyph.style.fontSize);
       final glyphColor = shapedGlyph.style.color;
 
-      final renderScale = Font.compensateForGlyphSize(size);
+      final renderScale = Font.compensateForGlyphSize(shapedGlyph.style.fontSize);
 
       final xPos = shapedGlyph.position.x * renderScale + glyph.bearingX * renderScale;
       final yPos = shapedGlyph.position.y * renderScale + initialBaselineY - glyph.bearingY * renderScale;

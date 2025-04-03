@@ -189,7 +189,7 @@ class _AppBodyState extends WidgetState<AppBody> {
                                   Span('oooooong word', TextStyle(color: Color.blue).toSpanStyle()),
                                 ],
                               ),
-                              rightChild: Text(text: 'THIS is a looooooooooooong word'),
+                              rightChild: Text(text: 'this is simply some normal text that i\'d like to see'),
                             ),
                           ),
                         ),

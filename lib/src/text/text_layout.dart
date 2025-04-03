@@ -51,9 +51,9 @@ final class Span {
   final SpanStyle style;
   const Span(this.content, this.style);
 
-  (Span, Span) _split(int at, {bool keepSplitChar = true}) => (
+  (Span, Span) _split(int at, {bool keepSplit = true}) => (
     Span(content.substring(0, at), style),
-    Span(content.substring(keepSplitChar ? at : at + 1), style),
+    Span(content.substring(keepSplit ? at : at + 1), style),
   );
 
   @override
@@ -63,11 +63,13 @@ final class Span {
   bool operator ==(Object other) => other is Span && other.content == content && other.style == style;
 }
 
+typedef _BreakPoint = ({_LayoutSpan span, int index, bool keepSplit});
+
 class Paragraph {
   final List<Span> _spans;
   final List<ShapedGlyph> _shapedGlyphs = [];
 
-  (int, double)? _lastShapingKey;
+  (int, double)? _lastLayoutKey;
   ParagraphMetrics? _metrics;
 
   Paragraph(this._spans) {
@@ -79,12 +81,16 @@ class Paragraph {
 
   @internal
   ParagraphMetrics get metrics {
-    assert(_lastShapingKey != null, 'paragraph metrics may only be accessed after the paragraph has been shaped');
+    assert(
+      _lastLayoutKey != null,
+      'attempted to query metrics on a paragraph which has not been laid out. '
+      'was TextRenderer.layoutParagraph invoked first?',
+    );
     return _metrics!;
   }
 
   @internal
-  bool isShapingCacheValid(int generation, double maxWidth) => (generation, maxWidth) == _lastShapingKey;
+  bool isLayoutCacheValid(int generation, double maxWidth) => (generation, maxWidth) == _lastLayoutKey;
 
   // ---
   static const _newline = 0xa;
@@ -100,83 +106,97 @@ class Paragraph {
     'calt on'.withAsNative((flag) => harfbuzz.feature_from_string(flag.cast(), -1, features));
 
     final session = _LayoutSession(features, fontLookup, maxWidth);
-    final spansForShaping = Queue.of(spans);
+    final spansToShape = DoubleLinkedQueue.of(spans);
 
-    while (spansForShaping.isNotEmpty) {
-      var spanToShape = spansForShaping.removeFirst();
+    while (spansToShape.isNotEmpty) {
+      var spanToShape = spansToShape.removeFirst();
 
-      final breakPoints = Queue<int>();
       var insertBreakAfterShaping = false;
+      final breakPoints = DoubleLinkedQueue<int>();
 
       for (final (index, codeUnit) in spanToShape.content.codeUnits.indexed) {
         if (codeUnit == _space || codeUnit == _zwsp) {
           breakPoints.addLast(index);
         } else if (codeUnit == _newline) {
-          final (left, right) = spanToShape._split(index, keepSplitChar: false);
+          // if we encountered a newline, we can simply split immediately
+          // and queue the right half of the span for next round - this saves a trip
+
+          final (left, right) = spanToShape._split(index, keepSplit: false);
 
           spanToShape = left;
-          spansForShaping.addFirst(right);
+          spansToShape.addFirst(right);
           insertBreakAfterShaping = true;
 
           break;
         }
       }
 
-      final shapedSpan = _ShapedSpan(spanToShape, breakPoints, session.state.copy());
-      session.shapedSpans.addLast(shapedSpan);
-      if (breakPoints.isNotEmpty) {
-        session.lastSpanWithBreakPoint = shapedSpan;
-      }
+      final layoutSpan = _LayoutSpan(spanToShape, breakPoints, session.state.copy(), session.lineMetrics.length);
+      session.layoutSpans.add(layoutSpan);
 
-      if (!_shapeSpan(session, shapedSpan)) {
-        ({_ShapedSpan span, int index, bool keepSplit})? breakPoint;
-        if (session.lastSpanWithBreakPoint != null) {
-          while (session.shapedSpans.last != session.lastSpanWithBreakPoint) {
-            session.shapedSpans.removeLast();
+      if (!_shapeSpan(session, layoutSpan)) {
+        _BreakPoint? breakPoint;
+
+        // first, try to find a suitable user-indicated break point in the input text
+        for (var spanIdx = session.layoutSpans.length - 1; spanIdx >= 0; spanIdx--) {
+          final candidateSpan = session.layoutSpans[spanIdx];
+
+          if (breakPoint != null || candidateSpan.lineIdx < session.lineMetrics.length) {
+            break;
           }
 
-          while (session.lastSpanWithBreakPoint!.possibleBreakIndices.isNotEmpty) {
-            final (index, position) = (
-              session.lastSpanWithBreakPoint!.possibleBreakIndices.removeLast(),
-              session.lastSpanWithBreakPoint!.possibleBreakPositions.removeLast(),
-            );
+          while (candidateSpan.possibleBreakPoints.isNotEmpty) {
+            final breakIndex = candidateSpan.possibleBreakPoints.removeLast();
+            final position =
+                candidateSpan.stateBeforeShaping.cursorX + _charIdxToClusterPos(candidateSpan.shapedGlyphs, breakIndex);
+
             if (position <= session.maxWidth) {
-              breakPoint = (span: session.lastSpanWithBreakPoint!, index: index, keepSplit: false);
+              breakPoint = (span: candidateSpan, index: breakIndex, keepSplit: false);
+
+              for (var popIdx = session.layoutSpans.length - 1; popIdx > spanIdx; popIdx--) {
+                spansToShape.addFirst(session.layoutSpans.removeAt(popIdx).content);
+              }
+
               break;
             }
           }
         }
 
+        // now, if that didn't work, try to find the last glyph (and corresponding char)
+        // which fully fits into the width limit and break after that
         if (breakPoint == null) {
-          for (final glyph in shapedSpan.shapedGlyphs.reversed) {
+          for (final glyph in layoutSpan.shapedGlyphs.reversed) {
             if (glyph.position.x + glyph.advance.x < session.maxWidth) {
-              breakPoint = (span: shapedSpan, index: glyph.cluster + 1, keepSplit: true);
+              breakPoint = (span: layoutSpan, index: glyph.cluster + 1, keepSplit: true);
               break;
             }
           }
         }
 
         if (breakPoint != null) {
+          // now, that we've hopefully finally found a reasonable spot for the line break,
+          // reset the cursor position and line metrics to the appropriate point and split
+          // the corresponding span
           session.state.setFrom(breakPoint.span.stateBeforeShaping);
-          final (left, right) = breakPoint.span.split(breakPoint.index, keepSplitChar: breakPoint.keepSplit);
+          final (left, right) = breakPoint.span.split(breakPoint.index, keepSplit: breakPoint.keepSplit);
 
-          spansForShaping.addFirst(right);
-
-          session.shapedSpans.removeLast();
-          session.lastSpanWithBreakPoint = null;
-
-          session.shapedSpans.add(left);
-          if (left.possibleBreakIndices.isNotEmpty) {
-            session.lastSpanWithBreakPoint = left;
-          }
+          // we must also take care to remove the span we just tried to shape
+          session.layoutSpans.removeLast();
 
           if (_shapeSpan(session, left)) {
+            // if we managed to successfully shape the span now
+            // (ideally the 99% case), record that fact
+            session.layoutSpans.add(left);
+
             _insertLineBreak(session);
           } else {
             // if the left span has somehow gotten longer after splitting, we must simply
             // repeat the entire shaping and splitting process, no two ways about it
-            spansForShaping.addFirst(left.span);
+            spansToShape.addFirst(left.content);
           }
+
+          // finally, queue up the other half we just split off
+          spansToShape.addFirst(right);
         } else {
           // if we somehow ended up here there is (probably) only two possible cases:
           // 1 - this span is after another span (ie. the cursor's x position is not zero)
@@ -185,10 +205,14 @@ class Paragraph {
           // 2 - this span is at the beginning of a new line and even just the first glyph does
           //     not fit in the width limit. in that case there is really nothing to do but give up,
           //     so that's what we do
+          //     TODO: ok, actually we maybe do still wanna split after the first char
 
-          if (shapedSpan.stateBeforeShaping.cursorX != 0) {
+          if (layoutSpan.stateBeforeShaping.cursorX != 0) {
             _insertLineBreak(session);
-            spansForShaping.addFirst(shapedSpan.span);
+
+            // let's pretend everything we just did never happened :)
+            session.layoutSpans.removeLast();
+            spansToShape.addFirst(layoutSpan.content);
           }
         }
 
@@ -200,12 +224,16 @@ class Paragraph {
       }
     }
 
+    for (final layoutSpan in session.layoutSpans) {
+      _shapedGlyphs.addAll(layoutSpan.shapedGlyphs);
+    }
+
     if (session.state.currentLineWidth != 0 || session.state.currentLineHeight != 0) {
       _insertLineBreak(session);
     }
 
     malloc.free(features);
-    _lastShapingKey = (generation, maxWidth);
+    _lastLayoutKey = (generation, maxWidth);
     _metrics = ParagraphMetrics(
       width: session.paragraphWidth ?? session.state.currentLineWidth,
       height: (session.paragraphHeight ?? 0) + session.state.currentLineHeight,
@@ -214,9 +242,9 @@ class Paragraph {
     );
   }
 
-  bool _shapeSpan(_LayoutSession session, _ShapedSpan shapedSpan) {
+  bool _shapeSpan(_LayoutSession session, _LayoutSpan shapedSpan) {
     final state = session.state;
-    final span = shapedSpan.span;
+    final span = shapedSpan.content;
 
     final spanSize = span.style.fontSize;
     final spanFont = session.fontLookup(span.style.fontFamily).fontForStyle(span.style);
@@ -262,17 +290,10 @@ class Paragraph {
     harfbuzz.buffer_destroy(buffer);
 
     shapedSpan.shapedGlyphs = shapedGlyphs;
-    for (final breakPosition in shapedSpan.possibleBreakIndices) {
-      shapedSpan.possibleBreakPositions.add(
-        shapedSpan.stateBeforeShaping.cursorX + _charIdxToClusterPos(shapedGlyphs, breakPosition),
-      );
-    }
 
     if (state.cursorX > session.maxWidth) {
       return false;
     }
-
-    _shapedGlyphs.addAll(shapedGlyphs);
 
     var spanBaselineY = spanFont.ascender * spanSize;
 
@@ -330,8 +351,7 @@ class _LayoutSession {
   final FontLookup fontLookup;
   final double maxWidth;
 
-  final Queue<_ShapedSpan> shapedSpans = Queue();
-  _ShapedSpan? lastSpanWithBreakPoint;
+  final List<_LayoutSpan> layoutSpans = [];
 
   final _LayoutState state = _LayoutState();
 
@@ -374,22 +394,22 @@ class _LayoutState {
   );
 }
 
-class _ShapedSpan {
-  final Span span;
-  final Queue<int> possibleBreakIndices;
-  final Queue<double> possibleBreakPositions = Queue();
+class _LayoutSpan {
+  final Span content;
+  final Queue<int> possibleBreakPoints;
   final _LayoutState stateBeforeShaping;
+  final int lineIdx;
 
   late List<ShapedGlyph> shapedGlyphs;
 
-  (_ShapedSpan, Span) split(int at, {bool keepSplitChar = true}) {
-    final (leftSpan, rightSpan) = span._split(at, keepSplitChar: keepSplitChar);
-    final leftIndices = Queue.of(possibleBreakIndices.takeWhile((value) => value < at));
+  (_LayoutSpan, Span) split(int at, {bool keepSplit = true}) {
+    final (leftSpan, rightSpan) = content._split(at, keepSplit: keepSplit);
+    final leftBreakPoints = DoubleLinkedQueue.of(possibleBreakPoints.takeWhile((value) => value < at));
 
-    return (_ShapedSpan(leftSpan, leftIndices, stateBeforeShaping), rightSpan);
+    return (_LayoutSpan(leftSpan, leftBreakPoints, stateBeforeShaping, lineIdx), rightSpan);
   }
 
-  _ShapedSpan(this.span, this.possibleBreakIndices, this.stateBeforeShaping);
+  _LayoutSpan(this.content, this.possibleBreakPoints, this.stateBeforeShaping, this.lineIdx);
 }
 
 class ShapedGlyph {
