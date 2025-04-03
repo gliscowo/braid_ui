@@ -106,7 +106,7 @@ class Paragraph {
       var spanToShape = spansForShaping.removeFirst();
 
       final breakPoints = Queue<int>();
-      var goToNextLine = false;
+      var insertBreakAfterShaping = false;
 
       for (final (index, codeUnit) in spanToShape.content.codeUnits.indexed) {
         if (codeUnit == _space || codeUnit == _zwsp) {
@@ -116,7 +116,7 @@ class Paragraph {
 
           spanToShape = left;
           spansForShaping.addFirst(right);
-          goToNextLine = true;
+          insertBreakAfterShaping = true;
 
           break;
         }
@@ -129,7 +129,7 @@ class Paragraph {
       }
 
       if (!_shapeSpan(session, shapedSpan)) {
-        ({_ShapedSpan span, int index})? breakPoint;
+        ({_ShapedSpan span, int index, bool keepSplit})? breakPoint;
         if (session.lastSpanWithBreakPoint != null) {
           while (session.shapedSpans.last != session.lastSpanWithBreakPoint) {
             session.shapedSpans.removeLast();
@@ -141,31 +141,24 @@ class Paragraph {
               session.lastSpanWithBreakPoint!.possibleBreakPositions.removeLast(),
             );
             if (position <= session.maxWidth) {
-              breakPoint = (span: session.lastSpanWithBreakPoint!, index: index);
+              breakPoint = (span: session.lastSpanWithBreakPoint!, index: index, keepSplit: false);
               break;
             }
           }
         }
 
         if (breakPoint == null) {
-          breakSearch:
-          while (session.shapedSpans.isNotEmpty) {
-            final span = session.shapedSpans.last;
-
-            for (final glyph in span.shapedGlyphs.reversed) {
-              if (glyph.position.x + glyph.advance.x < session.maxWidth) {
-                breakPoint = (span: span, index: glyph.cluster);
-                break breakSearch;
-              }
+          for (final glyph in shapedSpan.shapedGlyphs.reversed) {
+            if (glyph.position.x + glyph.advance.x < session.maxWidth) {
+              breakPoint = (span: shapedSpan, index: glyph.cluster + 1, keepSplit: true);
+              break;
             }
-
-            session.shapedSpans.removeLast();
           }
         }
 
         if (breakPoint != null) {
           session.state.setFrom(breakPoint.span.stateBeforeShaping);
-          final (left, right) = breakPoint.span.split(breakPoint.index, keepSplitChar: false);
+          final (left, right) = breakPoint.span.split(breakPoint.index, keepSplitChar: breakPoint.keepSplit);
 
           spansForShaping.addFirst(right);
 
@@ -177,26 +170,38 @@ class Paragraph {
             session.lastSpanWithBreakPoint = left;
           }
 
-          assert(_shapeSpan(session, left), 'span must fit after breaking');
-
-          _insertLineBreak(session);
-          continue;
+          if (_shapeSpan(session, left)) {
+            _insertLineBreak(session);
+          } else {
+            // if the left span has somehow gotten longer after splitting, we must simply
+            // repeat the entire shaping and splitting process, no two ways about it
+            spansForShaping.addFirst(left.span);
+          }
         } else {
-          // if we got here it means that the first glyph of the shaped text is too wide
-          // to fit in our max width restriction. at this point there is really nothing
-          // to do but give up, so that's what we do
+          // if we somehow ended up here there is (probably) only two possible cases:
+          // 1 - this span is after another span (ie. the cursor's x position is not zero)
+          //     and just so happens to start with the character where the line break must be.
+          //     in this case we insert a line break and try again
+          // 2 - this span is at the beginning of a new line and even just the first glyph does
+          //     not fit in the width limit. in that case there is really nothing to do but give up,
+          //     so that's what we do
+
+          if (shapedSpan.stateBeforeShaping.cursorX != 0) {
+            _insertLineBreak(session);
+            spansForShaping.addFirst(shapedSpan.span);
+          }
         }
+
+        continue;
       }
 
-      if (goToNextLine) {
+      if (insertBreakAfterShaping) {
         _insertLineBreak(session);
       }
     }
 
     if (session.state.currentLineWidth != 0 || session.state.currentLineHeight != 0) {
-      session.lineMetrics.add(
-        LineMetrics(width: session.state.currentLineWidth, height: session.state.currentLineHeight),
-      );
+      _insertLineBreak(session);
     }
 
     malloc.free(features);

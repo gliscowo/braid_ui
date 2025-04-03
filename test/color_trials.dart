@@ -11,6 +11,7 @@ import 'package:braid_ui/src/widgets/basic.dart';
 import 'package:braid_ui/src/widgets/drag_arena.dart';
 import 'package:braid_ui/src/widgets/icon.dart';
 import 'package:braid_ui/src/widgets/slider.dart';
+import 'package:braid_ui/src/widgets/split_pane.dart';
 import 'package:braid_ui/src/widgets/stack.dart';
 import 'package:braid_ui/src/widgets/window.dart';
 import 'package:diamond_gl/diamond_gl.dart' hide Window;
@@ -175,17 +176,20 @@ class _AppBodyState extends WidgetState<AppBody> {
                           child: MouseArea(cursorStyle: cursor, child: Panel(color: Color.white)),
                         ),
                         Sized(
-                          width: 100,
+                          width: 200,
                           height: 100,
                           child: Panel(
-                            color: Color.green,
-                            child: RawText(
-                              spans: [
-                                Span('THIS', TextStyle.empty.toSpanStyle()),
-                                Span(' is ', TextStyle(bold: true).toSpanStyle()),
-                                Span('a looooooo', TextStyle.empty.toSpanStyle()),
-                                Span('oooooong word', TextStyle(color: Color.blue).toSpanStyle()),
-                              ],
+                            color: Color.red,
+                            child: HorizontalSplitPane(
+                              leftChild: RawText(
+                                spans: [
+                                  Span('THIS', TextStyle.empty.toSpanStyle()),
+                                  Span(' is ', TextStyle(bold: true).toSpanStyle()),
+                                  Span('a looooooo', TextStyle.empty.toSpanStyle()),
+                                  Span('oooooong word', TextStyle(color: Color.blue).toSpanStyle()),
+                                ],
+                              ),
+                              rightChild: Text(text: 'THIS is a looooooooooooong word'),
                             ),
                           ),
                         ),
