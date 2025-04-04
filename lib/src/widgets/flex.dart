@@ -180,8 +180,10 @@ class FlexInstance extends MultiChildWidgetInstance<Flex> {
             .toList();
 
     // now, compute the remaining space on the main axis
-    final remainingSpace =
-        constraints.maxOnAxis(mainAxis) - childSizes.fold(0.0, (acc, size) => acc + size.getAxisExtent(mainAxis));
+    final remainingSpace = max(
+      constraints.maxOnAxis(mainAxis) - childSizes.fold(0.0, (acc, size) => acc + size.getAxisExtent(mainAxis)),
+      0,
+    );
 
     // get the flex children and compute the total flex factor in order
     // to divvy up the remaining space properly later
