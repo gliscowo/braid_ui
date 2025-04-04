@@ -182,6 +182,7 @@ class _AppBodyState extends WidgetState<AppBody> {
                             color: Color.red,
                             child: HorizontalSplitPane(
                               leftChild: RawText(
+                                alignment: Alignment.center,
                                 spans: [
                                   Span('THIS', TextStyle.empty.toSpanStyle()),
                                   Span(' is ', TextStyle(bold: true).toSpanStyle()),
@@ -189,7 +190,10 @@ class _AppBodyState extends WidgetState<AppBody> {
                                   Span('oooooong word', TextStyle(color: Color.blue).toSpanStyle()),
                                 ],
                               ),
-                              rightChild: Text(text: 'this is simply some normal text that i\'d like to see'),
+                              rightChild: Text(
+                                text: 'this is simply some normal text that i\'d like to see',
+                                style: TextStyle(alignment: Alignment.bottomRight),
+                              ),
                             ),
                           ),
                         ),

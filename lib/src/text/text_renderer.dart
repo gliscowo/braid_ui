@@ -11,10 +11,12 @@ import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math.dart';
 
 import '../context.dart';
+import '../core/math.dart';
 import '../native/freetype.dart';
 import '../native/harfbuzz.dart';
 import '../resources.dart';
 import '../vertex_descriptors.dart';
+import '../widgets/basic.dart';
 import 'text_layout.dart';
 
 final freetype = FreetypeLibrary(BraidNatives.activeLibraries.freetype);
@@ -315,15 +317,25 @@ class TextRenderer {
     return text.metrics;
   }
 
-  void drawText(Paragraph text, Matrix4 transform, Matrix4 projection, {DrawContext? debugCtx}) {
-    final initialBaselineY = text.metrics.initialBaselineY.floor();
+  void drawText(
+    Paragraph text,
+    Alignment alignment,
+    Size drawSpace,
+    Matrix4 transform,
+    Matrix4 projection, {
+    DrawContext? debugCtx,
+  }) {
+    final initialY =
+        text.metrics.initialBaselineY.floor() + alignment.alignVertical(drawSpace.height, text.metrics.height);
+    final lineOffsets =
+        text.metrics.lineMetrics.map((e) => alignment.alignHorizontal(drawSpace.width, e.width)).toList();
 
     if (debugCtx != null) {
       final textSize = text.metrics;
       debugCtx.primitives.rect(textSize.width, textSize.height, Color.black.copyWith(a: .25), transform, projection);
 
       debugCtx.transform.scope((mat4) {
-        mat4.translate(0.0, initialBaselineY.toDouble());
+        mat4.translate(0.0, initialY.toDouble());
         debugCtx.primitives.rect(textSize.width, 1, Color.red, mat4, projection);
       });
     }
@@ -346,8 +358,8 @@ class TextRenderer {
 
       final renderScale = Font.compensateForGlyphSize(shapedGlyph.style.fontSize);
 
-      final xPos = shapedGlyph.position.x * renderScale + glyph.bearingX * renderScale;
-      final yPos = shapedGlyph.position.y * renderScale + initialBaselineY - glyph.bearingY * renderScale;
+      final xPos = shapedGlyph.position.x * renderScale + glyph.bearingX * renderScale + lineOffsets[shapedGlyph.line];
+      final yPos = shapedGlyph.position.y * renderScale + initialY - glyph.bearingY * renderScale;
 
       final width = glyph.width * renderScale;
       final height = glyph.height * renderScale;

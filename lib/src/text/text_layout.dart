@@ -92,12 +92,6 @@ class Paragraph {
   @internal
   bool isLayoutCacheValid(int generation, double maxWidth) => (generation, maxWidth) == _lastLayoutKey;
 
-  // ---
-  static const _newline = 0xa;
-  static const _space = 0x20;
-  static const _zwsp = 0x200b;
-  // ---
-
   @internal
   void layout(FontLookup fontLookup, double maxWidth, int generation) {
     _shapedGlyphs.clear();
@@ -114,10 +108,13 @@ class Paragraph {
       var insertBreakAfterShaping = false;
       final breakPoints = DoubleLinkedQueue<int>();
 
-      for (final (index, codeUnit) in spanToShape.content.codeUnits.indexed) {
-        if (codeUnit == _space || codeUnit == _zwsp) {
+      for (final (index, codeUnit) in spanToShape.content.runes.indexed) {
+        const newline = 0xa; // '\n'
+        const space = 0x20; // ' '
+
+        if (codeUnit == space) {
           breakPoints.addLast(index);
-        } else if (codeUnit == _newline) {
+        } else if (codeUnit == newline) {
           // if we encountered a newline, we can simply split immediately
           // and queue the right half of the span for next round - this saves a trip
 
@@ -180,7 +177,8 @@ class Paragraph {
           session.state.setFrom(breakPoint.span.stateBeforeShaping);
           final (left, right) = breakPoint.span.split(breakPoint.index, keepSplit: breakPoint.keepSplit);
 
-          // we must also take care to remove the span we just tried to shape
+          // we must also take care to remove the span we just tried
+          // to shape from the output
           session.layoutSpans.removeLast();
 
           if (_shapeSpan(session, left)) {
@@ -280,6 +278,7 @@ class Paragraph {
           (x: hbToPixels(glyphPos[i].x_advance).toDouble(), y: hbToPixels(glyphPos[i].y_advance).toDouble()),
           span.style,
           glyphInfo[i].cluster,
+          shapedSpan.lineIdx,
         ),
       );
 
@@ -419,7 +418,8 @@ class ShapedGlyph {
   final ({double x, double y}) advance;
   final SpanStyle style;
   final int cluster;
-  ShapedGlyph._(this.font, this.index, this.position, this.advance, this.style, this.cluster);
+  final int line;
+  ShapedGlyph._(this.font, this.index, this.position, this.advance, this.style, this.cluster, this.line);
 }
 
 class ParagraphMetrics {

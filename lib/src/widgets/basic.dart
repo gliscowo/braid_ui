@@ -192,9 +192,12 @@ class Alignment {
   const Alignment({required this.horizontal, required this.vertical});
 
   (double, double) align(Size space, Size object) => (
-    ((space.width - object.width) * horizontal).floorToDouble(),
-    ((space.height - object.height) * vertical).floorToDouble(),
+    alignHorizontal(space.width, object.width),
+    alignVertical(space.height, object.height),
   );
+
+  double alignHorizontal(double space, double object) => ((space - object) * horizontal).floorToDouble();
+  double alignVertical(double space, double object) => ((space - object) * vertical).floorToDouble();
 
   get _props => (horizontal, vertical);
 
