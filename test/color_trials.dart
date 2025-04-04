@@ -50,31 +50,35 @@ class ColorApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultButtonStyle(
-      style: const ButtonStyle(
-        color: Color.rgb(0x5f43b2),
-        hoveredColor: Color.rgb(0x684fb3),
-        disabledColor: Color.rgb(0x3a3135),
-        padding: Insets.axis(horizontal: 6, vertical: 3),
-        cornerRadius: CornerRadius.all(5),
-      ),
-      child: Column(
-        children: [
-          Constrain(
-            constraints: Constraints.only(minHeight: 50),
-            child: Panel(
-              color: Color.rgb(0x161616),
-              child: Padding(
-                insets: const Insets.all(10).copy(left: 15),
-                child: Align(
-                  alignment: Alignment.left,
-                  child: Text(text: 'cool & based colors test :o', style: TextStyle(bold: true)),
+    return DefaultTextStyle(
+      style: TextStyle(color: Color.white, fontSize: 16.0, bold: false, italic: false),
+      child: DefaultButtonStyle(
+        style: const ButtonStyle(
+          color: Color.rgb(0x5f43b2),
+          hoveredColor: Color.rgb(0x684fb3),
+          disabledColor: Color.rgb(0x3a3135),
+          padding: Insets.axis(horizontal: 6, vertical: 3),
+          cornerRadius: CornerRadius.all(5),
+          textStyle: TextStyle(fontSize: 14.0, bold: true),
+        ),
+        child: Column(
+          children: [
+            Constrain(
+              constraints: Constraints.only(minHeight: 50),
+              child: Panel(
+                color: Color.rgb(0x161616),
+                child: Padding(
+                  insets: const Insets.all(10).copy(left: 15),
+                  child: Align(
+                    alignment: Alignment.left,
+                    child: Text(text: 'cool & based colors test :o', style: TextStyle(bold: true)),
+                  ),
                 ),
               ),
             ),
-          ),
-          const AppBody(),
-        ],
+            const AppBody(),
+          ],
+        ),
       ),
     );
   }
@@ -184,10 +188,13 @@ class _AppBodyState extends WidgetState<AppBody> {
                               leftChild: RawText(
                                 alignment: Alignment.center,
                                 spans: [
-                                  Span('THIS', TextStyle.empty.toSpanStyle()),
-                                  Span(' is ', TextStyle(bold: true).toSpanStyle()),
-                                  Span('a looooooo', TextStyle.empty.toSpanStyle()),
-                                  Span('oooooong word', TextStyle(color: Color.blue).toSpanStyle()),
+                                  Span('THIS', DefaultTextStyle.of(context).toSpanStyle()),
+                                  Span(' is ', DefaultTextStyle.of(context).copy(bold: true).toSpanStyle()),
+                                  Span('a looooooo', DefaultTextStyle.of(context).toSpanStyle()),
+                                  Span(
+                                    'oooooong word',
+                                    DefaultTextStyle.of(context).copy(color: Color.blue).toSpanStyle(),
+                                  ),
                                 ],
                               ),
                               rightChild: Text(

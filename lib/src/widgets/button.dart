@@ -26,8 +26,16 @@ class ButtonStyle {
   final Color? disabledColor;
   final Insets? padding;
   final CornerRadius? cornerRadius;
+  final TextStyle? textStyle;
 
-  const ButtonStyle({this.color, this.hoveredColor, this.disabledColor, this.padding, this.cornerRadius});
+  const ButtonStyle({
+    this.color,
+    this.hoveredColor,
+    this.disabledColor,
+    this.padding,
+    this.cornerRadius,
+    this.textStyle,
+  });
 
   ButtonStyle copy({
     Color? color,
@@ -35,12 +43,14 @@ class ButtonStyle {
     Color? disabledColor,
     Insets? padding,
     CornerRadius? cornerRadius,
+    TextStyle? textStyle,
   }) => ButtonStyle(
     color: color ?? this.color,
     hoveredColor: hoveredColor ?? this.hoveredColor,
     disabledColor: disabledColor ?? this.disabledColor,
     padding: padding ?? this.padding,
     cornerRadius: cornerRadius ?? this.cornerRadius,
+    textStyle: textStyle ?? this.textStyle,
   );
 
   ButtonStyle overriding(ButtonStyle other) => ButtonStyle(
@@ -49,10 +59,11 @@ class ButtonStyle {
     disabledColor: disabledColor ?? other.disabledColor,
     padding: padding ?? other.padding,
     cornerRadius: cornerRadius ?? other.cornerRadius,
+    textStyle: textStyle ?? other.textStyle,
   );
 
   @override
-  int get hashCode => Object.hash(color, hoveredColor, disabledColor, padding, cornerRadius);
+  int get hashCode => Object.hash(color, hoveredColor, disabledColor, padding, cornerRadius, textStyle);
 
   @override
   bool operator ==(Object other) =>
@@ -61,24 +72,30 @@ class ButtonStyle {
       other.hoveredColor == hoveredColor &&
       other.disabledColor == disabledColor &&
       other.padding == padding &&
-      other.cornerRadius == cornerRadius;
+      other.cornerRadius == cornerRadius &&
+      other.textStyle == textStyle;
 }
 
 class Button extends StatelessWidget {
-  final ButtonStyle style;
+  final ButtonStyle? style;
   final bool enabled;
   final void Function() onClick;
   final String text;
 
-  Button({super.key, this.style = ButtonStyle.empty, this.enabled = true, required this.onClick, required this.text});
+  Button({super.key, this.style, this.enabled = true, required this.onClick, required this.text});
 
   @override
   Widget build(BuildContext context) {
+    var effectiveStyle = style ?? ButtonStyle.empty;
+    if (DefaultButtonStyle.maybeOf(context) case ButtonStyle contextStyle) {
+      effectiveStyle = effectiveStyle.overriding(contextStyle);
+    }
+
     return RawButton(
-      style: style,
+      style: effectiveStyle,
       enabled: enabled,
       onClick: onClick,
-      child: Text(text: text, style: TextStyle(fontSize: 14, bold: true)),
+      child: Text(text: text, style: effectiveStyle.textStyle),
     );
   }
 }
@@ -92,18 +109,15 @@ class RawButton extends StatefulWidget {
   const RawButton({super.key, required this.style, required this.enabled, required this.onClick, required this.child});
 
   @override
-  WidgetState createState() => ButtonState();
+  WidgetState createState() => _RawButtonState();
 }
 
-class ButtonState extends WidgetState<RawButton> {
+class _RawButtonState extends WidgetState<RawButton> {
   bool _hovered = false;
 
   @override
   Widget build(BuildContext context) {
-    var style = widget.style;
-    if (DefaultButtonStyle.maybeOf(context) case ButtonStyle contextStyle) {
-      style = style.overriding(contextStyle);
-    }
+    final style = widget.style;
 
     Widget result = Panel(
       cornerRadius: style.cornerRadius ?? _defaultCornerRadius,

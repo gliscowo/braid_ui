@@ -40,7 +40,7 @@ enum SpanComparison {
 class SpanStyle {
   final Color color;
   final double fontSize;
-  final String fontFamily;
+  final String? fontFamily;
   final bool bold;
   final bool italic;
   final double? lineHeight;

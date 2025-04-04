@@ -1,6 +1,8 @@
 import 'package:diamond_gl/diamond_gl.dart';
 
 import '../framework/widget.dart';
+import '../text/text_layout.dart';
+import 'basic.dart';
 import 'text.dart';
 
 extension type const IconSpec(int _codepoint) {
@@ -16,9 +18,21 @@ class Icon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text: icon.asString(),
-      style: TextStyle(fontFamily: 'MaterialSymbols', fontSize: size, lineHeight: 1.0, color: color),
+    return RawText(
+      spans: [
+        Span(
+          icon.asString(),
+          SpanStyle(
+            fontFamily: 'MaterialSymbols',
+            fontSize: size,
+            lineHeight: 1.0,
+            color: color,
+            bold: false,
+            italic: false,
+          ),
+        ),
+      ],
+      alignment: Alignment.center,
     );
   }
 }

@@ -56,19 +56,21 @@ class TextStyle {
     alignment: alignment ?? other.alignment,
   );
 
-  SpanStyle toSpanStyle() => SpanStyle(
-    color: color ?? _defaultTextColor,
-    fontSize: fontSize ?? _defaultFontSize,
-    fontFamily: fontFamily ?? 'Noto Sans',
-    bold: bold ?? false,
-    italic: italic ?? false,
-    lineHeight: lineHeight,
-  );
+  SpanStyle toSpanStyle() {
+    assert(color != null, 'only text styles which define \'color\' may be converted into a SpanStyle');
+    assert(fontSize != null, 'only text styles which define \'fontSize\' may be converted into a SpanStyle');
+    assert(bold != null, 'only text styles which define \'bold\' may be converted into a SpanStyle');
+    assert(italic != null, 'only text styles which define \'italic\' may be converted into a SpanStyle');
 
-  // --- TEMPORARY ---
-  static final _defaultFontSize = 16.0;
-  static final _defaultTextColor = Color.white;
-  // -----------------
+    return SpanStyle(
+      color: color!,
+      fontSize: fontSize!,
+      fontFamily: fontFamily,
+      bold: bold!,
+      italic: italic!,
+      lineHeight: lineHeight,
+    );
+  }
 
   // for now we'll leave it at this, since it's a lot nicer to implement and shorter.
   // however, quick benchmarks indicate that this is ~4x slower than a full manual
@@ -89,29 +91,38 @@ class DefaultTextStyle extends InheritedWidget {
   @override
   bool mustRebuildDependents(DefaultTextStyle newWidget) => newWidget.style != style;
 
-  static TextStyle? maybeOf(BuildContext context) => context.dependOnAncestor<DefaultTextStyle>()?.style;
+  static TextStyle of(BuildContext context) {
+    final ancestorStyle = context.dependOnAncestor<DefaultTextStyle>()?.style;
+    assert(
+      ancestorStyle != null,
+      'an ambient DefaultTextStyle which defines \'color\', \'fontSize\', \'bold\' '
+      'and \'italic\' must be present in every app which wants to display text',
+    );
+
+    return ancestorStyle!;
+  }
 }
 
 class Text extends StatelessWidget {
-  final TextStyle style;
+  final TextStyle? style;
   final String text;
 
-  const Text({super.key, this.style = TextStyle.empty, required this.text});
+  const Text({super.key, this.style, required this.text});
 
   @override
   Widget build(BuildContext context) {
-    final contextStyle = DefaultTextStyle.maybeOf(context);
-    final computedStyle = contextStyle != null ? style.overriding(contextStyle) : style;
+    final effectiveStyle = style ?? TextStyle.empty;
+    final spanStyle = effectiveStyle.overriding(DefaultTextStyle.of(context)).toSpanStyle();
 
-    return RawText(spans: [Span(text, computedStyle.toSpanStyle())], alignment: style.alignment ?? Alignment.center);
+    return RawText(spans: [Span(text, spanStyle)], alignment: effectiveStyle.alignment ?? Alignment.center);
   }
 }
 
 class RawText extends LeafInstanceWidget {
-  final List<Span> spans;
   final Alignment alignment;
+  final List<Span> spans;
 
-  const RawText({super.key, required this.spans, required this.alignment});
+  const RawText({super.key, required this.alignment, required this.spans});
 
   @override
   RawTextInstance instantiate() => RawTextInstance(widget: this);
