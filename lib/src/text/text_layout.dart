@@ -15,6 +15,28 @@ typedef FontLookup = FontFamily Function(String? fontFamily);
 
 // ---
 
+enum SpanComparison {
+  /// The spans describe the same text, nothing changed
+  equal,
+
+  /// The spans describe different text, but a purely
+  /// visual attribute (like color) changed, which does
+  /// not affect the layout
+  visualsChanged,
+
+  /// The spans describe different text and the
+  /// layout must be recomputed
+  layoutChanged;
+
+  static SpanComparison max(SpanComparison a, SpanComparison b) {
+    if (a == layoutChanged || b == layoutChanged) return layoutChanged;
+    if (a == visualsChanged || b == visualsChanged) return visualsChanged;
+    return equal;
+  }
+}
+
+// ---
+
 class SpanStyle {
   final Color color;
   final double fontSize;
@@ -32,16 +54,29 @@ class SpanStyle {
     this.lineHeight,
   });
 
-  // for now we'll leave it at this, since it's a lot nicer to implement and shorter.
-  // however, quick benchmarks indicate that this is ~4x slower than a full manual
-  // impl so we might change it in the future should it ever becomer relevant
-  get _props => (color, fontSize, fontFamily, bold, italic, lineHeight);
+  static SpanComparison compare(SpanStyle a, SpanStyle b) {
+    if (a.fontSize != b.fontSize ||
+        a.fontFamily != b.fontFamily ||
+        a.bold != b.bold ||
+        a.italic != b.italic ||
+        a.lineHeight != b.lineHeight) {
+      return SpanComparison.layoutChanged;
+    }
 
-  @override
-  int get hashCode => _props.hashCode;
+    if (a.color != b.color) {
+      return SpanComparison.visualsChanged;
+    }
 
+    return SpanComparison.equal;
+  }
+
+  @Deprecated('use SpanStyle.compare instead')
   @override
-  bool operator ==(Object other) => other is SpanStyle && other._props == _props;
+  int get hashCode => super.hashCode;
+
+  @Deprecated('use SpanStyle.compare instead')
+  @override
+  bool operator ==(Object other) => super == other;
 }
 
 // ---
@@ -56,17 +91,39 @@ final class Span {
     Span(content.substring(keepSplit ? at : at + 1), style),
   );
 
-  @override
-  int get hashCode => Object.hash(content, style);
+  static SpanComparison compare(Span a, Span b) {
+    if (a.content != b.content) return SpanComparison.layoutChanged;
+    return SpanStyle.compare(a.style, b.style);
+  }
 
+  static SpanComparison comapreLists(List<Span> a, List<Span> b) {
+    if (a.length != b.length) return SpanComparison.layoutChanged;
+
+    var result = SpanComparison.equal;
+    for (var i = 0; i < a.length; i++) {
+      result = SpanComparison.max(result, compare(a[i], b[i]));
+
+      if (result == SpanComparison.layoutChanged) {
+        return SpanComparison.layoutChanged;
+      }
+    }
+
+    return result;
+  }
+
+  @Deprecated('use Span.compare instead')
   @override
-  bool operator ==(Object other) => other is Span && other.content == content && other.style == style;
+  int get hashCode => super.hashCode;
+
+  @Deprecated('use Span.compare instead')
+  @override
+  bool operator ==(Object other) => super == other;
 }
 
 typedef _BreakPoint = ({_LayoutSpan span, int index, bool keepSplit});
 
 class Paragraph {
-  final List<Span> _spans;
+  List<Span> _spans;
   final List<ShapedGlyph> _shapedGlyphs = [];
 
   (int, double)? _lastLayoutKey;
@@ -74,6 +131,17 @@ class Paragraph {
 
   Paragraph(this._spans) {
     assert(_spans.isNotEmpty, 'each paragraph must have at least one span');
+  }
+
+  void updateSpans(List<Span> newSpans) {
+    assert(
+      Span.comapreLists(_spans, newSpans) != SpanComparison.layoutChanged,
+      'when updating the spans of a paragraph, it is the responsibility of the caller '
+      'to ensure that there is difference larger than SpanComparison.visualsChanged exists '
+      'between the old and new lists',
+    );
+
+    _spans = newSpans;
   }
 
   List<Span> get spans => UnmodifiableListView(_spans);
@@ -90,6 +158,11 @@ class Paragraph {
   }
 
   @internal
+  SpanStyle styleFor(ShapedGlyph glyph) {
+    return _spans[glyph._spanIndex].style;
+  }
+
+  @internal
   bool isLayoutCacheValid(int generation, double maxWidth) => (generation, maxWidth) == _lastLayoutKey;
 
   @internal
@@ -100,10 +173,10 @@ class Paragraph {
     'calt on'.withAsNative((flag) => harfbuzz.feature_from_string(flag.cast(), -1, features));
 
     final session = _LayoutSession(features, fontLookup, maxWidth);
-    final spansToShape = DoubleLinkedQueue.of(spans);
+    final spansToShape = DoubleLinkedQueue.of(spans.indexed);
 
     while (spansToShape.isNotEmpty) {
-      var spanToShape = spansToShape.removeFirst();
+      var (spanIdx, spanToShape) = spansToShape.removeFirst();
 
       var insertBreakAfterShaping = false;
       final breakPoints = DoubleLinkedQueue<int>();
@@ -121,7 +194,7 @@ class Paragraph {
           final (left, right) = spanToShape._split(index, keepSplit: false);
 
           spanToShape = left;
-          spansToShape.addFirst(right);
+          spansToShape.addFirst((spanIdx, right));
           insertBreakAfterShaping = true;
 
           break;
@@ -131,7 +204,7 @@ class Paragraph {
       final layoutSpan = _LayoutSpan(spanToShape, breakPoints, session.state.copy(), session.lineMetrics.length);
       session.layoutSpans.add(layoutSpan);
 
-      if (!_shapeSpan(session, layoutSpan)) {
+      if (!_shapeSpan(session, layoutSpan, spanIdx)) {
         _BreakPoint? breakPoint;
 
         // first, try to find a suitable user-indicated break point in the input text
@@ -151,7 +224,7 @@ class Paragraph {
               breakPoint = (span: candidateSpan, index: breakIndex, keepSplit: false);
 
               for (var popIdx = session.layoutSpans.length - 1; popIdx > spanIdx; popIdx--) {
-                spansToShape.addFirst(session.layoutSpans.removeAt(popIdx).content);
+                spansToShape.addFirst((spanIdx, session.layoutSpans.removeAt(popIdx).content));
               }
 
               break;
@@ -181,7 +254,7 @@ class Paragraph {
           // to shape from the output
           session.layoutSpans.removeLast();
 
-          if (_shapeSpan(session, left)) {
+          if (_shapeSpan(session, left, spanIdx)) {
             // if we managed to successfully shape the span now
             // (ideally the 99% case), record that fact
             session.layoutSpans.add(left);
@@ -190,11 +263,11 @@ class Paragraph {
           } else {
             // if the left span has somehow gotten longer after splitting, we must simply
             // repeat the entire shaping and splitting process, no two ways about it
-            spansToShape.addFirst(left.content);
+            spansToShape.addFirst((spanIdx, left.content));
           }
 
           // finally, queue up the other half we just split off
-          spansToShape.addFirst(right);
+          spansToShape.addFirst((spanIdx, right));
         } else {
           // if we somehow ended up here there is (probably) only two possible cases:
           // 1 - this span is after another span (ie. the cursor's x position is not zero)
@@ -210,7 +283,7 @@ class Paragraph {
 
             // let's pretend everything we just did never happened :)
             session.layoutSpans.removeLast();
-            spansToShape.addFirst(layoutSpan.content);
+            spansToShape.addFirst((spanIdx, layoutSpan.content));
           }
         }
 
@@ -240,7 +313,7 @@ class Paragraph {
     );
   }
 
-  bool _shapeSpan(_LayoutSession session, _LayoutSpan shapedSpan) {
+  bool _shapeSpan(_LayoutSession session, _LayoutSpan shapedSpan, int spanIdx) {
     final state = session.state;
     final span = shapedSpan.content;
 
@@ -276,7 +349,7 @@ class Paragraph {
             y: state.cursorY + hbToPixels(glyphPos[i].y_offset).toDouble(),
           ),
           (x: hbToPixels(glyphPos[i].x_advance).toDouble(), y: hbToPixels(glyphPos[i].y_advance).toDouble()),
-          span.style,
+          spanIdx,
           glyphInfo[i].cluster,
           shapedSpan.lineIdx,
         ),
@@ -416,10 +489,10 @@ class ShapedGlyph {
   final int index;
   final ({double x, double y}) position;
   final ({double x, double y}) advance;
-  final SpanStyle style;
+  final int _spanIndex;
   final int cluster;
   final int line;
-  ShapedGlyph._(this.font, this.index, this.position, this.advance, this.style, this.cluster, this.line);
+  ShapedGlyph._(this.font, this.index, this.position, this.advance, this._spanIndex, this.cluster, this.line);
 }
 
 class ParagraphMetrics {

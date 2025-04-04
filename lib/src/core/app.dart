@@ -263,8 +263,7 @@ class AppState implements InstanceHost, ProxyHost {
     _root = _RootWidget(child: root, rootBuildScope: _rootBuildScope).proxy();
     _root.bootstrap(this, this);
 
-    _scheduleScaffoldLayout(force: true, global: true);
-    _subscriptions.add(window.onResize.listen((event) => _scheduleScaffoldLayout(force: true)));
+    _subscriptions.add(window.onResize.listen((event) => rootInstance.markNeedsLayout()));
 
     // ---
 
@@ -441,7 +440,6 @@ node [shape="box"];
     final watch = Stopwatch()..start();
 
     _root.reassemble();
-    _scheduleScaffoldLayout(force: true, global: true);
 
     final elapesd = watch.elapsedMicroseconds;
     logger?.fine('completed full app rebuild in ${elapesd}us');
@@ -484,14 +482,6 @@ node [shape="box"];
     rootInstance.hitTest(x, y, state);
 
     return state;
-  }
-
-  void _scheduleScaffoldLayout({bool force = false, bool global = false}) {
-    if (force) {
-      rootInstance.clearLayoutCache(recursive: global);
-    }
-
-    scheduleLayout(rootInstance);
   }
 
   // ---

@@ -1,4 +1,3 @@
-import 'package:collection/collection.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 
 import '../context.dart';
@@ -143,11 +142,15 @@ class RawTextInstance extends LeafWidgetInstance<RawText> {
 
   @override
   set widget(RawText value) {
-    if (const ListEquality<Span>().equals(widget.spans, value.spans) && widget.alignment == value.alignment) return;
+    final spansComp = Span.comapreLists(widget.spans, value.spans);
+    if (spansComp == SpanComparison.equal && widget.alignment == value.alignment) return;
 
     super.widget = value;
-    _styledText = Paragraph(widget.spans);
-
-    markNeedsLayout();
+    if (spansComp == SpanComparison.visualsChanged) {
+      _styledText.updateSpans(value.spans);
+    } else {
+      _styledText = Paragraph(widget.spans);
+      markNeedsLayout();
+    }
   }
 }

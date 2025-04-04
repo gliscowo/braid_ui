@@ -353,10 +353,11 @@ class TextRenderer {
     }
 
     for (final shapedGlyph in text.glyphs) {
-      final glyph = shapedGlyph.font.getGlyph(shapedGlyph.index, shapedGlyph.style.fontSize);
-      final glyphColor = shapedGlyph.style.color;
+      final glyphStyle = text.styleFor(shapedGlyph);
+      final glyph = shapedGlyph.font.getGlyph(shapedGlyph.index, glyphStyle.fontSize);
+      final glyphColor = glyphStyle.color;
 
-      final renderScale = Font.compensateForGlyphSize(shapedGlyph.style.fontSize);
+      final renderScale = Font.compensateForGlyphSize(glyphStyle.fontSize);
 
       final xPos = shapedGlyph.position.x * renderScale + glyph.bearingX * renderScale + lineOffsets[shapedGlyph.line];
       final yPos = shapedGlyph.position.y * renderScale + initialY - glyph.bearingY * renderScale;

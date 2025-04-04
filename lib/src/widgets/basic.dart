@@ -173,6 +173,7 @@ class ConstrainedInstance extends SingleChildWidgetInstance<ConstraintWidget> {
 
 // ---
 
+// TODO: this should live somewhere more generic
 class Alignment {
   static const topLeft = Alignment(horizontal: 0, vertical: 0);
   static const top = Alignment(horizontal: .5, vertical: 0);
