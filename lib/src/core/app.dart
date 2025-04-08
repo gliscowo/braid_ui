@@ -262,6 +262,7 @@ class AppState implements InstanceHost, ProxyHost {
   }) : cursorController = CursorController.ofWindow(window) {
     _root = _RootWidget(child: root, rootBuildScope: _rootBuildScope).proxy();
     _root.bootstrap(this, this);
+    scheduleLayout(rootInstance);
 
     _subscriptions.add(window.onResize.listen((event) => rootInstance.markNeedsLayout()));
 
