@@ -304,6 +304,30 @@ class PanelInstance extends OptionalChildWidgetInstance<Panel> with OptionalShri
   }
 }
 
+class Expanded extends SingleChildInstanceWidget {
+  const Expanded({super.key, required super.child});
+
+  @override
+  SingleChildWidgetInstance<InstanceWidget> instantiate() => _ExpandedInstance(widget: this);
+}
+
+class _ExpandedInstance extends SingleChildWidgetInstance<Expanded> {
+  _ExpandedInstance({required super.widget});
+
+  @override
+  void doLayout(Constraints constraints) {
+    final childConstraints = Constraints(
+      constraints.hasBoundedWidth ? constraints.maxWidth : constraints.minWidth,
+      constraints.hasBoundedHeight ? constraints.maxHeight : constraints.minHeight,
+      constraints.maxWidth,
+      constraints.maxHeight,
+    );
+
+    final childSize = child.layout(childConstraints);
+    transform.setSize(childSize);
+  }
+}
+
 // ---
 
 typedef CustomDrawFunction = void Function(DrawContext ctx, WidgetTransform transform);
@@ -650,11 +674,11 @@ class Builder extends Widget {
   const Builder({super.key, required this.builder});
 
   @override
-  WidgetProxy proxy() => _BuilderProxy(this);
+  WidgetProxy proxy() => BuilderProxy(this);
 }
 
-class _BuilderProxy extends ComposedProxy with SingleChildWidgetProxy {
-  _BuilderProxy(Builder super.widget);
+class BuilderProxy extends ComposedProxy with SingleChildWidgetProxy {
+  BuilderProxy(Builder super.widget);
 
   @override
   void mount(WidgetProxy parent, Object? slot) {
