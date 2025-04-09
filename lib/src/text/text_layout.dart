@@ -389,13 +389,16 @@ class Paragraph {
     }
 
     var spanBaselineY = spanFont.ascender * spanSize;
+    var spanDescender = spanFont.descender.abs() * spanSize;
 
     if (span.style.lineHeight != null) {
-      spanBaselineY += ((span.style.lineHeight! - spanFont.lineHeight) * .5 * spanSize).ceil();
+      final adjustment = (span.style.lineHeight! - spanFont.lineHeight) * .5 * spanSize;
+      spanBaselineY += adjustment;
+      spanDescender += adjustment;
     }
 
     state.currentLineBaseline = max(state.currentLineBaseline, spanBaselineY);
-    state.currentLineDescender = max(state.currentLineDescender, spanFont.descender.abs() * spanSize);
+    state.currentLineDescender = max(state.currentLineDescender, spanDescender);
 
     state.currentLineWidth = max(state.currentLineWidth, state.cursorX.toDouble());
     state.currentLineHeight = max(state.currentLineHeight, (span.style.lineHeight ?? spanFont.lineHeight) * spanSize);
