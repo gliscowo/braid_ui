@@ -53,14 +53,22 @@ class ButtonStyle {
     textStyle: textStyle ?? this.textStyle,
   );
 
-  ButtonStyle overriding(ButtonStyle other) => ButtonStyle(
-    color: color ?? other.color,
-    hoveredColor: hoveredColor ?? other.hoveredColor,
-    disabledColor: disabledColor ?? other.disabledColor,
-    padding: padding ?? other.padding,
-    cornerRadius: cornerRadius ?? other.cornerRadius,
-    textStyle: textStyle ?? other.textStyle,
-  );
+  ButtonStyle overriding(ButtonStyle other) {
+    var textStyle = this.textStyle;
+    if (textStyle != null && other.textStyle != null) {
+      textStyle = textStyle.overriding(other.textStyle!);
+    }
+    textStyle ??= other.textStyle;
+
+    return ButtonStyle(
+      color: color ?? other.color,
+      hoveredColor: hoveredColor ?? other.hoveredColor,
+      disabledColor: disabledColor ?? other.disabledColor,
+      padding: padding ?? other.padding,
+      cornerRadius: cornerRadius ?? other.cornerRadius,
+      textStyle: textStyle,
+    );
+  }
 
   @override
   int get hashCode => Object.hash(color, hoveredColor, disabledColor, padding, cornerRadius, textStyle);
