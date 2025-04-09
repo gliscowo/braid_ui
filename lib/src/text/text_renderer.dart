@@ -325,6 +325,8 @@ class TextRenderer {
     Matrix4 projection, {
     DrawContext? debugCtx,
   }) {
+    if (text.metrics.lineMetrics.isEmpty) return;
+
     final initialY =
         text.metrics.initialBaselineY.floor() + alignment.alignVertical(drawSpace.height, text.metrics.height);
     final lineOffsets =
