@@ -32,6 +32,7 @@ class Icon extends StatelessWidget {
           ),
         ),
       ],
+      softWrap: false,
       alignment: Alignment.center,
     );
   }

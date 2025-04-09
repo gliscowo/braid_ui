@@ -106,23 +106,29 @@ class DefaultTextStyle extends InheritedWidget {
 class Text extends StatelessWidget {
   final TextStyle? style;
   final String text;
+  final bool softWrap;
 
-  const Text({super.key, this.style, required this.text});
+  const Text({super.key, this.style, this.softWrap = true, required this.text});
 
   @override
   Widget build(BuildContext context) {
     final effectiveStyle = style ?? TextStyle.empty;
     final spanStyle = effectiveStyle.overriding(DefaultTextStyle.of(context)).toSpanStyle();
 
-    return RawText(spans: [Span(text, spanStyle)], alignment: effectiveStyle.alignment ?? Alignment.center);
+    return RawText(
+      softWrap: softWrap,
+      spans: [Span(text, spanStyle)],
+      alignment: effectiveStyle.alignment ?? Alignment.center,
+    );
   }
 }
 
 class RawText extends LeafInstanceWidget {
+  final bool softWrap;
   final Alignment alignment;
   final List<Span> spans;
 
-  const RawText({super.key, required this.alignment, required this.spans});
+  const RawText({super.key, required this.softWrap, required this.alignment, required this.spans});
 
   @override
   RawTextInstance instantiate() => RawTextInstance(widget: this);
@@ -147,7 +153,10 @@ class RawTextInstance extends LeafWidgetInstance<RawText> {
 
   @override
   void doLayout(Constraints constraints) {
-    final size = host!.textRenderer.layoutParagraph(_styledText, constraints.maxWidth).size.constrained(constraints);
+    final size = host!.textRenderer
+        .layoutParagraph(_styledText, widget.softWrap ? constraints.maxWidth : double.infinity)
+        .size
+        .constrained(constraints);
     transform.setSize(size.ceil());
   }
 
