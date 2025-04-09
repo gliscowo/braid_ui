@@ -35,9 +35,25 @@ class InheritedStateApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return DefaultTextStyle(
       style: TextStyle(fontSize: 24.0, color: Color.white, bold: false, italic: false),
-      child: SharedState(
-        initState: CounterState.new,
-        child: Row(children: [Flexible(child: Center(child: LeftBody())), Flexible(child: Center(child: RightBody()))]),
+      child: Column(children: [Flexible(child: TheApp()), Flexible(child: TheApp(nest: true))]),
+    );
+  }
+}
+
+class TheApp extends StatelessWidget {
+  final bool nest;
+  const TheApp({super.key, this.nest = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return SharedState(
+      initState: CounterState.new,
+      child: Row(
+        children: [
+          Flexible(child: Center(child: LeftBody())),
+          Flexible(child: Center(child: RightBody())),
+          if (nest) Flexible(child: TheApp(), flexFactor: 2),
+        ],
       ),
     );
   }
@@ -46,7 +62,12 @@ class InheritedStateApp extends StatelessWidget {
 class LeftBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Text(text: 'current state: ${SharedState.get<CounterState>(context).count}');
+    return Expanded(
+      child: Panel(
+        color: Color.green,
+        child: Text(text: 'current state: ${SharedState.get<CounterState>(context).count}'),
+      ),
+    );
   }
 }
 

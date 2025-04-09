@@ -30,7 +30,7 @@ class CounterApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const DefaultTextStyle(
-      style: TextStyle(color: Color.black, fontSize: 32),
+      style: TextStyle(color: Color.black, fontSize: 32, bold: false, italic: false),
       child: Panel(color: Color.white, child: Center(child: Counter())),
     );
   }
