@@ -10,6 +10,7 @@ import 'package:braid_ui/src/framework/widget.dart';
 import 'package:braid_ui/src/widgets/basic.dart';
 import 'package:braid_ui/src/widgets/drag_arena.dart';
 import 'package:braid_ui/src/widgets/icon.dart';
+import 'package:braid_ui/src/widgets/notifications.dart';
 import 'package:braid_ui/src/widgets/slider.dart';
 import 'package:braid_ui/src/widgets/split_pane.dart';
 import 'package:braid_ui/src/widgets/stack.dart';
@@ -130,76 +131,124 @@ class _AppBodyState extends WidgetState<AppBody> {
             child: Column(
               children: [
                 Flexible(
-                  child: Center(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                  child: NotificationArea(
+                    child: Stack(
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Constrain(
-                              constraints: Constraints.only(maxWidth: 150),
-                              child: ColorSlider(from: const Color.rgb(0x5f43b2), to: const Color.rgb(0x1bd664)),
-                            ),
-                            const Padding(insets: Insets.axis(vertical: 25)),
-                            for (final color in const [
-                              Color.rgb(0x5f43b2),
-                              Color.rgb(0xfefdfd),
-                              Color.rgb(0xb1aebb),
-                              Color.rgb(0x3a3135),
-                            ])
-                              Row(
+                        Center(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Column(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  ToggleBox(),
-                                  Padding(
-                                    insets: const Insets.all(10).copy(left: 15),
-                                    child: Constrain(
-                                      constraints: Constraints.tight(const Size(65, 35)),
-                                      child: Panel(color: color, cornerRadius: const CornerRadius.all(5)),
-                                    ),
+                                  Constrain(
+                                    constraints: Constraints.only(maxWidth: 150),
+                                    child: ColorSlider(from: const Color.rgb(0x5f43b2), to: const Color.rgb(0x1bd664)),
                                   ),
-                                  Panel(
-                                    color: Color.rgb(0x161616),
-                                    cornerRadius: const CornerRadius.all(5),
-                                    child: Padding(
-                                      insets: const Insets.all(5),
-                                      child: Text(
-                                        text: '0x${color.toHexString(false)}',
-                                        style: TextStyle(fontSize: 14, fontFamily: 'cascadia'),
-                                      ),
+                                  const Padding(insets: Insets.axis(vertical: 25)),
+                                  for (final color in const [
+                                    Color.rgb(0x5f43b2),
+                                    Color.rgb(0xfefdfd),
+                                    Color.rgb(0xb1aebb),
+                                    Color.rgb(0x3a3135),
+                                  ])
+                                    Row(
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        ToggleBox(),
+                                        Padding(
+                                          insets: const Insets.all(10).copy(left: 15),
+                                          child: Constrain(
+                                            constraints: Constraints.tight(const Size(65, 35)),
+                                            child: Panel(color: color, cornerRadius: const CornerRadius.all(5)),
+                                          ),
+                                        ),
+                                        Panel(
+                                          color: Color.rgb(0x161616),
+                                          cornerRadius: const CornerRadius.all(5),
+                                          child: Padding(
+                                            insets: const Insets.all(5),
+                                            child: Text(
+                                              text: '0x${color.toHexString(false)}',
+                                              style: TextStyle(fontSize: 14, fontFamily: 'cascadia'),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
                                 ],
                               ),
-                          ],
-                        ),
-                        Sized(
-                          width: 100,
-                          height: 100,
-                          child: MouseArea(cursorStyle: cursor, child: Panel(color: Color.white)),
-                        ),
-                        Sized(
-                          width: 200,
-                          height: 100,
-                          child: Panel(
-                            color: Color.red,
-                            child: HorizontalSplitPane(
-                              leftChild: RawText(
-                                alignment: Alignment.center,
-                                spans: [
-                                  Span('THIS', DefaultTextStyle.of(context).toSpanStyle()),
-                                  Span(' is ', DefaultTextStyle.of(context).copy(bold: true).toSpanStyle()),
-                                  Span('a looooooo', DefaultTextStyle.of(context).toSpanStyle()),
-                                  Span(
-                                    'oooooong word',
-                                    DefaultTextStyle.of(context).copy(color: Color.blue).toSpanStyle(),
-                                  ),
-                                ],
+                              Sized(
+                                width: 100,
+                                height: 100,
+                                child: MouseArea(cursorStyle: cursor, child: Panel(color: Color.white)),
                               ),
-                              rightChild: Text(
-                                text: 'this is simply some normal text that i\'d like to see',
-                                style: TextStyle(alignment: Alignment.bottomRight),
+                              Sized(
+                                width: 200,
+                                height: 100,
+                                child: Panel(
+                                  color: Color.red,
+                                  child: HorizontalSplitPane(
+                                    leftChild: RawText(
+                                      softWrap: true,
+                                      alignment: Alignment.center,
+                                      spans: [
+                                        Span('THIS', DefaultTextStyle.of(context).toSpanStyle()),
+                                        Span(' is ', DefaultTextStyle.of(context).copy(bold: true).toSpanStyle()),
+                                        Span('a looooooo', DefaultTextStyle.of(context).toSpanStyle()),
+                                        Span(
+                                          'oooooong word',
+                                          DefaultTextStyle.of(context).copy(color: Color.blue).toSpanStyle(),
+                                        ),
+                                      ],
+                                    ),
+                                    rightChild: Text(
+                                      text: 'this is simply some normal text that i\'d like to see',
+                                      style: TextStyle(alignment: Alignment.bottomRight),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: Align(
+                            alignment: Alignment.left,
+                            child: Padding(
+                              insets: const Insets.all(25),
+                              child: Panel(
+                                color: const Color.rgb(0x161616),
+                                cornerRadius: const CornerRadius.all(15),
+                                child: Padding(
+                                  insets: const Insets.all(15),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      for (final dest in const ['checkboxes test', 'text wrapping test'])
+                                        Padding(
+                                          insets: const Insets.all(5),
+                                          child: Builder(
+                                            builder: (context) {
+                                              return Button(
+                                                onClick: () {
+                                                  NotificationArea.send(
+                                                    context,
+                                                    NotificationData(message: 'navigating to $dest'),
+                                                  );
+                                                },
+                                                text: dest,
+                                                style: const ButtonStyle(
+                                                  cornerRadius: CornerRadius.all(10),
+                                                  padding: Insets.all(10),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ),
                           ),
