@@ -78,35 +78,44 @@ class _ScrollWithSliderState extends WidgetState<ScrollWithSlider> {
           ],
         );
       },
-      child: Flexible(child: ScrollView.vertical(controller: controller, child: widget.content)),
+      child: Flexible(child: Scrollable.vertical(controller: controller, child: widget.content)),
     );
   }
 }
 
 class ScrollController with Listenable {
-  ScrollController({double? initialOffset}) : offset = initialOffset ?? 0;
+  double _offset;
+  double _maxOffset;
 
-  double offset;
+  ScrollController({double offset = 0}) : _offset = offset, _maxOffset = 0;
 
-  double _maxOffset = 0;
+  double get offset => _offset;
+  set offset(double value) {
+    if (_offset == value) return;
+
+    _offset = value.clamp(0, _maxOffset);
+    notifyListeners();
+  }
+
   double get maxOffset => _maxOffset;
+  void _setMaxOffset(double value) {
+    if (_maxOffset == value) return;
 
-  void _setState(double offset, double maxOffset) {
-    this.offset = offset;
-    _maxOffset = maxOffset;
+    _maxOffset = value;
+    _offset = offset.clamp(0, _maxOffset);
 
     notifyListeners();
   }
 }
 
-class ScrollView extends StatelessWidget {
-  final Widget child;
-  final bool vertical;
+class Scrollable extends StatefulWidget {
   final bool horizontal;
+  final bool vertical;
   final ScrollController? horizontalController;
   final ScrollController? verticalController;
+  final Widget child;
 
-  const ScrollView({
+  const Scrollable({
     super.key,
     required this.horizontal,
     required this.vertical,
@@ -115,122 +124,159 @@ class ScrollView extends StatelessWidget {
     required this.child,
   });
 
-  const ScrollView.horizontal({super.key, ScrollController? controller, required this.child})
-    : horizontal = true,
-      horizontalController = controller,
-      vertical = false,
-      verticalController = null;
-
-  const ScrollView.vertical({super.key, ScrollController? controller, required this.child})
+  const Scrollable.vertical({super.key, ScrollController? controller, required this.child})
     : horizontal = false,
-      horizontalController = null,
       vertical = true,
+      horizontalController = null,
       verticalController = controller;
 
-  const ScrollView.both({super.key, this.horizontalController, this.verticalController, required this.child})
+  const Scrollable.horizontal({super.key, ScrollController? controller, required this.child})
+    : horizontal = true,
+      vertical = false,
+      horizontalController = controller,
+      verticalController = null;
+
+  const Scrollable.both({super.key, this.horizontalController, this.verticalController, required this.child})
     : horizontal = true,
       vertical = true;
 
   @override
+  WidgetState<Scrollable> createState() => _ScrollableState();
+}
+
+class _ScrollableState extends WidgetState<Scrollable> {
+  final CompoundListenable listenable = CompoundListenable();
+
+  ScrollController? horizontalController;
+  ScrollController? verticalController;
+
+  @override
+  void init() {
+    horizontalController = widget.horizontal ? widget.horizontalController ?? ScrollController() : null;
+    verticalController = widget.vertical ? widget.verticalController ?? ScrollController() : null;
+
+    if (horizontalController != null) listenable.addChild(horizontalController!);
+    if (verticalController != null) listenable.addChild(verticalController!);
+  }
+
+  @override
+  void didUpdateWidget(Scrollable oldWidget) {
+    listenable.clear();
+
+    if (widget.horizontal) {
+      if (widget.horizontalController != null) {
+        horizontalController = widget.horizontalController;
+      } else if (horizontalController == null || horizontalController == oldWidget.horizontalController) {
+        horizontalController = ScrollController();
+      }
+
+      listenable.addChild(horizontalController!);
+    } else {
+      horizontalController = null;
+    }
+
+    if (widget.vertical) {
+      if (widget.verticalController != null) {
+        verticalController = widget.verticalController;
+      } else if (verticalController == null || verticalController == oldWidget.verticalController) {
+        verticalController = ScrollController();
+      }
+
+      listenable.addChild(verticalController!);
+    } else {
+      verticalController = null;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Clip(
-      child: RawScrollView(
-        horizontal: horizontal,
-        vertical: vertical,
-        horizontalController: horizontalController,
-        verticalController: verticalController,
-        child: child,
+      child: MouseArea(
+        scrollCallback: (horizontal, vertical) {
+          horizontalController?.offset += -horizontal * 25;
+          verticalController?.offset += -vertical * 25;
+        },
+        child: ListenableBuilder(
+          listenable: listenable,
+          builder: (context, child) {
+            return RawScrollView(
+              horizontalController: horizontalController,
+              verticalController: verticalController,
+              child: child!,
+            );
+          },
+          child: widget.child,
+        ),
       ),
     );
   }
 }
 
 class RawScrollView extends SingleChildInstanceWidget {
-  final bool horizontal;
-  final bool vertical;
   final ScrollController? horizontalController;
   final ScrollController? verticalController;
 
-  RawScrollView({
-    required this.horizontal,
-    required this.vertical,
-    required super.child,
-    this.horizontalController,
-    this.verticalController,
-  });
+  RawScrollView({required super.child, required this.horizontalController, required this.verticalController});
 
   @override
   SingleChildWidgetInstance<InstanceWidget> instantiate() => RawScrollViewInstance(widget: this);
 }
 
 class RawScrollViewInstance extends SingleChildWidgetInstance<RawScrollView> with MouseListener {
-  (double, double) maxScroll = const (0, 0);
-  late ScrollController horizontalController;
-  late ScrollController verticalController;
+  double horizontalOffset = 0, maxHorizontalOffset = 0;
+  double verticalOffset = 0, maxVerticalOffset = 0;
 
   RawScrollViewInstance({required super.widget}) {
-    horizontalController = widget.horizontalController ?? ScrollController();
-    verticalController = widget.verticalController ?? ScrollController();
+    horizontalOffset = widget.horizontalController?.offset ?? 0;
+    maxHorizontalOffset = widget.horizontalController?.maxOffset ?? 0;
+    verticalOffset = widget.verticalController?.offset ?? 0;
+    maxVerticalOffset = widget.verticalController?.maxOffset ?? 0;
   }
 
   @override
   set widget(RawScrollView value) {
-    horizontalController = value.horizontalController ?? horizontalController;
-    verticalController = value.verticalController ?? verticalController;
+    var horizontalOffset = widget.horizontalController?.offset ?? 0;
+    var maxHorizontalOffset = widget.horizontalController?.maxOffset ?? 0;
+    var verticalOffset = widget.verticalController?.offset ?? 0;
+    var maxVerticalOffset = widget.verticalController?.maxOffset ?? 0;
 
-    if (widget.horizontal == value.horizontal && widget.vertical == value.vertical) {
-      _updateAndApplyOffsets((currentHorizontal) => currentHorizontal, (currentVertical) => currentVertical);
-      return;
+    if (!(this.horizontalOffset == horizontalOffset &&
+        this.maxHorizontalOffset == maxHorizontalOffset &&
+        this.verticalOffset == verticalOffset &&
+        this.maxVerticalOffset == maxVerticalOffset)) {
+      this.horizontalOffset = horizontalOffset;
+      this.maxHorizontalOffset = maxHorizontalOffset;
+      this.verticalOffset = verticalOffset;
+      this.maxVerticalOffset = maxVerticalOffset;
+
+      markNeedsLayout();
     }
 
     super.widget = value;
-    markNeedsLayout();
   }
 
   @override
   void doLayout(Constraints constraints) {
-    final childSize = child.layout(
-      constraints.copy(
-        minWidth: widget.horizontal ? 0 : null,
-        maxWidth: widget.horizontal ? double.infinity : null,
-        minHeight: widget.vertical ? 0 : null,
-        maxHeight: widget.vertical ? double.infinity : null,
+    var childSize = child.layout(
+      Constraints(
+        widget.horizontalController != null ? 0 : constraints.minWidth,
+        widget.verticalController != null ? 0 : constraints.minHeight,
+        widget.horizontalController != null ? double.infinity : constraints.maxWidth,
+        widget.verticalController != null ? double.infinity : constraints.maxHeight,
       ),
     );
 
-    maxScroll = (
-      widget.horizontal ? max(0, childSize.width - constraints.maxWidth) : 0,
-      widget.vertical ? max(0, childSize.height - constraints.maxHeight) : 0,
-    );
+    widget.horizontalController?._setMaxOffset(max(0, childSize.width - constraints.maxWidth));
+    widget.verticalController?._setMaxOffset(max(0, childSize.height - constraints.maxHeight));
 
-    _updateAndApplyOffsets((currentHorizontal) => currentHorizontal, (currentVertical) => currentVertical);
+    child.transform.x = -horizontalOffset;
+    child.transform.y = -verticalOffset;
 
-    final selfSize = Size(
-      widget.horizontal && constraints.hasBoundedWidth ? constraints.maxWidth : childSize.width,
-      widget.vertical && constraints.hasBoundedHeight ? constraints.maxHeight : childSize.height,
+    var selfSize = Size(
+      widget.horizontalController != null && constraints.hasBoundedWidth ? constraints.maxWidth : constraints.minWidth,
+      widget.verticalController != null && constraints.hasBoundedHeight ? constraints.maxHeight : constraints.minHeight,
     ).constrained(constraints);
 
     transform.setSize(selfSize);
-  }
-
-  @override
-  bool onMouseScroll(double x, double y, double horizontal, double vertical) {
-    _updateAndApplyOffsets(
-      (currentHorizontal) => currentHorizontal - horizontal * 25,
-      (currentVertical) => currentVertical - vertical * 25,
-    );
-
-    return true;
-  }
-
-  void _updateAndApplyOffsets(
-    double Function(double currentHorizontal) horizontalUpdate,
-    double Function(double currentVertical) verticalUpdate,
-  ) {
-    horizontalController._setState(horizontalUpdate(horizontalController.offset).clamp(0, maxScroll.$1), maxScroll.$1);
-    verticalController._setState(verticalUpdate(verticalController.offset).clamp(0, maxScroll.$2), maxScroll.$2);
-
-    child.transform.x = -horizontalController.offset;
-    child.transform.y = -verticalController.offset;
   }
 }

@@ -330,7 +330,7 @@ class TextRenderer {
     final initialY =
         text.metrics.initialBaselineY.floor() + alignment.alignVertical(drawSpace.height, text.metrics.height);
     final lineOffsets =
-        text.metrics.lineMetrics.map((e) => alignment.alignHorizontal(drawSpace.width, e.width)).toList();
+        text.metrics.lineMetrics.map((line) => alignment.alignHorizontal(drawSpace.width, line.width)).toList();
 
     if (debugCtx != null) {
       final textSize = text.metrics;
@@ -355,16 +355,16 @@ class TextRenderer {
     }
 
     for (final shapedGlyph in text.glyphs) {
-      // if (shapedGlyph.line >= lineOffsets.length) continue;
-
       final glyphStyle = text.styleFor(shapedGlyph);
       final glyph = shapedGlyph.font.getGlyph(shapedGlyph.index, glyphStyle.fontSize);
       final glyphColor = glyphStyle.color;
 
       final renderScale = Font.compensateForGlyphSize(glyphStyle.fontSize);
 
-      final xPos = shapedGlyph.position.x * renderScale + glyph.bearingX * renderScale + lineOffsets[shapedGlyph.line];
-      final yPos = shapedGlyph.position.y * renderScale + initialY - glyph.bearingY * renderScale;
+      final xPos =
+          (shapedGlyph.position.x + shapedGlyph.drawOffset.x + glyph.bearingX) * renderScale +
+          lineOffsets[shapedGlyph.line];
+      final yPos = (shapedGlyph.position.y + shapedGlyph.drawOffset.y + initialY - glyph.bearingY) * renderScale;
 
       final width = glyph.width * renderScale;
       final height = glyph.height * renderScale;

@@ -127,9 +127,9 @@ mixin MouseListener<T extends InstanceWidget> on WidgetInstance<T> {
 }
 
 mixin KeyboardListener<T extends InstanceWidget> on WidgetInstance<T> {
-  void onKeyDown(int keyCode, int modifiers);
-  void onKeyUp(int keyCode, int modifiers);
-  void onChar(int charCode, int modifiers);
+  bool onKeyDown(int keyCode, int modifiers);
+  bool onKeyUp(int keyCode, int modifiers);
+  bool onChar(int charCode, int modifiers);
 
   void onFocusGained();
   void onFocusLost();

@@ -415,6 +415,7 @@ class MouseAreaInstance extends SingleChildWidgetInstance<MouseArea> with Shrink
 
 // ---
 
+// TODO: allow not consuming events with per-callback predicates
 class KeyboardInput extends SingleChildInstanceWidget {
   final void Function(int keyCode, int modifiers)? keyDownCallback;
   final void Function(int keyCode, int modifiers)? keyUpCallback;
@@ -442,13 +443,13 @@ class KeyboardInputInstance extends SingleChildWidgetInstance<KeyboardInput> wit
   KeyboardInputInstance({required super.widget});
 
   @override
-  void onKeyDown(int keyCode, int modifiers) => widget.keyDownCallback?.call(keyCode, modifiers);
+  bool onKeyDown(int keyCode, int modifiers) => (widget.keyDownCallback?..call(keyCode, modifiers)) != null;
 
   @override
-  void onKeyUp(int keyCode, int modifiers) => widget.keyUpCallback?.call(keyCode, modifiers);
+  bool onKeyUp(int keyCode, int modifiers) => (widget.keyUpCallback?..call(keyCode, modifiers)) != null;
 
   @override
-  void onChar(int charCode, int modifiers) => widget.charCallback?.call(charCode, modifiers);
+  bool onChar(int charCode, int modifiers) => (widget.charCallback?..call(charCode, modifiers)) != null;
 
   @override
   void onFocusGained() {

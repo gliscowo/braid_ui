@@ -131,9 +131,11 @@ class _ShapeSpan extends _LayoutInstruction {
 }
 
 class _InsertNewlines extends _LayoutInstruction {
-  final int newlineCount;
-  _InsertNewlines(this.newlineCount);
+  final List<_LineBreakIndices> breakIndices;
+  _InsertNewlines(this.breakIndices);
 }
+
+typedef _LineBreakIndices = ({int endIdx, int startIdx});
 
 class Paragraph {
   List<Span> _spans;
@@ -150,12 +152,14 @@ class Paragraph {
     assert(
       Span.comapreLists(_spans, newSpans) != SpanComparison.layoutChanged,
       'when updating the spans of a paragraph, it is the responsibility of the caller '
-      'to ensure that there is difference larger than SpanComparison.visualsChanged exists '
+      'to ensure that there is no difference larger than SpanComparison.visualsChanged '
       'between the old and new lists',
     );
 
     _spans = newSpans;
   }
+
+  ShapedGlyph? getGlyphForCharIndex(int charIdx) => _getGlyphForCluster(glyphs, charIdx);
 
   List<Span> get spans => UnmodifiableListView(_spans);
   List<ShapedGlyph> get glyphs => UnmodifiableListView(_shapedGlyphs);
@@ -192,6 +196,10 @@ class Paragraph {
       switch (instructions.removeFirst()) {
         case _ShapeSpan(span: var spanToShape, index: final spanIdx):
           final breakPoints = DoubleLinkedQueue<int>();
+          final spanStartRune =
+              session.layoutSpans.isNotEmpty
+                  ? session.layoutSpans.last.startRune + session.layoutSpans.last.content.content.length
+                  : 0;
 
           final iter = spanToShape.content.runes.indexed.iterator;
           while (iter.moveNext()) {
@@ -206,22 +214,32 @@ class Paragraph {
               // if we encountered a newline, we can simply split immediately
               // and queue the right half of the span for next round - this saves a trip
 
-              var newlineCount = 1;
+              var lineBreaks = [(endIdx: spanStartRune + index, startIdx: spanStartRune + index + 1)];
               while (iter.moveNext() && iter.current.$2 == newline) {
-                newlineCount++;
+                lineBreaks.add((endIdx: spanStartRune + index, startIdx: spanStartRune + index + 1));
               }
 
-              final (left, right) = spanToShape._split(index, to: index + newlineCount, keepSplit: false);
+              final (left, right) = spanToShape._split(
+                index,
+                to: lineBreaks.last.startIdx - spanStartRune,
+                keepSplit: false,
+              );
 
               spanToShape = left;
               instructions.addFirst(_ShapeSpan(right, spanIdx));
-              instructions.addFirst(_InsertNewlines(newlineCount));
+              instructions.addFirst(_InsertNewlines(lineBreaks));
 
               break;
             }
           }
 
-          final layoutSpan = _LayoutSpan(spanToShape, breakPoints, session.state.copy(), session.lineMetrics.length);
+          final layoutSpan = _LayoutSpan(
+            spanToShape,
+            breakPoints,
+            session.state.copy(),
+            session.lineMetrics.length,
+            spanStartRune,
+          );
           session.layoutSpans.add(layoutSpan);
 
           if (!_shapeSpan(session, layoutSpan, spanIdx)) {
@@ -237,11 +255,9 @@ class Paragraph {
 
               while (candidateSpan.possibleBreakPoints.isNotEmpty) {
                 final breakIndex = candidateSpan.possibleBreakPoints.removeLast();
-                final position =
-                    candidateSpan.stateBeforeShaping.cursorX +
-                    _charIdxToClusterPos(candidateSpan.shapedGlyphs, breakIndex);
+                final glyph = _getGlyphForCluster(candidateSpan.shapedGlyphs, candidateSpan.startRune + breakIndex)!;
 
-                if (position <= session.maxWidth) {
+                if (glyph.position.x <= session.maxWidth) {
                   breakPoint = (span: candidateSpan, index: breakIndex, keepSplit: false);
 
                   for (var popIdx = session.layoutSpans.length - 1; popIdx > candidateIdx; popIdx--) {
@@ -258,7 +274,7 @@ class Paragraph {
             if (breakPoint == null) {
               for (final glyph in layoutSpan.shapedGlyphs.reversed) {
                 if (glyph.position.x + glyph.advance.x < session.maxWidth) {
-                  breakPoint = (span: layoutSpan, index: glyph.cluster + 1, keepSplit: true);
+                  breakPoint = (span: layoutSpan, index: glyph.cluster + 1 - layoutSpan.startRune, keepSplit: true);
                   break;
                 }
               }
@@ -280,7 +296,12 @@ class Paragraph {
                 // (ideally the 99% case), record that fact
                 session.layoutSpans.add(left);
 
-                _startNewLine(session);
+                _startNewLine(session, [
+                  (
+                    endIdx: spanStartRune + breakPoint.index,
+                    startIdx: spanStartRune + (breakPoint.keepSplit ? breakPoint.index + 1 : breakPoint.index),
+                  ),
+                ]);
               } else {
                 // if the left span has somehow gotten longer after splitting, we must simply
                 // repeat the entire shaping and splitting process, no two ways about it
@@ -300,7 +321,7 @@ class Paragraph {
               //     TODO: ok, actually we maybe do still wanna split after the first char
 
               if (layoutSpan.stateBeforeShaping.cursorX != 0) {
-                _startNewLine(session);
+                _startNewLine(session, [(endIdx: spanStartRune, startIdx: spanStartRune)]);
 
                 // let's pretend everything we just did never happened :)
                 session.layoutSpans.removeLast();
@@ -311,8 +332,8 @@ class Paragraph {
             continue;
           }
 
-        case _InsertNewlines(newlineCount: final newlineCount):
-          _startNewLine(session, newlineCount);
+        case _InsertNewlines(breakIndices: final breakIndices):
+          _startNewLine(session, breakIndices);
       }
     }
 
@@ -321,7 +342,7 @@ class Paragraph {
     }
 
     if (session.state.currentLineWidth != 0 || session.state.currentLineHeight != 0) {
-      _startNewLine(session);
+      _startNewLine(session, [(endIdx: session.layoutSpans.last.endRune, startIdx: 0)]);
     }
 
     malloc.free(features);
@@ -334,9 +355,9 @@ class Paragraph {
     );
   }
 
-  bool _shapeSpan(_LayoutSession session, _LayoutSpan shapedSpan, int spanIdx) {
+  bool _shapeSpan(_LayoutSession session, _LayoutSpan layoutSpan, int spanIdx) {
     final state = session.state;
-    final span = shapedSpan.content;
+    final span = layoutSpan.content;
 
     final spanSize = span.style.fontSize;
     final spanFont = session.fontLookup(span.style.fontFamily).fontForStyle(span.style);
@@ -365,14 +386,12 @@ class Paragraph {
         ShapedGlyph._(
           spanFont,
           glyphInfo[i].codepoint,
-          (
-            x: state.cursorX + hbToPixels(glyphPos[i].x_offset).toDouble(),
-            y: state.cursorY + hbToPixels(glyphPos[i].y_offset).toDouble(),
-          ),
+          (x: state.cursorX, y: state.cursorY),
+          (x: hbToPixels(glyphPos[i].x_offset).toDouble(), y: hbToPixels(glyphPos[i].y_offset).toDouble()),
           (x: hbToPixels(glyphPos[i].x_advance).toDouble(), y: hbToPixels(glyphPos[i].y_advance).toDouble()),
           spanIdx,
-          glyphInfo[i].cluster,
-          shapedSpan.lineIdx,
+          layoutSpan.startRune + glyphInfo[i].cluster,
+          layoutSpan.lineIdx,
         ),
       );
 
@@ -382,7 +401,7 @@ class Paragraph {
 
     harfbuzz.buffer_destroy(buffer);
 
-    shapedSpan.shapedGlyphs = shapedGlyphs;
+    layoutSpan.shapedGlyphs = shapedGlyphs;
 
     if (state.cursorX > session.maxWidth) {
       return false;
@@ -406,7 +425,7 @@ class Paragraph {
     return true;
   }
 
-  void _startNewLine(_LayoutSession session, [int breakCount = 1]) {
+  void _startNewLine(_LayoutSession session, List<_LineBreakIndices> breaks) {
     final state = session.state;
 
     session.initialBaselineY ??= state.currentLineBaseline;
@@ -414,26 +433,40 @@ class Paragraph {
     session.paragraphHeight = session.initialBaselineY! + state.cursorY + state.currentLineDescender;
 
     state.cursorX = 0;
-    state.cursorY += state.currentLineHeight.ceil() * breakCount;
+    state.cursorY += state.currentLineHeight.ceil() * breaks.length;
 
-    session.lineMetrics.add(LineMetrics(width: state.currentLineWidth, height: state.currentLineHeight));
+    for (final lineBreak in breaks) {
+      session.lineMetrics.add(
+        LineMetrics(
+          width: state.currentLineWidth,
+          height: state.currentLineHeight,
+          startRune: session.state.currentLineStartIdx,
+          endRune: lineBreak.endIdx,
+        ),
+      );
+      session.state.currentLineStartIdx = lineBreak.startIdx;
+    }
 
     state.currentLineWidth = 0;
     state.currentLineHeight = 0;
     state.currentLineBaseline = 0;
   }
 
-  double _charIdxToClusterPos(List<ShapedGlyph> glyphs, int charIdx) {
-    if (glyphs.isEmpty || charIdx == 0) return 0;
+  ShapedGlyph? _getGlyphForCluster(List<ShapedGlyph> glyphs, int charIdx) {
+    if (glyphs.isEmpty) return null;
+    if (charIdx == 0) return glyphs.first;
 
-    var pos = 0.0;
+    for (var glyphIdx = 0; glyphIdx < glyphs.length; glyphIdx++) {
+      final glyph = glyphs[glyphIdx];
 
-    for (var glyphIdx = 0; glyphIdx < glyphs.length && glyphs[glyphIdx].cluster < charIdx; glyphIdx++) {
-      var glyph = glyphs[glyphIdx];
-      pos += glyph.advance.x;
+      if (glyph.cluster == charIdx) {
+        return glyph;
+      } else if (glyph.cluster > charIdx) {
+        return glyphs[glyphIdx - 1];
+      }
     }
 
-    return pos;
+    return glyphs.last;
   }
 
   @override
@@ -466,6 +499,7 @@ class _LayoutState {
   double currentLineHeight;
   double currentLineBaseline;
   double currentLineDescender;
+  int currentLineStartIdx;
 
   _LayoutState({
     this.cursorX = 0,
@@ -474,6 +508,7 @@ class _LayoutState {
     this.currentLineHeight = 0,
     this.currentLineBaseline = 0,
     this.currentLineDescender = 0,
+    this.currentLineStartIdx = 0,
   });
 
   void setFrom(_LayoutState source) {
@@ -483,6 +518,7 @@ class _LayoutState {
     currentLineHeight = source.currentLineHeight;
     currentLineBaseline = source.currentLineBaseline;
     currentLineDescender = source.currentLineDescender;
+    currentLineStartIdx = source.currentLineStartIdx;
   }
 
   _LayoutState copy() => _LayoutState(
@@ -492,6 +528,7 @@ class _LayoutState {
     currentLineHeight: currentLineHeight,
     currentLineBaseline: currentLineBaseline,
     currentLineDescender: currentLineDescender,
+    currentLineStartIdx: currentLineStartIdx,
   );
 }
 
@@ -501,27 +538,40 @@ class _LayoutSpan {
   final _LayoutState stateBeforeShaping;
   final int lineIdx;
 
+  final int startRune;
+  int get endRune => startRune + content.content.length;
+
   late List<ShapedGlyph> shapedGlyphs;
 
   (_LayoutSpan, Span) split(int at, {bool keepSplit = true}) {
     final (leftSpan, rightSpan) = content._split(at, keepSplit: keepSplit);
     final leftBreakPoints = DoubleLinkedQueue.of(possibleBreakPoints.takeWhile((value) => value < at));
 
-    return (_LayoutSpan(leftSpan, leftBreakPoints, stateBeforeShaping, lineIdx), rightSpan);
+    return (_LayoutSpan(leftSpan, leftBreakPoints, stateBeforeShaping, lineIdx, startRune), rightSpan);
   }
 
-  _LayoutSpan(this.content, this.possibleBreakPoints, this.stateBeforeShaping, this.lineIdx);
+  _LayoutSpan(this.content, this.possibleBreakPoints, this.stateBeforeShaping, this.lineIdx, this.startRune);
 }
 
 class ShapedGlyph {
   final Font font;
   final int index;
   final ({double x, double y}) position;
+  final ({double x, double y}) drawOffset;
   final ({double x, double y}) advance;
   final int _spanIndex;
   final int cluster;
   final int line;
-  ShapedGlyph._(this.font, this.index, this.position, this.advance, this._spanIndex, this.cluster, this.line);
+  ShapedGlyph._(
+    this.font,
+    this.index,
+    this.position,
+    this.drawOffset,
+    this.advance,
+    this._spanIndex,
+    this.cluster,
+    this.line,
+  );
 }
 
 class ParagraphMetrics {
@@ -545,8 +595,9 @@ class ParagraphMetrics {
 
 class LineMetrics {
   final double width, height;
-  LineMetrics({required this.width, required this.height});
+  final int startRune, endRune;
+  LineMetrics({required this.width, required this.height, required this.startRune, required this.endRune});
 
   @override
-  String toString() => 'LineMetrics(width=$width, height=$height)';
+  String toString() => 'LineMetrics(width=$width, height=$height, startRune=$startRune, endRune=$endRune)';
 }

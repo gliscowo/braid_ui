@@ -4,6 +4,7 @@ import 'dart:ffi' as ffi;
 import 'dart:io';
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:dart_glfw/dart_glfw.dart';
 import 'package:dart_opengl/dart_opengl.dart';
 import 'package:diamond_gl/diamond_gl.dart';
@@ -257,7 +258,8 @@ class AppState implements InstanceHost, ProxyHost {
   MouseListener? _dragging;
   CursorStyle? _draggingCursorStyle;
   bool _dragStarted = false;
-  KeyboardListener? _focused;
+
+  List<KeyboardListener> _focused = [];
 
   final List<StreamSubscription> _subscriptions = [];
   bool _running = true;
@@ -320,12 +322,22 @@ class AppState implements InstanceHost, ProxyHost {
           _dragStarted = false;
         }
 
-        final nowFocused = state.firstWhere((hit) => hit.instance is KeyboardListener)?.instance as KeyboardListener?;
-        if (nowFocused != _focused) {
-          _focused?.onFocusLost();
-          _focused = nowFocused;
-          _focused?.onFocusGained();
+        final nowFocused = <KeyboardListener>[];
+        for (final listener in state.occludedTrace.map((e) => e.instance).whereType<KeyboardListener>()) {
+          nowFocused.add(listener);
+
+          if (_focused.contains(listener)) {
+            _focused.remove(listener);
+          } else {
+            listener.onFocusGained();
+          }
         }
+
+        for (final noLongerFocused in _focused) {
+          noLongerFocused.onFocusLost();
+        }
+
+        _focused = nowFocused;
       }),
       window.onMouseMove.listen((event) {
         if (_dragging == null) return;
@@ -397,17 +409,18 @@ node [shape="box"];
 
         if (event.action == glfwPress && event.key == glfwKeyI && (event.mods & (glfwModControl | glfwModShift)) != 0) {
           _inspector.activate();
+          return;
         }
 
         if (event.action == glfwPress || event.action == glfwRepeat) {
-          _focused?.onKeyDown(event.key, event.mods);
+          _focused.firstWhereOrNull((listener) => listener.onKeyDown(event.key, event.mods));
         } else if (event.action == glfwRelease) {
-          _focused?.onKeyUp(event.key, event.mods);
+          _focused.firstWhereOrNull((listener) => listener.onKeyUp(event.key, event.mods));
         }
       }),
       // ---
-      window.onChar.listen((event) {
-        _focused?.onChar(event, 0);
+      window.onCharMods.listen((event) {
+        _focused.firstWhereOrNull((listener) => listener.onChar(event.codepoint, event.mods));
       }),
     ]);
   }
