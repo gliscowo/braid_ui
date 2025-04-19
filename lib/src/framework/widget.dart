@@ -1,9 +1,11 @@
+import 'package:diamond_gl/diamond_gl.dart';
 import 'package:meta/meta.dart';
 
 import 'instance.dart';
 import 'proxy.dart';
 
 abstract interface class BuildContext {
+  Window get window;
   T? dependOnAncestor<T extends Widget>();
 }
 

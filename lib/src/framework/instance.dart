@@ -115,7 +115,7 @@ class HitTestState {
 }
 
 mixin MouseListener<T extends InstanceWidget> on WidgetInstance<T> {
-  CursorStyle? cursorStyleAt(double x, double y);
+  CursorStyle? cursorStyleAt(double x, double y) => null;
 
   bool onMouseDown(double x, double y) => false;
   void onMouseEnter() {}
@@ -186,7 +186,12 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
 
   // ---
 
+  bool debugHighlighted = false;
+
+  // ---
+
   Constraints? _constraints;
+  Constraints? get constraints => _constraints;
 
   bool _needsLayout = false;
   bool get needsLayout => _needsLayout;
@@ -269,8 +274,6 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
   @protected
   WidgetTransform createTransform() => WidgetTransform();
 
-  Constraints? get constraints => _constraints;
-
   @override
   void visitChildren(WidgetInstanceVisitor visitor);
 
@@ -297,11 +300,11 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
   Matrix4 computeGlobalTransform() {
     final result = Matrix4.identity();
 
-    for (final ancestor in this.ancestors.toList().reversed) {
+    result.multiply(transform.toWidget);
+
+    for (final ancestor in this.ancestors) {
       result.multiply(ancestor.transform.toWidget);
     }
-
-    result.multiply(transform.toWidget);
 
     return result;
   }
@@ -345,6 +348,16 @@ mixin ChildRenderer<T extends InstanceWidget> on WidgetInstance<T> {
   void drawChild(DrawContext ctx, WidgetInstance child) {
     ctx.transform.scopedTransform(child.transform.transformToParent, (mat4) {
       child.draw(ctx);
+
+      if (child.debugHighlighted) {
+        ctx.primitives.rect(
+          child.transform.width,
+          child.transform.height,
+          Color.rgb(0xFFD63A).copyWith(a: .5),
+          ctx.transform,
+          ctx.projection,
+        );
+      }
     });
 
     if (ctx.drawBoundingBoxes) {

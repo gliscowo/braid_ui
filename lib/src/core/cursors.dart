@@ -11,10 +11,12 @@ sealed class CursorStyle {
   static const text = _SystemCursorStyle(glfwIbeamCursor);
   static const hand = _SystemCursorStyle(glfwHandCursor);
   static const move = _SystemCursorStyle(glfwResizeAllCursor);
+  static const crosshair = _SystemCursorStyle(glfwCrosshairCursor);
   static const horizontalResize = _SystemCursorStyle(glfwHresizeCursor);
   static const verticalResize = _SystemCursorStyle(glfwVresizeCursor);
   static const nwseResize = _SystemCursorStyle(glfwResizeNwseCursor);
   static const neswResize = _SystemCursorStyle(glfwResizeNeswCursor);
+  static const notAllowed = _SystemCursorStyle(glfwNotAllowedCursor);
 
   factory CursorStyle.custom(Image image, int hotspotX, int hotspotY) = _CustomCursorStyle.new;
 

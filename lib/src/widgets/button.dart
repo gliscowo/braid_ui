@@ -12,6 +12,17 @@ class DefaultButtonStyle extends InheritedWidget {
 
   DefaultButtonStyle({required this.style, required super.child});
 
+  static Widget merge({required ButtonStyle style, required Widget child}) {
+    return Builder(
+      builder: (context) {
+        final contextStyle = maybeOf(context);
+        final effectiveStyle = contextStyle != null ? style.overriding(contextStyle) : style;
+
+        return DefaultButtonStyle(style: effectiveStyle, child: child);
+      },
+    );
+  }
+
   @override
   bool mustRebuildDependents(DefaultButtonStyle newWidget) => newWidget.style != style;
 

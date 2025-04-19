@@ -38,12 +38,6 @@ class _DragArenaInstance extends MultiChildWidgetInstance<DragArena> {
   _DragArenaInstance({required super.widget});
 
   @override
-  set widget(DragArena value) {
-    super.widget = value;
-    markNeedsLayout();
-  }
-
-  @override
   W adopt<W extends WidgetInstance?>(W child) {
     if (child?.parentData is! DragParentData) {
       child?.parentData = DragParentData(x: 0, y: 0);

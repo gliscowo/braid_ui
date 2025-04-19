@@ -533,6 +533,8 @@ class TransformInstance extends SingleChildWidgetInstance<Transform> with Shrink
     }
 
     super.widget = value;
+    (transform as CustomWidgetTransform).matrix = widget.matrix;
+
     markNeedsLayout();
   }
 
@@ -575,7 +577,7 @@ class Clip extends SingleChildInstanceWidget {
   final bool clipHitTest;
   final bool clipDrawing;
 
-  const Clip({super.key, this.clipHitTest = false, this.clipDrawing = true, required super.child});
+  const Clip({super.key, this.clipHitTest = true, this.clipDrawing = true, required super.child});
 
   @override
   ClipInstance instantiate() => ClipInstance(widget: this);
@@ -597,10 +599,12 @@ class ClipInstance extends SingleChildWidgetInstance<Clip> with ShrinkWrapLayout
   @override
   void draw(DrawContext ctx) {
     if (!widget.clipDrawing) {
+      super.draw(ctx);
       return;
     }
 
-    final scissorBox = Aabb3.copy(transform.aabb)..transform(ctx.transform);
+    final scissorBox = Aabb3.minMax(Vector3.zero(), Vector3(transform.width, transform.height, 0))
+      ..transform(ctx.transform);
     gl.scissor(
       scissorBox.min.x.toInt(),
       ctx.renderContext.window.height - scissorBox.min.y.toInt() - scissorBox.height.toInt(),
@@ -694,8 +698,8 @@ class BuilderProxy extends ComposedProxy with SingleChildWidgetProxy {
 
   @override
   void doRebuild() {
-    super.doRebuild();
     child = refreshChild(child, (widget as Builder).builder(this), slot);
+    super.doRebuild();
   }
 }
 

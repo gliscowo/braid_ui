@@ -19,6 +19,8 @@ import '../framework/widget.dart';
 import '../primitive_renderer.dart';
 import '../resources.dart';
 import '../text/text_renderer.dart';
+import '../widgets/basic.dart';
+import '../widgets/inspector.dart';
 import 'constraints.dart';
 import 'cursors.dart';
 import 'math.dart';
@@ -216,12 +218,28 @@ class _RootInstance extends SingleChildWidgetInstance with ShrinkWrapLayout {
   _RootInstance({required super.widget});
 }
 
+class _UserRoot extends VisitorWidget {
+  final void Function(WidgetProxy userRootProxy) proxyCallback;
+  final void Function(WidgetInstance userRootInstance) instanceCallback;
+
+  const _UserRoot({required this.proxyCallback, required this.instanceCallback, required super.child});
+
+  @override
+  VisitorProxy<VisitorWidget> proxy() {
+    final proxy = VisitorProxy<_UserRoot>(this, (widget, instance) => widget.instanceCallback(instance));
+    proxyCallback(proxy);
+
+    return proxy;
+  }
+}
+
 // ---
 
 class AppState implements InstanceHost, ProxyHost {
   final BraidResources resources;
   final Logger? logger;
 
+  @override
   final Window window;
   final CursorController cursorController;
   final Matrix4 projection;
@@ -246,6 +264,7 @@ class AppState implements InstanceHost, ProxyHost {
 
   // --- debug properties ---
 
+  final BraidInspector _inspector;
   bool debugDrawInstanceBoxes = false;
 
   // ------------------------
@@ -259,8 +278,20 @@ class AppState implements InstanceHost, ProxyHost {
     this.primitives,
     Widget root, {
     this.logger,
-  }) : cursorController = CursorController.ofWindow(window) {
-    _root = _RootWidget(child: root, rootBuildScope: _rootBuildScope).proxy();
+  }) : cursorController = CursorController.ofWindow(window),
+       _inspector = BraidInspector() {
+    _root =
+        _RootWidget(
+          child: InspectableTree(
+            inspector: _inspector,
+            tree: _UserRoot(
+              proxyCallback: (userRootProxy) => _inspector.rootProxy = userRootProxy,
+              instanceCallback: (userRootInstance) => _inspector.rootInstance = userRootInstance,
+              child: root,
+            ),
+          ),
+          rootBuildScope: _rootBuildScope,
+        ).proxy();
     _root.bootstrap(this, this);
     scheduleLayout(rootInstance);
 
@@ -289,9 +320,12 @@ class AppState implements InstanceHost, ProxyHost {
           _dragStarted = false;
         }
 
-        _focused?.onFocusLost();
-        _focused = state.firstWhere((instance) => instance is KeyboardListener)?.instance as KeyboardListener?;
-        _focused?.onFocusGained();
+        final nowFocused = state.firstWhere((hit) => hit.instance is KeyboardListener)?.instance as KeyboardListener?;
+        if (nowFocused != _focused) {
+          _focused?.onFocusLost();
+          _focused = nowFocused;
+          _focused?.onFocusGained();
+        }
       }),
       window.onMouseMove.listen((event) {
         if (_dragging == null) return;
@@ -361,6 +395,10 @@ node [shape="box"];
             });
         }
 
+        if (event.action == glfwPress && event.key == glfwKeyI && (event.mods & (glfwModControl | glfwModShift)) != 0) {
+          _inspector.activate();
+        }
+
         if (event.action == glfwPress || event.action == glfwRepeat) {
           _focused?.onKeyDown(event.key, event.mods);
         } else if (event.action == glfwRelease) {
@@ -427,7 +465,7 @@ node [shape="box"];
       );
 
       if (cursorStyleSource != null) {
-        activeStyle = (cursorStyleSource.instance as MouseListener?)?.cursorStyleAt(
+        activeStyle = (cursorStyleSource.instance as MouseListener).cursorStyleAt(
           cursorStyleSource.coordinates.x,
           cursorStyleSource.coordinates.y,
         );
@@ -442,8 +480,8 @@ node [shape="box"];
 
     _root.reassemble();
 
-    final elapesd = watch.elapsedMicroseconds;
-    logger?.fine('completed full app rebuild in ${elapesd}us');
+    final elapsed = watch.elapsedMicroseconds;
+    logger?.fine('completed full app rebuild in ${elapsed}us');
   }
 
   // TODO: there should be a separate function that doesn't go

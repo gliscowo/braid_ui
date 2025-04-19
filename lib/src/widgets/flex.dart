@@ -43,6 +43,11 @@ enum LayoutAxis {
     LayoutAxis.vertical => vertical,
   };
 
+  T chooseCompute<T>(T Function() horizontal, T Function() vertical) => switch (this) {
+    LayoutAxis.horizontal => horizontal(),
+    LayoutAxis.vertical => vertical(),
+  };
+
   Size createSize(double extent, double crossExtent) => switch (this) {
     LayoutAxis.horizontal => Size(extent, crossExtent),
     LayoutAxis.vertical => Size(crossExtent, extent),
@@ -103,12 +108,13 @@ enum CrossAxisAlignment {
   center,
   stretch;
 
-  double _computeChildOffset(double freeSpace) => switch (this) {
-    CrossAxisAlignment.stretch => 0,
-    CrossAxisAlignment.start => 0,
-    CrossAxisAlignment.center => (freeSpace / 2).floorToDouble(),
-    CrossAxisAlignment.end => freeSpace,
-  };
+  double _computeChildOffset(double freeSpace) =>
+      (switch (this) {
+        CrossAxisAlignment.stretch => 0,
+        CrossAxisAlignment.start => 0,
+        CrossAxisAlignment.center => freeSpace / 2,
+        CrossAxisAlignment.end => freeSpace,
+      }).floorToDouble();
 }
 
 enum MainAxisAlignment {

@@ -355,6 +355,8 @@ class TextRenderer {
     }
 
     for (final shapedGlyph in text.glyphs) {
+      // if (shapedGlyph.line >= lineOffsets.length) continue;
+
       final glyphStyle = text.styleFor(shapedGlyph);
       final glyph = shapedGlyph.font.getGlyph(shapedGlyph.index, glyphStyle.fontSize);
       final glyphColor = glyphStyle.color;

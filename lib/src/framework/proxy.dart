@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:diamond_gl/diamond_gl.dart';
 import 'package:meta/meta.dart';
 
 import 'instance.dart';
@@ -41,6 +42,7 @@ mixin NodeWithDepth {
 typedef AnimationCallback = void Function(double delta);
 
 abstract interface class ProxyHost {
+  Window get window;
   void scheduleAnimationCallback(AnimationCallback callback);
 }
 
@@ -116,6 +118,9 @@ sealed class WidgetProxy with NodeWithDepth implements BuildContext, Comparable<
 
   ProxyHost? _host;
   ProxyHost? get host => _host;
+
+  @override
+  Window get window => _host!.window;
 
   ProxyLifecycle lifecycle = ProxyLifecycle.initial;
 
@@ -381,8 +386,8 @@ class InheritedProxy extends ComposedProxy {
 
   @override
   void doRebuild() {
-    super.doRebuild();
     child = refreshChild(child, (widget as InheritedWidget).child, slot);
+    super.doRebuild();
   }
 }
 
@@ -404,9 +409,9 @@ class StatelessProxy extends ComposedProxy {
   @override
   void doRebuild() {
     final newWidget = (widget as StatelessWidget).build(this);
-    super.doRebuild();
-
     child = refreshChild(child, newWidget, slot);
+
+    super.doRebuild();
   }
 }
 
@@ -447,9 +452,9 @@ class StatefulProxy extends ComposedProxy {
   @override
   void doRebuild() {
     final newWidget = _state.build(this);
-    super.doRebuild();
-
     child = refreshChild(child, newWidget, slot);
+
+    super.doRebuild();
   }
 }
 
@@ -488,12 +493,6 @@ class SingleChildInstanceWidgetProxy extends InstanceWidgetProxy with SingleChil
   SingleChildWidgetInstance get instance => (super.instance as SingleChildWidgetInstance);
 
   @override
-  void mount(WidgetProxy parent, Object? slot) {
-    super.mount(parent, slot);
-    rebuild();
-  }
-
-  @override
   void updateWidget(SingleChildInstanceWidget newWidget) {
     super.updateWidget(newWidget);
     rebuild(force: true);
@@ -516,12 +515,6 @@ class OptionalChildInstanceWidgetProxy extends InstanceWidgetProxy with SingleCh
 
   @override
   OptionalChildWidgetInstance get instance => (super.instance as OptionalChildWidgetInstance);
-
-  @override
-  void mount(WidgetProxy parent, Object? slot) {
-    super.mount(parent, slot);
-    rebuild();
-  }
 
   @override
   void updateWidget(OptionalChildInstanceWidget newWidget) {
@@ -565,12 +558,6 @@ class MultiChildInstanceWidgetProxy extends InstanceWidgetProxy {
   }
 
   @override
-  void mount(WidgetProxy parent, Object? slot) {
-    super.mount(parent, slot);
-    rebuild();
-  }
-
-  @override
   void updateWidget(MultiChildInstanceWidget newWidget) {
     super.updateWidget(newWidget);
     rebuild(force: true);
@@ -578,7 +565,6 @@ class MultiChildInstanceWidgetProxy extends InstanceWidgetProxy {
 
   @override
   void doRebuild() {
-    instance.widget = widget as MultiChildInstanceWidget;
     final newWidgets = (widget as MultiChildInstanceWidget).children;
 
     var newChildrenTop = 0;
@@ -705,13 +691,7 @@ class MultiChildInstanceWidgetProxy extends InstanceWidgetProxy {
 }
 
 class LeafInstanceWidgetProxy extends InstanceWidgetProxy {
-  LeafInstanceWidgetProxy(super.widget);
-
-  @override
-  void mount(WidgetProxy parent, Object? slot) {
-    super.mount(parent, slot);
-    rebuild();
-  }
+  LeafInstanceWidgetProxy(LeafInstanceWidget super.widget);
 
   @override
   void visitChildren(WidgetProxyVisitor visitor) {}

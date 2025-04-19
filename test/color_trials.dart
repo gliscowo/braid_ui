@@ -8,11 +8,13 @@ import 'package:braid_ui/src/baked_assets.g.dart';
 import 'package:braid_ui/src/framework/proxy.dart';
 import 'package:braid_ui/src/framework/widget.dart';
 import 'package:braid_ui/src/widgets/basic.dart';
+import 'package:braid_ui/src/widgets/collapsible.dart';
 import 'package:braid_ui/src/widgets/drag_arena.dart';
 import 'package:braid_ui/src/widgets/icon.dart';
 import 'package:braid_ui/src/widgets/slider.dart';
 import 'package:braid_ui/src/widgets/split_pane.dart';
 import 'package:braid_ui/src/widgets/stack.dart';
+import 'package:braid_ui/src/widgets/text_field.dart';
 import 'package:braid_ui/src/widgets/window.dart';
 import 'package:diamond_gl/diamond_gl.dart' hide Window;
 import 'package:endec/endec.dart';
@@ -91,7 +93,7 @@ class AppBody extends StatefulWidget {
   WidgetState<AppBody> createState() => _AppBodyState();
 }
 
-enum Test { checkboxes, cursors, textWrapping }
+enum Test { checkboxes, cursors, textWrapping, textInput, collapsible }
 
 class _AppBodyState extends WidgetState<AppBody> {
   static final _windowEndec = structEndec<(String, WindowController)>().with2Fields(
@@ -142,6 +144,8 @@ class _AppBodyState extends WidgetState<AppBody> {
                             Test.checkboxes => const [CheckBoxesTest()],
                             Test.cursors => const [CursorTest()],
                             Test.textWrapping => const [TextWrappingTest()],
+                            Test.textInput => const [TextInputTest()],
+                            Test.collapsible => const [CollapsibleTest()],
                           },
                         ),
                       ),
@@ -350,6 +354,71 @@ class TextWrappingTest extends StatelessWidget {
   }
 }
 
+class TextInputTest extends StatelessWidget {
+  const TextInputTest({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Sized(height: 35, width: 250, child: RawTextField());
+  }
+}
+
+class CollapsibleTest extends StatelessWidget {
+  const CollapsibleTest({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Expanded(
+      child: Align(
+        alignment: Alignment.top,
+        child: CollapsibleThing(
+          title: Text(text: 'collapsible thing'),
+          content: Column(
+            children: [
+              CollapsibleThing(
+                title: Text(text: 'a'),
+                content: CollapsibleThing(
+                  title: Text(text: 'd'),
+                  content: CollapsibleThing(title: Text(text: 'c'), content: Panel(color: Color.white)),
+                ),
+              ),
+              Row(children: [Icon(icon: Icons.fiber_manual_record), Text(text: 'just some text')]),
+              CollapsibleThing(title: Text(text: 'b'), content: Panel(color: Color.blue)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class CollapsibleThing extends StatefulWidget {
+  final Widget title;
+  final Widget content;
+
+  const CollapsibleThing({super.key, required this.title, required this.content});
+
+  @override
+  WidgetState<CollapsibleThing> createState() => _CollapsibleTestState();
+}
+
+class _CollapsibleTestState extends WidgetState<CollapsibleThing> {
+  bool collapsed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Collapsible(
+      collapsed: collapsed,
+      onToggled:
+          (nowCollapsed) => setState(() {
+            collapsed = nowCollapsed;
+          }),
+      title: widget.title,
+      content: Sized(width: 100, height: 100, child: widget.content),
+    );
+  }
+}
+
 class ColorSlider extends StatefulWidget {
   final Color from;
   final Color to;
@@ -442,8 +511,9 @@ class _CheckboxState extends WidgetState<Checkbox> {
       enterCallback: () => setState(() => _hovered = true),
       exitCallback: () => setState(() => _hovered = false),
       cursorStyle: CursorStyle.hand,
-      child: Constrain(
-        constraints: const Constraints.only(minWidth: 20, minHeight: 20),
+      child: Sized(
+        width: 20,
+        height: 20,
         child: Panel(
           color:
               widget.checked

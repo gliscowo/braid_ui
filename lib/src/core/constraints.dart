@@ -24,6 +24,13 @@ class Constraints {
 
   Constraints asLoose() => isLoose ? this : Constraints(0, 0, maxWidth, maxHeight);
 
+  Constraints copy({double? minWidth, double? minHeight, double? maxWidth, double? maxHeight}) => Constraints(
+    minWidth ?? this.minWidth,
+    minHeight ?? this.minHeight,
+    maxWidth ?? this.maxWidth,
+    maxHeight ?? this.maxHeight,
+  );
+
   Constraints respecting(Constraints other) => Constraints(
     minWidth.clamp(other.minWidth, other.maxWidth),
     minHeight.clamp(other.minHeight, other.maxHeight),

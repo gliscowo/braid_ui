@@ -21,6 +21,9 @@ class Size {
   @literal
   const Size(this.width, this.height);
 
+  @literal
+  const Size.square(double size) : this(size, size);
+
   Size.max(Size a, Size b) : this(max(a.width, b.width), max(a.height, b.height));
 
   Size copy({double? width, double? height}) => Size(width ?? this.width, height ?? this.height);

@@ -103,15 +103,16 @@ class _WindowState extends WidgetState<Window> {
                                     (_, _) => setState(() {
                                       controller.expanded = !controller.expanded;
                                     }),
-                                child: Icon(icon: controller.expanded ? Icons.arrow_drop_up : Icons.arrow_drop_down),
+                                child: Icon(icon: controller.expanded ? Icons.arrow_drop_down : Icons.arrow_drop_up),
                               ),
                             Text(text: widget.title, style: TextStyle(fontSize: 14.0, bold: true)),
                             Flexible(child: Padding(insets: Insets.zero)),
-                            MouseArea(
-                              cursorStyle: CursorStyle.hand,
-                              clickCallback: (_, _) => widget.onClose?.call(),
-                              child: Icon(icon: Icons.close, size: 18),
-                            ),
+                            if (widget.onClose != null)
+                              MouseArea(
+                                cursorStyle: CursorStyle.hand,
+                                clickCallback: (_, _) => widget.onClose?.call(),
+                                child: Icon(icon: Icons.close, size: 18),
+                              ),
                           ],
                         ),
                       ),
@@ -142,7 +143,7 @@ class _WindowState extends WidgetState<Window> {
     final result = <_WindowEdge>{};
 
     if (y < 10) result.add(_WindowEdge.top);
-    if (y > controller.size.height + 10) result.add(_WindowEdge.bottom);
+    if (y > controller.size.height + 10 + 25) result.add(_WindowEdge.bottom);
 
     if (x < 10) result.add(_WindowEdge.left);
     if (x > controller.size.width + 10) result.add(_WindowEdge.right);

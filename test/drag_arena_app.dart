@@ -125,7 +125,6 @@ class _PanArenaState extends WidgetState<PanArena> {
   @override
   Widget build(BuildContext context) {
     return Clip(
-      clipHitTest: true,
       child: MouseArea(
         cursorStyle: CursorStyle.move,
         dragCallback: (_, _, dx, dy) {

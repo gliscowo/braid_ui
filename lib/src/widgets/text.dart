@@ -88,6 +88,14 @@ class DefaultTextStyle extends InheritedWidget {
   final TextStyle style;
   const DefaultTextStyle({super.key, required this.style, required super.child});
 
+  static Widget merge({required TextStyle style, required Widget child}) {
+    return Builder(
+      builder: (context) {
+        return DefaultTextStyle(style: style.overriding(of(context)), child: child);
+      },
+    );
+  }
+
   @override
   bool mustRebuildDependents(DefaultTextStyle newWidget) => newWidget.style != style;
 
