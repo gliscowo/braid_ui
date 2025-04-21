@@ -143,14 +143,28 @@ class RawText extends LeafInstanceWidget {
 }
 
 class RawTextInstance extends LeafWidgetInstance<RawText> {
-  Paragraph _styledText;
+  Paragraph _paragraph;
 
-  RawTextInstance({required super.widget}) : _styledText = Paragraph(widget.spans);
+  RawTextInstance({required super.widget}) : _paragraph = Paragraph(widget.spans);
+
+  @override
+  set widget(RawText value) {
+    final spansComp = Span.comapreLists(widget.spans, value.spans);
+    if (spansComp == SpanComparison.equal && widget.alignment == value.alignment) return;
+
+    super.widget = value;
+    if (spansComp == SpanComparison.visualsChanged) {
+      _paragraph.updateSpans(value.spans);
+    } else {
+      _paragraph = Paragraph(widget.spans);
+      markNeedsLayout();
+    }
+  }
 
   @override
   void draw(DrawContext ctx) {
     ctx.textRenderer.drawText(
-      _styledText,
+      _paragraph,
       widget.alignment,
       transform.toSize(),
       ctx.transform,
@@ -162,23 +176,9 @@ class RawTextInstance extends LeafWidgetInstance<RawText> {
   @override
   void doLayout(Constraints constraints) {
     final size = host!.textRenderer
-        .layoutParagraph(_styledText, widget.softWrap ? constraints.maxWidth : double.infinity)
+        .layoutParagraph(_paragraph, widget.softWrap ? constraints.maxWidth : double.infinity)
         .size
         .constrained(constraints);
     transform.setSize(size.ceil());
-  }
-
-  @override
-  set widget(RawText value) {
-    final spansComp = Span.comapreLists(widget.spans, value.spans);
-    if (spansComp == SpanComparison.equal && widget.alignment == value.alignment) return;
-
-    super.widget = value;
-    if (spansComp == SpanComparison.visualsChanged) {
-      _styledText.updateSpans(value.spans);
-    } else {
-      _styledText = Paragraph(widget.spans);
-      markNeedsLayout();
-    }
   }
 }

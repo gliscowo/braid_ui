@@ -1,7 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:analyzer/dart/analysis/utilities.dart';
+import 'package:analyzer/dart/ast/token.dart';
 import 'package:braid_ui/braid_ui.dart';
 import 'package:braid_ui/src/animation/lerp.dart';
 import 'package:braid_ui/src/baked_assets.g.dart';
@@ -11,6 +14,7 @@ import 'package:braid_ui/src/widgets/basic.dart';
 import 'package:braid_ui/src/widgets/collapsible.dart';
 import 'package:braid_ui/src/widgets/drag_arena.dart';
 import 'package:braid_ui/src/widgets/icon.dart';
+import 'package:braid_ui/src/widgets/scroll.dart';
 import 'package:braid_ui/src/widgets/slider.dart';
 import 'package:braid_ui/src/widgets/split_pane.dart';
 import 'package:braid_ui/src/widgets/stack.dart';
@@ -345,7 +349,7 @@ class TextWrappingTest extends StatelessWidget {
             ],
           ),
           rightChild: Text(
-            text: 'this is simply some normal text that i\'d like to see',
+            text: 'this is simply some\n\nnormal text that i\'d like to see',
             style: TextStyle(alignment: Alignment.bottomRight),
           ),
         ),
@@ -354,12 +358,127 @@ class TextWrappingTest extends StatelessWidget {
   }
 }
 
-class TextInputTest extends StatelessWidget {
+class TextInputTest extends StatefulWidget {
   const TextInputTest({super.key});
 
   @override
+  WidgetState<TextInputTest> createState() => _TextInputTestState();
+}
+
+class DartController extends TextEditingController {
+  @override
+  List<Span> createSpans(SpanStyle baseStyle) {
+    final parseResult = parseString(content: text, throwIfDiagnostics: false);
+    Token? token = parseResult.unit.beginToken;
+
+    var spans = <Span>[];
+    int lastEnd = 0;
+    while (token != null && token != parseResult.unit.endToken) {
+      if (token.charOffset != lastEnd) {
+        spans.add(Span(text.substring(lastEnd, token.charOffset), baseStyle));
+      }
+
+      var style = baseStyle;
+      if (token.type.isKeyword ||
+          token.type == TokenType.SEMICOLON ||
+          token.type == TokenType.COMMA ||
+          token.type == TokenType.PERIOD ||
+          token.type == TokenType.PERIOD_PERIOD ||
+          token.type == TokenType.PERIOD_PERIOD_PERIOD ||
+          token.type == TokenType.COLON) {
+        style = style.copy(color: const Color.rgb(0x89DDFF));
+      } else if (token.type == TokenType.STRING) {
+        style = style.copy(color: const Color.rgb(0xFFECA0));
+      } else if (token.type == TokenType.OPEN_CURLY_BRACKET ||
+          token.type == TokenType.CLOSE_CURLY_BRACKET ||
+          token.type == TokenType.OPEN_PAREN ||
+          token.type == TokenType.CLOSE_PAREN) {
+        style = style.copy(color: const Color.rgb(0x5060bb));
+      } else if (token.type == TokenType.FUNCTION) {
+        style = style.copy(color: const Color.rgb(0x57B2FF));
+      } else if (token.isOperator) {
+        style = style.copy(color: const Color.rgb(0xABC8FF));
+      } else if (token.type == TokenType.INT ||
+          token.type == TokenType.DOUBLE ||
+          token.type == TokenType.HEXADECIMAL ||
+          token.type == TokenType.HEXADECIMAL_WITH_SEPARATORS) {
+        style = style.copy(color: const Color.rgb(0xA0FFE0));
+      }
+
+      spans.add(Span(text.substring(token.charOffset, token.charEnd), style));
+      lastEnd = token.charEnd;
+
+      token = token.next;
+    }
+
+    if (text.length != lastEnd) {
+      spans.add(Span(text.substring(lastEnd, text.length), baseStyle));
+    }
+
+    if (spans.isEmpty) {
+      spans.add(Span('', baseStyle));
+    }
+
+    return spans;
+  }
+}
+
+class _TextInputTestState extends WidgetState<TextInputTest> {
+  final TextEditingController controller = TextEditingController();
+
+  Timer? blinkTimer;
+  bool showCursor = true;
+
+  @override
+  void init() {
+    blinkTimer = Timer.periodic(const Duration(milliseconds: 650), (_) {
+      setState(() {
+        showCursor = !showCursor;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    blinkTimer?.cancel();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Sized(height: 35, width: 250, child: RawTextField());
+    return Sized(
+      height: 450,
+      width: 500,
+      child: Panel(
+        color: const Color.rgb(0x202531),
+        cornerRadius: const CornerRadius.all(5),
+        child: Padding(
+          insets: const Insets.all(5),
+          child: Scrollable.vertical(
+            child: Constrain(
+              constraints: Constraints.only(minHeight: 450),
+              child: ListenableBuilder(
+                listenable: controller,
+                builder: (context, child) {
+                  return TextInput(
+                    controller: controller,
+                    showCursor: showCursor,
+                    softWrap: true,
+                    allowMultipleLines: true,
+                    style: const SpanStyle(
+                      color: Color.white,
+                      fontSize: 14,
+                      fontFamily: 'cascadia',
+                      bold: true,
+                      italic: false,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

@@ -27,6 +27,7 @@ dependencies:
 
   source_helper: any
   collection: ^1.19.1
+  unicode: ^1.1.8
 dev_dependencies:
   benchmark_harness: ^2.3.1
   intl: ^0.20.2
@@ -38,3 +39,4 @@ dev_dependencies:
   endec_json:
     hosted: https://pub.wispforest.io
     version: ^0.1.0
+  analyzer: ^7.4.1

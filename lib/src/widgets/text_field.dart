@@ -3,126 +3,471 @@ import 'dart:math';
 import 'package:dart_glfw/dart_glfw.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:ffi/ffi.dart';
+import 'package:unicode/unicode.dart';
 
+import '../context.dart';
+import '../core/constraints.dart';
 import '../core/cursors.dart';
+import '../core/key_modifiers.dart';
+import '../core/listenable.dart';
 import '../core/math.dart';
-import '../framework/proxy.dart';
+import '../framework/instance.dart';
 import '../framework/widget.dart';
+import '../text/text_layout.dart';
 import 'basic.dart';
-import 'container.dart';
-import 'stack.dart';
-import 'text.dart';
 
-class TextFieldController {
-  int cursorPosition;
-  String text;
+class TextSelection {
+  final int start, end;
 
-  TextFieldController({this.cursorPosition = 0, this.text = ''});
+  const TextSelection(this.start, this.end);
+  const TextSelection.collapsed(int cursorPosition) : start = cursorPosition, end = cursorPosition;
 
-  void insert(String insertion) {
-    final runes = text.runes.toList();
-    runes.insertAll(cursorPosition, insertion.runes);
+  int get lower => min(start, end);
+  int get upper => max(start, end);
 
-    text = String.fromCharCodes(runes);
-    cursorPosition += insertion.runes.length;
-  }
+  bool get collapsed => start == end;
 }
 
-class RawTextField extends StatefulWidget {
-  final TextFieldController? controller;
-  const RawTextField({super.key, this.controller});
+class TextEditingController with Listenable {
+  String _text;
+  TextSelection _selection;
 
-  @override
-  WidgetState<RawTextField> createState() => RawTextFieldState();
+  TextEditingController({String text = '', TextSelection selection = const TextSelection.collapsed(0)})
+    : _selection = selection,
+      _text = text;
+
+  String get text => _text;
+  set text(String value) {
+    if (_text == value) return;
+
+    _text = value;
+    notifyListeners();
+  }
+
+  TextSelection get selection => _selection;
+  set selection(TextSelection value) {
+    if (_selection == value) return;
+
+    _selection = value;
+    notifyListeners();
+  }
+
+  List<Span> createSpans(SpanStyle baseStyle) => [Span(_text, baseStyle)];
 }
 
-class RawTextFieldState extends WidgetState<RawTextField> {
-  late TextFieldController controller;
-  late BuildContext _lastContext;
+class TextInput extends LeafInstanceWidget {
+  final TextEditingController controller;
+  final bool showCursor;
+  final bool softWrap;
+  final bool allowMultipleLines;
+  final SpanStyle style;
+
+  TextInput({
+    super.key,
+    required this.controller,
+    required this.showCursor,
+    required this.softWrap,
+    required this.allowMultipleLines,
+    required this.style,
+  });
 
   @override
-  void init() {
-    super.init();
-    controller = widget.controller ?? TextFieldController();
+  LeafWidgetInstance<InstanceWidget> instantiate() => TextInputInstance(widget: this);
+}
+
+typedef _CursorLocation = ({int line, int rune});
+
+class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListener, MouseListener {
+  String _text;
+  TextSelection _selection;
+  _CursorLocation _cursorLocation = (line: 0, rune: 0);
+
+  late Paragraph _paragraph;
+
+  TextInputInstance({required super.widget}) : _text = widget.controller.text, _selection = widget.controller.selection;
+
+  @override
+  set widget(TextInput value) {
+    if (!(_text == value.controller.text &&
+        _selection == value.controller.selection &&
+        widget.softWrap == value.softWrap &&
+        widget.allowMultipleLines == value.allowMultipleLines &&
+        SpanStyle.compare(widget.style, value.style) == SpanComparison.equal)) {
+      _text = widget.controller.text;
+      _selection = widget.controller.selection;
+
+      markNeedsLayout();
+    }
+
+    super.widget = value;
   }
 
   @override
-  void didUpdateWidget(RawTextField oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.controller != null) {
-      controller = widget.controller!;
+  void doLayout(Constraints constraints) {
+    final width = constraints.hasBoundedWidth ? constraints.maxWidth : constraints.minWidth;
+
+    _paragraph = Paragraph(widget.controller.createSpans(widget.style));
+    host!.textRenderer.layoutParagraph(_paragraph, widget.softWrap ? width : double.infinity);
+
+    var size = Size(width, _paragraph.metrics.height).constrained(constraints);
+    transform.setSize(size);
+
+    final newLineIdx = _lineIdxAtRuneIdx(_selection.end);
+    _cursorLocation = (line: newLineIdx, rune: _selection.end - _paragraph.metrics.lineMetrics[newLineIdx].startRune);
+  }
+
+  LineMetrics get _currentLine => _paragraph.metrics.lineMetrics[_cursorLocation.line];
+
+  @override
+  void draw(DrawContext ctx) {
+    if (!_selection.collapsed) {
+      final startLine = _lineIdxAtRuneIdx(_selection.lower);
+      final endLine = _lineIdxAtRuneIdx(_selection.upper);
+
+      void drawSelection(int startRune, int endRune) {
+        final (startX, _, _) = _coordinatesAtRuneIdx(startRune);
+        final (endX, y, height) = _coordinatesAtRuneIdx(endRune);
+        ctx.transform.scope((mat4) {
+          mat4.translate(startX, y - height - 1);
+
+          var width = endX - startX;
+          if (startRune == endRune) width = 5;
+
+          ctx.primitives.rect(width, height + 2, const Color.rgb(0x3A59D1), mat4, ctx.projection);
+        });
+      }
+
+      if (startLine == endLine) {
+        drawSelection(_selection.lower, _selection.upper);
+      } else {
+        drawSelection(_selection.lower, _paragraph.metrics.lineMetrics[startLine].endRune);
+        for (var lineIdx = startLine + 1; lineIdx < endLine; lineIdx++) {
+          final line = _paragraph.metrics.lineMetrics[lineIdx];
+          drawSelection(line.startRune, line.endRune);
+        }
+        drawSelection(_paragraph.metrics.lineMetrics[startLine].startRune, _selection.upper);
+      }
+    }
+
+    ctx.textRenderer.drawText(_paragraph, Alignment.topLeft, transform.toSize(), ctx.transform, ctx.projection);
+
+    if (widget.showCursor) {
+      final (xPos, yPos, lineHeight) = _coordinatesAtRuneIdx(_selection.end);
+
+      ctx.transform.scope((mat4) {
+        mat4.translate(xPos, yPos);
+        ctx.primitives.rect(2, -lineHeight, Color.white, mat4, ctx.projection);
+      });
+    }
+
+    // final cursorParagraph = Paragraph([
+    //   Span(
+    //     'length: ${_text.length} cursor: ${_selection.lower}\n$_cursorLocation',
+    //     SpanStyle(color: const Color.rgb(0x94B4C1), fontSize: 10.0, fontFamily: 'cascadia', bold: false, italic: false),
+    //   ),
+    // ]);
+
+    // host!.textRenderer.layoutParagraph(cursorParagraph, transform.width);
+    // host!.textRenderer.drawText(
+    //   cursorParagraph,
+    //   Alignment.bottomRight,
+    //   transform.toSize(),
+    //   ctx.transform,
+    //   ctx.projection,
+    // );
+  }
+
+  int _lineIdxAtRuneIdx(int runeIdx) {
+    int? matchedLineIdx;
+    final lines = _paragraph.metrics.lineMetrics;
+
+    for (var lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+      final line = lines[lineIdx];
+      if (runeIdx >= line.startRune && runeIdx <= line.endRune) {
+        matchedLineIdx = lineIdx;
+
+        break;
+      }
+    }
+
+    return matchedLineIdx ?? lines.length - 1;
+  }
+
+  (double, double, double) _coordinatesAtRuneIdx(int runeIdx) {
+    final line = _paragraph.metrics.lineMetrics[_lineIdxAtRuneIdx(runeIdx)];
+
+    final cursorGlyph = runeIdx != line.startRune ? _paragraph.getGlyphForCharIndex(runeIdx - 1) : null;
+    final x = cursorGlyph != null ? cursorGlyph.position.x + cursorGlyph.advance.x : 0.0;
+
+    final y = line.yOffset + line.descender + _paragraph.metrics.initialBaselineY;
+
+    return (x, y, line.height);
+  }
+
+  double _computeCursorX() => _coordinatesAtRuneIdx(_selection.end).$1;
+
+  void _insert(String insertion) {
+    final runes = _text.runes.toList();
+    runes.replaceRange(_selection.lower, _selection.upper, insertion.runes);
+
+    widget.controller.text = String.fromCharCodes(runes);
+    widget.controller.selection = TextSelection.collapsed(_selection.lower + insertion.runes.length);
+  }
+
+  void _deleteSelection() => _insert('');
+
+  void _moveCursorVertically(int byLines, bool selecting) {
+    final newLineIdx = (_cursorLocation.line + byLines).clamp(0, _paragraph.metrics.lineMetrics.length - 1);
+    final currentX = _computeCursorX();
+
+    final newLine = _paragraph.metrics.lineMetrics[newLineIdx];
+    var newLocalRune = 0;
+
+    while (newLocalRune < (newLine.endRune - newLine.startRune)) {
+      final currentGlyph = _paragraph.getGlyphForCharIndex(newLine.startRune + newLocalRune)!;
+
+      if (currentGlyph.position.x >= currentX) {
+        final previousGlyph = _paragraph.getGlyphForCharIndex(max(0, newLine.startRune + newLocalRune - 1))!;
+
+        if ((currentX - previousGlyph.position.x).abs() < (currentX - currentGlyph.position.x).abs()) {
+          newLocalRune--;
+        }
+
+        break;
+      }
+
+      newLocalRune++;
+    }
+
+    _moveCursor(newLine.startRune + newLocalRune, selecting);
+  }
+
+  int _runeIdxAt(double x, double y) {
+    LineMetrics? clickedLine;
+    for (final line in _paragraph.metrics.lineMetrics) {
+      if (line.yOffset <= y && y <= line.yOffset + line.height) {
+        clickedLine = line;
+        break;
+      }
+    }
+
+    clickedLine ??= y < 0 ? _paragraph.metrics.lineMetrics.first : _paragraph.metrics.lineMetrics.last;
+
+    var clickedRuneIdx = x < 0 ? clickedLine.startRune : clickedLine.endRune;
+    for (var runeIdx = clickedLine.startRune; runeIdx < clickedLine.endRune; runeIdx++) {
+      final glyph = _paragraph.getGlyphForCharIndex(runeIdx)!;
+
+      if (glyph.position.x <= x && x <= glyph.position.x + glyph.advance.x) {
+        clickedRuneIdx = min(clickedLine.endRune, x > glyph.position.x + glyph.advance.x / 2 ? runeIdx + 1 : runeIdx);
+        break;
+      }
+    }
+
+    return clickedRuneIdx;
+  }
+
+  void _moveCursor(int toRune, bool selecting) {
+    if (selecting) {
+      widget.controller.selection = TextSelection(_selection.start, toRune);
+    } else {
+      widget.controller.selection = TextSelection.collapsed(toRune);
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    _lastContext = context;
-    return MouseArea(
-      cursorStyle: CursorStyle.text,
-      child: KeyboardInput(
-        keyDownCallback: _handleKeypress,
-        charCallback: (charCode, modifiers) => setState(() => controller.insert(String.fromCharCode(charCode))),
-        child: Container(
-          color: const Color.rgb(0x161616),
-          cornerRadius: const CornerRadius.all(5),
-          padding: const Insets.all(5),
-          child: Stack(
-            children: [
-              Text(text: controller.text, style: const TextStyle(alignment: Alignment.topLeft)),
-              Align(
-                alignment: Alignment.left,
-                child: Padding(
-                  insets: const Insets(left: 0),
-                  child: Sized(height: 20, width: 1, child: const Panel(color: Color.white)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  int _nextWordBoundary(bool forwards) {
+    var direction = forwards ? 1 : -1;
+    var lookAhead = forwards ? 0 : -1;
+    var bound = forwards ? _text.runes.length + 1 : -1;
+
+    var startingClass = _SkipClass(_safeCharCodeAt(_selection.end));
+    var idx = _selection.end + direction;
+
+    if (startingClass != const _LineBreakClass()) {
+      startingClass = _SkipClass(_safeCharCodeAt(idx + lookAhead));
+    }
+
+    while (idx != bound && startingClass.shouldSkip(_safeCharCodeAt(idx + lookAhead))) {
+      idx += direction;
+    }
+
+    return idx;
   }
 
-  void _handleKeypress(int keyCode, int modifiers) {
+  int _safeCharCodeAt(int runeIdx) => _text.runes.toList()[runeIdx.clamp(0, _text.runes.length - 1)];
+
+  @override
+  bool onChar(int charCode, KeyModifiers modifiers) {
+    _insert(String.fromCharCode(charCode));
+    return true;
+  }
+
+  @override
+  bool onKeyDown(int keyCode, KeyModifiers modifiers) {
+    final cursorPosition = _selection.end;
+
     if (keyCode == glfwKeyBackspace) {
-      if (controller.text.isEmpty) return;
+      if (!_selection.collapsed) {
+        _deleteSelection();
+      } else if (cursorPosition > 0) {
+        final runes = _text.runes.toList();
+        runes.removeAt(cursorPosition - 1);
 
-      final runes = controller.text.runes.toList();
-      runes.removeAt(controller.cursorPosition - 1);
+        widget.controller.selection = TextSelection.collapsed(cursorPosition - 1);
+        widget.controller.text = String.fromCharCodes(runes);
+      }
 
-      setState(() {
-        controller.cursorPosition--;
-        controller.text = String.fromCharCodes(runes);
-      });
+      return true;
     } else if (keyCode == glfwKeyDelete) {
-      if (controller.text.isEmpty) return;
+      if (!_selection.collapsed) {
+        _deleteSelection();
+      } else if (cursorPosition < _text.runes.length) {
+        final runes = _text.runes.toList();
+        runes.removeAt(cursorPosition);
 
-      final runes = controller.text.runes.toList();
-      runes.removeAt(controller.cursorPosition);
+        widget.controller.text = String.fromCharCodes(runes);
+      }
 
-      setState(() {
-        controller.text = String.fromCharCodes(runes);
-      });
-    } else if (keyCode == glfwKeyV && (modifiers & glfwModControl) != 0) {
-      setState(() {
-        controller.insert(glfw.getClipboardString(_lastContext.window.handle).cast<Utf8>().toDartString());
-      });
+      return true;
+    } else if (keyCode == glfwKeyV && modifiers.ctrl) {
+      final clipboardString = glfw.getClipboardString(host!.window.handle);
+      if (clipboardString.address != 0) {
+        _insert(clipboardString.cast<Utf8>().toDartString());
+      }
+
+      return true;
+    } else if ((keyCode == glfwKeyC || keyCode == glfwKeyX) && modifiers.ctrl) {
+      if (!_selection.collapsed) {
+        using((arena) {
+          glfw.setClipboardString(
+            host!.window.handle,
+            _text.substring(_selection.lower, _selection.upper).toNativeUtf8(allocator: arena).cast(),
+          );
+        });
+
+        if (keyCode == glfwKeyX) {
+          _deleteSelection();
+        }
+      }
+
+      return true;
+    } else if (keyCode == glfwKeyA && modifiers.ctrl) {
+      widget.controller.selection = TextSelection(0, _text.length);
+      return true;
     } else if (keyCode == glfwKeyLeft) {
-      setState(() {
-        controller.cursorPosition = max(0, controller.cursorPosition - 1);
-      });
+      final endingSelection = !_selection.collapsed && !modifiers.shift;
+      _moveCursor(
+        max(
+          0,
+          endingSelection
+              ? _selection.lower
+              : modifiers.ctrl
+              ? _nextWordBoundary(false)
+              : cursorPosition - 1,
+        ),
+        modifiers.shift,
+      );
+      return true;
     } else if (keyCode == glfwKeyRight) {
-      setState(() {
-        controller.cursorPosition = min(controller.text.runes.length, controller.cursorPosition + 1);
-      });
+      final endingSelection = !_selection.collapsed && !modifiers.shift;
+      _moveCursor(
+        min(
+          _text.runes.length,
+          endingSelection
+              ? _selection.upper
+              : modifiers.ctrl
+              ? _nextWordBoundary(true)
+              : cursorPosition + 1,
+        ),
+        modifiers.shift,
+      );
+      return true;
     } else if (keyCode == glfwKeyHome) {
-      setState(() {
-        controller.cursorPosition = 0;
-      });
+      _moveCursor(_currentLine.startRune, modifiers.shift);
+      return true;
     } else if (keyCode == glfwKeyEnd) {
-      setState(() {
-        controller.cursorPosition = controller.text.runes.length;
-      });
+      _moveCursor(_currentLine.endRune, modifiers.shift);
+      return true;
     }
+
+    if (widget.allowMultipleLines) {
+      if (keyCode == glfwKeyEnter || keyCode == glfwKeyKpEnter) {
+        _insert('\n');
+      } else if (keyCode == glfwKeyUp) {
+        _moveCursorVertically(-1, modifiers.shift);
+        return true;
+      } else if (keyCode == glfwKeyDown) {
+        _moveCursorVertically(1, modifiers.shift);
+        return true;
+      }
+
+      return true;
+    }
+
+    return false;
   }
+
+  @override
+  CursorStyle? cursorStyleAt(double x, double y) => CursorStyle.text;
+
+  @override
+  bool onMouseDown(double x, double y) {
+    _moveCursor(_runeIdxAt(x, y), glfw.getKey(host!.window.handle, glfwKeyLeftShift) == glfwPress);
+    return true;
+  }
+
+  @override
+  void onMouseDrag(double x, double y, double dx, double dy) {
+    _moveCursor(_runeIdxAt(x, y), true);
+  }
+}
+
+sealed class _SkipClass {
+  const _SkipClass._();
+  bool shouldSkip(int charCode);
+
+  factory _SkipClass(int charCode) {
+    const newline = 0xa; // '\n'
+    if (charCode == newline) {
+      return const _LineBreakClass();
+    }
+
+    if (_WordClass.isWordChar(charCode)) {
+      return const _WordClass();
+    }
+
+    return _NonWordClass(charCode);
+  }
+}
+
+final class _WordClass extends _SkipClass {
+  const _WordClass() : super._();
+
+  @override
+  bool shouldSkip(int charCode) => isWordChar(charCode);
+
+  static const _underscore = 0x5f; // '_'
+  static bool isWordChar(int charCode) =>
+      isUpperCaseLetter(charCode) ||
+      isLowerCaseLetter(charCode) ||
+      isTitleCaseLetter(charCode) ||
+      isModifierLetter(charCode) ||
+      isOtherLetter(charCode) ||
+      isLetterNumber(charCode) ||
+      isDecimalNumber(charCode) ||
+      charCode == _underscore;
+}
+
+final class _NonWordClass extends _SkipClass {
+  final int specimen;
+  _NonWordClass(this.specimen) : super._();
+
+  @override
+  bool shouldSkip(int charCode) => charCode == specimen;
+}
+
+final class _LineBreakClass extends _SkipClass {
+  const _LineBreakClass() : super._();
+
+  @override
+  bool shouldSkip(int charCode) => false;
 }

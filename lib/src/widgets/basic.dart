@@ -7,6 +7,7 @@ import 'package:vector_math/vector_math.dart';
 import '../context.dart';
 import '../core/constraints.dart';
 import '../core/cursors.dart';
+import '../core/key_modifiers.dart';
 import '../core/math.dart';
 import '../framework/instance.dart';
 import '../framework/proxy.dart';
@@ -417,9 +418,9 @@ class MouseAreaInstance extends SingleChildWidgetInstance<MouseArea> with Shrink
 
 // TODO: allow not consuming events with per-callback predicates
 class KeyboardInput extends SingleChildInstanceWidget {
-  final void Function(int keyCode, int modifiers)? keyDownCallback;
-  final void Function(int keyCode, int modifiers)? keyUpCallback;
-  final void Function(int charCode, int modifiers)? charCallback;
+  final void Function(int keyCode, KeyModifiers modifiers)? keyDownCallback;
+  final void Function(int keyCode, KeyModifiers modifiers)? keyUpCallback;
+  final void Function(int charCode, KeyModifiers modifiers)? charCallback;
   final void Function()? focusGainedCallback;
   final void Function()? focusLostCallback;
 
@@ -443,13 +444,13 @@ class KeyboardInputInstance extends SingleChildWidgetInstance<KeyboardInput> wit
   KeyboardInputInstance({required super.widget});
 
   @override
-  bool onKeyDown(int keyCode, int modifiers) => (widget.keyDownCallback?..call(keyCode, modifiers)) != null;
+  bool onKeyDown(int keyCode, KeyModifiers modifiers) => (widget.keyDownCallback?..call(keyCode, modifiers)) != null;
 
   @override
-  bool onKeyUp(int keyCode, int modifiers) => (widget.keyUpCallback?..call(keyCode, modifiers)) != null;
+  bool onKeyUp(int keyCode, KeyModifiers modifiers) => (widget.keyUpCallback?..call(keyCode, modifiers)) != null;
 
   @override
-  bool onChar(int charCode, int modifiers) => (widget.charCallback?..call(charCode, modifiers)) != null;
+  bool onChar(int charCode, KeyModifiers modifiers) => (widget.charCallback?..call(charCode, modifiers)) != null;
 
   @override
   void onFocusGained() {

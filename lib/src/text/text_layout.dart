@@ -54,6 +54,16 @@ class SpanStyle {
     this.lineHeight,
   });
 
+  SpanStyle copy({Color? color, double? fontSize, String? fontFamily, bool? bold, bool? italic, double? lineHeight}) =>
+      SpanStyle(
+        color: color ?? this.color,
+        fontSize: fontSize ?? this.fontSize,
+        fontFamily: fontFamily ?? this.fontFamily,
+        bold: bold ?? this.bold,
+        italic: italic ?? this.italic,
+        lineHeight: lineHeight ?? this.lineHeight,
+      );
+
   static SpanComparison compare(SpanStyle a, SpanStyle b) {
     if (a.fontSize != b.fontSize ||
         a.fontFamily != b.fontFamily ||
@@ -127,7 +137,8 @@ sealed class _LayoutInstruction {}
 class _ShapeSpan extends _LayoutInstruction {
   final Span span;
   final int index;
-  _ShapeSpan(this.span, this.index);
+  final int startRune, endRune;
+  _ShapeSpan(this.span, this.index, this.startRune, this.endRune);
 }
 
 class _InsertNewlines extends _LayoutInstruction {
@@ -190,16 +201,23 @@ class Paragraph {
     'calt on'.withAsNative((flag) => harfbuzz.feature_from_string(flag.cast(), -1, features));
 
     final session = _LayoutSession(features, fontLookup, maxWidth);
-    final instructions = DoubleLinkedQueue<_LayoutInstruction>.of(spans.indexed.map((e) => _ShapeSpan(e.$2, e.$1)));
+
+    final instructions = DoubleLinkedQueue<_LayoutInstruction>();
+    var runeCount = 0;
+    for (final (idx, span) in _spans.indexed) {
+      instructions.add(_ShapeSpan(span, idx, runeCount, runeCount + span.content.length));
+      runeCount += span.content.length;
+    }
 
     while (instructions.isNotEmpty) {
       switch (instructions.removeFirst()) {
-        case _ShapeSpan(span: var spanToShape, index: final spanIdx):
+        case _ShapeSpan(
+          span: var spanToShape,
+          index: final spanIdx,
+          startRune: final spanStartRune,
+          endRune: var spanEndRune,
+        ):
           final breakPoints = DoubleLinkedQueue<int>();
-          final spanStartRune =
-              session.layoutSpans.isNotEmpty
-                  ? session.layoutSpans.last.startRune + session.layoutSpans.last.content.content.length
-                  : 0;
 
           final iter = spanToShape.content.runes.indexed.iterator;
           while (iter.moveNext()) {
@@ -216,7 +234,10 @@ class Paragraph {
 
               var lineBreaks = [(endIdx: spanStartRune + index, startIdx: spanStartRune + index + 1)];
               while (iter.moveNext() && iter.current.$2 == newline) {
-                lineBreaks.add((endIdx: spanStartRune + index, startIdx: spanStartRune + index + 1));
+                lineBreaks.add((
+                  endIdx: spanStartRune + iter.current.$1,
+                  startIdx: spanStartRune + iter.current.$1 + 1,
+                ));
               }
 
               final (left, right) = spanToShape._split(
@@ -225,8 +246,11 @@ class Paragraph {
                 keepSplit: false,
               );
 
+              final baseEndRune = spanEndRune;
               spanToShape = left;
-              instructions.addFirst(_ShapeSpan(right, spanIdx));
+              spanEndRune = lineBreaks.last.startIdx;
+
+              instructions.addFirst(_ShapeSpan(right, spanIdx, spanEndRune, baseEndRune));
               instructions.addFirst(_InsertNewlines(lineBreaks));
 
               break;
@@ -237,8 +261,10 @@ class Paragraph {
             spanToShape,
             breakPoints,
             session.state.copy(),
+            spanIdx,
             session.lineMetrics.length,
             spanStartRune,
+            spanEndRune,
           );
           session.layoutSpans.add(layoutSpan);
 
@@ -261,7 +287,10 @@ class Paragraph {
                   breakPoint = (span: candidateSpan, index: breakIndex, keepSplit: false);
 
                   for (var popIdx = session.layoutSpans.length - 1; popIdx > candidateIdx; popIdx--) {
-                    instructions.addFirst(_ShapeSpan(session.layoutSpans.removeAt(popIdx).content, spanIdx));
+                    final poppedSpan = session.layoutSpans.removeAt(popIdx);
+                    instructions.addFirst(
+                      _ShapeSpan(poppedSpan.content, poppedSpan.contentIdx, poppedSpan.startRune, poppedSpan.endRune),
+                    );
                   }
 
                   break;
@@ -298,18 +327,19 @@ class Paragraph {
 
                 _startNewLine(session, [
                   (
-                    endIdx: spanStartRune + breakPoint.index,
-                    startIdx: spanStartRune + (breakPoint.keepSplit ? breakPoint.index + 1 : breakPoint.index),
+                    endIdx: breakPoint.span.startRune + breakPoint.index,
+                    startIdx:
+                        breakPoint.span.startRune + (breakPoint.keepSplit ? breakPoint.index : breakPoint.index + 1),
                   ),
                 ]);
               } else {
                 // if the left span has somehow gotten longer after splitting, we must simply
                 // repeat the entire shaping and splitting process, no two ways about it
-                instructions.addFirst(_ShapeSpan(left.content, spanIdx));
+                instructions.addFirst(_ShapeSpan(left.content, spanIdx, left.startRune, left.endRune));
               }
 
               // finally, queue up the other half we just split off
-              instructions.addFirst(_ShapeSpan(right, spanIdx));
+              instructions.addFirst(_ShapeSpan(right, spanIdx, left.endRune, breakPoint.span.endRune));
             } else {
               // if we somehow ended up here there is (probably) only two possible cases:
               // 1 - this span is after another span (ie. the cursor's x position is not zero)
@@ -325,7 +355,7 @@ class Paragraph {
 
                 // let's pretend everything we just did never happened :)
                 session.layoutSpans.removeLast();
-                instructions.addFirst(_ShapeSpan(layoutSpan.content, spanIdx));
+                instructions.addFirst(_ShapeSpan(layoutSpan.content, spanIdx, spanStartRune, spanEndRune));
               }
             }
 
@@ -432,20 +462,23 @@ class Paragraph {
     session.paragraphWidth = max(session.paragraphWidth ?? 0, state.currentLineWidth);
     session.paragraphHeight = session.initialBaselineY! + state.cursorY + state.currentLineDescender;
 
-    state.cursorX = 0;
-    state.cursorY += state.currentLineHeight.ceil() * breaks.length;
-
     for (final lineBreak in breaks) {
       session.lineMetrics.add(
         LineMetrics(
+          yOffset: state.cursorY,
           width: state.currentLineWidth,
           height: state.currentLineHeight,
+          descender: state.currentLineDescender,
           startRune: session.state.currentLineStartIdx,
           endRune: lineBreak.endIdx,
         ),
       );
+
+      state.cursorY += state.currentLineHeight.ceil();
       session.state.currentLineStartIdx = lineBreak.startIdx;
     }
+
+    state.cursorX = 0;
 
     state.currentLineWidth = 0;
     state.currentLineHeight = 0;
@@ -454,7 +487,7 @@ class Paragraph {
 
   ShapedGlyph? _getGlyphForCluster(List<ShapedGlyph> glyphs, int charIdx) {
     if (glyphs.isEmpty) return null;
-    if (charIdx == 0) return glyphs.first;
+    if (charIdx <= 0) return glyphs.first;
 
     for (var glyphIdx = 0; glyphIdx < glyphs.length; glyphIdx++) {
       final glyph = glyphs[glyphIdx];
@@ -536,10 +569,11 @@ class _LayoutSpan {
   final Span content;
   final Queue<int> possibleBreakPoints;
   final _LayoutState stateBeforeShaping;
+  final int contentIdx;
   final int lineIdx;
 
   final int startRune;
-  int get endRune => startRune + content.content.length;
+  final int endRune;
 
   late List<ShapedGlyph> shapedGlyphs;
 
@@ -547,10 +581,29 @@ class _LayoutSpan {
     final (leftSpan, rightSpan) = content._split(at, keepSplit: keepSplit);
     final leftBreakPoints = DoubleLinkedQueue.of(possibleBreakPoints.takeWhile((value) => value < at));
 
-    return (_LayoutSpan(leftSpan, leftBreakPoints, stateBeforeShaping, lineIdx, startRune), rightSpan);
+    return (
+      _LayoutSpan(
+        leftSpan,
+        leftBreakPoints,
+        stateBeforeShaping,
+        contentIdx,
+        lineIdx,
+        startRune,
+        startRune + (keepSplit ? at : at + 1),
+      ),
+      rightSpan,
+    );
   }
 
-  _LayoutSpan(this.content, this.possibleBreakPoints, this.stateBeforeShaping, this.lineIdx, this.startRune);
+  _LayoutSpan(
+    this.content,
+    this.possibleBreakPoints,
+    this.stateBeforeShaping,
+    this.contentIdx,
+    this.lineIdx,
+    this.startRune,
+    this.endRune,
+  );
 }
 
 class ShapedGlyph {
@@ -594,9 +647,18 @@ class ParagraphMetrics {
 }
 
 class LineMetrics {
+  final double yOffset;
   final double width, height;
+  final double descender;
   final int startRune, endRune;
-  LineMetrics({required this.width, required this.height, required this.startRune, required this.endRune});
+  LineMetrics({
+    required this.yOffset,
+    required this.width,
+    required this.height,
+    required this.descender,
+    required this.startRune,
+    required this.endRune,
+  });
 
   @override
   String toString() => 'LineMetrics(width=$width, height=$height, startRune=$startRune, endRune=$endRune)';

@@ -6,6 +6,7 @@ import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math.dart';
 
 import '../../braid_ui.dart';
+import '../core/key_modifiers.dart';
 import '../widgets/layout_builder.dart';
 import 'proxy.dart';
 import 'widget.dart';
@@ -127,12 +128,12 @@ mixin MouseListener<T extends InstanceWidget> on WidgetInstance<T> {
 }
 
 mixin KeyboardListener<T extends InstanceWidget> on WidgetInstance<T> {
-  bool onKeyDown(int keyCode, int modifiers);
-  bool onKeyUp(int keyCode, int modifiers);
-  bool onChar(int charCode, int modifiers);
+  bool onKeyDown(int keyCode, KeyModifiers modifiers) => false;
+  bool onKeyUp(int keyCode, KeyModifiers modifiers) => false;
+  bool onChar(int charCode, KeyModifiers modifiers) => false;
 
-  void onFocusGained();
-  void onFocusLost();
+  void onFocusGained() {}
+  void onFocusLost() {}
 }
 
 extension type const InstanceFlags._(int _value) {
@@ -146,6 +147,7 @@ extension type const InstanceFlags._(int _value) {
 }
 
 abstract interface class InstanceHost {
+  Window get window;
   TextRenderer get textRenderer;
 
   /// Schedule a [WidgetInstance.layout] invocation for [instance],

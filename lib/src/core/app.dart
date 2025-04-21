@@ -24,6 +24,7 @@ import '../widgets/basic.dart';
 import '../widgets/inspector.dart';
 import 'constraints.dart';
 import 'cursors.dart';
+import 'key_modifiers.dart';
 import 'math.dart';
 import 'reload_hook.dart';
 
@@ -381,9 +382,12 @@ class AppState implements InstanceHost, ProxyHost {
       }),
       // ---
       window.onKey.listen((event) {
+        final modifiers = KeyModifiers(event.mods);
+
         if (event.action == glfwPress &&
             (event.key == glfwKeyI || event.key == glfwKeyP) &&
-            (event.mods & (glfwModAlt | glfwModShift)) != 0) {
+            modifiers.alt &&
+            modifiers.shift) {
           final treeFile = File('widget_tree.dot');
           final out = treeFile.openWrite();
           out.writeln('''
@@ -407,20 +411,20 @@ node [shape="box"];
             });
         }
 
-        if (event.action == glfwPress && event.key == glfwKeyI && (event.mods & (glfwModControl | glfwModShift)) != 0) {
+        if (event.action == glfwPress && event.key == glfwKeyI && modifiers.ctrl && modifiers.shift) {
           _inspector.activate();
           return;
         }
 
         if (event.action == glfwPress || event.action == glfwRepeat) {
-          _focused.firstWhereOrNull((listener) => listener.onKeyDown(event.key, event.mods));
+          _focused.firstWhereOrNull((listener) => listener.onKeyDown(event.key, KeyModifiers(event.mods)));
         } else if (event.action == glfwRelease) {
-          _focused.firstWhereOrNull((listener) => listener.onKeyUp(event.key, event.mods));
+          _focused.firstWhereOrNull((listener) => listener.onKeyUp(event.key, KeyModifiers(event.mods)));
         }
       }),
       // ---
       window.onCharMods.listen((event) {
-        _focused.firstWhereOrNull((listener) => listener.onChar(event.codepoint, event.mods));
+        _focused.firstWhereOrNull((listener) => listener.onChar(event.codepoint, KeyModifiers(event.mods)));
       }),
     ]);
   }
