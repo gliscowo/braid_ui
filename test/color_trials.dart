@@ -141,51 +141,45 @@ class _AppBodyState extends WidgetState<AppBody> {
                 Flexible(
                   child: Stack(
                     children: [
-                      Center(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: switch (test) {
-                            Test.checkboxes => const [CheckBoxesTest()],
-                            Test.cursors => const [CursorTest()],
-                            Test.textWrapping => const [TextWrappingTest()],
-                            Test.textInput => const [TextInputTest()],
-                            Test.collapsible => const [CollapsibleTest()],
-                          },
-                        ),
-                      ),
-                      Expanded(
-                        child: Align(
-                          alignment: Alignment.left,
-                          child: Panel(
-                            color: const Color.rgb(0x161616),
-                            cornerRadius: const CornerRadius.right(10),
-                            child: Padding(
-                              insets: const Insets.all(15),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  for (final test in Test.values)
-                                    Padding(
-                                      insets: const Insets.all(5),
-                                      child: Sized(
-                                        width: 150,
-                                        child: Button(
-                                          onClick: () => setState(() => this.test = test),
-                                          text: test.name,
-                                          style: const ButtonStyle(
-                                            cornerRadius: CornerRadius.all(10),
-                                            padding: Insets.axis(vertical: 10),
-                                          ),
+                      switch (test) {
+                        Test.checkboxes => const CheckBoxesTest(),
+                        Test.cursors => const CursorTest(),
+                        Test.textWrapping => const TextWrappingTest(),
+                        Test.textInput => const TextInputTest(),
+                        Test.collapsible => const CollapsibleTest(),
+                      },
+                      Align(
+                        alignment: Alignment.left,
+                        child: Panel(
+                          color: const Color.rgb(0x161616),
+                          cornerRadius: const CornerRadius.right(10),
+                          child: Padding(
+                            insets: const Insets.all(15),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                for (final test in Test.values)
+                                  Padding(
+                                    insets: const Insets.all(5),
+                                    child: Sized(
+                                      width: 150,
+                                      child: Button(
+                                        onClick: () => setState(() => this.test = test),
+                                        text: test.name,
+                                        style: const ButtonStyle(
+                                          cornerRadius: CornerRadius.all(10),
+                                          padding: Insets.axis(vertical: 10),
                                         ),
                                       ),
                                     ),
-                                  const Padding(insets: Insets(top: 10), child: Text(text: 'test selection')),
-                                ],
-                              ),
+                                  ),
+                                const Padding(insets: Insets(top: 10), child: Text(text: 'test selection')),
+                              ],
                             ),
                           ),
                         ),
                       ),
+                      // ),
                     ],
                   ),
                 ),
@@ -280,40 +274,47 @@ class CheckBoxesTest extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Constrain(
-          constraints: Constraints.only(maxWidth: 150),
-          child: ColorSlider(from: const Color.rgb(0x5f43b2), to: const Color.rgb(0x1bd664)),
-        ),
-        const Padding(insets: Insets.axis(vertical: 25)),
-        for (final color in const [Color.rgb(0x5f43b2), Color.rgb(0xfefdfd), Color.rgb(0xb1aebb), Color.rgb(0x3a3135)])
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              ToggleBox(),
-              Padding(
-                insets: const Insets.all(10).copy(left: 15),
-                child: Constrain(
-                  constraints: Constraints.tight(const Size(65, 35)),
-                  child: Panel(color: color, cornerRadius: const CornerRadius.all(5)),
-                ),
-              ),
-              Panel(
-                color: Color.rgb(0x161616),
-                cornerRadius: const CornerRadius.all(5),
-                child: Padding(
-                  insets: const Insets.all(5),
-                  child: Text(
-                    text: '0x${color.toHexString(false)}',
-                    style: TextStyle(fontSize: 14, fontFamily: 'cascadia'),
+    return Center(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Constrain(
+            constraints: Constraints.only(maxWidth: 150),
+            child: ColorSlider(from: const Color.rgb(0x5f43b2), to: const Color.rgb(0x1bd664)),
+          ),
+          const Padding(insets: Insets.axis(vertical: 25)),
+          for (final color in const [
+            Color.rgb(0x5f43b2),
+            Color.rgb(0xfefdfd),
+            Color.rgb(0xb1aebb),
+            Color.rgb(0x3a3135),
+          ])
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                ToggleBox(),
+                Padding(
+                  insets: const Insets.all(10).copy(left: 15),
+                  child: Constrain(
+                    constraints: Constraints.tight(const Size(65, 35)),
+                    child: Panel(color: color, cornerRadius: const CornerRadius.all(5)),
                   ),
                 ),
-              ),
-            ],
-          ),
-      ],
+                Panel(
+                  color: Color.rgb(0x161616),
+                  cornerRadius: const CornerRadius.all(5),
+                  child: Padding(
+                    insets: const Insets.all(5),
+                    child: Text(
+                      text: '0x${color.toHexString(false)}',
+                      style: TextStyle(fontSize: 14, fontFamily: 'cascadia'),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
     );
   }
 }
@@ -323,7 +324,9 @@ class CursorTest extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Sized(width: 100, height: 100, child: MouseArea(cursorStyle: cursor, child: Panel(color: Color.white)));
+    return Center(
+      child: Sized(width: 100, height: 100, child: MouseArea(cursorStyle: cursor, child: Panel(color: Color.white))),
+    );
   }
 }
 
@@ -332,25 +335,27 @@ class TextWrappingTest extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Sized(
-      width: 200,
-      height: 100,
-      child: Panel(
-        color: Color.red,
-        child: HorizontalSplitPane(
-          leftChild: RawText(
-            softWrap: true,
-            alignment: Alignment.center,
-            spans: [
-              Span('THIS', DefaultTextStyle.of(context).toSpanStyle()),
-              Span(' is ', DefaultTextStyle.of(context).copy(bold: true).toSpanStyle()),
-              Span('a looooooo', DefaultTextStyle.of(context).toSpanStyle()),
-              Span('oooooong word', DefaultTextStyle.of(context).copy(color: Color.blue).toSpanStyle()),
-            ],
-          ),
-          rightChild: Text(
-            text: 'this is simply some\n\nnormal text that i\'d like to see',
-            style: TextStyle(alignment: Alignment.bottomRight),
+    return Center(
+      child: Sized(
+        width: 200,
+        height: 100,
+        child: Panel(
+          color: Color.red,
+          child: HorizontalSplitPane(
+            leftChild: RawText(
+              softWrap: true,
+              alignment: Alignment.center,
+              spans: [
+                Span('THIS', DefaultTextStyle.of(context).toSpanStyle()),
+                Span(' is ', DefaultTextStyle.of(context).copy(bold: true).toSpanStyle()),
+                Span('a looooooo', DefaultTextStyle.of(context).toSpanStyle()),
+                Span('oooooong word', DefaultTextStyle.of(context).copy(color: Color.blue).toSpanStyle()),
+              ],
+            ),
+            rightChild: Text(
+              text: 'this is simply some\n\nnormal text that i\'d like to see',
+              style: TextStyle(alignment: Alignment.bottomRight),
+            ),
           ),
         ),
       ),
@@ -445,34 +450,36 @@ class _TextInputTestState extends WidgetState<TextInputTest> {
 
   @override
   Widget build(BuildContext context) {
-    return Sized(
-      height: 450,
-      width: 500,
-      child: Panel(
-        color: const Color.rgb(0x202531),
-        cornerRadius: const CornerRadius.all(5),
-        child: Padding(
-          insets: const Insets.all(5),
-          child: Scrollable.vertical(
-            child: Constrain(
-              constraints: Constraints.only(minHeight: 450),
-              child: ListenableBuilder(
-                listenable: controller,
-                builder: (context, child) {
-                  return TextInput(
-                    controller: controller,
-                    showCursor: showCursor,
-                    softWrap: true,
-                    allowMultipleLines: true,
-                    style: const SpanStyle(
-                      color: Color.white,
-                      fontSize: 14,
-                      fontFamily: 'cascadia',
-                      bold: true,
-                      italic: false,
-                    ),
-                  );
-                },
+    return Center(
+      child: Sized(
+        height: 450,
+        width: 500,
+        child: Panel(
+          color: const Color.rgb(0x202531),
+          cornerRadius: const CornerRadius.all(5),
+          child: Padding(
+            insets: const Insets.all(5),
+            child: Scrollable.vertical(
+              child: Constrain(
+                constraints: Constraints.only(minHeight: 450),
+                child: ListenableBuilder(
+                  listenable: controller,
+                  builder: (context, child) {
+                    return TextInput(
+                      controller: controller,
+                      showCursor: showCursor,
+                      softWrap: true,
+                      allowMultipleLines: true,
+                      style: const SpanStyle(
+                        color: Color.white,
+                        fontSize: 14,
+                        fontFamily: 'cascadia',
+                        bold: true,
+                        italic: false,
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
           ),
@@ -487,24 +494,28 @@ class CollapsibleTest extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Expanded(
-      child: Align(
-        alignment: Alignment.top,
-        child: CollapsibleThing(
-          title: Text(text: 'collapsible thing'),
-          content: Column(
-            children: [
-              CollapsibleThing(
-                title: Text(text: 'a'),
+    return const Align(
+      alignment: Alignment.top,
+      child: CollapsibleThing(
+        title: Text(text: 'collapsible thing'),
+        content: Column(
+          children: [
+            CollapsibleThing(
+              title: Text(text: 'a'),
+              content: CollapsibleThing(
+                title: Text(text: 'd'),
                 content: CollapsibleThing(
-                  title: Text(text: 'd'),
-                  content: CollapsibleThing(title: Text(text: 'c'), content: Panel(color: Color.white)),
+                  title: Text(text: 'c'),
+                  content: Sized(width: 100, height: 100, child: Panel(color: Color.white)),
                 ),
               ),
-              Row(children: [Icon(icon: Icons.fiber_manual_record), Text(text: 'just some text')]),
-              CollapsibleThing(title: Text(text: 'b'), content: Panel(color: Color.blue)),
-            ],
-          ),
+            ),
+            Row(children: [Icon(icon: Icons.fiber_manual_record), Text(text: 'just some text')]),
+            CollapsibleThing(
+              title: Text(text: 'b'),
+              content: Sized(width: 100, height: 100, child: Panel(color: Color.blue)),
+            ),
+          ],
         ),
       ),
     );
@@ -533,7 +544,7 @@ class _CollapsibleTestState extends WidgetState<CollapsibleThing> {
             collapsed = nowCollapsed;
           }),
       title: widget.title,
-      content: Sized(width: 100, height: 100, child: widget.content),
+      content: widget.content,
     );
   }
 }

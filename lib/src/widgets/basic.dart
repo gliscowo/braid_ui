@@ -305,30 +305,6 @@ class PanelInstance extends OptionalChildWidgetInstance<Panel> with OptionalShri
   }
 }
 
-class Expanded extends SingleChildInstanceWidget {
-  const Expanded({super.key, required super.child});
-
-  @override
-  SingleChildWidgetInstance<InstanceWidget> instantiate() => _ExpandedInstance(widget: this);
-}
-
-class _ExpandedInstance extends SingleChildWidgetInstance<Expanded> {
-  _ExpandedInstance({required super.widget});
-
-  @override
-  void doLayout(Constraints constraints) {
-    final childConstraints = Constraints(
-      constraints.hasBoundedWidth ? constraints.maxWidth : constraints.minWidth,
-      constraints.hasBoundedHeight ? constraints.maxHeight : constraints.minHeight,
-      constraints.maxWidth,
-      constraints.maxHeight,
-    );
-
-    final childSize = child.layout(childConstraints);
-    transform.setSize(childSize);
-  }
-}
-
 // ---
 
 typedef CustomDrawFunction = void Function(DrawContext ctx, WidgetTransform transform);

@@ -50,7 +50,7 @@ class TheApp extends StatelessWidget {
       initState: CounterState.new,
       child: Row(
         children: [
-          Flexible(child: Center(child: LeftBody())),
+          Flexible(child: LeftBody()),
           Flexible(child: Center(child: RightBody())),
           if (nest) Flexible(child: TheApp(), flexFactor: 2),
         ],
@@ -62,11 +62,9 @@ class TheApp extends StatelessWidget {
 class LeftBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Panel(
-        color: Color.green,
-        child: Text(text: 'current state: ${SharedState.get<CounterState>(context).count}'),
-      ),
+    return Panel(
+      color: Color.green,
+      child: Text(text: 'current state: ${SharedState.get<CounterState>(context).count}'),
     );
   }
 }
