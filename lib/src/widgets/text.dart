@@ -116,7 +116,7 @@ class Text extends StatelessWidget {
   final String text;
   final bool softWrap;
 
-  const Text({super.key, this.style, this.softWrap = true, required this.text});
+  const Text(this.text, {super.key, this.style, this.softWrap = true});
 
   @override
   Widget build(BuildContext context) {

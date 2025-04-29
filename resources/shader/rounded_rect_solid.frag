@@ -21,7 +21,7 @@ float sdRoundBox(in vec2 pos, in vec2 size, in vec4 radii) {
 void main() {
     float distance = sdRoundBox(vPos - (uSize / 2.0), uSize / 2.0, uRadius);
     float smoothedAlpha = uRadius != vec4(0)
-        ? 1.0 - smoothstep(-0.5, 1.5, distance)
+        ? 1.0 - smoothstep(-0.5, 1.0, distance)
         : 1.0 - distance;
 
     if (smoothedAlpha < .001) discard;

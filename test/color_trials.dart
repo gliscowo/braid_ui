@@ -7,10 +7,10 @@ import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:braid_ui/braid_ui.dart';
 import 'package:braid_ui/src/animation/lerp.dart';
-import 'package:braid_ui/src/baked_assets.g.dart';
 import 'package:braid_ui/src/framework/proxy.dart';
 import 'package:braid_ui/src/framework/widget.dart';
 import 'package:braid_ui/src/widgets/basic.dart';
+import 'package:braid_ui/src/widgets/checkbox.dart';
 import 'package:braid_ui/src/widgets/collapsible.dart';
 import 'package:braid_ui/src/widgets/drag_arena.dart';
 import 'package:braid_ui/src/widgets/icon.dart';
@@ -18,7 +18,9 @@ import 'package:braid_ui/src/widgets/scroll.dart';
 import 'package:braid_ui/src/widgets/slider.dart';
 import 'package:braid_ui/src/widgets/split_pane.dart';
 import 'package:braid_ui/src/widgets/stack.dart';
+import 'package:braid_ui/src/widgets/switch.dart';
 import 'package:braid_ui/src/widgets/text_field.dart';
+import 'package:braid_ui/src/widgets/theme.dart';
 import 'package:braid_ui/src/widgets/window.dart';
 import 'package:diamond_gl/diamond_gl.dart' hide Window;
 import 'package:endec/endec.dart';
@@ -56,35 +58,28 @@ class ColorApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTextStyle(
-      style: TextStyle(color: Color.white, fontSize: 16.0, bold: false, italic: false),
-      child: DefaultButtonStyle(
-        style: const ButtonStyle(
-          color: Color.rgb(0x5f43b2),
-          hoveredColor: Color.rgb(0x684fb3),
-          disabledColor: Color.rgb(0x3a3135),
-          padding: Insets.axis(horizontal: 6, vertical: 3),
-          cornerRadius: CornerRadius.all(5),
-          textStyle: TextStyle(fontSize: 14.0, bold: true),
-        ),
-        child: Column(
-          children: [
-            Constrain(
-              constraints: Constraints.only(minHeight: 50),
-              child: Panel(
-                color: Color.rgb(0x161616),
-                child: Padding(
-                  insets: const Insets.all(10).copy(left: 15),
-                  child: Align(
-                    alignment: Alignment.left,
-                    child: Text(text: 'cool & based colors test :o', style: TextStyle(bold: true)),
+    return BraidTheme(
+      child: Builder(
+        builder: (context) {
+          return Column(
+            children: [
+              Constrain(
+                constraints: Constraints.only(minHeight: 50),
+                child: Panel(
+                  color: BraidTheme.of(context).elevatedColor,
+                  child: Padding(
+                    insets: const Insets.all(10).copy(left: 15),
+                    child: Align(
+                      alignment: Alignment.left,
+                      child: Text('cool & based colors test :o', style: TextStyle(bold: true)),
+                    ),
                   ),
                 ),
               ),
-            ),
-            const AppBody(),
-          ],
-        ),
+              const AppBody(),
+            ],
+          );
+        },
       ),
     );
   }
@@ -135,7 +130,7 @@ class _AppBodyState extends WidgetState<AppBody> {
       child: Stack(
         children: [
           Panel(
-            color: Color.rgb(0x0f0f0f),
+            color: BraidTheme.of(context).backgroundColor,
             child: Column(
               children: [
                 Flexible(
@@ -151,7 +146,7 @@ class _AppBodyState extends WidgetState<AppBody> {
                       Align(
                         alignment: Alignment.left,
                         child: Panel(
-                          color: const Color.rgb(0x161616),
+                          color: BraidTheme.of(context).elevatedColor,
                           cornerRadius: const CornerRadius.right(10),
                           child: Padding(
                             insets: const Insets.all(15),
@@ -162,18 +157,18 @@ class _AppBodyState extends WidgetState<AppBody> {
                                   Padding(
                                     insets: const Insets.all(5),
                                     child: Sized(
-                                      width: 150,
+                                      width: 115,
                                       child: Button(
                                         onClick: () => setState(() => this.test = test),
-                                        text: test.name,
+                                        child: Text(test.name),
                                         style: const ButtonStyle(
                                           cornerRadius: CornerRadius.all(10),
-                                          padding: Insets.axis(vertical: 10),
+                                          padding: Insets.axis(vertical: 8),
                                         ),
                                       ),
                                     ),
                                   ),
-                                const Padding(insets: Insets(top: 10), child: Text(text: 'test selection')),
+                                const Padding(insets: Insets(top: 10), child: Text('test selection')),
                               ],
                             ),
                           ),
@@ -192,7 +187,7 @@ class _AppBodyState extends WidgetState<AppBody> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           const Padding(insets: Insets(right: 5), child: DebugToggle()),
-                          Text(text: 'Draw instance outlines'),
+                          Text('Draw instance outlines'),
                         ],
                       ),
                       Flexible(
@@ -201,7 +196,7 @@ class _AppBodyState extends WidgetState<AppBody> {
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Button(
-                              text: 'Spawn window',
+                              child: Text('Spawn window'),
                               onClick: () {
                                 setState(() {
                                   windows.add((
@@ -214,13 +209,13 @@ class _AppBodyState extends WidgetState<AppBody> {
                           ],
                         ),
                       ),
-                      Button(onClick: () {}, text: 'Unavailable', enabled: false),
+                      Button(onClick: null, child: Text('Unavailable')),
                       Padding(insets: const Insets.axis(horizontal: 5)),
-                      Button(onClick: _saveWindowState, text: 'Save'),
+                      Button(onClick: _saveWindowState, child: Text('Save')),
                       Padding(insets: const Insets.axis(horizontal: 5)),
-                      Button(onClick: _loadWindowState, text: 'Load'),
+                      Button(onClick: _loadWindowState, child: Text('Load')),
                       Padding(insets: const Insets.axis(horizontal: 5)),
-                      Button(onClick: () => app!.scheduleShutdown(), text: 'Quit'),
+                      Button(onClick: () => app!.scheduleShutdown(), child: Text('Quit')),
                     ],
                   ),
                 ),
@@ -242,7 +237,10 @@ class _AppBodyState extends WidgetState<AppBody> {
                   content: Align(
                     alignment: Alignment.topLeft,
                     child: Column(
-                      children: [Button(onClick: () {}, text: 'bruh'), ColorSlider(from: Color.white, to: Color.black)],
+                      children: [
+                        Button(onClick: () {}, child: Text('bruh')),
+                        ColorSlider(from: Color.white, to: Color.black),
+                      ],
                     ),
                   ),
                 ),
@@ -275,44 +273,49 @@ class CheckBoxesTest extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Constrain(
-            constraints: Constraints.only(maxWidth: 150),
-            child: ColorSlider(from: const Color.rgb(0x5f43b2), to: const Color.rgb(0x1bd664)),
-          ),
-          const Padding(insets: Insets.axis(vertical: 25)),
-          for (final color in const [
-            Color.rgb(0x5f43b2),
-            Color.rgb(0xfefdfd),
-            Color.rgb(0xb1aebb),
-            Color.rgb(0x3a3135),
-          ])
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                ToggleBox(),
-                Padding(
-                  insets: const Insets.all(10).copy(left: 15),
-                  child: Constrain(
-                    constraints: Constraints.tight(const Size(65, 35)),
-                    child: Panel(color: color, cornerRadius: const CornerRadius.all(5)),
-                  ),
-                ),
-                Panel(
-                  color: Color.rgb(0x161616),
-                  cornerRadius: const CornerRadius.all(5),
-                  child: Padding(
-                    insets: const Insets.all(5),
-                    child: Text(
-                      text: '0x${color.toHexString(false)}',
-                      style: TextStyle(fontSize: 14, fontFamily: 'cascadia'),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Constrain(
+                constraints: Constraints.only(maxWidth: 150),
+                child: ColorSlider(from: const Color.rgb(0x5f43b2), to: const Color.rgb(0x1bd664)),
+              ),
+              const Padding(insets: Insets.axis(vertical: 25)),
+              for (final color in const [
+                Color.rgb(0x5f43b2),
+                Color.rgb(0xfefdfd),
+                Color.rgb(0xb1aebb),
+                Color.rgb(0x3a3135),
+              ])
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    ToggleBox(),
+                    Padding(
+                      insets: const Insets.all(10).copy(left: 15),
+                      child: Constrain(
+                        constraints: Constraints.tight(const Size(65, 35)),
+                        child: Panel(color: color, cornerRadius: const CornerRadius.all(5)),
+                      ),
                     ),
-                  ),
+                    Panel(
+                      color: Color.rgb(0x161616),
+                      cornerRadius: const CornerRadius.all(5),
+                      child: Padding(
+                        insets: const Insets.all(5),
+                        child: Text(
+                          '0x${color.toHexString(false)}',
+                          style: TextStyle(fontSize: 14, fontFamily: 'cascadia'),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+            ],
+          ),
         ],
       ),
     );
@@ -353,7 +356,7 @@ class TextWrappingTest extends StatelessWidget {
               ],
             ),
             rightChild: Text(
-              text: 'this is simply some\n\nnormal text that i\'d like to see',
+              'this is simply some\n\nnormal text that i\'d like to see',
               style: TextStyle(alignment: Alignment.bottomRight),
             ),
           ),
@@ -497,22 +500,22 @@ class CollapsibleTest extends StatelessWidget {
     return const Align(
       alignment: Alignment.top,
       child: CollapsibleThing(
-        title: Text(text: 'collapsible thing'),
+        title: Text('collapsible thing'),
         content: Column(
           children: [
             CollapsibleThing(
-              title: Text(text: 'a'),
+              title: Text('a'),
               content: CollapsibleThing(
-                title: Text(text: 'd'),
+                title: Text('d'),
                 content: CollapsibleThing(
-                  title: Text(text: 'c'),
+                  title: Text('c'),
                   content: Sized(width: 100, height: 100, child: Panel(color: Color.white)),
                 ),
               ),
             ),
-            Row(children: [Icon(icon: Icons.fiber_manual_record), Text(text: 'just some text')]),
+            Row(children: [Icon(icon: Icons.fiber_manual_record), Text('just some text')]),
             CollapsibleThing(
-              title: Text(text: 'b'),
+              title: Text('b'),
               content: Sized(width: 100, height: 100, child: Panel(color: Color.blue)),
             ),
           ],
@@ -601,7 +604,7 @@ class _DebugToggleState extends WidgetState<DebugToggle> {
   @override
   Widget build(BuildContext context) {
     return Checkbox(
-      clickCallback: () => setState(() => app!.debugDrawInstanceBoxes = !app!.debugDrawInstanceBoxes),
+      onClick: () => setState(() => app!.debugDrawInstanceBoxes = !app!.debugDrawInstanceBoxes),
       checked: app?.debugDrawInstanceBoxes ?? false,
     );
   }
@@ -617,47 +620,13 @@ class _ToggleBoxState extends WidgetState<ToggleBox> {
 
   @override
   Widget build(BuildContext context) {
-    return Checkbox(clickCallback: () => setState(() => _checked = !_checked), checked: _checked);
-  }
-}
-
-class Checkbox extends StatefulWidget {
-  final bool checked;
-  final void Function()? clickCallback;
-
-  const Checkbox({super.key, this.clickCallback, required this.checked});
-
-  @override
-  WidgetState<StatefulWidget> createState() => _CheckboxState();
-}
-
-class _CheckboxState extends WidgetState<Checkbox> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseArea(
-      clickCallback: (_, _) => widget.clickCallback?.call(),
-      enterCallback: () => setState(() => _hovered = true),
-      exitCallback: () => setState(() => _hovered = false),
-      cursorStyle: CursorStyle.hand,
-      child: Sized(
-        width: 20,
-        height: 20,
-        child: Panel(
-          color:
-              widget.checked
-                  ? _hovered
-                      ? const Color.rgb(0x684fb3)
-                      : const Color.rgb(0x5f43b2)
-                  : _hovered
-                  ? Color.white
-                  : const Color.rgb(0xb1aebb),
-          cornerRadius: const CornerRadius.all(5),
-          outlineThickness: !widget.checked ? .5 : null,
-          child: widget.checked ? const Icon(icon: Icons.close, size: 16) : null,
-        ),
-      ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Switch(on: _checked, onClick: () => setState(() => _checked = !_checked)),
+        const Padding(insets: Insets.all(5)),
+        Checkbox(onClick: () => setState(() => _checked = !_checked), checked: _checked),
+      ],
     );
   }
 }

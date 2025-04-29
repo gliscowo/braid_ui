@@ -2,7 +2,7 @@ import 'package:braid_ui/braid_ui.dart';
 import 'package:braid_ui/src/framework/proxy.dart';
 import 'package:braid_ui/src/framework/widget.dart';
 import 'package:braid_ui/src/widgets/basic.dart';
-import 'package:diamond_gl/diamond_gl.dart';
+import 'package:braid_ui/src/widgets/theme.dart';
 import 'package:logging/logging.dart';
 
 Future<void> main() async {
@@ -29,9 +29,9 @@ class CounterApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const DefaultTextStyle(
-      style: TextStyle(color: Color.black, fontSize: 32, bold: false, italic: false),
-      child: Panel(color: Color.white, child: Center(child: Counter())),
+    return const BraidTheme(
+      textStyle: TextStyle(fontSize: 32),
+      child: Panel(color: BraidTheme.defaultBackgroundColor, child: Center(child: Counter())),
     );
   }
 }
@@ -51,9 +51,9 @@ class _CounterState extends WidgetState<Counter> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(text: 'clicks: $clicks'),
-        Button(onClick: () => setState(() => clicks++), text: 'count!'),
-        Button(onClick: () => setState(() => clicks = 0), text: 'reset'),
+        Text('clicks: $clicks'),
+        Button(onClick: () => setState(() => clicks++), child: Text('count!')),
+        Button(onClick: () => setState(() => clicks = 0), child: Text('reset')),
       ],
     );
   }

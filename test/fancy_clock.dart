@@ -6,6 +6,7 @@ import 'package:braid_ui/src/framework/widget.dart';
 import 'package:braid_ui/src/widgets/animated_widgets.dart';
 import 'package:braid_ui/src/widgets/basic.dart';
 import 'package:braid_ui/src/widgets/layout_builder.dart';
+import 'package:braid_ui/src/widgets/theme.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
@@ -46,61 +47,63 @@ class ClockApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget widget = Column(
-      children: [
-        Flexible(
-          key: Key('a'),
-          child: Panel(
-            color: Color.white,
-            child: Center(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [TimeText(), Button(onClick: () => print('yup'), text: 'a')],
+    Widget widget = BraidTheme(
+      child: Column(
+        children: [
+          Flexible(
+            key: Key('a'),
+            child: Panel(
+              color: Color.white,
+              child: Center(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [TimeText(), Button(onClick: () => print('yup'), child: Text('a'))],
+                ),
               ),
             ),
           ),
-        ),
-        Flexible(
-          key: Key('b'),
-          child: LayoutBuilder(
-            builder:
-                (context, constraints) => Panel(
-                  color: constraints.maxWidth > 600 ? Color.green : Color.blue,
-                  child: const AnimatedPadding(
-                    easing: Easing.inOutExpo,
-                    duration: Duration(milliseconds: 1000),
-                    insets: Insets(top: 10, bottom: 10, left: 10, right: 10),
-                    child: AnimatedPanel(
-                      easing: Easing.outExpo,
-                      duration: Duration(seconds: 1),
-                      cornerRadius: CornerRadius.all(15),
-                      color: Color.white,
+          Flexible(
+            key: Key('b'),
+            child: LayoutBuilder(
+              builder:
+                  (context, constraints) => Panel(
+                    color: constraints.maxWidth > 600 ? Color.green : Color.blue,
+                    child: const AnimatedPadding(
+                      easing: Easing.inOutExpo,
+                      duration: Duration(milliseconds: 1000),
+                      insets: Insets(top: 10, bottom: 10, left: 10, right: 10),
+                      child: AnimatedPanel(
+                        easing: Easing.outExpo,
+                        duration: Duration(seconds: 1),
+                        cornerRadius: CornerRadius.all(15),
+                        color: Color.white,
+                      ),
                     ),
                   ),
-                ),
+            ),
+            flexFactor: .5,
           ),
-          flexFactor: .5,
-        ),
-        Constrain(constraints: Constraints.tightOnAxis(vertical: 75), child: Panel(color: Color.black)),
-        AnimatedAlign(
-          duration: Duration(milliseconds: 1000),
-          easing: Easing.inOutCubic,
-          alignment: Alignment.right,
-          child: AnimatedSized(
-            duration: Duration(milliseconds: 500),
-            easing: Easing.inOutExpo,
-            height: 50,
-            width: 200,
-            child: DependencyTest(),
+          Constrain(constraints: Constraints.tightOnAxis(vertical: 75), child: Panel(color: Color.black)),
+          AnimatedAlign(
+            duration: Duration(milliseconds: 1000),
+            easing: Easing.inOutCubic,
+            alignment: Alignment.right,
+            child: AnimatedSized(
+              duration: Duration(milliseconds: 500),
+              easing: Easing.inOutExpo,
+              height: 50,
+              width: 200,
+              child: DependencyTest(),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
 
     const orange = false;
     if (orange) {
       widget = DefaultButtonStyle(
-        style: const ButtonStyle(color: Color.rgb(0xEB5B00), hoveredColor: Color.rgb(0xEB5B00)),
+        style: const ButtonStyle(color: Color.rgb(0xEB5B00), highlightColor: Color.rgb(0xEB5B00)),
         child: widget,
       );
     }
@@ -128,7 +131,7 @@ class DependencyTestState extends WidgetState<DependencyTest> {
                 () => setState(() {
                   color = color == Color.red ? Color.green : Color.red;
                 }),
-            text: 'toggle',
+            child: Text('toggle'),
           ),
           Constrain(constraints: Constraints.only(minWidth: 10), child: Panel(color: color)),
           const Flexible(child: Builder(builder: _innerBuild)),
@@ -168,7 +171,7 @@ class TimeTextState extends WidgetState<TimeText> {
   @override
   Widget build(BuildContext context) {
     return Text(
-      text: '${DateFormat('Hms').format(_time)}:${_time.millisecond}',
+      '${DateFormat('Hms').format(_time)}:${_time.millisecond}',
       style: TextStyle(fontSize: 80.0, bold: true, color: Color.ofHsv(_time.second / 60.0, 1.0, 1.0)),
     );
   }

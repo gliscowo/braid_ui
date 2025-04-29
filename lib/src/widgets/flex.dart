@@ -5,18 +5,19 @@ import '../framework/widget.dart';
 
 /// A vertical array of widgets
 class Column extends Flex {
-  const Column({super.key, super.mainAxisAlignment, super.crossAxisAlignment, required super.children})
+  const Column({super.key, super.mainAxisAlignment, super.crossAxisAlignment, super.separator, required super.children})
     : super(mainAxis: LayoutAxis.vertical);
 }
 
 /// A horizontal array of widgets
 class Row extends Flex {
-  const Row({super.key, super.mainAxisAlignment, super.crossAxisAlignment, required super.children})
+  const Row({super.key, super.mainAxisAlignment, super.crossAxisAlignment, super.separator, required super.children})
     : super(mainAxis: LayoutAxis.horizontal);
 }
 
 class Flex extends MultiChildInstanceWidget {
   final LayoutAxis mainAxis;
+  final Widget? separator;
   final MainAxisAlignment mainAxisAlignment;
   final CrossAxisAlignment crossAxisAlignment;
 
@@ -24,12 +25,30 @@ class Flex extends MultiChildInstanceWidget {
     super.key,
     this.mainAxisAlignment = MainAxisAlignment.start,
     this.crossAxisAlignment = CrossAxisAlignment.start,
+    this.separator,
     required this.mainAxis,
     required super.children,
   });
 
   @override
   FlexInstance instantiate() => FlexInstance(widget: this);
+
+  @override
+  List<Widget> get children {
+    if (separator == null || super.children.isEmpty) {
+      return super.children;
+    }
+
+    final children = List<Widget?>.filled(2 * super.children.length - 1, null);
+    for (final (idx, child) in super.children.indexed.take(super.children.length - 1)) {
+      children[idx * 2] = child;
+      children[idx * 2 + 1] = separator;
+    }
+
+    children[children.length - 1] = super.children.last;
+
+    return children.cast();
+  }
 }
 
 // ---

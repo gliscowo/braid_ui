@@ -1,8 +1,8 @@
 import 'package:braid_ui/braid_ui.dart';
-import 'package:braid_ui/src/baked_assets.g.dart';
 import 'package:braid_ui/src/framework/widget.dart';
 import 'package:braid_ui/src/widgets/basic.dart';
 import 'package:braid_ui/src/widgets/icon.dart';
+import 'package:braid_ui/src/widgets/theme.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:logging/logging.dart';
 
@@ -30,15 +30,14 @@ class RegulatingDeviceApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultButtonStyle(
-      style: const ButtonStyle(
+    return BraidTheme(
+      buttonStyle: const ButtonStyle(
         color: Color.rgb(0xbac3ff),
-        hoveredColor: Color.rgb(0xaeb7f3),
+        highlightColor: Color.rgb(0xaeb7f3),
         // textColor: Color.rgb(0x222c61),
         padding: Insets.axis(horizontal: 25.0, vertical: 15.0),
         cornerRadius: CornerRadius.all(27.5),
       ),
-
       child: Panel(
         color: Color.rgb(0x121318),
         cornerRadius: const CornerRadius.all(10),
@@ -47,10 +46,7 @@ class RegulatingDeviceApp extends StatelessWidget {
           children: [
             Padding(
               insets: const Insets.all(15.0).copy(bottom: 25.0),
-              child: Text(
-                text: "Regulating Device",
-                style: TextStyle(bold: true, fontFamily: "Nunito", color: Color.white),
-              ),
+              child: Text("Regulating Device", style: TextStyle(bold: true, fontFamily: "Nunito", color: Color.white)),
             ),
             Padding(
               insets: const Insets.axis(horizontal: 10.0),
@@ -58,8 +54,8 @@ class RegulatingDeviceApp extends StatelessWidget {
                 mainAxis: LayoutAxis.vertical,
                 children: [
                   buttonPanel(Icon(icon: Icons.settings), "Settings", [
-                    Button(text: "On", onClick: () => ()),
-                    Button(text: "Off", onClick: () => ()),
+                    Button(child: Text("On"), onClick: () => ()),
+                    Button(child: Text("Off"), onClick: () => ()),
                   ]),
                 ],
               ),
@@ -91,7 +87,7 @@ Widget buttonPanel(Icon icon, String name, List<Widget> buttons) {
                     children: [
                       icon,
                       Padding(insets: const Insets.all(10.0)),
-                      Text(text: name, style: TextStyle(fontSize: 18.0)),
+                      Text(name, style: TextStyle(fontSize: 18.0)),
                     ],
                   ),
                   Padding(

@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:diamond_gl/diamond_gl.dart' hide Window;
 
 import '../../braid_ui.dart';
-import '../baked_assets.g.dart';
 import '../framework/proxy.dart';
 import '../framework/widget.dart';
 import 'basic.dart';
@@ -12,6 +11,7 @@ import 'drag_arena.dart';
 import 'icon.dart';
 import 'scroll.dart';
 import 'stack.dart';
+import 'theme.dart';
 import 'window.dart';
 
 class BraidInspector {
@@ -74,8 +74,8 @@ class _InspectableTreeState extends WidgetState<InspectableTree> {
       children: [
         widget.tree,
         if (active)
-          DefaultTextStyle(
-            style: TextStyle(color: Color.white, fontSize: 16.0, bold: false, italic: false),
+          BraidTheme(
+            // textStyle: TextStyle(color: Color.white, fontSize: 16.0, bold: false, italic: false),
             child: DragArena(
               children: [
                 Window(
@@ -88,10 +88,9 @@ class _InspectableTreeState extends WidgetState<InspectableTree> {
                           key: Key(tree.name),
                           children: [
                             Text(
-                              text:
-                                  tree == _Tree.proxy
-                                      ? 'proxies: ${_countProxies(widget.inspector.rootProxy!)}'
-                                      : 'instances: ${_countInstances(widget.inspector.rootInstance!)}',
+                              tree == _Tree.proxy
+                                  ? 'proxies: ${_countProxies(widget.inspector.rootProxy!)}'
+                                  : 'instances: ${_countInstances(widget.inspector.rootInstance!)}',
                             ),
                             Flexible(
                               child: Padding(
@@ -111,16 +110,14 @@ class _InspectableTreeState extends WidgetState<InspectableTree> {
                         children: [
                           Flexible(
                             child: Button(
-                              onClick: () => setState(() => tree = _Tree.instance),
-                              text: 'instances',
-                              enabled: tree != _Tree.instance,
+                              onClick: tree != _Tree.instance ? () => setState(() => tree = _Tree.instance) : null,
+                              child: Text('instances'),
                             ),
                           ),
                           Flexible(
                             child: Button(
-                              onClick: () => setState(() => tree = _Tree.proxy),
-                              text: 'proxies',
-                              enabled: tree != _Tree.proxy,
+                              onClick: tree != _Tree.proxy ? () => setState(() => tree = _Tree.proxy) : null,
+                              child: Text('proxies'),
                             ),
                           ),
                         ],
@@ -136,7 +133,7 @@ class _InspectableTreeState extends WidgetState<InspectableTree> {
   }
 
   Widget _constructProxyTree(WidgetProxy from) {
-    final title = Text(text: from.toString(), softWrap: false);
+    final title = Text(from.toString(), softWrap: false);
 
     final children = <WidgetProxy>[];
     from.visitChildren(children.add);
@@ -232,7 +229,7 @@ class _InstanceTitleState extends WidgetState<InstanceTitle> {
   Widget build(BuildContext context) {
     final title = Row(
       children: [
-        Text(text: widget.instance.runtimeType.toString(), softWrap: false, style: TextStyle(bold: hovered)),
+        Text(widget.instance.runtimeType.toString(), softWrap: false, style: TextStyle(bold: hovered)),
         if (widget.instance.isRelayoutBoundary)
           Padding(
             insets: const Insets(left: 5),

@@ -107,7 +107,7 @@ class Notification extends StatelessWidget {
       margin: const Insets.all(5),
       color: Color.blue,
       cornerRadius: const CornerRadius.all(10),
-      child: Clip(child: Text(softWrap: false, text: data.message)),
+      child: Clip(child: Text(data.message, softWrap: false)),
     );
   }
 }

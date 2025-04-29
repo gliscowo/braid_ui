@@ -1,6 +1,5 @@
 import 'package:diamond_gl/diamond_gl.dart';
 
-import '../baked_assets.g.dart';
 import '../core/cursors.dart';
 import '../core/math.dart';
 import '../framework/proxy.dart';
@@ -105,7 +104,7 @@ class _WindowState extends WidgetState<Window> {
                                     }),
                                 child: Icon(icon: controller.expanded ? Icons.arrow_drop_down : Icons.arrow_drop_up),
                               ),
-                            Text(text: widget.title, style: TextStyle(fontSize: 14.0, bold: true)),
+                            Text(widget.title, style: TextStyle(fontSize: 14.0, bold: true)),
                             Flexible(child: Padding(insets: Insets.zero)),
                             if (widget.onClose != null)
                               MouseArea(

@@ -9,7 +9,7 @@ out vec4 fragColor;
 void main() {
     vec2 center = vec2(uRadius);
     float distance = length(vPos - center);
-    float alpha = 1 - smoothstep(uRadius - 2, uRadius, distance);
+    float alpha = 1 - smoothstep(uRadius - 1.5, uRadius, distance);
 
     if(alpha < .001) discard;
     fragColor = vec4(uColor.rgb, alpha * uColor.a);

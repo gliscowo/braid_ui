@@ -4,6 +4,7 @@ import 'package:braid_ui/braid_ui.dart';
 import 'package:braid_ui/src/framework/proxy.dart';
 import 'package:braid_ui/src/framework/widget.dart';
 import 'package:braid_ui/src/widgets/basic.dart';
+import 'package:braid_ui/src/widgets/theme.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
@@ -36,7 +37,7 @@ class TimeTextState extends WidgetState<TimeText> {
     return MouseArea(
       cursorStyle: CursorStyle.hand,
       // clickCallback: () => setState(() => _time = DateTime.now()),
-      child: Text(text: DateFormat('Hms').format(_time), style: TextStyle(fontSize: 40.0, bold: true)),
+      child: Text(DateFormat('Hms').format(_time), style: TextStyle(fontSize: 40.0, bold: true)),
     );
   }
 }
@@ -55,7 +56,7 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Panel(color: Color.white, child: const Center(child: Clock()));
+    return BraidTheme(child: Panel(color: Color.white, child: const Center(child: Clock())));
   }
 }
 

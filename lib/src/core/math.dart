@@ -107,7 +107,7 @@ class CornerRadius {
   @literal
   const CornerRadius.right(double radius) : this(topRight: radius, bottomRight: radius);
 
-  bool get isVanishing => topLeft <= 1 && topRight <= 1 && bottomLeft <= 1 && bottomRight <= 1;
+  bool get isVanishing => topLeft < 1 && topRight < 1 && bottomLeft < 1 && bottomRight < 1;
 
   get _props => (topLeft, topRight, bottomLeft, bottomRight);
 

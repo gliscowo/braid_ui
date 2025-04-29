@@ -4,6 +4,7 @@ import '../core/cursors.dart';
 import '../core/math.dart';
 import '../framework/proxy.dart';
 import '../framework/widget.dart';
+import 'animated_widgets.dart';
 import 'basic.dart';
 import 'text.dart';
 
@@ -15,10 +16,7 @@ class DefaultButtonStyle extends InheritedWidget {
   static Widget merge({required ButtonStyle style, required Widget child}) {
     return Builder(
       builder: (context) {
-        final contextStyle = maybeOf(context);
-        final effectiveStyle = contextStyle != null ? style.overriding(contextStyle) : style;
-
-        return DefaultButtonStyle(style: effectiveStyle, child: child);
+        return DefaultButtonStyle(style: style.overriding(of(context)), child: child);
       },
     );
   }
@@ -26,42 +24,53 @@ class DefaultButtonStyle extends InheritedWidget {
   @override
   bool mustRebuildDependents(DefaultButtonStyle newWidget) => newWidget.style != style;
 
-  static ButtonStyle? maybeOf(BuildContext context) => context.dependOnAncestor<DefaultButtonStyle>()?.style;
+  // ---
+
+  static ButtonStyle of(BuildContext context) {
+    final widget = context.dependOnAncestor<DefaultButtonStyle>();
+    assert(widget != null, 'expected an ambient DefaultButtonStyle');
+
+    return widget!.style;
+  }
 }
 
 class ButtonStyle {
   static const empty = ButtonStyle();
 
   final Color? color;
-  final Color? hoveredColor;
+  final Color? highlightColor;
   final Color? disabledColor;
   final Insets? padding;
   final CornerRadius? cornerRadius;
   final TextStyle? textStyle;
+  final TextStyle? disabledTextStyle;
 
   const ButtonStyle({
     this.color,
-    this.hoveredColor,
+    this.highlightColor,
     this.disabledColor,
     this.padding,
     this.cornerRadius,
     this.textStyle,
+    this.disabledTextStyle,
   });
 
   ButtonStyle copy({
     Color? color,
-    Color? hoveredColor,
+    Color? highlightColor,
     Color? disabledColor,
     Insets? padding,
     CornerRadius? cornerRadius,
     TextStyle? textStyle,
+    TextStyle? disabledTextStyle,
   }) => ButtonStyle(
     color: color ?? this.color,
-    hoveredColor: hoveredColor ?? this.hoveredColor,
+    highlightColor: highlightColor ?? this.highlightColor,
     disabledColor: disabledColor ?? this.disabledColor,
     padding: padding ?? this.padding,
     cornerRadius: cornerRadius ?? this.cornerRadius,
     textStyle: textStyle ?? this.textStyle,
+    disabledTextStyle: disabledTextStyle ?? this.disabledTextStyle,
   );
 
   ButtonStyle overriding(ButtonStyle other) {
@@ -71,61 +80,67 @@ class ButtonStyle {
     }
     textStyle ??= other.textStyle;
 
+    var disabledTextStyle = this.disabledTextStyle;
+    if (disabledTextStyle != null && other.disabledTextStyle != null) {
+      disabledTextStyle = disabledTextStyle.overriding(other.disabledTextStyle!);
+    }
+    disabledTextStyle ??= other.disabledTextStyle;
+
     return ButtonStyle(
       color: color ?? other.color,
-      hoveredColor: hoveredColor ?? other.hoveredColor,
+      highlightColor: highlightColor ?? other.highlightColor,
       disabledColor: disabledColor ?? other.disabledColor,
       padding: padding ?? other.padding,
       cornerRadius: cornerRadius ?? other.cornerRadius,
       textStyle: textStyle,
+      disabledTextStyle: disabledTextStyle,
     );
   }
 
   @override
-  int get hashCode => Object.hash(color, hoveredColor, disabledColor, padding, cornerRadius, textStyle);
+  int get hashCode => Object.hash(color, highlightColor, disabledColor, padding, cornerRadius, textStyle);
 
   @override
   bool operator ==(Object other) =>
       other is ButtonStyle &&
       other.color == color &&
-      other.hoveredColor == hoveredColor &&
+      other.highlightColor == highlightColor &&
       other.disabledColor == disabledColor &&
       other.padding == padding &&
       other.cornerRadius == cornerRadius &&
-      other.textStyle == textStyle;
+      other.textStyle == textStyle &&
+      other.disabledTextStyle == disabledTextStyle;
 }
 
 class Button extends StatelessWidget {
   final ButtonStyle? style;
-  final bool enabled;
-  final void Function() onClick;
-  final String text;
+  final void Function()? onClick;
+  final Widget child;
 
-  Button({super.key, this.style, this.enabled = true, required this.onClick, required this.text});
+  Button({super.key, this.style, required this.onClick, required this.child});
 
   @override
   Widget build(BuildContext context) {
-    var effectiveStyle = style ?? ButtonStyle.empty;
-    if (DefaultButtonStyle.maybeOf(context) case ButtonStyle contextStyle) {
-      effectiveStyle = effectiveStyle.overriding(contextStyle);
+    final contextStyle = DefaultButtonStyle.of(context);
+    final style = this.style?.overriding(contextStyle) ?? contextStyle;
+
+    Widget result = RawButton(style: style, onClick: onClick, child: child);
+
+    final textStyle = onClick != null ? style.textStyle : style.disabledTextStyle;
+    if (textStyle != null) {
+      result = DefaultTextStyle.merge(style: textStyle, child: result);
     }
 
-    return RawButton(
-      style: effectiveStyle,
-      enabled: enabled,
-      onClick: onClick,
-      child: Text(text: text, style: effectiveStyle.textStyle),
-    );
+    return result;
   }
 }
 
 class RawButton extends StatefulWidget {
   final ButtonStyle style;
-  final bool enabled;
-  final void Function() onClick;
+  final void Function()? onClick;
   final Widget child;
 
-  const RawButton({super.key, required this.style, required this.enabled, required this.onClick, required this.child});
+  const RawButton({super.key, required this.style, required this.onClick, required this.child});
 
   @override
   WidgetState createState() => _RawButtonState();
@@ -138,21 +153,22 @@ class _RawButtonState extends WidgetState<RawButton> {
   Widget build(BuildContext context) {
     final style = widget.style;
 
-    Widget result = Panel(
-      cornerRadius: style.cornerRadius ?? _defaultCornerRadius,
+    Widget result = AnimatedPanel(
+      duration: const Duration(milliseconds: 100),
+      cornerRadius: style.cornerRadius!,
       color:
-          widget.enabled
+          widget.onClick != null
               ? _hovered
-                  ? style.hoveredColor ?? _defaultHoveredColor
-                  : style.color ?? _defaultColor
-              : style.disabledColor ?? _defaultDisabledColor,
-      child: Padding(insets: style.padding ?? _defaultPadding, child: widget.child),
+                  ? style.highlightColor!
+                  : style.color!
+              : style.disabledColor!,
+      child: Padding(insets: style.padding!, child: widget.child),
     );
 
-    if (widget.enabled) {
+    if (widget.onClick != null) {
       result = MouseArea(
         cursorStyle: CursorStyle.hand,
-        clickCallback: (_, _) => widget.onClick(),
+        clickCallback: (_, _) => widget.onClick!(),
         enterCallback: () => setState(() => _hovered = true),
         exitCallback: () => setState(() => _hovered = false),
         child: result,
@@ -161,10 +177,4 @@ class _RawButtonState extends WidgetState<RawButton> {
 
     return result;
   }
-
-  static const _defaultColor = Color.rgb(0x3867d6);
-  static const _defaultHoveredColor = Color.rgb(0x4b7bec);
-  static const _defaultDisabledColor = Color.rgb(0x4b6584);
-  static const _defaultPadding = Insets.all(3.0);
-  static const _defaultCornerRadius = CornerRadius.all(3.0);
 }

@@ -4,6 +4,7 @@ import 'package:braid_ui/src/framework/widget.dart';
 import 'package:braid_ui/src/widgets/basic.dart';
 import 'package:braid_ui/src/widgets/drag_arena.dart';
 import 'package:braid_ui/src/widgets/stack.dart';
+import 'package:braid_ui/src/widgets/theme.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:logging/logging.dart';
 import 'package:vector_math/vector_math.dart';
@@ -30,48 +31,53 @@ class DragArenaApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PanArena(
-      children: [
-        const FunnyDraggable(
-          child: Sized(width: 50, height: 50, child: Panel(color: Color.red, cornerRadius: CornerRadius.all(5))),
-        ),
-        FunnyDraggable(
-          child: Panel(
-            color: Color.green,
-            cornerRadius: const CornerRadius.all(5),
-            child: Padding(insets: const Insets.all(10), child: Button(onClick: () {}, text: 'a funny button')),
+    return BraidTheme(
+      child: PanArena(
+        children: [
+          const FunnyDraggable(
+            child: Sized(width: 50, height: 50, child: Panel(color: Color.red, cornerRadius: CornerRadius.all(5))),
           ),
-        ),
-        const FunnyDraggable(
-          child: Panel(
-            color: Color.white,
-            cornerRadius: CornerRadius.all(10),
-            child: Padding(
-              insets: Insets.all(25),
-              child: Resizable(
-                initialSize: Size(200, 200),
-                child: Panel(
-                  color: Color.black,
-                  child: PanArena(
-                    children: [
-                      FunnyDraggable(
-                        child: Sized(
-                          width: 50,
-                          height: 50,
-                          child: Panel(color: Color.red, cornerRadius: CornerRadius.all(5)),
+          FunnyDraggable(
+            child: Panel(
+              color: Color.green,
+              cornerRadius: const CornerRadius.all(5),
+              child: Padding(
+                insets: const Insets.all(10),
+                child: Button(onClick: () {}, child: Text('a funny button')),
+              ),
+            ),
+          ),
+          const FunnyDraggable(
+            child: Panel(
+              color: Color.white,
+              cornerRadius: CornerRadius.all(10),
+              child: Padding(
+                insets: Insets.all(25),
+                child: Resizable(
+                  initialSize: Size(200, 200),
+                  child: Panel(
+                    color: Color.black,
+                    child: PanArena(
+                      children: [
+                        FunnyDraggable(
+                          child: Sized(
+                            width: 50,
+                            height: 50,
+                            child: Panel(color: Color.red, cornerRadius: CornerRadius.all(5)),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
-        const FunnyDraggable(
-          child: Sized(width: 50, height: 50, child: Panel(color: Color.blue, cornerRadius: CornerRadius.all(5))),
-        ),
-      ],
+          const FunnyDraggable(
+            child: Sized(width: 50, height: 50, child: Panel(color: Color.blue, cornerRadius: CornerRadius.all(5))),
+          ),
+        ],
+      ),
     );
   }
 }

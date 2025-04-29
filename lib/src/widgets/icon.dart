@@ -5,6 +5,8 @@ import '../text/text_layout.dart';
 import 'basic.dart';
 import 'text.dart';
 
+export '../baked_assets.g.dart' show Icons;
+
 extension type const IconSpec(int _codepoint) {
   String asString() => String.fromCharCode(_codepoint);
 }

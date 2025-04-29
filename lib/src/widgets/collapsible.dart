@@ -1,5 +1,4 @@
 import '../../braid_ui.dart';
-import '../baked_assets.g.dart';
 import '../framework/widget.dart';
 import 'basic.dart';
 import 'icon.dart';

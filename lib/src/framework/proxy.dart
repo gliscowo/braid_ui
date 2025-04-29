@@ -2,7 +2,6 @@ import 'dart:collection';
 import 'dart:io';
 import 'dart:math';
 
-import 'package:diamond_gl/diamond_gl.dart';
 import 'package:meta/meta.dart';
 
 import 'instance.dart';
@@ -42,7 +41,6 @@ mixin NodeWithDepth {
 typedef AnimationCallback = void Function(double delta);
 
 abstract interface class ProxyHost {
-  Window get window;
   void scheduleAnimationCallback(AnimationCallback callback);
 }
 
@@ -118,9 +116,6 @@ sealed class WidgetProxy with NodeWithDepth implements BuildContext, Comparable<
 
   ProxyHost? _host;
   ProxyHost? get host => _host;
-
-  @override
-  Window get window => _host!.window;
 
   ProxyLifecycle lifecycle = ProxyLifecycle.initial;
 

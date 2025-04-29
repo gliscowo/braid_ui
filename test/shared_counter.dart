@@ -2,6 +2,7 @@ import 'package:braid_ui/braid_ui.dart';
 import 'package:braid_ui/src/framework/widget.dart';
 import 'package:braid_ui/src/widgets/basic.dart';
 import 'package:braid_ui/src/widgets/shared_state.dart';
+import 'package:braid_ui/src/widgets/theme.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:logging/logging.dart';
 
@@ -33,8 +34,8 @@ class InheritedStateApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTextStyle(
-      style: TextStyle(fontSize: 24.0, color: Color.white, bold: false, italic: false),
+    return BraidTheme(
+      textStyle: TextStyle(fontSize: 24.0),
       child: Column(children: [Flexible(child: TheApp()), Flexible(child: TheApp(nest: true))]),
     );
   }
@@ -62,10 +63,7 @@ class TheApp extends StatelessWidget {
 class LeftBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Panel(
-      color: Color.green,
-      child: Text(text: 'current state: ${SharedState.get<CounterState>(context).count}'),
-    );
+    return Panel(color: Color.green, child: Text('current state: ${SharedState.get<CounterState>(context).count}'));
   }
 }
 
@@ -74,7 +72,7 @@ class RightBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return Button(
       onClick: () => SharedState.set<CounterState>(context, (state) => state.count += 1),
-      text: 'increment',
+      child: Text('increment'),
     );
   }
 }

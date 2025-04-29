@@ -3,7 +3,8 @@ import 'dart:async';
 import 'package:braid_ui/braid_ui.dart';
 import 'package:braid_ui/src/framework/widget.dart';
 import 'package:braid_ui/src/widgets/basic.dart';
-import 'package:diamond_gl/diamond_gl.dart';
+import 'package:braid_ui/src/widgets/scroll.dart';
+import 'package:braid_ui/src/widgets/theme.dart';
 import 'package:logging/logging.dart';
 
 Future<void> main(List<String> args) async {
@@ -29,31 +30,33 @@ class TextSizesApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Panel(
-      color: Color.white,
-      child: Center(
-        child: Flex(
-          mainAxis: LayoutAxis.vertical,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Flexible(
-              child: /*VerticalScroll(
-                child:*/ Flex(
-                mainAxis: LayoutAxis.horizontal,
-                children: [
-                  Flex(
-                    mainAxis: LayoutAxis.vertical,
-                    children: [for (var size = 8.0; size < 52; size += 2) _testLabel(size)],
+    return BraidTheme(
+      child: Panel(
+        color: BraidTheme.defaultBackgroundColor,
+        child: Center(
+          child: Flex(
+            mainAxis: LayoutAxis.vertical,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Flexible(
+                child: Scrollable.vertical(
+                  child: Flex(
+                    mainAxis: LayoutAxis.horizontal,
+                    children: [
+                      Flex(
+                        mainAxis: LayoutAxis.vertical,
+                        children: [for (var size = 8.0; size < 52; size += 2) _testLabel(size)],
+                      ),
+                      Flex(
+                        mainAxis: LayoutAxis.vertical,
+                        children: [for (var size = 8.0; size < 52; size += 2) _testLabel(size, 'cascadia')],
+                      ),
+                    ],
                   ),
-                  Flex(
-                    mainAxis: LayoutAxis.vertical,
-                    children: [for (var size = 8.0; size < 52; size += 2) _testLabel(size, 'cascadia')],
-                  ),
-                ],
+                ),
               ),
-              // ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -62,7 +65,7 @@ class TextSizesApp extends StatelessWidget {
 
 Widget _testLabel(double size, [String fontFamily = 'Noto Sans']) => Padding(
   insets: const Insets.all(10),
-  child: Text(text: 'bruhve ${size}px', style: TextStyle(fontSize: size, color: Color.black, fontFamily: fontFamily)),
+  child: Text('bruhve ${size}px', style: TextStyle(fontSize: size, fontFamily: fontFamily)),
 );
 
 // class TextField extends SingleChildWidgetInstance with ShrinkWrapLayout {
