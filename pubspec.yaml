@@ -7,15 +7,9 @@ environment:
   sdk: ^3.7.0
 
 dependencies:
-  dart_opengl:
-    hosted: https://pub.wispforest.io
-    version: ^0.1.1
-  dart_glfw:
-    hosted: https://pub.wispforest.io
-    version: ^0.1.1
   diamond_gl:
     hosted: https://pub.wispforest.io
-    version: ^1.0.0
+    version: ^1.1.1
   ffi: ^2.1.4
   logging: ^1.2.0
   vector_math: ^2.1.4

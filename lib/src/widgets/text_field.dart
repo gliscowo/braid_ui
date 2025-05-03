@@ -1,7 +1,7 @@
 import 'dart:math';
 
-import 'package:dart_glfw/dart_glfw.dart';
 import 'package:diamond_gl/diamond_gl.dart';
+import 'package:diamond_gl/glfw.dart';
 import 'package:ffi/ffi.dart';
 import 'package:unicode/unicode.dart';
 

@@ -7,22 +7,7 @@ import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:braid_ui/braid_ui.dart';
 import 'package:braid_ui/src/animation/lerp.dart';
-import 'package:braid_ui/src/framework/proxy.dart';
-import 'package:braid_ui/src/framework/widget.dart';
-import 'package:braid_ui/src/widgets/basic.dart';
-import 'package:braid_ui/src/widgets/checkbox.dart';
-import 'package:braid_ui/src/widgets/collapsible.dart';
-import 'package:braid_ui/src/widgets/drag_arena.dart';
-import 'package:braid_ui/src/widgets/icon.dart';
-import 'package:braid_ui/src/widgets/scroll.dart';
-import 'package:braid_ui/src/widgets/slider.dart';
-import 'package:braid_ui/src/widgets/split_pane.dart';
-import 'package:braid_ui/src/widgets/stack.dart';
-import 'package:braid_ui/src/widgets/switch.dart';
-import 'package:braid_ui/src/widgets/text_field.dart';
-import 'package:braid_ui/src/widgets/theme.dart';
-import 'package:braid_ui/src/widgets/window.dart';
-import 'package:diamond_gl/diamond_gl.dart' hide Window;
+import 'package:braid_ui/src/widgets/spinning_indicator.dart';
 import 'package:endec/endec.dart';
 import 'package:endec_json/endec_json.dart';
 import 'package:image/image.dart' hide Color;
@@ -328,7 +313,13 @@ class CursorTest extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Sized(width: 100, height: 100, child: MouseArea(cursorStyle: cursor, child: Panel(color: Color.white))),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Padding(insets: Insets.all(10), child: SpinningIndicator()),
+          Sized(width: 100, height: 100, child: MouseArea(cursorStyle: cursor, child: Panel(color: Color.white))),
+        ],
+      ),
     );
   }
 }

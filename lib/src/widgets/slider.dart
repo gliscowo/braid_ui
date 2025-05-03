@@ -1,11 +1,4 @@
-import 'package:diamond_gl/diamond_gl.dart';
-
 import '../../braid_ui.dart';
-import '../framework/proxy.dart';
-import '../framework/widget.dart';
-import 'basic.dart';
-import 'layout_builder.dart';
-import 'stack.dart';
 
 class SliderStyle {
   final double? trackThickness;
@@ -185,7 +178,7 @@ class RawSlider extends StatelessWidget {
   final LayoutAxis axis;
   final void Function(double)? onUpdate;
   final SliderStyle style;
-  final Widget track;
+  final Widget? track;
   final Widget handle;
 
   RawSlider({
@@ -220,16 +213,16 @@ class RawSlider extends StatelessWidget {
                   width: axis.choose(constraints.maxWidth, style.trackThickness!),
                   height: axis.choose(style.trackThickness!, constraints.maxHeight),
                   child: Padding(
-                    insets: axis.choose(Insets.axis(horizontal: handleSize), Insets.axis(vertical: handleSize)),
+                    insets: axis.choose(Insets.axis(horizontal: handleSize / 2), Insets.axis(vertical: handleSize / 2)),
                     child: track,
                   ),
                 ),
                 Padding(
                   insets: axis.chooseCompute(
-                    () => Insets(left: normalizedValue * (constraints.maxWidth - handleSize * 2)),
-                    () => Insets(top: normalizedValue * (constraints.maxHeight - handleSize * 2)),
+                    () => Insets(left: normalizedValue * (constraints.maxWidth - handleSize)),
+                    () => Insets(top: (1 - normalizedValue) * (constraints.maxHeight - handleSize)),
                   ),
-                  child: Sized(width: handleSize * 2, height: handleSize * 2, child: handle),
+                  child: Sized(width: handleSize, height: handleSize, child: handle),
                 ),
               ],
             ),
@@ -243,8 +236,14 @@ class RawSlider extends StatelessWidget {
     if (onUpdate == null) return;
 
     final handleSize = style.handleSize!;
-    final newNormalizedValue = ((axis.choose(x, y) - handleSize) / (constraints.maxOnAxis(axis) - handleSize * 2))
-        .clamp(0, 1);
+    var newNormalizedValue = ((axis.choose(x, y) - handleSize / 2) / (constraints.maxOnAxis(axis) - handleSize)).clamp(
+      0,
+      1,
+    );
+
+    if (axis == LayoutAxis.vertical) {
+      newNormalizedValue = 1 - newNormalizedValue;
+    }
 
     final newValue = min + newNormalizedValue * (max - min);
     onUpdate!(step != null ? (newValue / step!).roundToDouble() * step! : newValue);

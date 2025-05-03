@@ -70,7 +70,8 @@ class _ScrollWithSliderState extends WidgetState<ScrollWithSlider> {
             if (controller.maxOffset != 0)
               Slider(
                 axis: LayoutAxis.vertical,
-                max: controller.maxOffset,
+                min: controller.maxOffset,
+                max: 0,
                 step: 1,
                 value: controller.offset,
                 onUpdate: (value) => setState(() => controller.offset = value),

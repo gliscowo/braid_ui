@@ -1,7 +1,7 @@
 import 'dart:math';
 
-import 'package:dart_opengl/dart_opengl.dart';
 import 'package:diamond_gl/diamond_gl.dart';
+import 'package:diamond_gl/opengl.dart';
 import 'package:vector_math/vector_math.dart';
 
 import '../context.dart';

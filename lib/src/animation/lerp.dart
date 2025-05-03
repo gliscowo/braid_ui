@@ -12,6 +12,7 @@ abstract class Lerp<T> {
 
   const Lerp(this.start, this.end);
 
+  @protected
   T operator [](double t);
 
   @nonVirtual
@@ -38,6 +39,30 @@ class NullableLerp<T> extends Lerp<T?> {
 
   @override
   T? operator [](double t) => _delegate?[t] ?? end;
+}
+
+class LerpSequence<T> extends Lerp<T> {
+  final List<Lerp<T>> _delegates;
+  LerpSequence(super.start, List<T> intermediaries, super.end, LerpFactory<Lerp<T>, T> delegateFactory)
+    : _delegates = List<Lerp<T>?>.filled(intermediaries.length + 1, null).cast() {
+    if (intermediaries.isNotEmpty) {
+      _delegates[0] = delegateFactory(start, intermediaries.isEmpty ? end : intermediaries.first);
+
+      for (final (idx, intermediary) in intermediaries.indexed) {
+        _delegates[idx + 1] = delegateFactory(idx == 0 ? start : intermediaries[idx - 1], intermediary);
+      }
+
+      _delegates[intermediaries.length] = delegateFactory(intermediaries.isEmpty ? start : intermediaries.last, end);
+    } else {
+      _delegates[0] = delegateFactory(start, end);
+    }
+  }
+
+  @override
+  T operator [](double t) {
+    final delegate = _delegates[(t / (1 / _delegates.length)).toInt()];
+    return delegate[t];
+  }
 }
 
 // ---

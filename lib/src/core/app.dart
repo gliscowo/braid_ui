@@ -5,9 +5,9 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:collection/collection.dart';
-import 'package:dart_glfw/dart_glfw.dart';
-import 'package:dart_opengl/dart_opengl.dart';
 import 'package:diamond_gl/diamond_gl.dart';
+import 'package:diamond_gl/glfw.dart';
+import 'package:diamond_gl/opengl.dart';
 import 'package:ffi/ffi.dart' as ffi;
 import 'package:logging/logging.dart';
 import 'package:vector_math/vector_math.dart';

@@ -3,11 +3,13 @@ import 'dart:math';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:meta/meta.dart';
 
-import '../../braid_ui.dart';
+import '../core/math.dart';
 import '../framework/widget.dart';
+import 'button.dart';
 import 'checkbox.dart';
 import 'slider.dart';
 import 'switch.dart';
+import 'text.dart';
 
 class BraidThemeData extends InheritedWidget {
   final Color accentColor;
@@ -181,5 +183,5 @@ class BraidTheme extends StatelessWidget {
     disabledTextStyle: TextStyle(fontSize: 14.0, bold: true),
   );
   static const defaultCheckboxStyle = CheckboxStyle(cornerRadius: CornerRadius.all(5));
-  static const defaultSliderStyle = SliderStyle(trackThickness: 3, handleSize: 10);
+  static const defaultSliderStyle = SliderStyle(trackThickness: 3, handleSize: 20);
 }

@@ -5,9 +5,12 @@ import 'package:diamond_gl/diamond_gl.dart';
 import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math.dart';
 
-import '../../braid_ui.dart';
+import '../context.dart';
+import '../core/constraints.dart';
+import '../core/cursors.dart';
 import '../core/key_modifiers.dart';
-import '../widgets/layout_builder.dart';
+import '../core/math.dart';
+import '../text/text_renderer.dart';
 import 'proxy.dart';
 import 'widget.dart';
 

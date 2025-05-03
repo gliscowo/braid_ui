@@ -3,8 +3,8 @@ import 'dart:ffi' hide Size;
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:dart_opengl/dart_opengl.dart';
 import 'package:diamond_gl/diamond_gl.dart';
+import 'package:diamond_gl/opengl.dart';
 import 'package:ffi/ffi.dart';
 import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';

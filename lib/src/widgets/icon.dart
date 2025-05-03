@@ -18,24 +18,13 @@ class Icon extends StatelessWidget {
 
   const Icon({super.key, this.size = 24, this.color = Color.white, required this.icon});
 
+  Span toSpan() => Span(
+    icon.asString(),
+    SpanStyle(fontFamily: 'MaterialSymbols', fontSize: size, lineHeight: 1.0, color: color, bold: false, italic: false),
+  );
+
   @override
   Widget build(BuildContext context) {
-    return RawText(
-      spans: [
-        Span(
-          icon.asString(),
-          SpanStyle(
-            fontFamily: 'MaterialSymbols',
-            fontSize: size,
-            lineHeight: 1.0,
-            color: color,
-            bold: false,
-            italic: false,
-          ),
-        ),
-      ],
-      softWrap: false,
-      alignment: Alignment.center,
-    );
+    return RawText(spans: [toSpan()], softWrap: false, alignment: Alignment.center);
   }
 }
