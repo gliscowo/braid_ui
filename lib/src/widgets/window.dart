@@ -105,7 +105,7 @@ class _WindowState extends WidgetState<Window> {
                                 child: Icon(icon: controller.expanded ? Icons.arrow_drop_down : Icons.arrow_drop_up),
                               ),
                             Text(widget.title, style: TextStyle(fontSize: 14.0, bold: true)),
-                            Flexible(child: Padding(insets: Insets.zero)),
+                            Flexible(child: Padding(insets: const Insets())),
                             if (widget.onClose != null)
                               MouseArea(
                                 cursorStyle: CursorStyle.hand,

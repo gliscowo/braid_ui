@@ -272,7 +272,7 @@ class Panel extends OptionalChildInstanceWidget {
   const Panel({
     super.key,
     required this.color,
-    this.cornerRadius = CornerRadius.zero,
+    this.cornerRadius = const CornerRadius(),
     this.outlineThickness,
     super.child,
   });

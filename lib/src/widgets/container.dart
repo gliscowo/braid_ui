@@ -1,6 +1,7 @@
 import 'package:diamond_gl/diamond_gl.dart';
 
-import '../../braid_ui.dart';
+import '../animation/easings.dart';
+import '../core/math.dart';
 import '../framework/widget.dart';
 import 'animated_widgets.dart';
 import 'basic.dart';
@@ -23,7 +24,7 @@ class Container extends StatelessWidget {
     }
 
     if (color != null) {
-      result = Panel(color: color!, cornerRadius: cornerRadius ?? CornerRadius.zero, child: result);
+      result = Panel(color: color!, cornerRadius: cornerRadius ?? const CornerRadius(), child: result);
     }
 
     if (margin != null) {
@@ -67,7 +68,7 @@ class AnimatedContainer extends StatelessWidget {
         easing: easing,
         duration: duration,
         color: color!,
-        cornerRadius: cornerRadius ?? CornerRadius.zero,
+        cornerRadius: cornerRadius ?? const CornerRadius(),
         child: result,
       );
     }

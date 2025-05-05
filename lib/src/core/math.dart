@@ -41,8 +41,6 @@ class Size {
 }
 
 class Insets {
-  static const Insets zero = Insets();
-
   final double top, bottom, left, right;
 
   @literal
@@ -81,8 +79,6 @@ class Insets {
 }
 
 class CornerRadius {
-  static const zero = CornerRadius.all(0);
-
   final double topLeft;
   final double topRight;
   final double bottomLeft;

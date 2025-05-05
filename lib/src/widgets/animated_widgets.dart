@@ -43,7 +43,7 @@ class AnimatedPanel extends AutomaticallyAnimatedWidget {
     super.easing,
     required super.duration,
     required this.color,
-    this.cornerRadius = CornerRadius.zero,
+    this.cornerRadius = const CornerRadius(),
     this.outlineThickness,
     this.child,
   });
