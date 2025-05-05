@@ -69,7 +69,16 @@ class ObservableBuilderProxy<T> extends BuilderProxy {
   void _listener() => rebuild(force: true);
 }
 
-abstract class ShareableState {}
+abstract class ShareableState {
+  late SharedStateWidgetState _backingState;
+
+  void setState(void Function() fn) {
+    _backingState.setState(() {
+      fn();
+      _backingState.generation++;
+    });
+  }
+}
 
 class SharedState<T extends ShareableState> extends StatefulWidget {
   final T Function() initState;
@@ -87,15 +96,11 @@ class SharedState<T extends ShareableState> extends StatefulWidget {
     return provider!.state.state;
   }
 
-  // TODO: this shouldn't introduce a dependency since its effectively write-only
   static void set<T extends ShareableState>(BuildContext context, void Function(T state) fn) {
-    final provider = context.dependOnAncestor<_SharedStateProvider<T>>();
+    final provider = context.getAncestor<_SharedStateProvider<T>>();
     assert(provider != null, 'attempted to set inherited state which is not provided by the current context');
 
-    provider!.state.setState(() {
-      fn(provider.state.state);
-      provider.state.generation++;
-    });
+    provider!.state.state.setState(() => fn(provider.state.state));
   }
 }
 
@@ -106,7 +111,7 @@ class SharedStateWidgetState<T extends ShareableState> extends WidgetState<Share
   @override
   void init() {
     super.init();
-    state = widget.initState();
+    state = widget.initState().._backingState = this;
   }
 
   @override

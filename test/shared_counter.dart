@@ -1,9 +1,4 @@
 import 'package:braid_ui/braid_ui.dart';
-import 'package:braid_ui/src/framework/widget.dart';
-import 'package:braid_ui/src/widgets/basic.dart';
-import 'package:braid_ui/src/widgets/shared_state.dart';
-import 'package:braid_ui/src/widgets/theme.dart';
-import 'package:diamond_gl/diamond_gl.dart';
 import 'package:logging/logging.dart';
 
 Future<void> main() async {
@@ -70,6 +65,7 @@ class LeftBody extends StatelessWidget {
 class RightBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    print('button build');
     return Button(
       onClick: () => SharedState.set<CounterState>(context, (state) => state.count += 1),
       child: Text('increment'),
