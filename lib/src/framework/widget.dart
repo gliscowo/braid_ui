@@ -4,7 +4,8 @@ import 'instance.dart';
 import 'proxy.dart';
 
 abstract interface class BuildContext {
-  T? dependOnAncestor<T extends Widget>();
+  T? getAncestor<T extends InheritedWidget>();
+  T? dependOnAncestor<T extends InheritedWidget>();
 }
 
 // ---

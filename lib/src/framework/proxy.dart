@@ -119,13 +119,16 @@ sealed class WidgetProxy with NodeWithDepth implements BuildContext, Comparable<
 
   ProxyLifecycle lifecycle = ProxyLifecycle.initial;
 
-  final Map<Type, InheritedProxy?> _dependencies = HashMap();
+  Map<Type, InheritedProxy>? _inheritedProxies;
+  Set<InheritedProxy>? _dependencies;
 
   void mount(WidgetProxy parent, Object? slot) {
     assert(parent.mounted, 'parent proxy must be mounted before its children');
 
     assert(lifecycle == ProxyLifecycle.initial, 'proxy must be in "initial" lifecycle state when mount() is called');
     lifecycle = ProxyLifecycle.live;
+
+    _inheritedProxies = parent._inheritedProxies;
 
     _parent = parent;
     _parentBuildScope = parent.buildScope;
@@ -144,8 +147,10 @@ sealed class WidgetProxy with NodeWithDepth implements BuildContext, Comparable<
     assert(lifecycle == ProxyLifecycle.live, 'proxy must be in "live" lifecycle state when unmount() is called');
     lifecycle = ProxyLifecycle.dead;
 
-    for (final dependency in _dependencies.values.nonNulls) {
-      dependency.removeDependent(this);
+    if (_dependencies != null) {
+      for (final dependency in _dependencies!) {
+        dependency.removeDependent(this);
+      }
     }
 
     visitChildren(_unmountChild);
@@ -216,22 +221,19 @@ sealed class WidgetProxy with NodeWithDepth implements BuildContext, Comparable<
   // ---
 
   @override
-  T? dependOnAncestor<T extends Widget>() {
-    if (_dependencies.containsKey(T)) {
-      return _dependencies[T]?.widget as T?;
-    }
+  T? getAncestor<T extends InheritedWidget>() => _inheritedProxies?[T]?.widget as T?;
 
-    var ancestor = _parent;
-    while (ancestor != null) {
-      if (ancestor is InheritedProxy && ancestor.widget.runtimeType == T) {
-        _dependencies[T] = ancestor..addDependent(this);
-        return ancestor.widget as T;
+  @override
+  T? dependOnAncestor<T extends InheritedWidget>() {
+    final ancestor = _inheritedProxies?[T];
+    if (ancestor != null) {
+      _dependencies ??= HashSet();
+      if (!_dependencies!.contains(ancestor)) {
+        _dependencies!.add(ancestor..addDependent(this));
       }
-
-      ancestor = ancestor.parent;
     }
 
-    return _dependencies[T] = null;
+    return ancestor?.widget as T?;
   }
 
   void notifyDependenciesChanged() {
@@ -362,6 +364,9 @@ class InheritedProxy extends ComposedProxy {
   @override
   void mount(WidgetProxy parent, Object? slot) {
     super.mount(parent, slot);
+    _inheritedProxies =
+        (_inheritedProxies != null ? Map.of(_inheritedProxies!) : HashMap())..[widget.runtimeType] = this;
+
     rebuild();
   }
 
