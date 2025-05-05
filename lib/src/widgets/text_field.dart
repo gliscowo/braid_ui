@@ -104,12 +104,12 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
 
   @override
   void doLayout(Constraints constraints) {
-    final width = constraints.hasBoundedWidth ? constraints.maxWidth : constraints.minWidth;
+    final maxWidth = constraints.hasBoundedWidth ? constraints.maxWidth : constraints.minWidth;
 
     _paragraph = Paragraph(widget.controller.createSpans(widget.style));
-    host!.textRenderer.layoutParagraph(_paragraph, widget.softWrap ? width : double.infinity);
+    host!.textRenderer.layoutParagraph(_paragraph, widget.softWrap ? maxWidth : double.infinity);
 
-    var size = Size(width, _paragraph.metrics.height).constrained(constraints);
+    var size = Size(_paragraph.metrics.width, _paragraph.metrics.height).constrained(constraints);
     transform.setSize(size);
 
     final newLineIdx = _lineIdxAtRuneIdx(_selection.end);
