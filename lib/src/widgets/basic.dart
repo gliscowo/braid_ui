@@ -334,10 +334,12 @@ class CustomDrawInstance extends LeafWidgetInstance<CustomDraw> {
 // ---
 
 class MouseArea extends SingleChildInstanceWidget {
-  final void Function(double x, double y)? clickCallback;
+  final void Function(double x, double y, int button)? clickCallback;
+  final void Function(double x, double y, int button)? unClickCallback;
   final void Function()? enterCallback;
+  final void Function(double toX, double toY)? moveCallback;
   final void Function()? exitCallback;
-  final void Function()? dragStartCallback;
+  final void Function(int button)? dragStartCallback;
   final void Function(double x, double y, double dx, double dy)? dragCallback;
   final void Function()? dragEndCallback;
   final void Function(double horizontal, double vertical)? scrollCallback;
@@ -346,7 +348,9 @@ class MouseArea extends SingleChildInstanceWidget {
   MouseArea({
     super.key,
     this.clickCallback,
+    this.unClickCallback,
     this.enterCallback,
+    this.moveCallback,
     this.exitCallback,
     this.dragStartCallback,
     this.dragCallback,
@@ -361,6 +365,9 @@ class MouseArea extends SingleChildInstanceWidget {
   MouseAreaInstance instantiate() => MouseAreaInstance(widget: this);
 }
 
+// TODO: allow not consuming events with per-callback predicates
+// in this process, likely also build a higher-level abstraction for
+// handling user input
 class MouseAreaInstance extends SingleChildWidgetInstance<MouseArea> with ShrinkWrapLayout, MouseListener {
   MouseAreaInstance({required super.widget});
 
@@ -368,16 +375,23 @@ class MouseAreaInstance extends SingleChildWidgetInstance<MouseArea> with Shrink
   CursorStyle? cursorStyleAt(double x, double y) => widget.cursorStyleSupplier?.call(x, y);
 
   @override
-  bool onMouseDown(double x, double y) => (widget.clickCallback?..call(x, y)) != null || widget.dragCallback != null;
+  bool onMouseDown(double x, double y, int button) =>
+      (widget.clickCallback?..call(x, y, button)) != null || widget.dragCallback != null;
+
+  @override
+  bool onMouseUp(double x, double y, int button) => (widget.unClickCallback?..call(x, y, button)) != null;
 
   @override
   void onMouseEnter() => widget.enterCallback?.call();
 
   @override
+  void onMouseMove(double toX, double toY) => widget.moveCallback?.call(toX, toY);
+
+  @override
   void onMouseExit() => widget.exitCallback?.call();
 
   @override
-  void onMouseDragStart() => widget.dragStartCallback?.call();
+  void onMouseDragStart(int button) => widget.dragStartCallback?.call(button);
 
   @override
   void onMouseDrag(double x, double y, double dx, double dy) => widget.dragCallback?.call(x, y, dx, dy);

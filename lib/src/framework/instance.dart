@@ -121,13 +121,18 @@ class HitTestState {
 mixin MouseListener<T extends InstanceWidget> on WidgetInstance<T> {
   CursorStyle? cursorStyleAt(double x, double y) => null;
 
-  bool onMouseDown(double x, double y) => false;
+  bool onMouseDown(double x, double y, int button) => false;
+  bool onMouseUp(double x, double y, int button) => false;
   void onMouseEnter() {}
+  void onMouseMove(double toX, double toY) {}
   void onMouseExit() {}
-  void onMouseDragStart() {}
+  void onMouseDragStart(int button) {}
   void onMouseDrag(double x, double y, double dx, double dy) {}
   void onMouseDragEnd() {}
   bool onMouseScroll(double x, double y, double horizontal, double vertical) => false;
+
+  @internal
+  ({double x, double y})? lastMousePosition;
 }
 
 mixin KeyboardListener<T extends InstanceWidget> on WidgetInstance<T> {

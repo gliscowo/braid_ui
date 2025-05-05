@@ -1,6 +1,7 @@
 import 'package:diamond_gl/diamond_gl.dart';
 
-import '../../braid_ui.dart';
+import '../core/cursors.dart';
+import '../core/math.dart';
 import '../framework/proxy.dart';
 import '../framework/widget.dart';
 import 'basic.dart';
@@ -88,7 +89,7 @@ class _CheckboxState extends WidgetState<Checkbox> {
     final style = widget.style?.overriding(contextStyle) ?? contextStyle;
 
     return MouseArea(
-      clickCallback: (_, _) => widget.onClick?.call(),
+      clickCallback: (_, _, _) => widget.onClick?.call(),
       enterCallback: () => setState(() => _hovered = true),
       exitCallback: () => setState(() => _hovered = false),
       cursorStyle: CursorStyle.hand,

@@ -409,7 +409,7 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
   CursorStyle? cursorStyleAt(double x, double y) => CursorStyle.text;
 
   @override
-  bool onMouseDown(double x, double y) {
+  bool onMouseDown(double x, double y, int button) {
     _moveCursor(_runeIdxAt(x, y), glfw.getKey(host!.window.handle, glfwKeyLeftShift) == glfwPress);
     return true;
   }

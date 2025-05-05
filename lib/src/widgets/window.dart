@@ -71,7 +71,7 @@ class _WindowState extends WidgetState<Window> {
               [_WindowEdge.bottom, _WindowEdge.left] || [_WindowEdge.top, _WindowEdge.right] => CursorStyle.neswResize,
               _ => null,
             },
-        clickCallback: (x, y) => draggingEdges = _edgesAt(x, y),
+        clickCallback: (x, y, _) => draggingEdges = _edgesAt(x, y),
         dragCallback: (x, y, dx, dy) => setState(() => _resize(dx, dy)),
         dragEndCallback: () => draggingEdges = null,
         child: Padding(
@@ -99,7 +99,7 @@ class _WindowState extends WidgetState<Window> {
                               MouseArea(
                                 cursorStyle: CursorStyle.hand,
                                 clickCallback:
-                                    (_, _) => setState(() {
+                                    (_, _, _) => setState(() {
                                       controller.expanded = !controller.expanded;
                                     }),
                                 child: Icon(icon: controller.expanded ? Icons.arrow_drop_down : Icons.arrow_drop_up),
@@ -109,7 +109,7 @@ class _WindowState extends WidgetState<Window> {
                             if (widget.onClose != null)
                               MouseArea(
                                 cursorStyle: CursorStyle.hand,
-                                clickCallback: (_, _) => widget.onClose?.call(),
+                                clickCallback: (_, _, _) => widget.onClose?.call(),
                                 child: Icon(icon: Icons.close, size: 18),
                               ),
                           ],

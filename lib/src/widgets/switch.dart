@@ -1,6 +1,8 @@
 import 'package:diamond_gl/diamond_gl.dart';
 
-import '../../braid_ui.dart';
+import '../animation/easings.dart';
+import '../core/cursors.dart';
+import '../core/math.dart';
 import '../framework/widget.dart';
 import 'animated_widgets.dart';
 import 'basic.dart';
@@ -102,7 +104,7 @@ class Switch extends StatelessWidget {
     final style = this.style?.overriding(contextStyle) ?? contextStyle;
 
     return MouseArea(
-      clickCallback: onClick != null ? (_, _) => onClick!() : null,
+      clickCallback: onClick != null ? (_, _, _) => onClick!() : null,
       cursorStyle: onClick != null ? CursorStyle.hand : null,
       child: Sized(
         width: 40,

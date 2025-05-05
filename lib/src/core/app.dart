@@ -257,6 +257,7 @@ class AppState implements InstanceHost, ProxyHost {
 
   Set<MouseListener> _hovered = {};
   MouseListener? _dragging;
+  int? _draggingButton;
   CursorStyle? _draggingCursorStyle;
   bool _dragStarted = false;
 
@@ -303,19 +304,18 @@ class AppState implements InstanceHost, ProxyHost {
     // ---
 
     _subscriptions.addAll([
-      window.onMouseButton.where((event) => event.action == glfwPress && event.button == glfwMouseButtonLeft).listen((
-        event,
-      ) {
+      window.onMouseButton.where((event) => event.action == glfwPress).listen((event) {
         final state = _hitTest();
 
         final clicked = state.firstWhere(
           (hit) =>
               hit.instance is MouseListener &&
-              (hit.instance as MouseListener).onMouseDown(hit.coordinates.x, hit.coordinates.y),
+              (hit.instance as MouseListener).onMouseDown(hit.coordinates.x, hit.coordinates.y, event.button),
         );
 
         if (clicked != null) {
           _dragging = clicked.instance as MouseListener;
+          _draggingButton = event.button;
           _draggingCursorStyle = (clicked.instance as MouseListener).cursorStyleAt(
             clicked.coordinates.x,
             clicked.coordinates.y,
@@ -344,7 +344,7 @@ class AppState implements InstanceHost, ProxyHost {
         if (_dragging == null) return;
 
         if (!_dragStarted) {
-          _dragging!.onMouseDragStart();
+          _dragging!.onMouseDragStart(_draggingButton!);
           _dragStarted = true;
         }
 
@@ -358,14 +358,14 @@ class AppState implements InstanceHost, ProxyHost {
 
         _dragging!.onMouseDrag(x, y, delta.x, delta.y);
       }),
-      window.onMouseButton.where((event) => event.action == glfwRelease && event.button == glfwMouseButtonLeft).listen((
-        event,
-      ) {
-        if (_dragStarted) {
-          _dragging?.onMouseDragEnd();
-        }
+      window.onMouseButton.where((event) => event.action == glfwRelease).listen((event) {
+        if (event.button == _draggingButton) {
+          if (_dragStarted) {
+            _dragging?.onMouseDragEnd();
+          }
 
-        _dragging = null;
+          _dragging = null;
+        }
       }),
       // ---
       window.onMouseScroll.listen((event) {
@@ -453,8 +453,14 @@ node [shape="box"];
     final state = _hitTest();
 
     final nowHovered = <MouseListener>{};
-    for (final listener in state.occludedTrace.map((e) => e.instance).whereType<MouseListener>()) {
+    for (final hit in state.occludedTrace.where((element) => element.instance is MouseListener)) {
+      final listener = hit.instance as MouseListener;
+
       nowHovered.add(listener);
+      if (listener.lastMousePosition != hit.coordinates) {
+        listener.lastMousePosition = hit.coordinates;
+        listener.onMouseMove(hit.coordinates.x, hit.coordinates.y);
+      }
 
       if (_hovered.contains(listener)) {
         _hovered.remove(listener);
@@ -465,6 +471,7 @@ node [shape="box"];
 
     for (final noLongerHovered in _hovered) {
       noLongerHovered.onMouseExit();
+      noLongerHovered.lastMousePosition = null;
     }
 
     _hovered = nowHovered;
