@@ -1,6 +1,8 @@
-import '../../braid_ui.dart';
+import '../core/cursors.dart';
+import '../core/math.dart';
 import '../framework/widget.dart';
 import 'basic.dart';
+import 'flex.dart';
 import 'icon.dart';
 
 class Collapsible extends StatelessWidget {
@@ -25,9 +27,9 @@ class Collapsible extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             MouseArea(
-              clickCallback: (_, _) => onToggled(!collapsed),
+              clickCallback: (_, _, _) => onToggled(!collapsed),
               cursorStyle: CursorStyle.hand,
-              child: Icon(icon: collapsed ? Icons.arrow_drop_up : Icons.arrow_drop_down, size: 24),
+              child: Icon(icon: collapsed ? Icons.arrow_right : Icons.arrow_drop_down, size: 24),
             ),
             Sized(height: 24, child: title),
           ],
