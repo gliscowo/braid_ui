@@ -392,6 +392,7 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
     if (widget.allowMultipleLines) {
       if (keyCode == glfwKeyEnter || keyCode == glfwKeyKpEnter) {
         _insert('\n');
+        return true;
       } else if (keyCode == glfwKeyUp) {
         _moveCursorVertically(-1, modifiers.shift);
         return true;
@@ -399,8 +400,6 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
         _moveCursorVertically(1, modifiers.shift);
         return true;
       }
-
-      return true;
     }
 
     return false;
