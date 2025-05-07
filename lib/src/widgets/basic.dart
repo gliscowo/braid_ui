@@ -664,35 +664,13 @@ class StencilClipInstance extends SingleChildWidgetInstance with ShrinkWrapLayou
 
 typedef WidgetBuilder = Widget Function(BuildContext context);
 
-class Builder extends Widget {
+class Builder extends StatelessWidget {
   final WidgetBuilder builder;
 
   const Builder({super.key, required this.builder});
 
   @override
-  WidgetProxy proxy() => BuilderProxy(this);
-}
-
-class BuilderProxy extends ComposedProxy with SingleChildWidgetProxy {
-  BuilderProxy(Builder super.widget);
-
-  @override
-  void mount(WidgetProxy parent, Object? slot) {
-    super.mount(parent, slot);
-    rebuild();
-  }
-
-  @override
-  void updateWidget(covariant Widget newWidget) {
-    super.updateWidget(newWidget);
-    rebuild(force: true);
-  }
-
-  @override
-  void doRebuild() {
-    child = refreshChild(child, (widget as Builder).builder(this), slot);
-    super.doRebuild();
-  }
+  Widget build(BuildContext context) => builder(context);
 }
 
 // ---

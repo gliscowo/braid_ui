@@ -2,7 +2,6 @@ import 'package:meta/meta.dart';
 
 import '../framework/proxy.dart';
 import '../framework/widget.dart';
-import 'basic.dart';
 
 typedef ObservableListener = void Function();
 
@@ -36,37 +35,6 @@ class ObservableValue<T> with Observable {
     _value = value;
     notifyListeners();
   }
-}
-
-class ObservableBuilder<T> extends Builder {
-  final Observable observable;
-
-  const ObservableBuilder({required this.observable, required super.builder});
-
-  @override
-  WidgetProxy proxy() => ObservableBuilderProxy(this);
-}
-
-class ObservableBuilderProxy<T> extends BuilderProxy {
-  late final ObservableListener listener = _listener;
-  ObservableBuilderProxy(ObservableBuilder<T> super.widget) {
-    (widget as ObservableBuilder<T>).observable.subscribe(_listener);
-  }
-
-  @override
-  void updateWidget(covariant ObservableBuilder<T> newWidget) {
-    final oldObservable = (widget as ObservableBuilder<T>).observable;
-    if (oldObservable != newWidget.observable) {
-      oldObservable.unsubscribe(listener);
-    }
-    super.updateWidget(newWidget);
-
-    if (oldObservable != newWidget.observable) {
-      newWidget.observable.subscribe(listener);
-    }
-  }
-
-  void _listener() => rebuild(force: true);
 }
 
 abstract class ShareableState {
