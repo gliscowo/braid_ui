@@ -5,7 +5,12 @@
 </picture>
 </h1>
 
-braid is an experimental, retained-mode desktop UI framework (currently supporting Windows 10/11 and Linux) written in [Dart](https://dart.dev). It is primarily being developed as a testing ground for an eventual replacement of [owo-lib](https://github.com/wisp-forest/owo-lib)'s owo-ui framework, but standalone use will be possible and this implementation will always serve as the primary one where development efforts are focused.
+braid is an modern, declarative desktop UI framework (currently supporting Windows 10/11 and Linux) written in [Dart](https://dart.dev). Its core concepts are strongly inspired by frameworks like [React](https://react.dev) and especially [Flutter](https://flutter.dev).
+
+> [!NOTE]
+> braid is currently in early development, highly experimental and has no stable API.
+
+This repository contains the reference implementation, the even more explosive and unfinished Minecraft-specific implementation (written in Java) can, for now, be found in the `braid-ui` branch of the [owo-lib repository](https://github.com/wisp-forest/owo-lib).
 
 ## Setup
 
@@ -20,7 +25,7 @@ dependencies:
 ...
 ```
 
-Then, after running the usual `dart pub get`, use braid's `setup_natives` utility for downloading the native libraries required for braid to run:
+Then, after running the usual `dart pub get`, use braid's `install_natives` utility for downloading the native libraries required for braid to run:
 
 ```
 $ dart run braid_ui:install_natives resources/lib
