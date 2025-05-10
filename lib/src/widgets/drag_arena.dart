@@ -58,4 +58,10 @@ class _DragArenaInstance extends MultiChildWidgetInstance<DragArena> {
 
     transform.setSize(constraints.maxSize);
   }
+
+  @override
+  double measureIntrinsicWidth(double height) => 0;
+
+  @override
+  double measureIntrinsicHeight(double width) => 0;
 }

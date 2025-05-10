@@ -123,6 +123,12 @@ class PaddingInstance extends OptionalChildWidgetInstance<Padding> {
     child?.transform.x = insets.left;
     child?.transform.y = insets.top;
   }
+
+  @override
+  double measureIntrinsicWidth(double height) => (child?.measureIntrinsicWidth(height) ?? 0) + widget.insets.horizontal;
+
+  @override
+  double measureIntrinsicHeight(double width) => (child?.measureIntrinsicHeight(width) ?? 0) + widget.insets.vertical;
 }
 
 // ---
@@ -170,6 +176,12 @@ class ConstrainedInstance extends SingleChildWidgetInstance<ConstraintWidget> {
     final size = child.layout(widget.constraints.respecting(constraints));
     transform.setSize(size);
   }
+
+  @override
+  double measureIntrinsicWidth(double height) => child.measureIntrinsicWidth(height);
+
+  @override
+  double measureIntrinsicHeight(double width) => child.measureIntrinsicHeight(width);
 }
 
 // ---
@@ -260,6 +272,12 @@ class _AlignInstance extends SingleChildWidgetInstance<Align> {
 
     transform.setSize(selfSize);
   }
+
+  @override
+  double measureIntrinsicWidth(double height) => child.measureIntrinsicWidth(height) * (widget.widthFactor ?? 1);
+
+  @override
+  double measureIntrinsicHeight(double width) => child.measureIntrinsicHeight(width) * (widget.heightFactor ?? 1);
 }
 
 // ---
@@ -329,6 +347,12 @@ class CustomDrawInstance extends LeafWidgetInstance<CustomDraw> {
 
   @override
   void draw(DrawContext ctx) => widget.drawFunction(ctx, transform);
+
+  @override
+  double measureIntrinsicWidth(double height) => 0;
+
+  @override
+  double measureIntrinsicHeight(double width) => 0;
 }
 
 // ---
@@ -536,15 +560,15 @@ class TransformInstance extends SingleChildWidgetInstance<Transform> with Shrink
 
 // ---
 
-class LayoutAfterTransform extends SingleChildInstanceWidget {
-  const LayoutAfterTransform({super.key, required super.child});
+class SizeToAABB extends SingleChildInstanceWidget {
+  const SizeToAABB({super.key, required super.child});
 
   @override
-  LayoutAfterTransformInstance instantiate() => LayoutAfterTransformInstance(widget: this);
+  SizeToAABBInstance instantiate() => SizeToAABBInstance(widget: this);
 }
 
-class LayoutAfterTransformInstance<LayoutAfterTransform> extends SingleChildWidgetInstance {
-  LayoutAfterTransformInstance({required super.widget});
+class SizeToAABBInstance extends SingleChildWidgetInstance<SizeToAABB> {
+  SizeToAABBInstance({required super.widget});
 
   @override
   void doLayout(Constraints constraints) {
@@ -561,6 +585,14 @@ class LayoutAfterTransformInstance<LayoutAfterTransform> extends SingleChildWidg
     transform.width = size.width;
     transform.height = size.height;
   }
+
+  // TODO: these implementations are not correct
+
+  @override
+  double measureIntrinsicWidth(double height) => child.measureIntrinsicWidth(height);
+
+  @override
+  double measureIntrinsicHeight(double width) => child.measureIntrinsicHeight(width);
 }
 
 // ---
@@ -705,6 +737,14 @@ class _VisibilityInstance extends SingleChildWidgetInstance<Visibility> {
       transform.setSize(Size.zero);
     }
   }
+
+  @override
+  double measureIntrinsicWidth(double height) =>
+      widget.visible || widget.reportSize ? child.measureIntrinsicWidth(height) : 0;
+
+  @override
+  double measureIntrinsicHeight(double width) =>
+      widget.visible || widget.reportSize ? child.measureIntrinsicHeight(width) : 0;
 
   @override
   void draw(DrawContext ctx) {

@@ -116,6 +116,19 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
     _cursorLocation = (line: newLineIdx, rune: _selection.end - _paragraph.metrics.lineMetrics[newLineIdx].startRune);
   }
 
+  @override
+  double measureIntrinsicWidth(double height) =>
+      host!.textRenderer.layoutParagraph(Paragraph(widget.controller.createSpans(widget.style)), double.infinity).width;
+
+  @override
+  double measureIntrinsicHeight(double width) =>
+      host!.textRenderer
+          .layoutParagraph(
+            Paragraph(widget.controller.createSpans(widget.style)),
+            widget.softWrap ? width : double.infinity,
+          )
+          .height;
+
   LineMetrics get _currentLine => _paragraph.metrics.lineMetrics[_cursorLocation.line];
 
   @override

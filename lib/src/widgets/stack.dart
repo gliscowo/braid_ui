@@ -1,6 +1,6 @@
+import 'dart:math';
+
 import '../../braid_ui.dart';
-import '../framework/widget.dart';
-import 'basic.dart';
 
 class Stack extends MultiChildInstanceWidget {
   final Alignment alignment;
@@ -34,4 +34,16 @@ class _StackInstance extends MultiChildWidgetInstance<Stack> {
 
     transform.setSize(maxSize);
   }
+
+  @override
+  double measureIntrinsicWidth(double height) => children.fold(
+    0.0,
+    (width, child) => max(child.measureIntrinsicWidth(height), child.measureIntrinsicWidth(height)),
+  );
+
+  @override
+  double measureIntrinsicHeight(double width) => children.fold(
+    0.0,
+    (height, child) => max(child.measureIntrinsicHeight(width), child.measureIntrinsicHeight(width)),
+  );
 }

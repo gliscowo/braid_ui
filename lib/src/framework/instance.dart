@@ -228,6 +228,17 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
 
   void doLayout(Constraints constraints);
 
+  @protected
+  double measureIntrinsicWidth(double height);
+  @protected
+  double measureIntrinsicHeight(double width);
+
+  final Map<double, double> _intrinsicWidthCache = HashMap();
+  final Map<double, double> _intrinsicHeightCache = HashMap();
+
+  double getIntrinsicWidth(double height) => _intrinsicWidthCache[height] ??= measureIntrinsicWidth(height);
+  double getIntrinsicHeight(double width) => _intrinsicHeightCache[width] ??= measureIntrinsicHeight(width);
+
   // ---
 
   void draw(DrawContext ctx);
@@ -263,8 +274,11 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
     }
   }
 
+  @mustCallSuper
   void markNeedsLayout() {
     _needsLayout = true;
+    _intrinsicWidthCache.clear();
+    _intrinsicHeightCache.clear();
 
     if (isRelayoutBoundary) {
       host?.scheduleLayout(this);
@@ -417,6 +431,12 @@ mixin ShrinkWrapLayout<T extends InstanceWidget> on WidgetInstance<T>, SingleChi
     final size = child.layout(constraints);
     transform.setSize(size);
   }
+
+  @override
+  double measureIntrinsicWidth(double height) => child.measureIntrinsicWidth(height);
+
+  @override
+  double measureIntrinsicHeight(double width) => child.measureIntrinsicHeight(width);
 }
 
 mixin OptionalShrinkWrapLayout<T extends InstanceWidget> on WidgetInstance<T>, OptionalChildProvider<T> {
@@ -425,6 +445,12 @@ mixin OptionalShrinkWrapLayout<T extends InstanceWidget> on WidgetInstance<T>, O
     final size = child?.layout(constraints) ?? constraints.minSize;
     transform.setSize(size);
   }
+
+  @override
+  double measureIntrinsicWidth(double height) => child?.measureIntrinsicWidth(height) ?? 0;
+
+  @override
+  double measureIntrinsicHeight(double width) => child?.measureIntrinsicHeight(width) ?? 0;
 }
 
 // --- template classes

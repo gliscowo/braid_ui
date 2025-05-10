@@ -1,7 +1,8 @@
 import 'dart:math';
 
+import 'package:collection/collection.dart';
+
 import '../../braid_ui.dart';
-import '../framework/widget.dart';
 
 /// A vertical array of widgets
 class Column extends Flex {
@@ -160,13 +161,8 @@ class FlexParentData {
   FlexParentData(this.flexFactor);
 }
 
-// class MultiChilkWidgetInstance<T ex> extends WidgetInstance
-
 class FlexInstance extends MultiChildWidgetInstance<Flex> {
   FlexInstance({required super.widget});
-
-  // TODO: revisit whether available main axis space should always
-  // saturate constraints for non-flex children
 
   @override
   set widget(Flex value) {
@@ -206,17 +202,14 @@ class FlexInstance extends MultiChildWidgetInstance<Flex> {
 
     // now, compute the remaining space on the main axis
     final remainingSpace = max(
-      constraints.maxOnAxis(mainAxis) - childSizes.fold(0.0, (acc, size) => acc + size.getAxisExtent(mainAxis)),
+      constraints.maxOnAxis(mainAxis) - childSizes.map((size) => size.getAxisExtent(mainAxis)).sum,
       0,
     );
 
     // get the flex children and compute the total flex factor in order
     // to divvy up the remaining space properly later
     final flexChildren = children.where((element) => element.parentData is FlexParentData);
-    final totalFlexFactor = flexChildren.fold(
-      0.0,
-      (previousValue, element) => previousValue + (element.parentData as FlexParentData).flexFactor,
-    );
+    final totalFlexFactor = flexChildren.map((element) => (element.parentData as FlexParentData).flexFactor).sum;
 
     // lay out all flex children with (for now) tight constraints
     // on the main axis according to their allotted space
@@ -249,7 +242,7 @@ class FlexInstance extends MultiChildWidgetInstance<Flex> {
 
     // distribute remaining space on the main axis
     final (leadingSpace, betweenSpace) = widget.mainAxisAlignment._distributeSpace(
-      size.getAxisExtent(mainAxis) - childSizes.fold(0, (acc, size) => acc + size.getAxisExtent(mainAxis)),
+      size.getAxisExtent(mainAxis) - childSizes.map((size) => size.getAxisExtent(mainAxis)).sum,
       childSizes.length,
     );
 
@@ -267,5 +260,66 @@ class FlexInstance extends MultiChildWidgetInstance<Flex> {
 
       mainAxisOffset += child.transform.getAxisExtent(mainAxis) + betweenSpace;
     }
+  }
+
+  @override
+  double measureIntrinsicWidth(double height) =>
+      widget.mainAxis == LayoutAxis.horizontal ? _measureMainAxis(height) : _measureCrossAxis(height);
+
+  @override
+  double measureIntrinsicHeight(double width) =>
+      widget.mainAxis == LayoutAxis.vertical ? _measureMainAxis(width) : _measureCrossAxis(width);
+
+  double _measureMainAxis(double crossExtent) {
+    final horizontal = widget.mainAxis == LayoutAxis.horizontal;
+    final nonFlexSize =
+        children
+            .where((element) => element.parentData is! FlexParentData)
+            .map((e) => horizontal ? e.measureIntrinsicWidth(crossExtent) : e.measureIntrinsicHeight(crossExtent))
+            .sum;
+
+    var totalFlexFactor = 0.0;
+    (WidgetInstance child, double size, double flexFactor)? largestFlexChild;
+    for (final flexChild in children.where((element) => element.parentData is FlexParentData)) {
+      totalFlexFactor += (flexChild.parentData as FlexParentData).flexFactor;
+
+      final size =
+          horizontal ? flexChild.measureIntrinsicWidth(crossExtent) : flexChild.measureIntrinsicHeight(crossExtent);
+      if (size > (largestFlexChild?.$2 ?? 0)) {
+        largestFlexChild = (flexChild, size, (flexChild.parentData as FlexParentData).flexFactor);
+      }
+    }
+
+    final flexSize = largestFlexChild != null ? (totalFlexFactor / largestFlexChild.$3) * largestFlexChild.$2 : 0;
+
+    return nonFlexSize + flexSize;
+  }
+
+  double _measureCrossAxis(double mainExtent) {
+    final horizontal = widget.mainAxis == LayoutAxis.horizontal;
+
+    var crossSize = 0.0;
+
+    var nonFlexSize = 0.0;
+    for (final child in children.where((element) => element.parentData is! FlexParentData)) {
+      final childSize = horizontal ? child.measureIntrinsicHeight(mainExtent) : child.measureIntrinsicWidth(mainExtent);
+
+      nonFlexSize += childSize;
+      crossSize = max(crossSize, childSize);
+    }
+
+    final flexChildren = children.where((element) => element.parentData is FlexParentData);
+    final totalFlexFactor = flexChildren.map((e) => (e.parentData as FlexParentData).flexFactor).sum;
+
+    for (final child in flexChildren) {
+      final childSpace =
+          (mainExtent - nonFlexSize) * (totalFlexFactor / (child.parentData as FlexParentData).flexFactor);
+      crossSize = max(
+        crossSize,
+        horizontal ? child.measureIntrinsicHeight(childSpace) : child.measureIntrinsicWidth(childSpace),
+      );
+    }
+
+    return crossSize;
   }
 }

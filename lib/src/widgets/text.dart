@@ -183,4 +183,12 @@ class RawTextInstance extends LeafWidgetInstance<RawText> {
         .constrained(constraints);
     transform.setSize(size.ceil());
   }
+
+  @override
+  double measureIntrinsicWidth(double height) =>
+      host!.textRenderer.layoutParagraph(Paragraph(widget.spans), double.infinity).width;
+
+  @override
+  double measureIntrinsicHeight(double width) =>
+      host!.textRenderer.layoutParagraph(Paragraph(widget.spans), widget.softWrap ? width : double.infinity).height;
 }

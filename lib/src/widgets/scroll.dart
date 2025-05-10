@@ -288,4 +288,16 @@ class RawScrollViewInstance extends SingleChildWidgetInstance<RawScrollView> wit
 
     transform.setSize(selfSize);
   }
+
+  // we might actually want to put false assertions here and in [DragArena]
+  // to point out to the user that measuring 'viewport-like' widgets in this
+  // manner does not really make sense
+
+  @override
+  double measureIntrinsicWidth(double height) =>
+      widget.horizontalController == null ? child.measureIntrinsicWidth(height) : 0;
+
+  @override
+  double measureIntrinsicHeight(double width) =>
+      widget.verticalController == null ? child.measureIntrinsicHeight(width) : 0;
 }
