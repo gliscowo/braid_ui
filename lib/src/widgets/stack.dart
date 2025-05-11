@@ -46,4 +46,7 @@ class _StackInstance extends MultiChildWidgetInstance<Stack> {
     0.0,
     (height, child) => max(child.measureIntrinsicHeight(width), child.measureIntrinsicHeight(width)),
   );
+
+  @override
+  double? measureBaselineOffset() => computeHighestBaselineOffset();
 }

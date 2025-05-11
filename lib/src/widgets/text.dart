@@ -191,4 +191,7 @@ class RawTextInstance extends LeafWidgetInstance<RawText> {
   @override
   double measureIntrinsicHeight(double width) =>
       host!.textRenderer.layoutParagraph(Paragraph(widget.spans), widget.softWrap ? width : double.infinity).height;
+
+  @override
+  double? measureBaselineOffset() => _paragraph.metrics.initialBaselineY;
 }

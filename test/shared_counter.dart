@@ -17,7 +17,7 @@ Future<void> main() async {
     widget: const InheritedStateApp(),
   );
 
-  runBraidApp(app: app, experimentalReloadHook: true);
+  runBraidApp(app: app, reloadHook: true);
 }
 
 class CounterState extends ShareableState {

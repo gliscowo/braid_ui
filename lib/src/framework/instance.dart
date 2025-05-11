@@ -211,9 +211,7 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
 
   @nonVirtual
   Size layout(Constraints constraints) {
-    // print('${'  ' * depth}﹂layout $this ${constraints.isTight ? 'TIGHT' : ''}');
     if (!_needsLayout && constraints == _constraints) {
-      // print('${'  ' * depth}﹂skipped');
       return transform.toSize();
     }
 
@@ -233,11 +231,17 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
   @protected
   double measureIntrinsicHeight(double width);
 
-  final Map<double, double> _intrinsicWidthCache = HashMap();
-  final Map<double, double> _intrinsicHeightCache = HashMap();
+  final Map<(LayoutAxis, double), double> _intrinsicSizeCache = HashMap();
+  double getIntrinsicWidth(double height) =>
+      _intrinsicSizeCache[(LayoutAxis.horizontal, height)] ??= measureIntrinsicWidth(height);
+  double getIntrinsicHeight(double width) =>
+      _intrinsicSizeCache[(LayoutAxis.vertical, width)] ??= measureIntrinsicHeight(width);
 
-  double getIntrinsicWidth(double height) => _intrinsicWidthCache[height] ??= measureIntrinsicWidth(height);
-  double getIntrinsicHeight(double width) => _intrinsicHeightCache[width] ??= measureIntrinsicHeight(width);
+  @protected
+  double? measureBaselineOffset();
+
+  (double?,)? _baselineOffsetCache;
+  double? getBaselineOffset() => (_baselineOffsetCache ??= (measureBaselineOffset(),)).$1;
 
   // ---
 
@@ -277,8 +281,8 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
   @mustCallSuper
   void markNeedsLayout() {
     _needsLayout = true;
-    _intrinsicWidthCache.clear();
-    _intrinsicHeightCache.clear();
+    _intrinsicSizeCache.clear();
+    _baselineOffsetCache = null;
 
     if (isRelayoutBoundary) {
       host?.scheduleLayout(this);
@@ -437,6 +441,9 @@ mixin ShrinkWrapLayout<T extends InstanceWidget> on WidgetInstance<T>, SingleChi
 
   @override
   double measureIntrinsicHeight(double width) => child.measureIntrinsicHeight(width);
+
+  @override
+  double? measureBaselineOffset() => child.measureBaselineOffset();
 }
 
 mixin OptionalShrinkWrapLayout<T extends InstanceWidget> on WidgetInstance<T>, OptionalChildProvider<T> {
@@ -451,6 +458,9 @@ mixin OptionalShrinkWrapLayout<T extends InstanceWidget> on WidgetInstance<T>, O
 
   @override
   double measureIntrinsicHeight(double width) => child?.measureIntrinsicHeight(width) ?? 0;
+
+  @override
+  double? measureBaselineOffset() => child?.measureBaselineOffset();
 }
 
 // --- template classes
@@ -507,6 +517,34 @@ abstract class MultiChildWidgetInstance<T extends MultiChildInstanceWidget> exte
   void insertChild(int index, WidgetInstance child) {
     children[index] = adopt(child);
     markNeedsLayout();
+  }
+
+  @protected
+  double? computeFirstBaselineOffset() {
+    for (final child in children) {
+      final childBaseline = child.getBaselineOffset();
+      if (childBaseline == null) continue;
+
+      return childBaseline + child.transform.y;
+    }
+
+    return null;
+  }
+
+  @protected
+  double? computeHighestBaselineOffset() {
+    double? baselineMin(double? a, double? b) {
+      if (a == null) return b;
+      if (b == null) return a;
+      return a <= b ? a : b;
+    }
+
+    return children.fold(null, (acc, child) {
+      final childBaseline = child.getBaselineOffset();
+      if (childBaseline == null) return acc;
+
+      return baselineMin(acc, childBaseline + child.transform.y);
+    });
   }
 }
 

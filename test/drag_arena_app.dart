@@ -1,11 +1,4 @@
 import 'package:braid_ui/braid_ui.dart';
-import 'package:braid_ui/src/framework/proxy.dart';
-import 'package:braid_ui/src/framework/widget.dart';
-import 'package:braid_ui/src/widgets/basic.dart';
-import 'package:braid_ui/src/widgets/drag_arena.dart';
-import 'package:braid_ui/src/widgets/stack.dart';
-import 'package:braid_ui/src/widgets/theme.dart';
-import 'package:diamond_gl/diamond_gl.dart';
 import 'package:logging/logging.dart';
 import 'package:vector_math/vector_math.dart';
 
@@ -23,7 +16,7 @@ Future<void> main() async {
     widget: const DragArenaApp(),
   );
 
-  runBraidApp(app: app, experimentalReloadHook: true);
+  runBraidApp(app: app, reloadHook: true);
 }
 
 class DragArenaApp extends StatelessWidget {

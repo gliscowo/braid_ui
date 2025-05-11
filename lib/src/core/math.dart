@@ -114,6 +114,33 @@ class CornerRadius {
   bool operator ==(Object other) => other is CornerRadius && other._props == _props;
 }
 
+enum LayoutAxis {
+  horizontal,
+  vertical;
+
+  T choose<T>(T horizontal, T vertical) => switch (this) {
+    LayoutAxis.horizontal => horizontal,
+    LayoutAxis.vertical => vertical,
+  };
+
+  T chooseCompute<T>(T Function() horizontal, T Function() vertical) => switch (this) {
+    LayoutAxis.horizontal => horizontal(),
+    LayoutAxis.vertical => vertical(),
+  };
+
+  Size createSize(double extent, double crossExtent) => switch (this) {
+    LayoutAxis.horizontal => Size(extent, crossExtent),
+    LayoutAxis.vertical => Size(crossExtent, extent),
+  };
+
+  LayoutAxis get opposite => switch (this) {
+    LayoutAxis.horizontal => LayoutAxis.vertical,
+    LayoutAxis.vertical => LayoutAxis.horizontal,
+  };
+}
+
+// ---
+
 extension Dimensions on Aabb3 {
   double get width => (this.max.x - this.min.x).abs();
   double get height => (this.max.y - this.min.y).abs();

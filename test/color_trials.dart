@@ -35,7 +35,7 @@ Future<void> main() async {
   cursor = CursorStyle.custom((await icon)!, 32, 32);
   await app!.loadFontFamily('CascadiaCode', 'cascadia');
 
-  runBraidApp(app: app!, experimentalReloadHook: true);
+  runBraidApp(app: app!, reloadHook: true);
 }
 
 class ColorApp extends StatelessWidget {
@@ -330,28 +330,55 @@ class TextWrappingTest extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Sized(
-        width: 200,
-        height: 100,
-        child: Panel(
-          color: Color.red,
-          child: HorizontalSplitPane(
-            leftChild: RawText(
-              softWrap: true,
-              alignment: Alignment.center,
-              spans: [
-                Span('THIS', DefaultTextStyle.of(context).toSpanStyle()),
-                Span(' is ', DefaultTextStyle.of(context).copy(bold: true).toSpanStyle()),
-                Span('a looooooo', DefaultTextStyle.of(context).toSpanStyle()),
-                Span('oooooong word', DefaultTextStyle.of(context).copy(color: Color.blue).toSpanStyle()),
-              ],
-            ),
-            rightChild: Text(
-              'this is simply some\n\nnormal text that i\'d like to see',
-              style: TextStyle(alignment: Alignment.bottomRight),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Sized(
+            width: 200,
+            height: 100,
+            child: Panel(
+              color: Color.red,
+              child: HorizontalSplitPane(
+                leftChild: RawText(
+                  softWrap: true,
+                  alignment: Alignment.center,
+                  spans: [
+                    Span('THIS', DefaultTextStyle.of(context).toSpanStyle()),
+                    Span(' is ', DefaultTextStyle.of(context).copy(bold: true).toSpanStyle()),
+                    Span('a looooooo', DefaultTextStyle.of(context).toSpanStyle()),
+                    Span('oooooong word', DefaultTextStyle.of(context).copy(color: Color.blue).toSpanStyle()),
+                  ],
+                ),
+                rightChild: Text(
+                  'this is simply some\n\nnormal text that i\'d like to see',
+                  style: TextStyle(alignment: Alignment.bottomRight),
+                ),
+              ),
             ),
           ),
-        ),
+          const Padding(insets: Insets.all(10)),
+          Panel(
+            color: Color.black.copyWith(a: .25),
+            child: const Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              children: [
+                Panel(
+                  color: Color.black,
+                  child: Column(
+                    children: [
+                      Sized(width: 25, height: 25, child: Panel(color: Color.blue)),
+                      Text('some text', style: TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                ),
+                Panel(color: Color.black, child: Text(' and some\nwrapped text', style: TextStyle(fontSize: 14))),
+                Panel(color: Color.black, child: Text(' and more\ntext', style: TextStyle(bold: true, fontSize: 32))),
+                Panel(color: Color.black, child: Text('and an icon')),
+                Panel(color: Color.black, child: Icon(icon: Icons.ac_unit)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

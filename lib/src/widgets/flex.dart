@@ -54,31 +54,6 @@ class Flex extends MultiChildInstanceWidget {
 
 // ---
 
-enum LayoutAxis {
-  horizontal,
-  vertical;
-
-  T choose<T>(T horizontal, T vertical) => switch (this) {
-    LayoutAxis.horizontal => horizontal,
-    LayoutAxis.vertical => vertical,
-  };
-
-  T chooseCompute<T>(T Function() horizontal, T Function() vertical) => switch (this) {
-    LayoutAxis.horizontal => horizontal(),
-    LayoutAxis.vertical => vertical(),
-  };
-
-  Size createSize(double extent, double crossExtent) => switch (this) {
-    LayoutAxis.horizontal => Size(extent, crossExtent),
-    LayoutAxis.vertical => Size(crossExtent, extent),
-  };
-
-  LayoutAxis get opposite => switch (this) {
-    LayoutAxis.horizontal => LayoutAxis.vertical,
-    LayoutAxis.vertical => LayoutAxis.horizontal,
-  };
-}
-
 extension ConstraintsAxisOperations on Constraints {
   double minOnAxis(LayoutAxis axis) => switch (axis) {
     LayoutAxis.horizontal => minWidth,
@@ -126,7 +101,8 @@ enum CrossAxisAlignment {
   start,
   end,
   center,
-  stretch;
+  stretch,
+  baseline;
 
   double _computeChildOffset(double freeSpace) =>
       (switch (this) {
@@ -134,6 +110,7 @@ enum CrossAxisAlignment {
         CrossAxisAlignment.start => 0,
         CrossAxisAlignment.center => freeSpace / 2,
         CrossAxisAlignment.end => freeSpace,
+        CrossAxisAlignment.baseline => 0,
       }).floorToDouble();
 }
 
@@ -193,11 +170,26 @@ class FlexInstance extends MultiChildWidgetInstance<Flex> {
       mainAxis == LayoutAxis.horizontal ? constraints.maxOnAxis(crossAxis) : double.infinity,
     );
 
+    var maxAscent = 0.0;
+    var maxDescent = 0.0;
+    final isBaselineAligned =
+        mainAxis == LayoutAxis.horizontal && widget.crossAxisAlignment == CrossAxisAlignment.baseline;
+
+    Size layoutChild(WidgetInstance child, Constraints childConstraints) {
+      final size = child.layout(childConstraints);
+
+      final baseline = child.getBaselineOffset() ?? size.height;
+      maxAscent = max(maxAscent, baseline);
+      maxDescent = max(maxDescent, size.height - baseline);
+
+      return size;
+    }
+
     // first, lay out all non-flex children and store their sizes
     final childSizes =
         children
             .where((element) => element.parentData is! FlexParentData)
-            .map((e) => e.layout(childConstraints))
+            .map((e) => layoutChild(e, childConstraints))
             .toList();
 
     // now, compute the remaining space on the main axis
@@ -211,12 +203,13 @@ class FlexInstance extends MultiChildWidgetInstance<Flex> {
     final flexChildren = children.where((element) => element.parentData is FlexParentData);
     final totalFlexFactor = flexChildren.map((element) => (element.parentData as FlexParentData).flexFactor).sum;
 
-    // lay out all flex children with (for now) tight constraints
+    // lay out all flex children with tight constraints
     // on the main axis according to their allotted space
     for (final child in flexChildren) {
       final space = remainingSpace * ((child.parentData as FlexParentData).flexFactor / totalFlexFactor);
       childSizes.add(
-        child.layout(
+        layoutChild(
+          child,
           childConstraints.respecting(
             Constraints.tightOnAxis(
               horizontal: mainAxis == LayoutAxis.horizontal ? space : null,
@@ -228,16 +221,19 @@ class FlexInstance extends MultiChildWidgetInstance<Flex> {
     }
 
     // compute and apply the final size of ourselves
-    final size = childSizes
-        .fold(
-          Size.zero,
-          (acc, size) => mainAxis.createSize(
-            acc.getAxisExtent(mainAxis) + size.getAxisExtent(mainAxis),
-            max(acc.getAxisExtent(crossAxis), size.getAxisExtent(crossAxis)),
-          ),
-        )
-        .constrained(constraints);
+    var size = childSizes.fold(
+      Size.zero,
+      (acc, size) => mainAxis.createSize(
+        acc.getAxisExtent(mainAxis) + size.getAxisExtent(mainAxis),
+        max(acc.getAxisExtent(crossAxis), size.getAxisExtent(crossAxis)),
+      ),
+    );
 
+    if (isBaselineAligned) {
+      size = size.copy(height: maxAscent + maxDescent);
+    }
+
+    size = size.constrained(constraints);
     transform.setSize(size);
 
     // distribute remaining space on the main axis
@@ -251,12 +247,16 @@ class FlexInstance extends MultiChildWidgetInstance<Flex> {
     for (final child in children) {
       child.transform.setAxisCoordinate(mainAxis, mainAxisOffset);
 
-      child.transform.setAxisCoordinate(
-        crossAxis,
-        widget.crossAxisAlignment._computeChildOffset(
-          size.getAxisExtent(crossAxis) - child.transform.getAxisExtent(crossAxis),
-        ),
-      );
+      if (!isBaselineAligned) {
+        child.transform.setAxisCoordinate(
+          crossAxis,
+          widget.crossAxisAlignment._computeChildOffset(
+            size.getAxisExtent(crossAxis) - child.transform.getAxisExtent(crossAxis),
+          ),
+        );
+      } else {
+        child.transform.y = maxAscent - (child.getBaselineOffset() ?? child.transform.height);
+      }
 
       mainAxisOffset += child.transform.getAxisExtent(mainAxis) + betweenSpace;
     }
@@ -269,6 +269,16 @@ class FlexInstance extends MultiChildWidgetInstance<Flex> {
   @override
   double measureIntrinsicHeight(double width) =>
       widget.mainAxis == LayoutAxis.vertical ? _measureMainAxis(width) : _measureCrossAxis(width);
+
+  @override
+  double? measureBaselineOffset() {
+    switch (widget.mainAxis) {
+      case LayoutAxis.vertical:
+        return computeFirstBaselineOffset();
+      case LayoutAxis.horizontal:
+        return computeHighestBaselineOffset();
+    }
+  }
 
   double _measureMainAxis(double crossExtent) {
     final horizontal = widget.mainAxis == LayoutAxis.horizontal;

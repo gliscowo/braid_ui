@@ -129,6 +129,14 @@ class PaddingInstance extends OptionalChildWidgetInstance<Padding> {
 
   @override
   double measureIntrinsicHeight(double width) => (child?.measureIntrinsicHeight(width) ?? 0) + widget.insets.vertical;
+
+  @override
+  double? measureBaselineOffset() {
+    final childBaseline = child?.measureBaselineOffset();
+    if (childBaseline == null) return null;
+
+    return childBaseline + widget.insets.top;
+  }
 }
 
 // ---
@@ -182,6 +190,9 @@ class ConstrainedInstance extends SingleChildWidgetInstance<ConstraintWidget> {
 
   @override
   double measureIntrinsicHeight(double width) => child.measureIntrinsicHeight(width);
+
+  @override
+  double? measureBaselineOffset() => child.measureBaselineOffset();
 }
 
 // ---
@@ -278,6 +289,9 @@ class _AlignInstance extends SingleChildWidgetInstance<Align> {
 
   @override
   double measureIntrinsicHeight(double width) => child.measureIntrinsicHeight(width) * (widget.heightFactor ?? 1);
+
+  @override
+  double? measureBaselineOffset() => child.measureBaselineOffset();
 }
 
 // ---
@@ -353,6 +367,9 @@ class CustomDrawInstance extends LeafWidgetInstance<CustomDraw> {
 
   @override
   double measureIntrinsicHeight(double width) => 0;
+
+  @override
+  double? measureBaselineOffset() => null;
 }
 
 // ---
@@ -593,6 +610,9 @@ class SizeToAABBInstance extends SingleChildWidgetInstance<SizeToAABB> {
 
   @override
   double measureIntrinsicHeight(double width) => child.measureIntrinsicHeight(width);
+
+  @override
+  double? measureBaselineOffset() => child.measureBaselineOffset();
 }
 
 // ---
@@ -745,6 +765,9 @@ class _VisibilityInstance extends SingleChildWidgetInstance<Visibility> {
   @override
   double measureIntrinsicHeight(double width) =>
       widget.visible || widget.reportSize ? child.measureIntrinsicHeight(width) : 0;
+
+  @override
+  double? measureBaselineOffset() => widget.visible || widget.reportSize ? child.measureBaselineOffset() : null;
 
   @override
   void draw(DrawContext ctx) {

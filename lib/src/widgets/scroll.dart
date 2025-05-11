@@ -300,4 +300,12 @@ class RawScrollViewInstance extends SingleChildWidgetInstance<RawScrollView> wit
   @override
   double measureIntrinsicHeight(double width) =>
       widget.verticalController == null ? child.measureIntrinsicHeight(width) : 0;
+
+  @override
+  double? measureBaselineOffset() {
+    final childBaseline = child.getBaselineOffset();
+    if (childBaseline == null) return null;
+
+    return childBaseline + child.transform.y;
+  }
 }

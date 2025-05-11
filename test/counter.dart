@@ -1,8 +1,4 @@
 import 'package:braid_ui/braid_ui.dart';
-import 'package:braid_ui/src/framework/proxy.dart';
-import 'package:braid_ui/src/framework/widget.dart';
-import 'package:braid_ui/src/widgets/basic.dart';
-import 'package:braid_ui/src/widgets/theme.dart';
 import 'package:logging/logging.dart';
 
 Future<void> main() async {
@@ -21,7 +17,7 @@ Future<void> main() async {
     widget: const CounterApp(),
   );
 
-  runBraidApp(app: app, experimentalReloadHook: true);
+  runBraidApp(app: app, reloadHook: true);
 }
 
 class CounterApp extends StatelessWidget {

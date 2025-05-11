@@ -28,10 +28,10 @@ import 'key_modifiers.dart';
 import 'math.dart';
 import 'reload_hook.dart';
 
-Future<void> runBraidApp({required AppState app, int targetFps = 60, bool experimentalReloadHook = false}) async {
+Future<void> runBraidApp({required AppState app, int targetFps = 60, bool reloadHook = false}) async {
   void Function()? reloadCancelCallback;
 
-  if (experimentalReloadHook) {
+  if (reloadHook) {
     reloadCancelCallback = await setupReloadHook(() {
       app.logger?.info('hot reload detected, rebuilding root widget');
       app.rebuildRoot();

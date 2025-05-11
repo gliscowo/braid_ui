@@ -1,8 +1,4 @@
 import 'package:braid_ui/braid_ui.dart';
-import 'package:braid_ui/src/framework/widget.dart';
-import 'package:braid_ui/src/widgets/basic.dart';
-import 'package:braid_ui/src/widgets/split_pane.dart';
-import 'package:diamond_gl/diamond_gl.dart';
 import 'package:logging/logging.dart';
 
 Future<void> main(List<String> args) async {
@@ -22,7 +18,7 @@ Future<void> main(List<String> args) async {
     widget: const DragApp(),
   );
 
-  runBraidApp(app: app, experimentalReloadHook: true);
+  runBraidApp(app: app, reloadHook: true);
 }
 
 class DragApp extends StatelessWidget {

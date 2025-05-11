@@ -64,4 +64,7 @@ class _DragArenaInstance extends MultiChildWidgetInstance<DragArena> {
 
   @override
   double measureIntrinsicHeight(double width) => 0;
+
+  @override
+  double? measureBaselineOffset() => computeHighestBaselineOffset();
 }

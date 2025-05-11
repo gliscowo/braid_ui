@@ -129,6 +129,9 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
           )
           .height;
 
+  @override
+  double? measureBaselineOffset() => _paragraph.metrics.initialBaselineY;
+
   LineMetrics get _currentLine => _paragraph.metrics.lineMetrics[_cursorLocation.line];
 
   @override
