@@ -490,6 +490,7 @@ class _TextInputTestState extends WidgetState<TextInputTest> {
                       controller: controller,
                       showCursor: showCursor,
                       softWrap: true,
+                      autoFocus: false,
                       allowMultipleLines: true,
                       style: const SpanStyle(
                         color: Color.white,

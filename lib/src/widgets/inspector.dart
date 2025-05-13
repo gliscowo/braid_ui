@@ -80,7 +80,6 @@ class _InspectableTreeState extends WidgetState<InspectableTree> {
         widget.tree,
         if (active)
           BraidTheme(
-            // textStyle: TextStyle(color: Color.white, fontSize: 16.0, bold: false, italic: false),
             child: DragArena(
               children: [
                 Window(

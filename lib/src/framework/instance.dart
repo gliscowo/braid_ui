@@ -142,6 +142,26 @@ mixin KeyboardListener<T extends InstanceWidget> on WidgetInstance<T> {
 
   void onFocusGained() {}
   void onFocusLost() {}
+
+  bool _requestFocusWhenHostAttached = false;
+  void requestFocus() {
+    if (_host case var host?) {
+      host.moveFocusTo(this);
+    } else {
+      _requestFocusWhenHostAttached = true;
+    }
+  }
+
+  @override
+  void attachHost(InstanceHost host) {
+    super.attachHost(host);
+
+    if (_requestFocusWhenHostAttached) {
+      _requestFocusWhenHostAttached = false;
+
+      host.moveFocusTo(this);
+    }
+  }
 }
 
 extension type const InstanceFlags._(int _value) {
@@ -173,6 +193,12 @@ abstract interface class InstanceHost {
   ///
   /// This is used to implement the [LayoutBuilder] mechanism
   void notifySubtreeRebuild();
+
+  /// Request that focus be moved to [focusTarget]. Given that
+  /// the host allows the operation, it will generally be
+  /// executed immediately and the listener is ready to receive
+  /// input events from the next frame onwards
+  void moveFocusTo(KeyboardListener focusTarget) {}
 }
 
 typedef WidgetInstanceVisitor = void Function(WidgetInstance child);
@@ -305,6 +331,8 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
   @override
   void visitChildren(WidgetInstanceVisitor visitor);
 
+  /// Gather the ancestors of this instance (excluding the
+  /// instance itself), ordered from immediate parent to root
   Iterable<WidgetInstance> get ancestors sync* {
     var ancestor = _parent;
     while (ancestor != null) {

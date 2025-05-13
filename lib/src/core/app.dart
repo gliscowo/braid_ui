@@ -323,22 +323,7 @@ class AppState implements InstanceHost, ProxyHost {
           _dragStarted = false;
         }
 
-        final nowFocused = <KeyboardListener>[];
-        for (final listener in state.occludedTrace.map((e) => e.instance).whereType<KeyboardListener>()) {
-          nowFocused.add(listener);
-
-          if (_focused.contains(listener)) {
-            _focused.remove(listener);
-          } else {
-            listener.onFocusGained();
-          }
-        }
-
-        for (final noLongerFocused in _focused) {
-          noLongerFocused.onFocusLost();
-        }
-
-        _focused = nowFocused;
+        _updateFocus(state.occludedTrace.map((e) => e.instance).whereType<KeyboardListener>().toList());
       }),
       window.onMouseMove.listen((event) {
         if (_dragging == null) return;
@@ -499,6 +484,22 @@ node [shape="box"];
     cursorController.style = activeStyle ?? CursorStyle.none;
   }
 
+  void _updateFocus(List<KeyboardListener> nowFocused) {
+    for (final listener in nowFocused) {
+      if (_focused.contains(listener)) {
+        _focused.remove(listener);
+      } else {
+        listener.onFocusGained();
+      }
+    }
+
+    for (final noLongerFocused in _focused) {
+      noLongerFocused.onFocusLost();
+    }
+
+    _focused = nowFocused;
+  }
+
   void rebuildRoot() {
     final watch = Stopwatch()..start();
 
@@ -586,6 +587,11 @@ node [shape="box"];
 
   @override
   void notifySubtreeRebuild() => _mergeToLayoutQueue = true;
+
+  @override
+  void moveFocusTo(KeyboardListener<InstanceWidget> focusTarget) {
+    _updateFocus([focusTarget].followedBy(focusTarget.ancestors.whereType<KeyboardListener>()).toList());
+  }
 
   @override
   void scheduleAnimationCallback(AnimationCallback callback) => _callbacks.add(callback);
