@@ -32,8 +32,8 @@ class TextEditingController with Listenable {
   String _text;
   TextSelection _selection;
 
-  TextEditingController({String text = '', TextSelection selection = const TextSelection.collapsed(0)})
-    : _selection = selection,
+  TextEditingController({String text = '', TextSelection? selection})
+    : _selection = selection ?? TextSelection.collapsed(text.length),
       _text = text;
 
   String get text => _text;
@@ -59,6 +59,7 @@ class TextInput extends LeafInstanceWidget {
   final TextEditingController controller;
   final bool showCursor;
   final bool softWrap;
+  final bool autoFocus;
   final bool allowMultipleLines;
   final SpanStyle style;
 
@@ -67,6 +68,7 @@ class TextInput extends LeafInstanceWidget {
     required this.controller,
     required this.showCursor,
     required this.softWrap,
+    required this.autoFocus,
     required this.allowMultipleLines,
     required this.style,
   });
@@ -84,7 +86,11 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
 
   late Paragraph _paragraph;
 
-  TextInputInstance({required super.widget}) : _text = widget.controller.text, _selection = widget.controller.selection;
+  TextInputInstance({required super.widget})
+    : _text = widget.controller.text,
+      _selection = widget.controller.selection {
+    if (widget.autoFocus) requestFocus();
+  }
 
   @override
   set widget(TextInput value) {
