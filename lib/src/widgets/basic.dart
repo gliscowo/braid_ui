@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:diamond_gl/opengl.dart';
 import 'package:vector_math/vector_math.dart';
 
+import '../../glfw.dart';
 import '../context.dart';
 import '../core/constraints.dart';
 import '../core/cursors.dart';
@@ -13,6 +16,10 @@ import '../framework/instance.dart';
 import '../framework/proxy.dart';
 import '../framework/widget.dart';
 import 'flex.dart';
+
+typedef VoidCallback = void Function();
+
+// ---
 
 abstract class VisitorWidget extends Widget {
   final Widget child;
@@ -375,15 +382,15 @@ class CustomDrawInstance extends LeafWidgetInstance<CustomDraw> {
 // ---
 
 class MouseArea extends SingleChildInstanceWidget {
-  final void Function(double x, double y, int button)? clickCallback;
-  final void Function(double x, double y, int button)? unClickCallback;
-  final void Function()? enterCallback;
+  final bool Function(double x, double y, int button)? clickCallback;
+  final bool Function(double x, double y, int button)? unClickCallback;
+  final VoidCallback? enterCallback;
   final void Function(double toX, double toY)? moveCallback;
-  final void Function()? exitCallback;
+  final VoidCallback? exitCallback;
   final void Function(int button)? dragStartCallback;
   final void Function(double x, double y, double dx, double dy)? dragCallback;
-  final void Function()? dragEndCallback;
-  final void Function(double horizontal, double vertical)? scrollCallback;
+  final VoidCallback? dragEndCallback;
+  final bool Function(double horizontal, double vertical)? scrollCallback;
   final CursorStyle? Function(double x, double y)? cursorStyleSupplier;
 
   MouseArea({
@@ -406,7 +413,6 @@ class MouseArea extends SingleChildInstanceWidget {
   MouseAreaInstance instantiate() => MouseAreaInstance(widget: this);
 }
 
-// TODO: allow not consuming events with per-callback predicates
 // in this process, likely also build a higher-level abstraction for
 // handling user input
 class MouseAreaInstance extends SingleChildWidgetInstance<MouseArea> with ShrinkWrapLayout, MouseListener {
@@ -417,10 +423,10 @@ class MouseAreaInstance extends SingleChildWidgetInstance<MouseArea> with Shrink
 
   @override
   bool onMouseDown(double x, double y, int button) =>
-      (widget.clickCallback?..call(x, y, button)) != null || widget.dragCallback != null;
+      (widget.clickCallback?.call(x, y, button) ?? false) || widget.dragCallback != null;
 
   @override
-  bool onMouseUp(double x, double y, int button) => (widget.unClickCallback?..call(x, y, button)) != null;
+  bool onMouseUp(double x, double y, int button) => widget.unClickCallback?.call(x, y, button) ?? false;
 
   @override
   void onMouseEnter() => widget.enterCallback?.call();
@@ -442,18 +448,17 @@ class MouseAreaInstance extends SingleChildWidgetInstance<MouseArea> with Shrink
 
   @override
   bool onMouseScroll(double x, double y, double horizontal, double vertical) =>
-      (widget.scrollCallback?..call(horizontal, vertical)) != null;
+      widget.scrollCallback?.call(horizontal, vertical) ?? false;
 }
 
 // ---
 
-// TODO: allow not consuming events with per-callback predicates
 class KeyboardInput extends SingleChildInstanceWidget {
-  final void Function(int keyCode, KeyModifiers modifiers)? keyDownCallback;
-  final void Function(int keyCode, KeyModifiers modifiers)? keyUpCallback;
-  final void Function(int charCode, KeyModifiers modifiers)? charCallback;
-  final void Function()? focusGainedCallback;
-  final void Function()? focusLostCallback;
+  final bool Function(int keyCode, KeyModifiers modifiers)? keyDownCallback;
+  final bool Function(int keyCode, KeyModifiers modifiers)? keyUpCallback;
+  final bool Function(int charCode, KeyModifiers modifiers)? charCallback;
+  final VoidCallback? focusGainedCallback;
+  final VoidCallback? focusLostCallback;
 
   const KeyboardInput({
     super.key,
@@ -475,13 +480,13 @@ class KeyboardInputInstance extends SingleChildWidgetInstance<KeyboardInput> wit
   KeyboardInputInstance({required super.widget});
 
   @override
-  bool onKeyDown(int keyCode, KeyModifiers modifiers) => (widget.keyDownCallback?..call(keyCode, modifiers)) != null;
+  bool onKeyDown(int keyCode, KeyModifiers modifiers) => widget.keyDownCallback?.call(keyCode, modifiers) ?? false;
 
   @override
-  bool onKeyUp(int keyCode, KeyModifiers modifiers) => (widget.keyUpCallback?..call(keyCode, modifiers)) != null;
+  bool onKeyUp(int keyCode, KeyModifiers modifiers) => widget.keyUpCallback?.call(keyCode, modifiers) ?? false;
 
   @override
-  bool onChar(int charCode, KeyModifiers modifiers) => (widget.charCallback?..call(charCode, modifiers)) != null;
+  bool onChar(int charCode, KeyModifiers modifiers) => widget.charCallback?.call(charCode, modifiers) ?? false;
 
   @override
   void onFocusGained() {
@@ -496,6 +501,251 @@ class KeyboardInputInstance extends SingleChildWidgetInstance<KeyboardInput> wit
   }
 
   bool get focused => _focused;
+}
+
+// ---
+
+extension type const ActionTrigger._(({Set<int> mouseButtons, Set<int> keyCodes, KeyModifiers keyModifiers}) _value) {
+  const ActionTrigger({
+    Set<int> mouseButtons = const {},
+    Set<int> keyCodes = const {},
+    KeyModifiers keyModifiers = KeyModifiers.none,
+  }) : this._((mouseButtons: mouseButtons, keyCodes: keyCodes, keyModifiers: keyModifiers));
+
+  bool isTriggeredByMouseButton(int button) => _value.mouseButtons.contains(button);
+  bool isTriggeredByKeyCode(int code, KeyModifiers modifiers) =>
+      _value.keyCodes.contains(code) && _value.keyModifiers == modifiers;
+
+  static const click = ActionTrigger(
+    mouseButtons: {glfwMouseButtonLeft},
+    keyCodes: {glfwKeySpace, glfwKeyEnter, glfwKeyKpEnter},
+  );
+
+  static const secondaryClick = ActionTrigger(
+    mouseButtons: {glfwMouseButtonRight},
+    keyCodes: {glfwKeySpace, glfwKeyEnter, glfwKeyKpEnter},
+    keyModifiers: KeyModifiers(glfwModShift),
+  );
+}
+
+class Actions extends StatefulWidget {
+  final VoidCallback? enterCallback;
+  final VoidCallback? exitCallback;
+  final CursorStyle? cursorStyle;
+
+  final VoidCallback? focusGainedCallback;
+  final VoidCallback? focusLostCallback;
+
+  final Map<List<ActionTrigger>, VoidCallback> actions;
+
+  final Widget child;
+
+  const Actions({
+    super.key,
+    this.enterCallback,
+    this.exitCallback,
+    this.cursorStyle,
+    this.focusGainedCallback,
+    this.focusLostCallback,
+    required this.actions,
+    required this.child,
+  });
+
+  Actions.click({
+    super.key,
+    this.enterCallback,
+    this.exitCallback,
+    this.cursorStyle,
+    this.focusGainedCallback,
+    this.focusLostCallback,
+    required VoidCallback? onClick,
+    required this.child,
+  }) : actions = {
+         if (onClick != null) const [ActionTrigger.click]: onClick,
+       };
+
+  @override
+  WidgetState<Actions> createState() => ActionsState();
+}
+
+class ActionsState extends WidgetState<Actions> {
+  List<_ActionSequence> _sequences = [];
+
+  final List<_ActionSequence> _queuedSequences = [];
+  Timer? _dispatchTimer;
+
+  @override
+  void init() {
+    _sequences = widget.actions.entries.map((e) => _ActionSequence(e.key, e.value)).toList();
+  }
+
+  // TODO: probably not ideal to rebuild this list every time
+  @override
+  void didUpdateWidget(Actions oldWidget) {
+    _sequences = widget.actions.entries.map((e) => _ActionSequence(e.key, e.value)).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseArea(
+      enterCallback: widget.enterCallback,
+      exitCallback: widget.exitCallback,
+      cursorStyle: widget.cursorStyle,
+      clickCallback: (x, y, button) {
+        return _stepActions((trigger) {
+          return trigger.isTriggeredByMouseButton(button)
+              ? _ActionTriggerResult.activated
+              : _ActionTriggerResult.notActivated;
+        });
+      },
+      child: KeyboardInput(
+        focusGainedCallback: widget.focusGainedCallback,
+        focusLostCallback: widget.focusLostCallback,
+        keyDownCallback:
+            (keyCode, modifiers) => _stepActions((trigger) {
+              if (trigger.isTriggeredByKeyCode(keyCode, modifiers)) return _ActionTriggerResult.activated;
+
+              return KeyModifiers.isModifier(keyCode)
+                  ? _ActionTriggerResult.ignored
+                  : _ActionTriggerResult.notActivated;
+            }),
+        child: widget.child,
+      ),
+    );
+  }
+
+  bool _stepActions(_ActionTriggerResult Function(ActionTrigger trigger) test) {
+    // in case we currently have a dispatch queued, we
+    // must cancel it *now* to avoid prematurely triggering
+    // a dispatch before the user is done entering triggers
+    _dispatchTimer?.cancel();
+
+    // now, begin by stepping all sequences with current input and keeping
+    // only the ones which didn't ignore it. this can lead to a few outcomes
+    // for each sequence. to break it down:
+    // - singular sequences:
+    //   these can always step and, if so, will immediately complete
+    // - non-singular sequences:
+    //   whether these can step depends on their current state:
+    //   - non-negative trigger index:
+    //     if triggered, will step and potentially complete
+    //     if not triggered, will not step and poison the trigger index
+    //   - negative (poisoned) trigger index:
+    //     will not step
+    final steppedSequences =
+        _sequences
+            .map((e) => (sequence: e, step: e.step(test)))
+            .whereNot((element) => element.step == _ActionSequenceStep.ignore)
+            .toList();
+
+    // next, get the sequence to treat as completed on this iteration - if any
+    // - if multiple sequences completed, pick the first one
+    // - always prioritize non-singular sequences over singular sequences.
+    //   this is important, since the current trigger could both finish
+    //   a non-singular sequence (user intent) and immediately complete a
+    //   singular one (this would be an artifact)
+    final completed = steppedSequences
+        .where((element) => element.step == _ActionSequenceStep.complete)
+        .fold<({_ActionSequence sequence, _ActionSequenceStep step})?>(null, (acc, element) {
+          if (acc == null) return element;
+          return acc.sequence.isSingular && !element.sequence.isSingular ? element : acc;
+        });
+
+    // if we have successfully resolved all ambiguity, that is,
+    // every remaining (non-poisoned) sequence stepped to completion,
+    // dispatch immediately
+    if (steppedSequences.every((e) => e.step == _ActionSequenceStep.complete) && completed != null) {
+      _dispatch(completedSequence: completed.sequence, runQueued: completed.sequence.isSingular);
+      return true;
+    } else {
+      // otherwise, queue up the completed sequence (if any)
+      // and queue dispatch after the maximum possible input delay
+
+      if (completed != null) {
+        // if the sequence we just complete is non-singular, clear
+        // the queue - this is important, since otherwise we could duplicate
+        // the respective events
+        if (!completed.sequence.isSingular) {
+          _queuedSequences.clear();
+        }
+
+        _queuedSequences.add(completed.sequence);
+        completed.sequence.nextTriggerIndex = 0;
+      }
+
+      _dispatchTimer = Timer(_maxInputDelay, () => _dispatch(completedSequence: null, runQueued: true));
+
+      return steppedSequences.isNotEmpty;
+    }
+  }
+
+  void _dispatch({required _ActionSequence? completedSequence, required bool runQueued}) {
+    if (runQueued) {
+      for (final sequence in _queuedSequences) {
+        sequence.callback();
+      }
+    }
+
+    completedSequence?.callback();
+
+    _queuedSequences.clear();
+    for (final sequence in _sequences) {
+      sequence.nextTriggerIndex = 0;
+    }
+  }
+
+  static const _maxInputDelay = Duration(milliseconds: 250);
+}
+
+enum _ActionTriggerResult {
+  /// the trigger was not activated by this input.
+  /// non-singular sequences should posion
+  notActivated,
+
+  /// the trigger was activated by this input.
+  /// sequences should step
+  activated,
+
+  /// the trigger entirely ignored this input.
+  /// non-singular sequences should not poison
+  /// and sequences should not step
+  ignored,
+}
+
+enum _ActionSequenceStep { ignore, advance, complete }
+
+class _ActionSequence {
+  final List<ActionTrigger> triggers;
+  final VoidCallback callback;
+
+  /// whether this sequence is singular, i.e. it only has
+  /// a single trigger and can be completed at any time
+  final bool isSingular;
+
+  int nextTriggerIndex = 0;
+
+  _ActionSequence(this.triggers, this.callback) : isSingular = triggers.length == 1;
+
+  /// step this sequence
+  /// - if the sequence ignored the input, is poisoned or is completed, return [_ActionSequenceStep.ignore]
+  /// - if the sequence activated its final trigger, return [_ActionSequenceStep.complete]
+  /// - if the sequence activated an intermediate trigger, return [_ActionSequenceStep.advance]
+  _ActionSequenceStep step(_ActionTriggerResult Function(ActionTrigger trigger) test) {
+    if (nextTriggerIndex < 0 || nextTriggerIndex >= triggers.length) return _ActionSequenceStep.ignore;
+
+    final result = test(triggers[nextTriggerIndex]);
+    if (result == _ActionTriggerResult.activated) {
+      nextTriggerIndex++;
+      return nextTriggerIndex == triggers.length ? _ActionSequenceStep.complete : _ActionSequenceStep.advance;
+    } else if (!isSingular && result == _ActionTriggerResult.notActivated) {
+      // only poison non-singular sequences. this is important, because
+      // otherwise we could incorrectly swallow a singular sequence completed
+      // just after the first trigger of a non-singular sequence
+      nextTriggerIndex = -1;
+    }
+
+    return _ActionSequenceStep.ignore;
+  }
 }
 
 // ---

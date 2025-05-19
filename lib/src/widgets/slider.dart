@@ -204,7 +204,13 @@ class RawSlider extends StatelessWidget {
         builder: (context, constraints) {
           return MouseArea(
             cursorStyle: enabled ? CursorStyle.hand : null,
-            clickCallback: enabled ? (x, y, _) => _updateForInput(constraints, x, y) : null,
+            clickCallback:
+                enabled
+                    ? (x, y, _) {
+                      _updateForInput(constraints, x, y);
+                      return true;
+                    }
+                    : null,
             dragCallback: enabled ? (x, y, dx, dy) => _updateForInput(constraints, x, y) : null,
             child: Stack(
               alignment: axis.choose(Alignment.left, Alignment.top),

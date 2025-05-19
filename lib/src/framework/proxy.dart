@@ -465,6 +465,7 @@ abstract class WidgetState<T extends StatefulWidget> {
   T get widget => _widget!;
 
   void init() {}
+  void didUpdateWidget(T oldWidget) {}
   void dispose() {}
 
   StatefulProxy? _owner;
@@ -480,8 +481,6 @@ abstract class WidgetState<T extends StatefulWidget> {
   // TODO: this is not really the ideal way of doing this
   @nonVirtual
   void scheduleAnimationCallback(AnimationCallback callback) => _owner!.host!.scheduleAnimationCallback(callback);
-
-  void didUpdateWidget(T oldWidget) {}
 }
 
 // ---

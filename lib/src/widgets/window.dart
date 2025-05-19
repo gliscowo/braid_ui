@@ -71,7 +71,10 @@ class _WindowState extends WidgetState<Window> {
               [_WindowEdge.bottom, _WindowEdge.left] || [_WindowEdge.top, _WindowEdge.right] => CursorStyle.neswResize,
               _ => null,
             },
-        clickCallback: (x, y, _) => draggingEdges = _edgesAt(x, y),
+        clickCallback: (x, y, _) {
+          draggingEdges = _edgesAt(x, y);
+          return true;
+        },
         dragCallback: (x, y, dx, dy) => setState(() => _resize(dx, dy)),
         dragEndCallback: () => draggingEdges = null,
         child: Padding(
@@ -96,20 +99,17 @@ class _WindowState extends WidgetState<Window> {
                         child: Row(
                           children: [
                             if (widget.collapsible)
-                              MouseArea(
+                              Actions.click(
                                 cursorStyle: CursorStyle.hand,
-                                clickCallback:
-                                    (_, _, _) => setState(() {
-                                      controller.expanded = !controller.expanded;
-                                    }),
+                                onClick: () => setState(() => controller.expanded = !controller.expanded),
                                 child: Icon(icon: controller.expanded ? Icons.arrow_drop_down : Icons.arrow_drop_up),
                               ),
                             Text(widget.title, style: TextStyle(fontSize: 14.0, bold: true)),
                             Flexible(child: Padding(insets: const Insets())),
                             if (widget.onClose != null)
-                              MouseArea(
+                              Actions.click(
                                 cursorStyle: CursorStyle.hand,
-                                clickCallback: (_, _, _) => widget.onClose?.call(),
+                                onClick: () => widget.onClose?.call(),
                                 child: Icon(icon: Icons.close, size: 18),
                               ),
                           ],

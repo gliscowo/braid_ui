@@ -103,9 +103,9 @@ class Switch extends StatelessWidget {
     final contextStyle = DefaultSwitchStyle.of(context);
     final style = this.style?.overriding(contextStyle) ?? contextStyle;
 
-    return MouseArea(
-      clickCallback: onClick != null ? (_, _, _) => onClick!() : null,
+    return Actions.click(
       cursorStyle: onClick != null ? CursorStyle.hand : null,
+      onClick: onClick != null ? () => onClick!() : null,
       child: Sized(
         width: 40,
         height: 24,

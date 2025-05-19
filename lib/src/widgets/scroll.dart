@@ -196,6 +196,7 @@ class _ScrollableState extends WidgetState<Scrollable> {
         scrollCallback: (horizontal, vertical) {
           horizontalController?.offset += -horizontal * 25;
           verticalController?.offset += -vertical * 25;
+          return horizontalController != null && verticalController != null;
         },
         child: ListenableBuilder(
           listenable: listenable,

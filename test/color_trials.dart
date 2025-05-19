@@ -8,6 +8,7 @@ import 'package:analyzer/dart/ast/token.dart';
 import 'package:braid_ui/braid_ui.dart';
 import 'package:braid_ui/src/animation/lerp.dart';
 import 'package:braid_ui/src/widgets/spinning_indicator.dart';
+import 'package:diamond_gl/glfw.dart';
 import 'package:endec/endec.dart';
 import 'package:endec_json/endec_json.dart';
 import 'package:image/image.dart' hide Color;
@@ -516,7 +517,7 @@ class CollapsibleTest extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Align(
+    return Align(
       alignment: Alignment.top,
       child: CollapsibleThing(
         title: Text('collapsible thing'),
@@ -535,7 +536,54 @@ class CollapsibleTest extends StatelessWidget {
             Row(children: [Icon(icon: Icons.fiber_manual_record), Text('just some text')]),
             CollapsibleThing(
               title: Text('b'),
-              content: Sized(width: 100, height: 100, child: Panel(color: Color.blue)),
+              content: Sized(
+                width: 100,
+                height: 100,
+                child: Actions(
+                  actions: {
+                    [ActionTrigger.click]: () => print('primary hi'),
+                    [ActionTrigger.secondaryClick]: () => print('hi'),
+                    [ActionTrigger.secondaryClick, ActionTrigger.secondaryClick]: () => print('double hi'),
+                    [ActionTrigger.secondaryClick, ActionTrigger.secondaryClick, ActionTrigger.secondaryClick]:
+                        () => print('triple hi'),
+                    [ActionTrigger.secondaryClick, ActionTrigger.secondaryClick, ActionTrigger.click]:
+                        () => print('triple hi 2'),
+                    [ActionTrigger.click, ActionTrigger.click, ActionTrigger.secondaryClick]:
+                        () => print('triple hi 3'),
+                    [
+                      ActionTrigger(keyCodes: {glfwKey1}),
+                    ]: () => print('1'),
+                    [
+                      ActionTrigger(keyCodes: {glfwKey2}),
+                    ]: () => print('2'),
+                    [
+                      ActionTrigger(keyCodes: {glfwKey1}),
+                      ActionTrigger.click,
+                      ActionTrigger(keyCodes: {glfwKey2}),
+                    ]: () => print('1 click 2'),
+                    [
+                      ActionTrigger(keyCodes: {glfwKeyB}),
+                    ]: () => print('b'),
+                    [
+                      ActionTrigger(keyCodes: {glfwKeyR}),
+                    ]: () => print('r'),
+                    [
+                      ActionTrigger(keyCodes: {glfwKeyB}),
+                      ActionTrigger(keyCodes: {glfwKeyR}),
+                      ActionTrigger(keyCodes: {glfwKeyU}),
+                      ActionTrigger(keyCodes: {glfwKeyH}),
+                    ]: () => print('bruh'),
+                    [
+                      ActionTrigger.secondaryClick,
+                      ActionTrigger.secondaryClick,
+                      ActionTrigger(keyCodes: {glfwKey1}),
+                      ActionTrigger.click,
+                      ActionTrigger(keyCodes: {glfwKey2}),
+                    ]: () => print('yeah uhh'),
+                  },
+                  child: Panel(color: Color.blue),
+                ),
+              ),
             ),
           ],
         ),

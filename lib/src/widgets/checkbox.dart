@@ -88,11 +88,11 @@ class _CheckboxState extends WidgetState<Checkbox> {
     final contextStyle = DefaultCheckboxStyle.of(context);
     final style = widget.style?.overriding(contextStyle) ?? contextStyle;
 
-    return MouseArea(
-      clickCallback: (_, _, _) => widget.onClick?.call(),
+    return Actions.click(
       enterCallback: () => setState(() => _hovered = true),
       exitCallback: () => setState(() => _hovered = false),
       cursorStyle: CursorStyle.hand,
+      onClick: () => widget.onClick?.call(),
       child: Sized(
         width: 20,
         height: 20,

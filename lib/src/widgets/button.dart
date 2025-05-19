@@ -166,11 +166,11 @@ class _RawButtonState extends WidgetState<RawButton> {
     );
 
     if (widget.onClick != null) {
-      result = MouseArea(
-        cursorStyle: CursorStyle.hand,
-        clickCallback: (_, _, _) => widget.onClick!(),
+      result = Actions.click(
         enterCallback: () => setState(() => _hovered = true),
         exitCallback: () => setState(() => _hovered = false),
+        cursorStyle: CursorStyle.hand,
+        onClick: () => widget.onClick!(),
         child: result,
       );
     }

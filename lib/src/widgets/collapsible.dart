@@ -26,9 +26,9 @@ class Collapsible extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            MouseArea(
-              clickCallback: (_, _, _) => onToggled(!collapsed),
+            Actions.click(
               cursorStyle: CursorStyle.hand,
+              onClick: () => onToggled(!collapsed),
               child: Icon(icon: collapsed ? Icons.arrow_right : Icons.arrow_drop_down, size: 24),
             ),
             Sized(height: 24, child: title),
