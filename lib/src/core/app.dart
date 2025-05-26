@@ -33,7 +33,6 @@ Future<void> runBraidApp({required AppState app, int targetFps = 60, bool reload
 
   if (reloadHook) {
     reloadCancelCallback = await setupReloadHook(() {
-      app.logger?.info('hot reload detected, rebuilding root widget');
       app.rebuildRoot();
     });
 
@@ -260,7 +259,8 @@ class AppState implements InstanceHost, ProxyHost {
 
   // --- debug properties ---
 
-  final BraidInspector _inspector;
+  final BraidInspector _inspector = BraidInspector();
+  final _RebuildTimingTracker _rebuildTimingTracker = _RebuildTimingTracker();
   bool debugDrawInstanceBoxes = false;
   bool debugReloadShadersNextFrame = false;
 
@@ -275,8 +275,7 @@ class AppState implements InstanceHost, ProxyHost {
     this.primitives,
     Widget root, {
     this.logger,
-  }) : cursorController = CursorController.ofWindow(window),
-       _inspector = BraidInspector() {
+  }) : cursorController = CursorController.ofWindow(window) {
     _root =
         _RootWidget(
           child: InspectableTree(
@@ -435,8 +434,21 @@ node [shape="box"];
       }
     }
 
-    _rootBuildScope.rebuildDirtyProxies();
-    flushLayoutQueue();
+    if (_rebuildTimingTracker.trackNextIteration) {
+      final watch = Stopwatch()..start();
+      _rootBuildScope.rebuildDirtyProxies();
+      _rebuildTimingTracker.buildTime = watch.elapsed;
+
+      watch.reset();
+      flushLayoutQueue();
+      _rebuildTimingTracker.layoutTime = watch.elapsed;
+
+      _rebuildTimingTracker.trackNextIteration = false;
+      logger?.info('completed full app rebuild in ${_rebuildTimingTracker.formatted}');
+    } else {
+      _rootBuildScope.rebuildDirtyProxies();
+      flushLayoutQueue();
+    }
 
     // ---
 
@@ -509,9 +521,8 @@ node [shape="box"];
     final watch = Stopwatch()..start();
 
     _root.reassemble();
-
-    final elapsed = watch.elapsedMicroseconds;
-    logger?.fine('completed full app rebuild in ${elapsed}us');
+    _rebuildTimingTracker.reassembleTime = watch.elapsed;
+    _rebuildTimingTracker.trackNextIteration = true;
   }
 
   // TODO: there should be a separate function that doesn't go
@@ -600,4 +611,19 @@ node [shape="box"];
 
   @override
   void scheduleAnimationCallback(AnimationCallback callback) => _callbacks.add(callback);
+}
+
+class _RebuildTimingTracker {
+  Duration reassembleTime = Duration.zero;
+  Duration buildTime = Duration.zero;
+  Duration layoutTime = Duration.zero;
+
+  bool trackNextIteration = false;
+
+  String get formatted {
+    String formatMs(Duration duration) => '${(duration.inMicroseconds / 1000).toStringAsFixed(2)}ms';
+
+    final totalTime = reassembleTime + buildTime + layoutTime;
+    return '${formatMs(totalTime)} (reassemble: ${formatMs(reassembleTime)}, rebuild: ${formatMs(buildTime)}, layout: ${formatMs(layoutTime)})';
+  }
 }
