@@ -296,17 +296,15 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
     }
   }
 
-  int _nextWordBoundary(bool forwards) {
+  int _nextWordBoundary(bool forwards, {int? fromRuneIdx}) {
+    fromRuneIdx ??= _selection.end;
+
     var direction = forwards ? 1 : -1;
     var lookAhead = forwards ? 0 : -1;
     var bound = forwards ? _text.runes.length + 1 : -1;
 
-    var startingClass = _SkipClass(_safeCharCodeAt(_selection.end));
-    var idx = _selection.end + direction;
-
-    if (startingClass != const _LineBreakClass()) {
-      startingClass = _SkipClass(_safeCharCodeAt(idx + lookAhead));
-    }
+    var startingClass = _SkipClass(_safeCharCodeAt(fromRuneIdx + lookAhead));
+    var idx = fromRuneIdx + direction;
 
     while (idx != bound && startingClass.shouldSkip(_safeCharCodeAt(idx + lookAhead))) {
       idx += direction;
@@ -430,9 +428,23 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
   @override
   CursorStyle? cursorStyleAt(double x, double y) => CursorStyle.text;
 
+  DateTime _lastClickTime = DateTime.fromMillisecondsSinceEpoch(0);
+  static const _maxDoubleClickDelay = Duration(milliseconds: 250);
+
   @override
   bool onMouseDown(double x, double y, int button) {
-    _moveCursor(_runeIdxAt(x, y), glfw.getKey(host!.window.handle, glfwKeyLeftShift) == glfwPress);
+    final clickedIdx = _runeIdxAt(x, y);
+
+    if (DateTime.now().difference(_lastClickTime) < _maxDoubleClickDelay) {
+      final start = _nextWordBoundary(false, fromRuneIdx: clickedIdx);
+      final end = _nextWordBoundary(true, fromRuneIdx: clickedIdx);
+
+      widget.controller.selection = TextSelection(max(0, start), end);
+    } else {
+      _lastClickTime = DateTime.now();
+      _moveCursor(clickedIdx, glfw.getKey(host!.window.handle, glfwKeyLeftShift) == glfwPress);
+    }
+
     return true;
   }
 
