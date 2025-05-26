@@ -7,7 +7,7 @@ import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:braid_ui/braid_ui.dart';
 import 'package:braid_ui/src/animation/lerp.dart';
-import 'package:braid_ui/src/widgets/spinning_indicator.dart';
+import 'package:braid_ui/src/widgets/progress_indicator.dart';
 import 'package:diamond_gl/glfw.dart';
 import 'package:endec/endec.dart';
 import 'package:endec_json/endec_json.dart';
@@ -316,11 +316,43 @@ class CursorTest extends StatelessWidget {
     return Center(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
+        separator: const Padding(insets: Insets.all(10)),
         children: [
-          const Padding(insets: Insets.all(10), child: SpinningIndicator()),
+          const Padding(insets: Insets.all(10), child: ProgressIndicator.indeterminate()),
+          const ProgressIndicatorTest(),
           Sized(width: 100, height: 100, child: MouseArea(cursorStyle: cursor, child: Panel(color: Color.white))),
         ],
       ),
+    );
+  }
+}
+
+class ProgressIndicatorTest extends StatefulWidget {
+  const ProgressIndicatorTest({super.key});
+
+  @override
+  WidgetState<ProgressIndicatorTest> createState() => _ProgressIndicatorTestState();
+}
+
+class _ProgressIndicatorTestState extends WidgetState<ProgressIndicatorTest> {
+  double progress = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      separator: const Padding(insets: Insets.all(10)),
+      children: [
+        Sized(
+          height: 100,
+          child: Slider(
+            value: progress,
+            onUpdate: (value) => setState(() => progress = value),
+            axis: LayoutAxis.vertical,
+          ),
+        ),
+        ProgressIndicator(progress: progress),
+      ],
     );
   }
 }

@@ -1,3 +1,6 @@
+import 'dart:collection';
+import 'dart:math';
+
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:diamond_gl/opengl.dart';
 import 'package:vector_math/vector_math.dart';
@@ -9,19 +12,21 @@ import 'vertex_descriptors.dart';
 class PrimitiveRenderer {
   final RenderContext _context;
 
-  final MeshBuffer<PosVertexFunction> _solidBuffer;
-  final MeshBuffer<PosUvVertexFunction> _gradientBuffer;
-  final MeshBuffer<PosVertexFunction> _roundedSolidBuffer;
-  final MeshBuffer<PosVertexFunction> _roundedOutlineBuffer;
-  final MeshBuffer<PosVertexFunction> _circleBuffer;
-  MeshBuffer<BlitVertexFunction>? _blitBuffer;
+  final Map<Symbol, MeshBuffer> _buffers = HashMap();
 
-  PrimitiveRenderer(this._context)
-    : _solidBuffer = MeshBuffer(posVertexDescriptor, _context.findProgram('solid_fill')),
-      _gradientBuffer = MeshBuffer(posUvVertexDescriptor, _context.findProgram('gradient_fill')),
-      _circleBuffer = MeshBuffer(posVertexDescriptor, _context.findProgram('circle_solid')),
-      _roundedSolidBuffer = MeshBuffer(posVertexDescriptor, _context.findProgram('rounded_rect_solid')),
-      _roundedOutlineBuffer = MeshBuffer(posVertexDescriptor, _context.findProgram('rounded_rect_outline'));
+  PrimitiveRenderer(this._context);
+
+  void clearShaderCache() {
+    for (final buffer in _buffers.values) {
+      buffer.delete();
+    }
+
+    _buffers.clear();
+  }
+
+  MeshBuffer<VF> _getBuffer<VF extends Function>(Symbol symbol, VertexDescriptor<VF> descriptor, String program) {
+    return (_buffers[symbol] ??= MeshBuffer<VF>(descriptor, _context.findProgram(program))) as MeshBuffer<VF>;
+  }
 
   void roundedRect(
     double width,
@@ -32,7 +37,11 @@ class PrimitiveRenderer {
     Matrix4 projection, {
     double? outlineThickness,
   }) {
-    final buffer = outlineThickness == null ? _roundedSolidBuffer : _roundedOutlineBuffer;
+    final buffer =
+        outlineThickness == null
+            ? _getBuffer(#roundedSolid, posVertexDescriptor, 'rounded_rect_solid')
+            : _getBuffer(#roundedOutline, posVertexDescriptor, 'rounded_rect_outline');
+
     buffer.program
       ..uniformMat4('uTransform', transform)
       ..uniformMat4('uProjection', projection)
@@ -53,7 +62,9 @@ class PrimitiveRenderer {
   }
 
   void rect(double width, double height, Color color, Matrix4 transform, Matrix4 projection) {
-    _solidBuffer.program
+    final buffer = _getBuffer(#solid, posVertexDescriptor, 'solid_fill');
+
+    buffer.program
       ..uniformMat4('uTransform', transform)
       ..uniformMat4('uProjection', projection)
       ..uniform4vf('uColor', color.asVector())
@@ -61,9 +72,9 @@ class PrimitiveRenderer {
 
     gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
 
-    _solidBuffer.clear();
-    buildRect(_solidBuffer.vertex, 0, 0, width, height);
-    _solidBuffer
+    buffer.clear();
+    buildRect(buffer.vertex, 0, 0, width, height);
+    buffer
       ..upload(dynamic: true)
       ..draw();
   }
@@ -79,7 +90,9 @@ class PrimitiveRenderer {
     Matrix4 transform,
     Matrix4 projection,
   ) {
-    _gradientBuffer.program
+    final buffer = _getBuffer(#gradient, posUvVertexDescriptor, 'gradient_fill');
+
+    buffer.program
       ..uniformMat4('uTransform', transform)
       ..uniformMat4('uProjection', projection)
       ..uniform4vf('uStartColor', startColor.asVector())
@@ -91,9 +104,9 @@ class PrimitiveRenderer {
 
     gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
 
-    _gradientBuffer.clear();
-    buildGradientRect(_gradientBuffer.vertex, 0, 0, width, height);
-    _gradientBuffer
+    buffer.clear();
+    buildGradientRect(buffer.vertex, 0, 0, width, height);
+    buffer
       ..upload(dynamic: true)
       ..draw();
   }
@@ -120,26 +133,48 @@ class PrimitiveRenderer {
   //   gl.enable(glBlend);
   // }
 
-  void circle(double radius, Color color, Matrix4 transform, Matrix4 projection) {
-    _circleBuffer.program
+  void circle(
+    double radius,
+    Color color,
+    Matrix4 transform,
+    Matrix4 projection, {
+    double? innerRadius,
+    double? toAngle,
+    double? angleOffset,
+  }) {
+    final solid = innerRadius == null && toAngle == null && angleOffset != null;
+
+    final buffer =
+        solid
+            ? _getBuffer(#circleSolid, posVertexDescriptor, 'circle_solid')
+            : _getBuffer(#circleSector, posVertexDescriptor, 'circle_sector');
+
+    buffer.program
       ..uniformMat4('uTransform', transform)
       ..uniformMat4('uProjection', projection)
       ..uniform4vf('uColor', color.asVector())
       ..uniform1f('uRadius', radius)
       ..use();
 
+    if (!solid) {
+      buffer.program.uniform1f('uInnerRadius', innerRadius ?? -1);
+
+      buffer.program.uniform1f('uAngleOffset', ((angleOffset ?? 0) + pi / 2) % (pi * 2));
+      buffer.program.uniform1f('uAngleTo', toAngle ?? pi * 2);
+    }
+
     gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
 
-    _circleBuffer.clear();
-    buildRect(_circleBuffer.vertex, 0, 0, radius * 2, radius * 2);
-    _circleBuffer
+    buffer.clear();
+    buildRect(buffer.vertex, 0, 0, radius * 2, radius * 2);
+    buffer
       ..upload(dynamic: true)
       ..draw();
   }
 
   void blitFramebuffer(GlFramebuffer framebuffer) {
     final mesh =
-        _blitBuffer ??=
+        _buffers[#blit] ??=
             (() {
               final buffer = MeshBuffer(blitVertexDescriptor, _context.findProgram('blit'));
               buffer

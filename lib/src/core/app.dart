@@ -50,7 +50,7 @@ Future<void> runBraidApp({required AppState app, int targetFps = 60, bool reload
   while (glfw.windowShouldClose(app.window.handle) != glfwTrue && app._running) {
     final measuredDelta = glfw.getTime() - lastFrameTimestamp;
 
-    await Future.delayed(Duration(microseconds: max(((oneFrame - measuredDelta) * 1000000).toInt(), 0)));
+    await Future.delayed(Duration(microseconds: max(((oneFrame - measuredDelta) * 1_000_000).toInt(), 0)));
 
     final effectiveDelta = glfw.getTime() - lastFrameTimestamp;
     lastFrameTimestamp = glfw.getTime();
@@ -60,7 +60,7 @@ Future<void> runBraidApp({required AppState app, int targetFps = 60, bool reload
     gl.clear(glColorBufferBit);
 
     app.updateWidgetsAndInteractions(effectiveDelta);
-    app.draw();
+    await app.draw();
 
     app.context.nextFrame();
   }
@@ -116,16 +116,19 @@ Future<AppState> createBraidApp({
   }
 
   final renderContext = RenderContext(braidWindow);
-  await Stream.fromFutures([
-    _vertFragProgram(resources, 'blit', 'blit', 'blit'),
-    _vertFragProgram(resources, 'text', 'text', 'text'),
-    _vertFragProgram(resources, 'solid_fill', 'pos', 'solid_fill'),
-    _vertFragProgram(resources, 'texture_fill', 'pos_uv', 'texture_fill'),
-    _vertFragProgram(resources, 'rounded_rect_solid', 'pos', 'rounded_rect_solid'),
-    _vertFragProgram(resources, 'rounded_rect_outline', 'pos', 'rounded_rect_outline'),
-    _vertFragProgram(resources, 'circle_solid', 'pos', 'circle_solid'),
-    _vertFragProgram(resources, 'gradient_fill', 'pos_uv', 'gradient_fill'),
-  ]).forEach(renderContext.addProgram);
+  await Future.wait(
+    [
+      BraidShader(source: resources, name: 'blit', vert: 'blit', frag: 'blit'),
+      BraidShader(source: resources, name: 'text', vert: 'text', frag: 'text'),
+      BraidShader(source: resources, name: 'solid_fill', vert: 'pos', frag: 'solid_fill'),
+      BraidShader(source: resources, name: 'texture_fill', vert: 'pos_uv', frag: 'texture_fill'),
+      BraidShader(source: resources, name: 'rounded_rect_solid', vert: 'pos', frag: 'rounded_rect_solid'),
+      BraidShader(source: resources, name: 'rounded_rect_outline', vert: 'pos', frag: 'rounded_rect_outline'),
+      BraidShader(source: resources, name: 'circle_solid', vert: 'pos', frag: 'circle_solid'),
+      BraidShader(source: resources, name: 'circle_sector', vert: 'pos', frag: 'circle_sector'),
+      BraidShader(source: resources, name: 'gradient_fill', vert: 'pos_uv', frag: 'gradient_fill'),
+    ].map((shader) => renderContext.addShader(shader)).toList(),
+  );
 
   final (notoSans, materialSymbols) =
       await (FontFamily.load(resources, 'NotoSans'), FontFamily.load(resources, 'MaterialSymbols')).wait;
@@ -150,17 +153,6 @@ Future<AppState> createBraidApp({
     widget,
     logger: baseLogger,
   );
-}
-
-Future<GlProgram> _vertFragProgram(BraidResources resources, String name, String vert, String frag) async {
-  final (vertSource, fragSource) = await (resources.loadShader('$vert.vert'), resources.loadShader('$frag.frag')).wait;
-
-  final shaders = [
-    GlShader('$vert.vert', vertSource, GlShaderType.vertex),
-    GlShader('$frag.frag', fragSource, GlShaderType.fragment),
-  ];
-
-  return GlProgram(name, shaders);
 }
 
 final class BraidInitializationException implements Exception {
@@ -270,6 +262,7 @@ class AppState implements InstanceHost, ProxyHost {
 
   final BraidInspector _inspector;
   bool debugDrawInstanceBoxes = false;
+  bool debugReloadShadersNextFrame = false;
 
   // ------------------------
 
@@ -401,6 +394,11 @@ node [shape="box"];
           return;
         }
 
+        if (event.action == glfwPress && event.key == glfwKeyR && modifiers.ctrl && modifiers.shift) {
+          debugReloadShadersNextFrame = true;
+          return;
+        }
+
         if (event.action == glfwPress || event.action == glfwRepeat) {
           _focused.firstWhereOrNull((listener) => listener.onKeyDown(event.key, KeyModifiers(event.mods)));
         } else if (event.action == glfwRelease) {
@@ -414,7 +412,14 @@ node [shape="box"];
     ]);
   }
 
-  void draw() {
+  Future<void> draw() async {
+    if (debugReloadShadersNextFrame) {
+      debugReloadShadersNextFrame = false;
+
+      await context.reloadShaders();
+      primitives.clearShaderCache();
+    }
+
     final ctx = DrawContext(context, primitives, projection, textRenderer, drawBoundingBoxes: debugDrawInstanceBoxes);
     ctx.transform.scopedTransform(rootInstance.transform.transformToParent, (_) => rootInstance.draw(ctx));
   }
