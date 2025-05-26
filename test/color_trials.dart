@@ -490,16 +490,22 @@ class _TextInputTestState extends WidgetState<TextInputTest> {
 
   @override
   void init() {
+    _restartBlinkTimer();
+    controller.addListener(_restartBlinkTimer);
+  }
+
+  @override
+  void dispose() => blinkTimer?.cancel();
+
+  void _restartBlinkTimer() {
+    blinkTimer?.cancel();
+    showCursor = true;
+
     blinkTimer = Timer.periodic(const Duration(milliseconds: 650), (_) {
       setState(() {
         showCursor = !showCursor;
       });
     });
-  }
-
-  @override
-  void dispose() {
-    blinkTimer?.cancel();
   }
 
   @override
@@ -515,7 +521,7 @@ class _TextInputTestState extends WidgetState<TextInputTest> {
             insets: const Insets.all(5),
             child: Scrollable.vertical(
               child: Constrain(
-                constraints: Constraints.only(minHeight: 450),
+                constraints: Constraints.only(minHeight: 440),
                 child: ListenableBuilder(
                   listenable: controller,
                   builder: (context, child) {
