@@ -1031,3 +1031,75 @@ class _VisibilityInstance extends SingleChildWidgetInstance<Visibility> {
     super.hitTest(x, y, state);
   }
 }
+
+// ---
+
+class IntrinsicWidth extends SingleChildInstanceWidget {
+  IntrinsicWidth({super.key, required super.child});
+
+  @override
+  SingleChildWidgetInstance<InstanceWidget> instantiate() => _IntrinsicWidthInstance(widget: this);
+}
+
+class _IntrinsicWidthInstance extends SingleChildWidgetInstance {
+  _IntrinsicWidthInstance({required super.widget});
+
+  @override
+  void doLayout(Constraints constraints) {
+    final childSize = child.getIntrinsicWidth(constraints.maxHeight);
+
+    final childConstraints = Constraints(
+      childSize,
+      constraints.minHeight,
+      childSize,
+      constraints.maxHeight,
+    ).respecting(constraints);
+
+    transform.setSize(child.layout(childConstraints));
+  }
+
+  @override
+  double measureIntrinsicWidth(double height) => child.measureIntrinsicWidth(height);
+
+  @override
+  double measureIntrinsicHeight(double width) => child.measureIntrinsicHeight(width);
+
+  @override
+  double? measureBaselineOffset() => child.measureBaselineOffset();
+}
+
+// ---
+
+class IntrinsicHeight extends SingleChildInstanceWidget {
+  IntrinsicHeight({super.key, required super.child});
+
+  @override
+  SingleChildWidgetInstance<InstanceWidget> instantiate() => _IntrinsicHeightInstance(widget: this);
+}
+
+class _IntrinsicHeightInstance extends SingleChildWidgetInstance {
+  _IntrinsicHeightInstance({required super.widget});
+
+  @override
+  void doLayout(Constraints constraints) {
+    final childSize = child.getIntrinsicHeight(constraints.maxWidth);
+
+    final childConstraints = Constraints(
+      constraints.minWidth,
+      childSize,
+      constraints.maxWidth,
+      childSize,
+    ).respecting(constraints);
+
+    transform.setSize(child.layout(childConstraints));
+  }
+
+  @override
+  double measureIntrinsicWidth(double height) => child.measureIntrinsicWidth(height);
+
+  @override
+  double measureIntrinsicHeight(double width) => child.measureIntrinsicHeight(width);
+
+  @override
+  double? measureBaselineOffset() => child.measureBaselineOffset();
+}
