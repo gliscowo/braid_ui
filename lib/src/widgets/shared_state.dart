@@ -1,41 +1,7 @@
-import 'package:meta/meta.dart';
+import 'dart:collection';
 
 import '../framework/proxy.dart';
 import '../framework/widget.dart';
-
-typedef ObservableListener = void Function();
-
-abstract mixin class Observable {
-  final List<ObservableListener> _listeners = [];
-
-  void subscribe(ObservableListener listener) {
-    _listeners.add(listener);
-  }
-
-  void unsubscribe(ObservableListener listener) {
-    _listeners.remove(listener);
-  }
-
-  @protected
-  void notifyListeners() {
-    for (final listener in _listeners) {
-      listener();
-    }
-  }
-}
-
-class ObservableValue<T> with Observable {
-  T _value;
-  ObservableValue(this._value);
-
-  T get value => _value;
-  set value(T value) {
-    if (_value == value) return;
-
-    _value = value;
-    notifyListeners();
-  }
-}
 
 abstract class ShareableState {
   late SharedStateWidgetState _backingState;
@@ -59,14 +25,24 @@ class SharedState<T extends ShareableState> extends StatefulWidget {
 
   static T get<T extends ShareableState>(BuildContext context) {
     final provider = context.dependOnAncestor<_SharedStateProvider<T>>();
-    assert(provider != null, 'attempted to read inherited state which is not provided by the current context');
+    assert(provider != null, 'attempted to read shared state which is not provided by the current context');
 
     return provider!.state.state;
   }
 
+  static S select<T extends ShareableState, S>(BuildContext context, S Function(T state) selector) {
+    final provider = context.getAncestor<_SharedStateProvider<T>>();
+    assert(provider != null, 'attempted to select from shared state which is not provided by the current context');
+
+    final capturedValue = selector(provider!.state.state);
+    context.dependOnAncestor<_SharedStateProvider<T>>((capturedValue: capturedValue, selector: selector));
+
+    return capturedValue;
+  }
+
   static void set<T extends ShareableState>(BuildContext context, void Function(T state) fn) {
     final provider = context.getAncestor<_SharedStateProvider<T>>();
-    assert(provider != null, 'attempted to set inherited state which is not provided by the current context');
+    assert(provider != null, 'attempted to set shared state which is not provided by the current context');
 
     provider!.state.state.setState(() => fn(provider.state.state));
   }
@@ -97,5 +73,53 @@ class _SharedStateProvider<T extends ShareableState> extends InheritedWidget {
   @override
   bool mustRebuildDependents(covariant _SharedStateProvider<T> newWidget) {
     return generation != newWidget.generation;
+  }
+
+  @override
+  WidgetProxy proxy() => _SharedStateProviderProxy<T>(this);
+}
+
+typedef _StateAspect<T extends ShareableState> = ({Object? capturedValue, Object? Function(T) selector});
+
+class _SharedStateProviderProxy<T extends ShareableState> extends InheritedProxy {
+  _SharedStateProviderProxy(super.widget);
+
+  final Map<WidgetProxy, Object> _dependenciesByDependent = HashMap();
+
+  @override
+  void addDependency(WidgetProxy dependent, Object? dependency) {
+    super.addDependency(dependent, dependency);
+
+    final existingDependency = _dependenciesByDependent[dependent];
+    if (existingDependency != null && existingDependency is! List) {
+      return;
+    }
+
+    if (dependency is! _StateAspect<T>) {
+      _dependenciesByDependent[dependent] = const ();
+      return;
+    }
+
+    final aspects =
+        existingDependency as List<_StateAspect<T>>? ?? (_dependenciesByDependent[dependent] = <_StateAspect<T>>[]);
+    aspects.add(dependency);
+  }
+
+  @override
+  bool mustRebuildDependent(WidgetProxy dependent) {
+    final dependency = _dependenciesByDependent[dependent];
+    if (dependency is List<_StateAspect<T>>) {
+      return dependency.any(
+        (element) => element.capturedValue != element.selector((widget as _SharedStateProvider).state.state as T),
+      );
+    } else {
+      return true;
+    }
+  }
+
+  @override
+  void notifyDependent(WidgetProxy dependent) {
+    super.notifyDependent(dependent);
+    _dependenciesByDependent.remove(dependent);
   }
 }

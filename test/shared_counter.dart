@@ -22,6 +22,7 @@ Future<void> main() async {
 
 class CounterState extends ShareableState {
   int count = 0;
+  bool black = false;
 }
 
 class InheritedStateApp extends StatelessWidget {
@@ -58,17 +59,41 @@ class TheApp extends StatelessWidget {
 class LeftBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Panel(color: Color.green, child: Text('current state: ${SharedState.get<CounterState>(context).count}'));
+    print('panel rebuild');
+    return Panel(
+      color: SharedState.select<CounterState, bool>(context, (state) => state.black) ? Color.black : Color.green,
+      child: const CounterText(),
+    );
+  }
+}
+
+class CounterText extends StatelessWidget {
+  const CounterText({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    print('text rebuild');
+    return Text('current state: ${SharedState.select<CounterState, int>(context, (state) => state.count)}');
   }
 }
 
 class RightBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    print('button build');
-    return Button(
-      onClick: () => SharedState.set<CounterState>(context, (state) => state.count += 1),
-      child: Text('increment'),
+    print('buttons build');
+    return IntrinsicWidth(
+      child: Column(
+        children: [
+          Button(
+            onClick: () => SharedState.set<CounterState>(context, (state) => state.count += 1),
+            child: Text('increment'),
+          ),
+          Button(
+            onClick: () => SharedState.set<CounterState>(context, (state) => state.black = !state.black),
+            child: Text('toggle color'),
+          ),
+        ],
+      ),
     );
   }
 }

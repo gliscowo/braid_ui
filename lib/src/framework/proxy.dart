@@ -224,13 +224,11 @@ sealed class WidgetProxy with NodeWithDepth implements BuildContext, Comparable<
   T? getAncestor<T extends InheritedWidget>() => _inheritedProxies?[T]?.widget as T?;
 
   @override
-  T? dependOnAncestor<T extends InheritedWidget>() {
+  T? dependOnAncestor<T extends InheritedWidget>([Object? dependency]) {
     final ancestor = _inheritedProxies?[T];
     if (ancestor != null) {
       _dependencies ??= HashSet();
-      if (!_dependencies!.contains(ancestor)) {
-        _dependencies!.add(ancestor..addDependent(this));
-      }
+      _dependencies!.add(ancestor..addDependency(this, dependency));
     }
 
     return ancestor?.widget as T?;
@@ -349,16 +347,28 @@ abstract class InstanceWidgetProxy extends WidgetProxy with InstanceListenerProx
 // ---
 
 class InheritedProxy extends ComposedProxy {
-  final List<WidgetProxy> _dependents = [];
+  final Set<WidgetProxy> _dependents = {};
 
   InheritedProxy(InheritedWidget super.widget);
 
-  void addDependent(WidgetProxy dependent) {
+  @mustCallSuper
+  void addDependency(WidgetProxy dependent, Object? dependency) {
     _dependents.add(dependent);
   }
 
+  @mustCallSuper
   void removeDependent(WidgetProxy dependent) {
     _dependents.remove(dependent);
+  }
+
+  @protected
+  bool mustRebuildDependent(WidgetProxy dependent) {
+    return true;
+  }
+
+  @mustCallSuper
+  void notifyDependent(WidgetProxy dependent) {
+    dependent.notifyDependenciesChanged();
   }
 
   @override
@@ -379,7 +389,8 @@ class InheritedProxy extends ComposedProxy {
     rebuild(force: true);
     if (shouldUpdate) {
       for (final dependent in _dependents) {
-        dependent.notifyDependenciesChanged();
+        if (!mustRebuildDependent(dependent)) continue;
+        notifyDependent(dependent);
       }
     }
   }
