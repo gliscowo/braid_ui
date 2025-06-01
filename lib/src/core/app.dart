@@ -44,8 +44,8 @@ Future<void> runBraidApp({required AppState app, int targetFps = 60, bool reload
   final oneFrame = 1 / targetFps;
   var lastFrameTimestamp = glfw.getTime();
 
-  gl.enable(glBlend);
   glfw.swapInterval(0);
+
   while (glfw.windowShouldClose(app.window.handle) != glfwTrue && app._running) {
     final measuredDelta = glfw.getTime() - lastFrameTimestamp;
 
@@ -54,14 +54,15 @@ Future<void> runBraidApp({required AppState app, int targetFps = 60, bool reload
     final effectiveDelta = glfw.getTime() - lastFrameTimestamp;
     lastFrameTimestamp = glfw.getTime();
 
+    app.updateWidgetsAndInteractions(effectiveDelta);
+
+    glfw.makeContextCurrent(app.window.handle);
     gl.viewport(0, 0, app.context.window.width, app.context.window.height);
     gl.clearColor(0, 0, 0, 1);
     gl.clear(glColorBufferBit);
+    glfw.makeContextCurrent(ffi.nullptr);
 
-    app.updateWidgetsAndInteractions(effectiveDelta);
     await app.draw();
-
-    app.context.nextFrame();
   }
 
   app.dispose();
@@ -423,7 +424,14 @@ node [shape="box"];
     }
 
     final ctx = DrawContext(context, primitives, projection, textRenderer, drawBoundingBoxes: debugDrawInstanceBoxes);
+
+    glfw.makeContextCurrent(window.handle);
+    gl.enable(glBlend);
+
     ctx.transform.scopedTransform(rootInstance.transform.transformToParent, (_) => rootInstance.draw(ctx));
+    context.nextFrame();
+
+    glfw.makeContextCurrent(ffi.nullptr);
   }
 
   void updateWidgetsAndInteractions(double delta) {
