@@ -10,6 +10,7 @@ export 'src/core/math.dart';
 export 'src/framework/instance.dart';
 export 'src/framework/proxy.dart';
 export 'src/framework/widget.dart';
+export 'src/native/arena.dart';
 export 'src/primitive_renderer.dart';
 export 'src/resources.dart';
 export 'src/text/text_layout.dart';

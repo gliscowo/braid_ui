@@ -13,6 +13,7 @@ import '../core/listenable.dart';
 import '../core/math.dart';
 import '../framework/instance.dart';
 import '../framework/widget.dart';
+import '../native/arena.dart';
 import '../text/text_layout.dart';
 import 'basic.dart';
 
@@ -127,13 +128,12 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
       host!.textRenderer.layoutParagraph(Paragraph(widget.controller.createSpans(widget.style)), double.infinity).width;
 
   @override
-  double measureIntrinsicHeight(double width) =>
-      host!.textRenderer
-          .layoutParagraph(
-            Paragraph(widget.controller.createSpans(widget.style)),
-            widget.softWrap ? width : double.infinity,
-          )
-          .height;
+  double measureIntrinsicHeight(double width) => host!.textRenderer
+      .layoutParagraph(
+        Paragraph(widget.controller.createSpans(widget.style)),
+        widget.softWrap ? width : double.infinity,
+      )
+      .height;
 
   @override
   double? measureBaselineOffset() => _paragraph.metrics.initialBaselineY;
@@ -357,7 +357,7 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
       return true;
     } else if ((keyCode == glfwKeyC || keyCode == glfwKeyX) && modifiers.ctrl) {
       if (!_selection.collapsed) {
-        using((arena) {
+        malloc.arena((arena) {
           glfw.setClipboardString(
             host!.window.handle,
             _text.substring(_selection.lower, _selection.upper).toNativeUtf8(allocator: arena).cast(),
