@@ -23,8 +23,11 @@ class SharedState<T extends ShareableState> extends StatefulWidget {
   @override
   WidgetState<StatefulWidget> createState() => SharedStateWidgetState<T>();
 
-  static T get<T extends ShareableState>(BuildContext context) {
-    final provider = context.dependOnAncestor<_SharedStateProvider<T>>();
+  static T get<T extends ShareableState>(BuildContext context, {bool withDependency = true}) {
+    final provider =
+        withDependency
+            ? context.dependOnAncestor<_SharedStateProvider<T>>()
+            : context.getAncestor<_SharedStateProvider<T>>();
     assert(provider != null, 'attempted to read shared state which is not provided by the current context');
 
     return provider!.state.state;
