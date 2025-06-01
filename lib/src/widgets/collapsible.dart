@@ -1,5 +1,6 @@
 import '../core/cursors.dart';
 import '../core/math.dart';
+import '../framework/proxy.dart';
 import '../framework/widget.dart';
 import 'basic.dart';
 import 'flex.dart';
@@ -36,6 +37,42 @@ class Collapsible extends StatelessWidget {
         ),
         Visibility(visible: !collapsed, child: Padding(insets: const Insets(left: 24), child: content)),
       ],
+    );
+  }
+}
+
+class LazyCollapsible extends StatefulWidget {
+  final bool collapsed;
+  final void Function(bool nowCollapsed) onToggled;
+  final Widget title;
+  final Widget content;
+
+  LazyCollapsible({
+    super.key,
+    required this.collapsed,
+    required this.onToggled,
+    required this.title,
+    required this.content,
+  });
+
+  @override
+  WidgetState<LazyCollapsible> createState() => _LazyCollapsibleState();
+}
+
+class _LazyCollapsibleState extends WidgetState<LazyCollapsible> {
+  bool expandedOnce = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.collapsed && !expandedOnce) {
+      expandedOnce = true;
+    }
+
+    return Collapsible(
+      collapsed: widget.collapsed,
+      onToggled: widget.onToggled,
+      title: widget.title,
+      content: expandedOnce ? widget.content : const Padding(insets: Insets()),
     );
   }
 }
