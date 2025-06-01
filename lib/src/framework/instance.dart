@@ -68,12 +68,10 @@ class CustomWidgetTransform extends WidgetTransform {
   Matrix4 get matrix => _matrix;
 
   @override
-  Matrix4 get toParent =>
-      _toParent ??=
-          Matrix4.identity()
-            ..setTranslationRaw(_x + _width / 2, _y + _height / 2, 0)
-            ..multiply(_matrix)
-            ..translate(-_width / 2, -_height / 2);
+  Matrix4 get toParent => _toParent ??= Matrix4.identity()
+    ..setTranslationRaw(_x + _width / 2, _y + _height / 2, 0)
+    ..multiply(_matrix)
+    ..translate(-_width / 2, -_height / 2);
 
   @override
   void transformToParent(Matrix4 mat) => mat.multiply(toParent);
@@ -353,12 +351,15 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
     });
   }
 
-  Matrix4 computeGlobalTransform() {
+  /// Compute the complete transform from [ancestor] to this
+  /// instance. If [ancestor] is null, compute the transform
+  /// from the root of the tree
+  Matrix4 computeTransformFrom({required WidgetInstance? ancestor}) {
     final result = Matrix4.identity();
 
     result.multiply(transform.toWidget);
 
-    for (final ancestor in this.ancestors) {
+    for (final ancestor in this.ancestors.takeWhile((value) => value != ancestor)) {
       result.multiply(ancestor.transform.toWidget);
     }
 
