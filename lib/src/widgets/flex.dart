@@ -2,7 +2,10 @@ import 'dart:math';
 
 import 'package:collection/collection.dart';
 
-import '../../braid_ui.dart';
+import '../core/constraints.dart';
+import '../core/math.dart';
+import '../framework/instance.dart';
+import '../framework/widget.dart';
 
 /// A vertical array of widgets
 class Column extends Flex {
@@ -104,14 +107,13 @@ enum CrossAxisAlignment {
   stretch,
   baseline;
 
-  double _computeChildOffset(double freeSpace) =>
-      (switch (this) {
-        CrossAxisAlignment.stretch => 0,
-        CrossAxisAlignment.start => 0,
-        CrossAxisAlignment.center => freeSpace / 2,
-        CrossAxisAlignment.end => freeSpace,
-        CrossAxisAlignment.baseline => 0,
-      }).floorToDouble();
+  double _computeChildOffset(double freeSpace) => (switch (this) {
+    CrossAxisAlignment.stretch => 0,
+    CrossAxisAlignment.start => 0,
+    CrossAxisAlignment.center => freeSpace / 2,
+    CrossAxisAlignment.end => freeSpace,
+    CrossAxisAlignment.baseline => 0,
+  }).floorToDouble();
 }
 
 enum MainAxisAlignment {
@@ -122,15 +124,14 @@ enum MainAxisAlignment {
   spaceAround,
   spaceEvenly;
 
-  (double leading, double between) _distributeSpace(double freeSpace, int childCount) =>
-      (switch (this) {
-        MainAxisAlignment.start => (0.0, 0.0),
-        MainAxisAlignment.end => (freeSpace, 0.0),
-        MainAxisAlignment.center => (freeSpace / 2, 0.0),
-        MainAxisAlignment.spaceBetween => (0.0, freeSpace / (childCount - 1)),
-        MainAxisAlignment.spaceAround => (freeSpace / childCount / 2, freeSpace / childCount),
-        MainAxisAlignment.spaceEvenly => (freeSpace / (childCount + 1), freeSpace / (childCount + 1)),
-      }).floorToDouble();
+  (double leading, double between) _distributeSpace(double freeSpace, int childCount) => (switch (this) {
+    MainAxisAlignment.start => (0.0, 0.0),
+    MainAxisAlignment.end => (freeSpace, 0.0),
+    MainAxisAlignment.center => (freeSpace / 2, 0.0),
+    MainAxisAlignment.spaceBetween => (0.0, freeSpace / (childCount - 1)),
+    MainAxisAlignment.spaceAround => (freeSpace / childCount / 2, freeSpace / childCount),
+    MainAxisAlignment.spaceEvenly => (freeSpace / (childCount + 1), freeSpace / (childCount + 1)),
+  }).floorToDouble();
 }
 
 class FlexParentData {
@@ -158,10 +159,9 @@ class FlexInstance extends MultiChildWidgetInstance<Flex> {
     final mainAxis = widget.mainAxis;
     final crossAxis = mainAxis.opposite;
 
-    final crossAxisMinimum =
-        widget.crossAxisAlignment == CrossAxisAlignment.stretch
-            ? constraints.maxOnAxis(crossAxis)
-            : constraints.minOnAxis(crossAxis);
+    final crossAxisMinimum = widget.crossAxisAlignment == CrossAxisAlignment.stretch
+        ? constraints.maxOnAxis(crossAxis)
+        : constraints.minOnAxis(crossAxis);
 
     final childConstraints = Constraints(
       mainAxis == LayoutAxis.vertical ? crossAxisMinimum : 0,
@@ -178,19 +178,20 @@ class FlexInstance extends MultiChildWidgetInstance<Flex> {
     Size layoutChild(WidgetInstance child, Constraints childConstraints) {
       final size = child.layout(childConstraints);
 
-      final baseline = child.getBaselineOffset() ?? size.height;
-      maxAscent = max(maxAscent, baseline);
-      maxDescent = max(maxDescent, size.height - baseline);
+      if (isBaselineAligned) {
+        final baseline = child.getBaselineOffset() ?? size.height;
+        maxAscent = max(maxAscent, baseline);
+        maxDescent = max(maxDescent, size.height - baseline);
+      }
 
       return size;
     }
 
     // first, lay out all non-flex children and store their sizes
-    final childSizes =
-        children
-            .where((element) => element.parentData is! FlexParentData)
-            .map((e) => layoutChild(e, childConstraints))
-            .toList();
+    final childSizes = children
+        .where((element) => element.parentData is! FlexParentData)
+        .map((e) => layoutChild(e, childConstraints))
+        .toList();
 
     // now, compute the remaining space on the main axis
     final remainingSpace = max(
@@ -282,19 +283,19 @@ class FlexInstance extends MultiChildWidgetInstance<Flex> {
 
   double _measureMainAxis(double crossExtent) {
     final horizontal = widget.mainAxis == LayoutAxis.horizontal;
-    final nonFlexSize =
-        children
-            .where((element) => element.parentData is! FlexParentData)
-            .map((e) => horizontal ? e.measureIntrinsicWidth(crossExtent) : e.measureIntrinsicHeight(crossExtent))
-            .sum;
+    final nonFlexSize = children
+        .where((element) => element.parentData is! FlexParentData)
+        .map((e) => horizontal ? e.measureIntrinsicWidth(crossExtent) : e.measureIntrinsicHeight(crossExtent))
+        .sum;
 
     var totalFlexFactor = 0.0;
     (WidgetInstance child, double size, double flexFactor)? largestFlexChild;
     for (final flexChild in children.where((element) => element.parentData is FlexParentData)) {
       totalFlexFactor += (flexChild.parentData as FlexParentData).flexFactor;
 
-      final size =
-          horizontal ? flexChild.measureIntrinsicWidth(crossExtent) : flexChild.measureIntrinsicHeight(crossExtent);
+      final size = horizontal
+          ? flexChild.measureIntrinsicWidth(crossExtent)
+          : flexChild.measureIntrinsicHeight(crossExtent);
       if (size > (largestFlexChild?.$2 ?? 0)) {
         largestFlexChild = (flexChild, size, (flexChild.parentData as FlexParentData).flexFactor);
       }
