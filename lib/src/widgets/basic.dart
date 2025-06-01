@@ -34,6 +34,8 @@ typedef InstanceVisitor<T> = void Function(T widget, WidgetInstance instance);
 
 class VisitorProxy<T extends VisitorWidget> extends ComposedProxy with InstanceListenerProxy {
   final InstanceVisitor<T> visitor;
+  WidgetInstance? descendantInstance;
+
   VisitorProxy(VisitorWidget super.widget, this.visitor);
 
   @override
@@ -50,13 +52,17 @@ class VisitorProxy<T extends VisitorWidget> extends ComposedProxy with InstanceL
 
   @override
   void doRebuild() {
-    child = refreshChild(child, (widget as VisitorWidget).child, slot);
     super.doRebuild();
+    child = refreshChild(child, (widget as VisitorWidget).child, slot);
+
+    if (descendantInstance case var instance?) {
+      visitor(widget as T, instance);
+    }
   }
 
   @override
   void notifyDescendantInstance(WidgetInstance<InstanceWidget>? instance, covariant Object? slot) {
-    visitor(widget as T, instance!);
+    visitor(widget as T, descendantInstance = instance!);
   }
 }
 
@@ -223,10 +229,8 @@ class Alignment {
 
   const Alignment({required this.horizontal, required this.vertical});
 
-  (double, double) align(Size space, Size object) => (
-    alignHorizontal(space.width, object.width),
-    alignVertical(space.height, object.height),
-  );
+  (double, double) align(Size space, Size object) =>
+      (alignHorizontal(space.width, object.width), alignVertical(space.height, object.height));
 
   double alignHorizontal(double space, double object) => ((space - object) * horizontal).floorToDouble();
   double alignVertical(double space, double object) => ((space - object) * vertical).floorToDouble();
@@ -601,14 +605,11 @@ class ActionsState extends WidgetState<Actions> {
       child: KeyboardInput(
         focusGainedCallback: widget.focusGainedCallback,
         focusLostCallback: widget.focusLostCallback,
-        keyDownCallback:
-            (keyCode, modifiers) => _stepActions((trigger) {
-              if (trigger.isTriggeredByKeyCode(keyCode, modifiers)) return _ActionTriggerResult.activated;
+        keyDownCallback: (keyCode, modifiers) => _stepActions((trigger) {
+          if (trigger.isTriggeredByKeyCode(keyCode, modifiers)) return _ActionTriggerResult.activated;
 
-              return KeyModifiers.isModifier(keyCode)
-                  ? _ActionTriggerResult.ignored
-                  : _ActionTriggerResult.notActivated;
-            }),
+          return KeyModifiers.isModifier(keyCode) ? _ActionTriggerResult.ignored : _ActionTriggerResult.notActivated;
+        }),
         child: widget.child,
       ),
     );
@@ -632,11 +633,10 @@ class ActionsState extends WidgetState<Actions> {
     //     if not triggered, will not step and poison the trigger index
     //   - negative (poisoned) trigger index:
     //     will not step
-    final steppedSequences =
-        _sequences
-            .map((e) => (sequence: e, step: e.step(test)))
-            .whereNot((element) => element.step == _ActionSequenceStep.ignore)
-            .toList();
+    final steppedSequences = _sequences
+        .map((e) => (sequence: e, step: e.step(test)))
+        .whereNot((element) => element.step == _ActionSequenceStep.ignore)
+        .toList();
 
     // next, get the sequence to treat as completed on this iteration - if any
     // - if multiple sequences completed, pick the first one
@@ -699,7 +699,7 @@ class ActionsState extends WidgetState<Actions> {
 
 enum _ActionTriggerResult {
   /// the trigger was not activated by this input.
-  /// non-singular sequences should posion
+  /// non-singular sequences should poison
   notActivated,
 
   /// the trigger was activated by this input.
@@ -932,13 +932,11 @@ class StencilClipInstance extends SingleChildWidgetInstance with ShrinkWrapLayou
     stencilValue++;
 
     final window = ctx.renderContext.window;
-    final framebuffer =
-        _framebufferByWindow[window] ??=
-            (() {
-              final buffer = GlFramebuffer.trackingWindow(window, stencil: true);
-              ctx.renderContext.frameEvents.listen((_) => buffer.clear(color: const Color(0), depth: 0, stencil: 0));
-              return buffer;
-            })();
+    final framebuffer = _framebufferByWindow[window] ??= (() {
+      final buffer = GlFramebuffer.trackingWindow(window, stencil: true);
+      ctx.renderContext.frameEvents.listen((_) => buffer.clear(color: const Color(0), depth: 0, stencil: 0));
+      return buffer;
+    })();
 
     framebuffer.bind();
     gl.enable(glStencilTest);

@@ -197,7 +197,7 @@ sealed class WidgetProxy with NodeWithDepth implements BuildContext, Comparable<
     }
   }
 
-  /// Update the configuration of this element, called by the framework when
+  /// Update the configuration of this proxy, called by the framework when
   /// a new widget becomes available (through, for instance, a parent rebuild)
   ///
   /// The base implementation simply updates the [_widget] field
@@ -285,7 +285,7 @@ abstract class ComposedProxy extends WidgetProxy with SingleChildWidgetProxy {
 
 /// A proxy which immediately spawns, owns and manages a [WidgetInstance]
 /// in the instance tree. This instance can then have 0-n children (depending
-/// on the type of instance) and thus ever leaf of the proxy tree must be
+/// on the type of instance) and thus every leaf of the proxy tree must be
 /// an instance proxy (ideally a [LeafInstanceWidgetProxy])
 abstract class InstanceWidgetProxy extends WidgetProxy with InstanceListenerProxy {
   /// The instance owned and managed by this proxy. Immediately
@@ -310,6 +310,7 @@ abstract class InstanceWidgetProxy extends WidgetProxy with InstanceListenerProx
     _ancestorInstanceListeners.add(ancestor);
 
     rebuild();
+    _notifyAncestors();
   }
 
   @override
@@ -329,12 +330,6 @@ abstract class InstanceWidgetProxy extends WidgetProxy with InstanceListenerProx
   void updateWidget(InstanceWidget newWidget) {
     super.updateWidget(newWidget);
     instance.widget = newWidget;
-  }
-
-  @override
-  void doRebuild() {
-    super.doRebuild();
-    _notifyAncestors();
   }
 
   void _notifyAncestors() {
@@ -374,8 +369,8 @@ class InheritedProxy extends ComposedProxy {
   @override
   void mount(WidgetProxy parent, Object? slot) {
     super.mount(parent, slot);
-    _inheritedProxies =
-        (_inheritedProxies != null ? Map.of(_inheritedProxies!) : HashMap())..[widget.runtimeType] = this;
+    _inheritedProxies = (_inheritedProxies != null ? Map.of(_inheritedProxies!) : HashMap())
+      ..[widget.runtimeType] = this;
 
     rebuild();
   }
@@ -397,8 +392,8 @@ class InheritedProxy extends ComposedProxy {
 
   @override
   void doRebuild() {
-    child = refreshChild(child, (widget as InheritedWidget).child, slot);
     super.doRebuild();
+    child = refreshChild(child, (widget as InheritedWidget).child, slot);
   }
 }
 
@@ -420,9 +415,9 @@ class StatelessProxy extends ComposedProxy {
   @override
   void doRebuild() {
     final newWidget = (widget as StatelessWidget).build(this);
-    child = refreshChild(child, newWidget, slot);
-
     super.doRebuild();
+
+    child = refreshChild(child, newWidget, slot);
   }
 }
 
@@ -463,9 +458,8 @@ class StatefulProxy extends ComposedProxy {
   @override
   void doRebuild() {
     final newWidget = _state.build(this);
-    child = refreshChild(child, newWidget, slot);
-
     super.doRebuild();
+    child = refreshChild(child, newWidget, slot);
   }
 }
 
@@ -474,6 +468,8 @@ abstract class WidgetState<T extends StatefulWidget> {
 
   T? _widget;
   T get widget => _widget!;
+
+  BuildContext get context => _owner!;
 
   void init() {}
   void didUpdateWidget(T oldWidget) {}
@@ -510,8 +506,8 @@ class SingleChildInstanceWidgetProxy extends InstanceWidgetProxy with SingleChil
 
   @override
   void doRebuild() {
-    child = refreshChild(child, (widget as SingleChildInstanceWidget).child, null);
     super.doRebuild();
+    child = refreshChild(child, (widget as SingleChildInstanceWidget).child, null);
   }
 
   @override
@@ -534,6 +530,7 @@ class OptionalChildInstanceWidgetProxy extends InstanceWidgetProxy with SingleCh
 
   @override
   void doRebuild() {
+    super.doRebuild();
     child = refreshChild(child, (widget as OptionalChildInstanceWidget).child, null);
 
     // TODO: this should very likely be done by the descendant
@@ -541,8 +538,6 @@ class OptionalChildInstanceWidgetProxy extends InstanceWidgetProxy with SingleCh
     if ((widget as OptionalChildInstanceWidget).child == null) {
       instance.child = null;
     }
-
-    super.doRebuild();
   }
 
   @override
@@ -575,6 +570,8 @@ class MultiChildInstanceWidgetProxy extends InstanceWidgetProxy {
 
   @override
   void doRebuild() {
+    super.doRebuild();
+
     final newWidgets = (widget as MultiChildInstanceWidget).children;
 
     var newChildrenTop = 0;
@@ -690,8 +687,6 @@ class MultiChildInstanceWidgetProxy extends InstanceWidgetProxy {
 
     // finally, install new children
     children = newChildren.cast();
-
-    super.doRebuild();
   }
 
   @override
@@ -726,5 +721,5 @@ void dumpProxiesGraphviz(WidgetProxy widget, [IOSink? out]) {
 }
 
 String _formatWidget(WidgetProxy widget) {
-  return '"${widget.runtimeType}\\n${widget.hashCode.toRadixString(16)}\\nslot: ${widget.slot}"';
+  return '"${widget.widget.runtimeType}\\n${widget.runtimeType}\\n${widget.hashCode.toRadixString(16)}\\nslot: ${widget.slot}"';
 }
