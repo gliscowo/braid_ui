@@ -79,7 +79,9 @@ class _ScrollWithSliderState extends WidgetState<ScrollWithSlider> {
           ],
         );
       },
-      child: Flexible(child: Scrollable.vertical(controller: controller, child: widget.content)),
+      child: Flexible(
+        child: Scrollable.vertical(controller: controller, child: widget.content),
+      ),
     );
   }
 }
@@ -277,13 +279,13 @@ class RawScrollViewInstance extends SingleChildWidgetInstance<RawScrollView> wit
     var selfSize = Size(
       widget.horizontalController != null
           ? constraints.hasBoundedWidth
-              ? constraints.maxWidth
-              : constraints.minWidth
+                ? constraints.maxWidth
+                : constraints.minWidth
           : childSize.width,
       widget.verticalController != null
           ? constraints.hasBoundedHeight
-              ? constraints.maxHeight
-              : constraints.minHeight
+                ? constraints.maxHeight
+                : constraints.minHeight
           : childSize.height,
     ).constrained(constraints);
 

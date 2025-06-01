@@ -37,10 +37,9 @@ class PrimitiveRenderer {
     Matrix4 projection, {
     double? outlineThickness,
   }) {
-    final buffer =
-        outlineThickness == null
-            ? _getBuffer(#roundedSolid, posVertexDescriptor, 'rounded_rect_solid')
-            : _getBuffer(#roundedOutline, posVertexDescriptor, 'rounded_rect_outline');
+    final buffer = outlineThickness == null
+        ? _getBuffer(#roundedSolid, posVertexDescriptor, 'rounded_rect_solid')
+        : _getBuffer(#roundedOutline, posVertexDescriptor, 'rounded_rect_outline');
 
     buffer.program
       ..uniformMat4('uTransform', transform)
@@ -144,10 +143,9 @@ class PrimitiveRenderer {
   }) {
     final solid = innerRadius == null && toAngle == null && angleOffset != null;
 
-    final buffer =
-        solid
-            ? _getBuffer(#circleSolid, posVertexDescriptor, 'circle_solid')
-            : _getBuffer(#circleSector, posVertexDescriptor, 'circle_sector');
+    final buffer = solid
+        ? _getBuffer(#circleSolid, posVertexDescriptor, 'circle_solid')
+        : _getBuffer(#circleSector, posVertexDescriptor, 'circle_sector');
 
     buffer.program
       ..uniformMat4('uTransform', transform)
@@ -173,19 +171,17 @@ class PrimitiveRenderer {
   }
 
   void blitFramebuffer(GlFramebuffer framebuffer) {
-    final mesh =
-        _buffers[#blit] ??=
-            (() {
-              final buffer = MeshBuffer(blitVertexDescriptor, _context.findProgram('blit'));
-              buffer
-                ..vertex(Vector2.zero())
-                ..vertex(Vector2(1, 0))
-                ..vertex(Vector2(1, 1))
-                ..vertex(Vector2.zero())
-                ..vertex(Vector2(1, 1))
-                ..vertex(Vector2(0, 1));
-              return buffer..upload();
-            })();
+    final mesh = _buffers[#blit] ??= (() {
+      final buffer = MeshBuffer(blitVertexDescriptor, _context.findProgram('blit'));
+      buffer
+        ..vertex(Vector2.zero())
+        ..vertex(Vector2(1, 0))
+        ..vertex(Vector2(1, 1))
+        ..vertex(Vector2.zero())
+        ..vertex(Vector2(1, 1))
+        ..vertex(Vector2(0, 1));
+      return buffer..upload();
+    })();
 
     gl.disable(glBlend);
 

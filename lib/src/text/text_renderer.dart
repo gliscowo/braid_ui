@@ -22,11 +22,11 @@ import 'text_layout.dart';
 final freetype = FreetypeLibrary(BraidNatives.activeLibraries.freetype);
 final harfbuzz = HarfbuzzLibrary(BraidNatives.activeLibraries.harfbuzz);
 
-final Logger _logger = Logger('cutesy.text_handler');
+final _logger = Logger('cutesy.text_handler');
 const _hbScale = 64;
 
 @internal
-int hbToPixels(num hbUnits) => (hbUnits / _hbScale).round();
+int hbToPixels(int hbUnits) => (hbUnits / _hbScale).round();
 
 class FontFamily {
   final Font defaultFont;
@@ -329,8 +329,9 @@ class TextRenderer {
 
     final initialY =
         text.metrics.initialBaselineY.floor() + alignment.alignVertical(drawSpace.height, text.metrics.height);
-    final lineOffsets =
-        text.metrics.lineMetrics.map((line) => alignment.alignHorizontal(drawSpace.width, line.width)).toList();
+    final lineOffsets = text.metrics.lineMetrics
+        .map((line) => alignment.alignHorizontal(drawSpace.width, line.width))
+        .toList();
 
     if (debugCtx != null) {
       final textSize = text.metrics;
@@ -351,7 +352,7 @@ class TextRenderer {
     MeshBuffer<TextVertexFunction> buffer(int texture) {
       return buffers[texture] ??=
           ((_cachedBuffers[texture]?..clear()) ??
-              (_cachedBuffers[texture] = MeshBuffer(textVertexDescriptor, _textProgram)));
+          (_cachedBuffers[texture] = MeshBuffer(textVertexDescriptor, _textProgram)));
     }
 
     for (final shapedGlyph in text.glyphs) {

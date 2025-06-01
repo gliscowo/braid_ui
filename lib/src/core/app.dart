@@ -130,8 +130,10 @@ Future<AppState> createBraidApp({
     ].map((shader) => renderContext.addShader(shader)).toList(),
   );
 
-  final (notoSans, materialSymbols) =
-      await (FontFamily.load(resources, 'NotoSans'), FontFamily.load(resources, 'MaterialSymbols')).wait;
+  final (notoSans, materialSymbols) = await (
+    FontFamily.load(resources, 'NotoSans'),
+    FontFamily.load(resources, 'MaterialSymbols'),
+  ).wait;
 
   final textRenderer = TextRenderer(renderContext, notoSans, {
     'Noto Sans': notoSans,
@@ -161,13 +163,12 @@ final class BraidInitializationException implements Exception {
   BraidInitializationException(this.message, {this.cause});
 
   @override
-  String toString() =>
-      cause != null
-          ? '''
+  String toString() => cause != null
+      ? '''
 error during braid initialization: $message
 cause: $cause
 '''
-          : 'error during braid initialization: $message';
+      : 'error during braid initialization: $message';
 }
 
 // ---
@@ -277,18 +278,17 @@ class AppState implements InstanceHost, ProxyHost {
     Widget root, {
     this.logger,
   }) : cursorController = CursorController.ofWindow(window) {
-    _root =
-        _RootWidget(
-          child: InspectableTree(
-            inspector: _inspector,
-            tree: _UserRoot(
-              proxyCallback: (userRootProxy) => _inspector.rootProxy = userRootProxy,
-              instanceCallback: (userRootInstance) => _inspector.rootInstance = userRootInstance,
-              child: root,
-            ),
-          ),
-          rootBuildScope: _rootBuildScope,
-        ).proxy();
+    _root = _RootWidget(
+      child: InspectableTree(
+        inspector: _inspector,
+        tree: _UserRoot(
+          proxyCallback: (userRootProxy) => _inspector.rootProxy = userRootProxy,
+          instanceCallback: (userRootInstance) => _inspector.rootInstance = userRootInstance,
+          child: root,
+        ),
+      ),
+      rootBuildScope: _rootBuildScope,
+    ).proxy();
     _root.bootstrap(this, this);
     scheduleLayout(rootInstance);
 

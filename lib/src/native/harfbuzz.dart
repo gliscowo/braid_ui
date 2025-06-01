@@ -59,8 +59,8 @@ class HarfbuzzLibrary {
 
   late final _language_from_stringPtr =
       _lookup<ffi.NativeFunction<hb_language Function(ffi.Pointer<ffi.Char>, ffi.Int)>>('hb_language_from_string');
-  late final _language_from_string =
-      _language_from_stringPtr.asFunction<hb_language Function(ffi.Pointer<ffi.Char>, int)>();
+  late final _language_from_string = _language_from_stringPtr
+      .asFunction<hb_language Function(ffi.Pointer<ffi.Char>, int)>();
 
   ffi.Pointer<ffi.Char> language_to_string(hb_language language) {
     return _language_to_string(language);
@@ -131,8 +131,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<hb_bool Function(ffi.Pointer<ffi.Char>, ffi.Int, ffi.Pointer<hb_feature>)>>(
         'hb_feature_from_string',
       );
-  late final _feature_from_string =
-      _feature_from_stringPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int, ffi.Pointer<hb_feature>)>();
+  late final _feature_from_string = _feature_from_stringPtr
+      .asFunction<int Function(ffi.Pointer<ffi.Char>, int, ffi.Pointer<hb_feature>)>();
 
   void feature_to_string(ffi.Pointer<hb_feature> feature, ffi.Pointer<ffi.Char> buf, int size) {
     return _feature_to_string(feature, buf, size);
@@ -142,8 +142,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_feature>, ffi.Pointer<ffi.Char>, ffi.UnsignedInt)>>(
         'hb_feature_to_string',
       );
-  late final _feature_to_string =
-      _feature_to_stringPtr.asFunction<void Function(ffi.Pointer<hb_feature>, ffi.Pointer<ffi.Char>, int)>();
+  late final _feature_to_string = _feature_to_stringPtr
+      .asFunction<void Function(ffi.Pointer<hb_feature>, ffi.Pointer<ffi.Char>, int)>();
 
   int variation_from_string(ffi.Pointer<ffi.Char> str, int len, ffi.Pointer<hb_variation> variation) {
     return _variation_from_string(str, len, variation);
@@ -153,8 +153,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<hb_bool Function(ffi.Pointer<ffi.Char>, ffi.Int, ffi.Pointer<hb_variation>)>>(
         'hb_variation_from_string',
       );
-  late final _variation_from_string =
-      _variation_from_stringPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int, ffi.Pointer<hb_variation>)>();
+  late final _variation_from_string = _variation_from_stringPtr
+      .asFunction<int Function(ffi.Pointer<ffi.Char>, int, ffi.Pointer<hb_variation>)>();
 
   void variation_to_string(ffi.Pointer<hb_variation> variation, ffi.Pointer<ffi.Char> buf, int size) {
     return _variation_to_string(variation, buf, size);
@@ -164,8 +164,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_variation>, ffi.Pointer<ffi.Char>, ffi.UnsignedInt)>>(
         'hb_variation_to_string',
       );
-  late final _variation_to_string =
-      _variation_to_stringPtr.asFunction<void Function(ffi.Pointer<hb_variation>, ffi.Pointer<ffi.Char>, int)>();
+  late final _variation_to_string = _variation_to_stringPtr
+      .asFunction<void Function(ffi.Pointer<hb_variation>, ffi.Pointer<ffi.Char>, int)>();
 
   int color_get_alpha(int color) {
     return _color_get_alpha(color);
@@ -205,22 +205,22 @@ class HarfbuzzLibrary {
     return _blob_create(data, length, mode, user_data, destroy);
   }
 
-  late final _blob_createPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Pointer<hb_blob> Function(
-        ffi.Pointer<ffi.Char>,
-        ffi.UnsignedInt,
-        ffi.Int32,
-        ffi.Pointer<ffi.Void>,
-        hb_destroy_func,
-      )
-    >
-  >('hb_blob_create');
-  late final _blob_create =
-      _blob_createPtr
-          .asFunction<
-            ffi.Pointer<hb_blob> Function(ffi.Pointer<ffi.Char>, int, int, ffi.Pointer<ffi.Void>, hb_destroy_func)
-          >();
+  late final _blob_createPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Pointer<hb_blob> Function(
+            ffi.Pointer<ffi.Char>,
+            ffi.UnsignedInt,
+            ffi.Int32,
+            ffi.Pointer<ffi.Void>,
+            hb_destroy_func,
+          )
+        >
+      >('hb_blob_create');
+  late final _blob_create = _blob_createPtr
+      .asFunction<
+        ffi.Pointer<hb_blob> Function(ffi.Pointer<ffi.Char>, int, int, ffi.Pointer<ffi.Void>, hb_destroy_func)
+      >();
 
   ffi.Pointer<hb_blob> blob_create_or_fail(
     ffi.Pointer<ffi.Char> data,
@@ -232,22 +232,22 @@ class HarfbuzzLibrary {
     return _blob_create_or_fail(data, length, mode, user_data, destroy);
   }
 
-  late final _blob_create_or_failPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Pointer<hb_blob> Function(
-        ffi.Pointer<ffi.Char>,
-        ffi.UnsignedInt,
-        ffi.Int32,
-        ffi.Pointer<ffi.Void>,
-        hb_destroy_func,
-      )
-    >
-  >('hb_blob_create_or_fail');
-  late final _blob_create_or_fail =
-      _blob_create_or_failPtr
-          .asFunction<
-            ffi.Pointer<hb_blob> Function(ffi.Pointer<ffi.Char>, int, int, ffi.Pointer<ffi.Void>, hb_destroy_func)
-          >();
+  late final _blob_create_or_failPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Pointer<hb_blob> Function(
+            ffi.Pointer<ffi.Char>,
+            ffi.UnsignedInt,
+            ffi.Int32,
+            ffi.Pointer<ffi.Void>,
+            hb_destroy_func,
+          )
+        >
+      >('hb_blob_create_or_fail');
+  late final _blob_create_or_fail = _blob_create_or_failPtr
+      .asFunction<
+        ffi.Pointer<hb_blob> Function(ffi.Pointer<ffi.Char>, int, int, ffi.Pointer<ffi.Void>, hb_destroy_func)
+      >();
 
   ffi.Pointer<hb_blob> blob_create_from_file(ffi.Pointer<ffi.Char> file_name) {
     return _blob_create_from_file(file_name);
@@ -255,8 +255,8 @@ class HarfbuzzLibrary {
 
   late final _blob_create_from_filePtr =
       _lookup<ffi.NativeFunction<ffi.Pointer<hb_blob> Function(ffi.Pointer<ffi.Char>)>>('hb_blob_create_from_file');
-  late final _blob_create_from_file =
-      _blob_create_from_filePtr.asFunction<ffi.Pointer<hb_blob> Function(ffi.Pointer<ffi.Char>)>();
+  late final _blob_create_from_file = _blob_create_from_filePtr
+      .asFunction<ffi.Pointer<hb_blob> Function(ffi.Pointer<ffi.Char>)>();
 
   ffi.Pointer<hb_blob> blob_create_from_file_or_fail(ffi.Pointer<ffi.Char> file_name) {
     return _blob_create_from_file_or_fail(file_name);
@@ -266,18 +266,19 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Pointer<hb_blob> Function(ffi.Pointer<ffi.Char>)>>(
         'hb_blob_create_from_file_or_fail',
       );
-  late final _blob_create_from_file_or_fail =
-      _blob_create_from_file_or_failPtr.asFunction<ffi.Pointer<hb_blob> Function(ffi.Pointer<ffi.Char>)>();
+  late final _blob_create_from_file_or_fail = _blob_create_from_file_or_failPtr
+      .asFunction<ffi.Pointer<hb_blob> Function(ffi.Pointer<ffi.Char>)>();
 
   ffi.Pointer<hb_blob> blob_create_sub_blob(ffi.Pointer<hb_blob> parent, int offset, int length) {
     return _blob_create_sub_blob(parent, offset, length);
   }
 
-  late final _blob_create_sub_blobPtr = _lookup<
-    ffi.NativeFunction<ffi.Pointer<hb_blob> Function(ffi.Pointer<hb_blob>, ffi.UnsignedInt, ffi.UnsignedInt)>
-  >('hb_blob_create_sub_blob');
-  late final _blob_create_sub_blob =
-      _blob_create_sub_blobPtr.asFunction<ffi.Pointer<hb_blob> Function(ffi.Pointer<hb_blob>, int, int)>();
+  late final _blob_create_sub_blobPtr =
+      _lookup<
+        ffi.NativeFunction<ffi.Pointer<hb_blob> Function(ffi.Pointer<hb_blob>, ffi.UnsignedInt, ffi.UnsignedInt)>
+      >('hb_blob_create_sub_blob');
+  late final _blob_create_sub_blob = _blob_create_sub_blobPtr
+      .asFunction<ffi.Pointer<hb_blob> Function(ffi.Pointer<hb_blob>, int, int)>();
 
   ffi.Pointer<hb_blob> blob_copy_writable_or_fail(ffi.Pointer<hb_blob> blob) {
     return _blob_copy_writable_or_fail(blob);
@@ -285,8 +286,8 @@ class HarfbuzzLibrary {
 
   late final _blob_copy_writable_or_failPtr =
       _lookup<ffi.NativeFunction<ffi.Pointer<hb_blob> Function(ffi.Pointer<hb_blob>)>>('hb_blob_copy_writable_or_fail');
-  late final _blob_copy_writable_or_fail =
-      _blob_copy_writable_or_failPtr.asFunction<ffi.Pointer<hb_blob> Function(ffi.Pointer<hb_blob>)>();
+  late final _blob_copy_writable_or_fail = _blob_copy_writable_or_failPtr
+      .asFunction<ffi.Pointer<hb_blob> Function(ffi.Pointer<hb_blob>)>();
 
   ffi.Pointer<hb_blob> blob_get_empty() {
     return _blob_get_empty();
@@ -321,28 +322,22 @@ class HarfbuzzLibrary {
     return _blob_set_user_data(blob, key, data, destroy, replace);
   }
 
-  late final _blob_set_user_dataPtr = _lookup<
-    ffi.NativeFunction<
-      hb_bool Function(
-        ffi.Pointer<hb_blob>,
-        ffi.Pointer<hb_user_data_key>,
-        ffi.Pointer<ffi.Void>,
-        hb_destroy_func,
-        hb_bool,
-      )
-    >
-  >('hb_blob_set_user_data');
-  late final _blob_set_user_data =
-      _blob_set_user_dataPtr
-          .asFunction<
-            int Function(
-              ffi.Pointer<hb_blob>,
-              ffi.Pointer<hb_user_data_key>,
-              ffi.Pointer<ffi.Void>,
-              hb_destroy_func,
-              int,
-            )
-          >();
+  late final _blob_set_user_dataPtr =
+      _lookup<
+        ffi.NativeFunction<
+          hb_bool Function(
+            ffi.Pointer<hb_blob>,
+            ffi.Pointer<hb_user_data_key>,
+            ffi.Pointer<ffi.Void>,
+            hb_destroy_func,
+            hb_bool,
+          )
+        >
+      >('hb_blob_set_user_data');
+  late final _blob_set_user_data = _blob_set_user_dataPtr
+      .asFunction<
+        int Function(ffi.Pointer<hb_blob>, ffi.Pointer<hb_user_data_key>, ffi.Pointer<ffi.Void>, hb_destroy_func, int)
+      >();
 
   ffi.Pointer<ffi.Void> blob_get_user_data(ffi.Pointer<hb_blob> blob, ffi.Pointer<hb_user_data_key> key) {
     return _blob_get_user_data(blob, key);
@@ -352,9 +347,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<hb_blob>, ffi.Pointer<hb_user_data_key>)>>(
         'hb_blob_get_user_data',
       );
-  late final _blob_get_user_data =
-      _blob_get_user_dataPtr
-          .asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<hb_blob>, ffi.Pointer<hb_user_data_key>)>();
+  late final _blob_get_user_data = _blob_get_user_dataPtr
+      .asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<hb_blob>, ffi.Pointer<hb_user_data_key>)>();
 
   void blob_make_immutable(ffi.Pointer<hb_blob> blob) {
     return _blob_make_immutable(blob);
@@ -391,9 +385,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<hb_blob>, ffi.Pointer<ffi.UnsignedInt>)>>(
         'hb_blob_get_data',
       );
-  late final _blob_get_data =
-      _blob_get_dataPtr
-          .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<hb_blob>, ffi.Pointer<ffi.UnsignedInt>)>();
+  late final _blob_get_data = _blob_get_dataPtr
+      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<hb_blob>, ffi.Pointer<ffi.UnsignedInt>)>();
 
   ffi.Pointer<ffi.Char> blob_get_data_writable(ffi.Pointer<hb_blob> blob, ffi.Pointer<ffi.UnsignedInt> length) {
     return _blob_get_data_writable(blob, length);
@@ -403,9 +396,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<hb_blob>, ffi.Pointer<ffi.UnsignedInt>)>>(
         'hb_blob_get_data_writable',
       );
-  late final _blob_get_data_writable =
-      _blob_get_data_writablePtr
-          .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<hb_blob>, ffi.Pointer<ffi.UnsignedInt>)>();
+  late final _blob_get_data_writable = _blob_get_data_writablePtr
+      .asFunction<ffi.Pointer<ffi.Char> Function(ffi.Pointer<hb_blob>, ffi.Pointer<ffi.UnsignedInt>)>();
 
   int face_count(ffi.Pointer<hb_blob> blob) {
     return _face_count(blob);
@@ -434,12 +426,14 @@ class HarfbuzzLibrary {
     return _face_create_for_tables(reference_table_func, user_data, destroy);
   }
 
-  late final _face_create_for_tablesPtr = _lookup<
-    ffi.NativeFunction<ffi.Pointer<hb_face> Function(hb_reference_table_func, ffi.Pointer<ffi.Void>, hb_destroy_func)>
-  >('hb_face_create_for_tables');
-  late final _face_create_for_tables =
-      _face_create_for_tablesPtr
-          .asFunction<ffi.Pointer<hb_face> Function(hb_reference_table_func, ffi.Pointer<ffi.Void>, hb_destroy_func)>();
+  late final _face_create_for_tablesPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Pointer<hb_face> Function(hb_reference_table_func, ffi.Pointer<ffi.Void>, hb_destroy_func)
+        >
+      >('hb_face_create_for_tables');
+  late final _face_create_for_tables = _face_create_for_tablesPtr
+      .asFunction<ffi.Pointer<hb_face> Function(hb_reference_table_func, ffi.Pointer<ffi.Void>, hb_destroy_func)>();
 
   ffi.Pointer<hb_face> face_get_empty() {
     return _face_get_empty();
@@ -474,28 +468,22 @@ class HarfbuzzLibrary {
     return _face_set_user_data(face, key, data, destroy, replace);
   }
 
-  late final _face_set_user_dataPtr = _lookup<
-    ffi.NativeFunction<
-      hb_bool Function(
-        ffi.Pointer<hb_face>,
-        ffi.Pointer<hb_user_data_key>,
-        ffi.Pointer<ffi.Void>,
-        hb_destroy_func,
-        hb_bool,
-      )
-    >
-  >('hb_face_set_user_data');
-  late final _face_set_user_data =
-      _face_set_user_dataPtr
-          .asFunction<
-            int Function(
-              ffi.Pointer<hb_face>,
-              ffi.Pointer<hb_user_data_key>,
-              ffi.Pointer<ffi.Void>,
-              hb_destroy_func,
-              int,
-            )
-          >();
+  late final _face_set_user_dataPtr =
+      _lookup<
+        ffi.NativeFunction<
+          hb_bool Function(
+            ffi.Pointer<hb_face>,
+            ffi.Pointer<hb_user_data_key>,
+            ffi.Pointer<ffi.Void>,
+            hb_destroy_func,
+            hb_bool,
+          )
+        >
+      >('hb_face_set_user_data');
+  late final _face_set_user_data = _face_set_user_dataPtr
+      .asFunction<
+        int Function(ffi.Pointer<hb_face>, ffi.Pointer<hb_user_data_key>, ffi.Pointer<ffi.Void>, hb_destroy_func, int)
+      >();
 
   ffi.Pointer<ffi.Void> face_get_user_data(ffi.Pointer<hb_face> face, ffi.Pointer<hb_user_data_key> key) {
     return _face_get_user_data(face, key);
@@ -505,9 +493,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<hb_face>, ffi.Pointer<hb_user_data_key>)>>(
         'hb_face_get_user_data',
       );
-  late final _face_get_user_data =
-      _face_get_user_dataPtr
-          .asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<hb_face>, ffi.Pointer<hb_user_data_key>)>();
+  late final _face_get_user_data = _face_get_user_dataPtr
+      .asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<hb_face>, ffi.Pointer<hb_user_data_key>)>();
 
   void face_make_immutable(ffi.Pointer<hb_face> face) {
     return _face_make_immutable(face);
@@ -535,8 +522,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Pointer<hb_blob> Function(ffi.Pointer<hb_face>, hb_tag)>>(
         'hb_face_reference_table',
       );
-  late final _face_reference_table =
-      _face_reference_tablePtr.asFunction<ffi.Pointer<hb_blob> Function(ffi.Pointer<hb_face>, int)>();
+  late final _face_reference_table = _face_reference_tablePtr
+      .asFunction<ffi.Pointer<hb_blob> Function(ffi.Pointer<hb_face>, int)>();
 
   ffi.Pointer<hb_blob> face_reference_blob(ffi.Pointer<hb_face> face) {
     return _face_reference_blob(face);
@@ -545,8 +532,8 @@ class HarfbuzzLibrary {
   late final _face_reference_blobPtr = _lookup<ffi.NativeFunction<ffi.Pointer<hb_blob> Function(ffi.Pointer<hb_face>)>>(
     'hb_face_reference_blob',
   );
-  late final _face_reference_blob =
-      _face_reference_blobPtr.asFunction<ffi.Pointer<hb_blob> Function(ffi.Pointer<hb_face>)>();
+  late final _face_reference_blob = _face_reference_blobPtr
+      .asFunction<ffi.Pointer<hb_blob> Function(ffi.Pointer<hb_face>)>();
 
   void face_set_index(ffi.Pointer<hb_face> face, int index) {
     return _face_set_index(face, index);
@@ -610,14 +597,19 @@ class HarfbuzzLibrary {
     return _face_get_table_tags(face, start_offset, table_count, table_tags);
   }
 
-  late final _face_get_table_tagsPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.UnsignedInt Function(ffi.Pointer<hb_face>, ffi.UnsignedInt, ffi.Pointer<ffi.UnsignedInt>, ffi.Pointer<hb_tag>)
-    >
-  >('hb_face_get_table_tags');
-  late final _face_get_table_tags =
-      _face_get_table_tagsPtr
-          .asFunction<int Function(ffi.Pointer<hb_face>, int, ffi.Pointer<ffi.UnsignedInt>, ffi.Pointer<hb_tag>)>();
+  late final _face_get_table_tagsPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.UnsignedInt Function(
+            ffi.Pointer<hb_face>,
+            ffi.UnsignedInt,
+            ffi.Pointer<ffi.UnsignedInt>,
+            ffi.Pointer<hb_tag>,
+          )
+        >
+      >('hb_face_get_table_tags');
+  late final _face_get_table_tags = _face_get_table_tagsPtr
+      .asFunction<int Function(ffi.Pointer<hb_face>, int, ffi.Pointer<ffi.UnsignedInt>, ffi.Pointer<hb_tag>)>();
 
   void face_collect_unicodes(ffi.Pointer<hb_face> face, ffi.Pointer<hb_set> out) {
     return _face_collect_unicodes(face, out);
@@ -627,8 +619,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_face>, ffi.Pointer<hb_set>)>>(
         'hb_face_collect_unicodes',
       );
-  late final _face_collect_unicodes =
-      _face_collect_unicodesPtr.asFunction<void Function(ffi.Pointer<hb_face>, ffi.Pointer<hb_set>)>();
+  late final _face_collect_unicodes = _face_collect_unicodesPtr
+      .asFunction<void Function(ffi.Pointer<hb_face>, ffi.Pointer<hb_set>)>();
 
   void face_collect_variation_selectors(ffi.Pointer<hb_face> face, ffi.Pointer<hb_set> out) {
     return _face_collect_variation_selectors(face, out);
@@ -638,8 +630,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_face>, ffi.Pointer<hb_set>)>>(
         'hb_face_collect_variation_selectors',
       );
-  late final _face_collect_variation_selectors =
-      _face_collect_variation_selectorsPtr.asFunction<void Function(ffi.Pointer<hb_face>, ffi.Pointer<hb_set>)>();
+  late final _face_collect_variation_selectors = _face_collect_variation_selectorsPtr
+      .asFunction<void Function(ffi.Pointer<hb_face>, ffi.Pointer<hb_set>)>();
 
   void face_collect_variation_unicodes(ffi.Pointer<hb_face> face, int variation_selector, ffi.Pointer<hb_set> out) {
     return _face_collect_variation_unicodes(face, variation_selector, out);
@@ -649,8 +641,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_face>, hb_codepoint, ffi.Pointer<hb_set>)>>(
         'hb_face_collect_variation_unicodes',
       );
-  late final _face_collect_variation_unicodes =
-      _face_collect_variation_unicodesPtr.asFunction<void Function(ffi.Pointer<hb_face>, int, ffi.Pointer<hb_set>)>();
+  late final _face_collect_variation_unicodes = _face_collect_variation_unicodesPtr
+      .asFunction<void Function(ffi.Pointer<hb_face>, int, ffi.Pointer<hb_set>)>();
 
   ffi.Pointer<hb_face> face_builder_create() {
     return _face_builder_create();
@@ -669,8 +661,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<hb_bool Function(ffi.Pointer<hb_face>, hb_tag, ffi.Pointer<hb_blob>)>>(
         'hb_face_builder_add_table',
       );
-  late final _face_builder_add_table =
-      _face_builder_add_tablePtr.asFunction<int Function(ffi.Pointer<hb_face>, int, ffi.Pointer<hb_blob>)>();
+  late final _face_builder_add_table = _face_builder_add_tablePtr
+      .asFunction<int Function(ffi.Pointer<hb_face>, int, ffi.Pointer<hb_blob>)>();
 
   void face_builder_sort_tables(ffi.Pointer<hb_face> face, ffi.Pointer<hb_tag> tags) {
     return _face_builder_sort_tables(face, tags);
@@ -680,8 +672,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_face>, ffi.Pointer<hb_tag>)>>(
         'hb_face_builder_sort_tables',
       );
-  late final _face_builder_sort_tables =
-      _face_builder_sort_tablesPtr.asFunction<void Function(ffi.Pointer<hb_face>, ffi.Pointer<hb_tag>)>();
+  late final _face_builder_sort_tables = _face_builder_sort_tablesPtr
+      .asFunction<void Function(ffi.Pointer<hb_face>, ffi.Pointer<hb_tag>)>();
 
   ffi.Pointer<hb_font_funcs> font_funcs_create() {
     return _font_funcs_create();
@@ -709,8 +701,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Pointer<hb_font_funcs> Function(ffi.Pointer<hb_font_funcs>)>>(
         'hb_font_funcs_reference',
       );
-  late final _font_funcs_reference =
-      _font_funcs_referencePtr.asFunction<ffi.Pointer<hb_font_funcs> Function(ffi.Pointer<hb_font_funcs>)>();
+  late final _font_funcs_reference = _font_funcs_referencePtr
+      .asFunction<ffi.Pointer<hb_font_funcs> Function(ffi.Pointer<hb_font_funcs>)>();
 
   void font_funcs_destroy(ffi.Pointer<hb_font_funcs> ffuncs) {
     return _font_funcs_destroy(ffuncs);
@@ -731,39 +723,39 @@ class HarfbuzzLibrary {
     return _font_funcs_set_user_data(ffuncs, key, data, destroy, replace);
   }
 
-  late final _font_funcs_set_user_dataPtr = _lookup<
-    ffi.NativeFunction<
-      hb_bool Function(
-        ffi.Pointer<hb_font_funcs>,
-        ffi.Pointer<hb_user_data_key>,
-        ffi.Pointer<ffi.Void>,
-        hb_destroy_func,
-        hb_bool,
-      )
-    >
-  >('hb_font_funcs_set_user_data');
-  late final _font_funcs_set_user_data =
-      _font_funcs_set_user_dataPtr
-          .asFunction<
-            int Function(
-              ffi.Pointer<hb_font_funcs>,
-              ffi.Pointer<hb_user_data_key>,
-              ffi.Pointer<ffi.Void>,
-              hb_destroy_func,
-              int,
-            )
-          >();
+  late final _font_funcs_set_user_dataPtr =
+      _lookup<
+        ffi.NativeFunction<
+          hb_bool Function(
+            ffi.Pointer<hb_font_funcs>,
+            ffi.Pointer<hb_user_data_key>,
+            ffi.Pointer<ffi.Void>,
+            hb_destroy_func,
+            hb_bool,
+          )
+        >
+      >('hb_font_funcs_set_user_data');
+  late final _font_funcs_set_user_data = _font_funcs_set_user_dataPtr
+      .asFunction<
+        int Function(
+          ffi.Pointer<hb_font_funcs>,
+          ffi.Pointer<hb_user_data_key>,
+          ffi.Pointer<ffi.Void>,
+          hb_destroy_func,
+          int,
+        )
+      >();
 
   ffi.Pointer<ffi.Void> font_funcs_get_user_data(ffi.Pointer<hb_font_funcs> ffuncs, ffi.Pointer<hb_user_data_key> key) {
     return _font_funcs_get_user_data(ffuncs, key);
   }
 
-  late final _font_funcs_get_user_dataPtr = _lookup<
-    ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<hb_font_funcs>, ffi.Pointer<hb_user_data_key>)>
-  >('hb_font_funcs_get_user_data');
-  late final _font_funcs_get_user_data =
-      _font_funcs_get_user_dataPtr
-          .asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<hb_font_funcs>, ffi.Pointer<hb_user_data_key>)>();
+  late final _font_funcs_get_user_dataPtr =
+      _lookup<
+        ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<hb_font_funcs>, ffi.Pointer<hb_user_data_key>)>
+      >('hb_font_funcs_get_user_data');
+  late final _font_funcs_get_user_data = _font_funcs_get_user_dataPtr
+      .asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<hb_font_funcs>, ffi.Pointer<hb_user_data_key>)>();
 
   void font_funcs_make_immutable(ffi.Pointer<hb_font_funcs> ffuncs) {
     return _font_funcs_make_immutable(ffuncs);
@@ -772,8 +764,8 @@ class HarfbuzzLibrary {
   late final _font_funcs_make_immutablePtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_font_funcs>)>>(
     'hb_font_funcs_make_immutable',
   );
-  late final _font_funcs_make_immutable =
-      _font_funcs_make_immutablePtr.asFunction<void Function(ffi.Pointer<hb_font_funcs>)>();
+  late final _font_funcs_make_immutable = _font_funcs_make_immutablePtr
+      .asFunction<void Function(ffi.Pointer<hb_font_funcs>)>();
 
   int font_funcs_is_immutable(ffi.Pointer<hb_font_funcs> ffuncs) {
     return _font_funcs_is_immutable(ffuncs);
@@ -782,8 +774,8 @@ class HarfbuzzLibrary {
   late final _font_funcs_is_immutablePtr = _lookup<ffi.NativeFunction<hb_bool Function(ffi.Pointer<hb_font_funcs>)>>(
     'hb_font_funcs_is_immutable',
   );
-  late final _font_funcs_is_immutable =
-      _font_funcs_is_immutablePtr.asFunction<int Function(ffi.Pointer<hb_font_funcs>)>();
+  late final _font_funcs_is_immutable = _font_funcs_is_immutablePtr
+      .asFunction<int Function(ffi.Pointer<hb_font_funcs>)>();
 
   void font_funcs_set_font_h_extents_func(
     ffi.Pointer<hb_font_funcs> ffuncs,
@@ -794,26 +786,26 @@ class HarfbuzzLibrary {
     return _font_funcs_set_font_h_extents_func(ffuncs, func, user_data, destroy);
   }
 
-  late final _font_funcs_set_font_h_extents_funcPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(
-        ffi.Pointer<hb_font_funcs>,
-        hb_font_get_font_h_extents_func,
-        ffi.Pointer<ffi.Void>,
-        hb_destroy_func,
-      )
-    >
-  >('hb_font_funcs_set_font_h_extents_func');
-  late final _font_funcs_set_font_h_extents_func =
-      _font_funcs_set_font_h_extents_funcPtr
-          .asFunction<
-            void Function(
-              ffi.Pointer<hb_font_funcs>,
-              hb_font_get_font_h_extents_func,
-              ffi.Pointer<ffi.Void>,
-              hb_destroy_func,
-            )
-          >();
+  late final _font_funcs_set_font_h_extents_funcPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<hb_font_funcs>,
+            hb_font_get_font_h_extents_func,
+            ffi.Pointer<ffi.Void>,
+            hb_destroy_func,
+          )
+        >
+      >('hb_font_funcs_set_font_h_extents_func');
+  late final _font_funcs_set_font_h_extents_func = _font_funcs_set_font_h_extents_funcPtr
+      .asFunction<
+        void Function(
+          ffi.Pointer<hb_font_funcs>,
+          hb_font_get_font_h_extents_func,
+          ffi.Pointer<ffi.Void>,
+          hb_destroy_func,
+        )
+      >();
 
   void font_funcs_set_font_v_extents_func(
     ffi.Pointer<hb_font_funcs> ffuncs,
@@ -824,26 +816,26 @@ class HarfbuzzLibrary {
     return _font_funcs_set_font_v_extents_func(ffuncs, func, user_data, destroy);
   }
 
-  late final _font_funcs_set_font_v_extents_funcPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(
-        ffi.Pointer<hb_font_funcs>,
-        hb_font_get_font_v_extents_func,
-        ffi.Pointer<ffi.Void>,
-        hb_destroy_func,
-      )
-    >
-  >('hb_font_funcs_set_font_v_extents_func');
-  late final _font_funcs_set_font_v_extents_func =
-      _font_funcs_set_font_v_extents_funcPtr
-          .asFunction<
-            void Function(
-              ffi.Pointer<hb_font_funcs>,
-              hb_font_get_font_v_extents_func,
-              ffi.Pointer<ffi.Void>,
-              hb_destroy_func,
-            )
-          >();
+  late final _font_funcs_set_font_v_extents_funcPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<hb_font_funcs>,
+            hb_font_get_font_v_extents_func,
+            ffi.Pointer<ffi.Void>,
+            hb_destroy_func,
+          )
+        >
+      >('hb_font_funcs_set_font_v_extents_func');
+  late final _font_funcs_set_font_v_extents_func = _font_funcs_set_font_v_extents_funcPtr
+      .asFunction<
+        void Function(
+          ffi.Pointer<hb_font_funcs>,
+          hb_font_get_font_v_extents_func,
+          ffi.Pointer<ffi.Void>,
+          hb_destroy_func,
+        )
+      >();
 
   void font_funcs_set_nominal_glyph_func(
     ffi.Pointer<hb_font_funcs> ffuncs,
@@ -854,26 +846,26 @@ class HarfbuzzLibrary {
     return _font_funcs_set_nominal_glyph_func(ffuncs, func, user_data, destroy);
   }
 
-  late final _font_funcs_set_nominal_glyph_funcPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(
-        ffi.Pointer<hb_font_funcs>,
-        hb_font_get_nominal_glyph_func,
-        ffi.Pointer<ffi.Void>,
-        hb_destroy_func,
-      )
-    >
-  >('hb_font_funcs_set_nominal_glyph_func');
-  late final _font_funcs_set_nominal_glyph_func =
-      _font_funcs_set_nominal_glyph_funcPtr
-          .asFunction<
-            void Function(
-              ffi.Pointer<hb_font_funcs>,
-              hb_font_get_nominal_glyph_func,
-              ffi.Pointer<ffi.Void>,
-              hb_destroy_func,
-            )
-          >();
+  late final _font_funcs_set_nominal_glyph_funcPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<hb_font_funcs>,
+            hb_font_get_nominal_glyph_func,
+            ffi.Pointer<ffi.Void>,
+            hb_destroy_func,
+          )
+        >
+      >('hb_font_funcs_set_nominal_glyph_func');
+  late final _font_funcs_set_nominal_glyph_func = _font_funcs_set_nominal_glyph_funcPtr
+      .asFunction<
+        void Function(
+          ffi.Pointer<hb_font_funcs>,
+          hb_font_get_nominal_glyph_func,
+          ffi.Pointer<ffi.Void>,
+          hb_destroy_func,
+        )
+      >();
 
   void font_funcs_set_nominal_glyphs_func(
     ffi.Pointer<hb_font_funcs> ffuncs,
@@ -884,26 +876,26 @@ class HarfbuzzLibrary {
     return _font_funcs_set_nominal_glyphs_func(ffuncs, func, user_data, destroy);
   }
 
-  late final _font_funcs_set_nominal_glyphs_funcPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(
-        ffi.Pointer<hb_font_funcs>,
-        hb_font_get_nominal_glyphs_func,
-        ffi.Pointer<ffi.Void>,
-        hb_destroy_func,
-      )
-    >
-  >('hb_font_funcs_set_nominal_glyphs_func');
-  late final _font_funcs_set_nominal_glyphs_func =
-      _font_funcs_set_nominal_glyphs_funcPtr
-          .asFunction<
-            void Function(
-              ffi.Pointer<hb_font_funcs>,
-              hb_font_get_nominal_glyphs_func,
-              ffi.Pointer<ffi.Void>,
-              hb_destroy_func,
-            )
-          >();
+  late final _font_funcs_set_nominal_glyphs_funcPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<hb_font_funcs>,
+            hb_font_get_nominal_glyphs_func,
+            ffi.Pointer<ffi.Void>,
+            hb_destroy_func,
+          )
+        >
+      >('hb_font_funcs_set_nominal_glyphs_func');
+  late final _font_funcs_set_nominal_glyphs_func = _font_funcs_set_nominal_glyphs_funcPtr
+      .asFunction<
+        void Function(
+          ffi.Pointer<hb_font_funcs>,
+          hb_font_get_nominal_glyphs_func,
+          ffi.Pointer<ffi.Void>,
+          hb_destroy_func,
+        )
+      >();
 
   void font_funcs_set_variation_glyph_func(
     ffi.Pointer<hb_font_funcs> ffuncs,
@@ -914,26 +906,26 @@ class HarfbuzzLibrary {
     return _font_funcs_set_variation_glyph_func(ffuncs, func, user_data, destroy);
   }
 
-  late final _font_funcs_set_variation_glyph_funcPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(
-        ffi.Pointer<hb_font_funcs>,
-        hb_font_get_variation_glyph_func,
-        ffi.Pointer<ffi.Void>,
-        hb_destroy_func,
-      )
-    >
-  >('hb_font_funcs_set_variation_glyph_func');
-  late final _font_funcs_set_variation_glyph_func =
-      _font_funcs_set_variation_glyph_funcPtr
-          .asFunction<
-            void Function(
-              ffi.Pointer<hb_font_funcs>,
-              hb_font_get_variation_glyph_func,
-              ffi.Pointer<ffi.Void>,
-              hb_destroy_func,
-            )
-          >();
+  late final _font_funcs_set_variation_glyph_funcPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<hb_font_funcs>,
+            hb_font_get_variation_glyph_func,
+            ffi.Pointer<ffi.Void>,
+            hb_destroy_func,
+          )
+        >
+      >('hb_font_funcs_set_variation_glyph_func');
+  late final _font_funcs_set_variation_glyph_func = _font_funcs_set_variation_glyph_funcPtr
+      .asFunction<
+        void Function(
+          ffi.Pointer<hb_font_funcs>,
+          hb_font_get_variation_glyph_func,
+          ffi.Pointer<ffi.Void>,
+          hb_destroy_func,
+        )
+      >();
 
   void font_funcs_set_glyph_h_advance_func(
     ffi.Pointer<hb_font_funcs> ffuncs,
@@ -944,26 +936,26 @@ class HarfbuzzLibrary {
     return _font_funcs_set_glyph_h_advance_func(ffuncs, func, user_data, destroy);
   }
 
-  late final _font_funcs_set_glyph_h_advance_funcPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(
-        ffi.Pointer<hb_font_funcs>,
-        hb_font_get_glyph_h_advance_func,
-        ffi.Pointer<ffi.Void>,
-        hb_destroy_func,
-      )
-    >
-  >('hb_font_funcs_set_glyph_h_advance_func');
-  late final _font_funcs_set_glyph_h_advance_func =
-      _font_funcs_set_glyph_h_advance_funcPtr
-          .asFunction<
-            void Function(
-              ffi.Pointer<hb_font_funcs>,
-              hb_font_get_glyph_h_advance_func,
-              ffi.Pointer<ffi.Void>,
-              hb_destroy_func,
-            )
-          >();
+  late final _font_funcs_set_glyph_h_advance_funcPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<hb_font_funcs>,
+            hb_font_get_glyph_h_advance_func,
+            ffi.Pointer<ffi.Void>,
+            hb_destroy_func,
+          )
+        >
+      >('hb_font_funcs_set_glyph_h_advance_func');
+  late final _font_funcs_set_glyph_h_advance_func = _font_funcs_set_glyph_h_advance_funcPtr
+      .asFunction<
+        void Function(
+          ffi.Pointer<hb_font_funcs>,
+          hb_font_get_glyph_h_advance_func,
+          ffi.Pointer<ffi.Void>,
+          hb_destroy_func,
+        )
+      >();
 
   void font_funcs_set_glyph_v_advance_func(
     ffi.Pointer<hb_font_funcs> ffuncs,
@@ -974,26 +966,26 @@ class HarfbuzzLibrary {
     return _font_funcs_set_glyph_v_advance_func(ffuncs, func, user_data, destroy);
   }
 
-  late final _font_funcs_set_glyph_v_advance_funcPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(
-        ffi.Pointer<hb_font_funcs>,
-        hb_font_get_glyph_v_advance_func,
-        ffi.Pointer<ffi.Void>,
-        hb_destroy_func,
-      )
-    >
-  >('hb_font_funcs_set_glyph_v_advance_func');
-  late final _font_funcs_set_glyph_v_advance_func =
-      _font_funcs_set_glyph_v_advance_funcPtr
-          .asFunction<
-            void Function(
-              ffi.Pointer<hb_font_funcs>,
-              hb_font_get_glyph_v_advance_func,
-              ffi.Pointer<ffi.Void>,
-              hb_destroy_func,
-            )
-          >();
+  late final _font_funcs_set_glyph_v_advance_funcPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<hb_font_funcs>,
+            hb_font_get_glyph_v_advance_func,
+            ffi.Pointer<ffi.Void>,
+            hb_destroy_func,
+          )
+        >
+      >('hb_font_funcs_set_glyph_v_advance_func');
+  late final _font_funcs_set_glyph_v_advance_func = _font_funcs_set_glyph_v_advance_funcPtr
+      .asFunction<
+        void Function(
+          ffi.Pointer<hb_font_funcs>,
+          hb_font_get_glyph_v_advance_func,
+          ffi.Pointer<ffi.Void>,
+          hb_destroy_func,
+        )
+      >();
 
   void font_funcs_set_glyph_h_advances_func(
     ffi.Pointer<hb_font_funcs> ffuncs,
@@ -1004,26 +996,26 @@ class HarfbuzzLibrary {
     return _font_funcs_set_glyph_h_advances_func(ffuncs, func, user_data, destroy);
   }
 
-  late final _font_funcs_set_glyph_h_advances_funcPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(
-        ffi.Pointer<hb_font_funcs>,
-        hb_font_get_glyph_h_advances_func,
-        ffi.Pointer<ffi.Void>,
-        hb_destroy_func,
-      )
-    >
-  >('hb_font_funcs_set_glyph_h_advances_func');
-  late final _font_funcs_set_glyph_h_advances_func =
-      _font_funcs_set_glyph_h_advances_funcPtr
-          .asFunction<
-            void Function(
-              ffi.Pointer<hb_font_funcs>,
-              hb_font_get_glyph_h_advances_func,
-              ffi.Pointer<ffi.Void>,
-              hb_destroy_func,
-            )
-          >();
+  late final _font_funcs_set_glyph_h_advances_funcPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<hb_font_funcs>,
+            hb_font_get_glyph_h_advances_func,
+            ffi.Pointer<ffi.Void>,
+            hb_destroy_func,
+          )
+        >
+      >('hb_font_funcs_set_glyph_h_advances_func');
+  late final _font_funcs_set_glyph_h_advances_func = _font_funcs_set_glyph_h_advances_funcPtr
+      .asFunction<
+        void Function(
+          ffi.Pointer<hb_font_funcs>,
+          hb_font_get_glyph_h_advances_func,
+          ffi.Pointer<ffi.Void>,
+          hb_destroy_func,
+        )
+      >();
 
   void font_funcs_set_glyph_v_advances_func(
     ffi.Pointer<hb_font_funcs> ffuncs,
@@ -1034,26 +1026,26 @@ class HarfbuzzLibrary {
     return _font_funcs_set_glyph_v_advances_func(ffuncs, func, user_data, destroy);
   }
 
-  late final _font_funcs_set_glyph_v_advances_funcPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(
-        ffi.Pointer<hb_font_funcs>,
-        hb_font_get_glyph_v_advances_func,
-        ffi.Pointer<ffi.Void>,
-        hb_destroy_func,
-      )
-    >
-  >('hb_font_funcs_set_glyph_v_advances_func');
-  late final _font_funcs_set_glyph_v_advances_func =
-      _font_funcs_set_glyph_v_advances_funcPtr
-          .asFunction<
-            void Function(
-              ffi.Pointer<hb_font_funcs>,
-              hb_font_get_glyph_v_advances_func,
-              ffi.Pointer<ffi.Void>,
-              hb_destroy_func,
-            )
-          >();
+  late final _font_funcs_set_glyph_v_advances_funcPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<hb_font_funcs>,
+            hb_font_get_glyph_v_advances_func,
+            ffi.Pointer<ffi.Void>,
+            hb_destroy_func,
+          )
+        >
+      >('hb_font_funcs_set_glyph_v_advances_func');
+  late final _font_funcs_set_glyph_v_advances_func = _font_funcs_set_glyph_v_advances_funcPtr
+      .asFunction<
+        void Function(
+          ffi.Pointer<hb_font_funcs>,
+          hb_font_get_glyph_v_advances_func,
+          ffi.Pointer<ffi.Void>,
+          hb_destroy_func,
+        )
+      >();
 
   void font_funcs_set_glyph_h_origin_func(
     ffi.Pointer<hb_font_funcs> ffuncs,
@@ -1064,26 +1056,26 @@ class HarfbuzzLibrary {
     return _font_funcs_set_glyph_h_origin_func(ffuncs, func, user_data, destroy);
   }
 
-  late final _font_funcs_set_glyph_h_origin_funcPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(
-        ffi.Pointer<hb_font_funcs>,
-        hb_font_get_glyph_h_origin_func,
-        ffi.Pointer<ffi.Void>,
-        hb_destroy_func,
-      )
-    >
-  >('hb_font_funcs_set_glyph_h_origin_func');
-  late final _font_funcs_set_glyph_h_origin_func =
-      _font_funcs_set_glyph_h_origin_funcPtr
-          .asFunction<
-            void Function(
-              ffi.Pointer<hb_font_funcs>,
-              hb_font_get_glyph_h_origin_func,
-              ffi.Pointer<ffi.Void>,
-              hb_destroy_func,
-            )
-          >();
+  late final _font_funcs_set_glyph_h_origin_funcPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<hb_font_funcs>,
+            hb_font_get_glyph_h_origin_func,
+            ffi.Pointer<ffi.Void>,
+            hb_destroy_func,
+          )
+        >
+      >('hb_font_funcs_set_glyph_h_origin_func');
+  late final _font_funcs_set_glyph_h_origin_func = _font_funcs_set_glyph_h_origin_funcPtr
+      .asFunction<
+        void Function(
+          ffi.Pointer<hb_font_funcs>,
+          hb_font_get_glyph_h_origin_func,
+          ffi.Pointer<ffi.Void>,
+          hb_destroy_func,
+        )
+      >();
 
   void font_funcs_set_glyph_v_origin_func(
     ffi.Pointer<hb_font_funcs> ffuncs,
@@ -1094,26 +1086,26 @@ class HarfbuzzLibrary {
     return _font_funcs_set_glyph_v_origin_func(ffuncs, func, user_data, destroy);
   }
 
-  late final _font_funcs_set_glyph_v_origin_funcPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(
-        ffi.Pointer<hb_font_funcs>,
-        hb_font_get_glyph_v_origin_func,
-        ffi.Pointer<ffi.Void>,
-        hb_destroy_func,
-      )
-    >
-  >('hb_font_funcs_set_glyph_v_origin_func');
-  late final _font_funcs_set_glyph_v_origin_func =
-      _font_funcs_set_glyph_v_origin_funcPtr
-          .asFunction<
-            void Function(
-              ffi.Pointer<hb_font_funcs>,
-              hb_font_get_glyph_v_origin_func,
-              ffi.Pointer<ffi.Void>,
-              hb_destroy_func,
-            )
-          >();
+  late final _font_funcs_set_glyph_v_origin_funcPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<hb_font_funcs>,
+            hb_font_get_glyph_v_origin_func,
+            ffi.Pointer<ffi.Void>,
+            hb_destroy_func,
+          )
+        >
+      >('hb_font_funcs_set_glyph_v_origin_func');
+  late final _font_funcs_set_glyph_v_origin_func = _font_funcs_set_glyph_v_origin_funcPtr
+      .asFunction<
+        void Function(
+          ffi.Pointer<hb_font_funcs>,
+          hb_font_get_glyph_v_origin_func,
+          ffi.Pointer<ffi.Void>,
+          hb_destroy_func,
+        )
+      >();
 
   void font_funcs_set_glyph_h_kerning_func(
     ffi.Pointer<hb_font_funcs> ffuncs,
@@ -1124,26 +1116,26 @@ class HarfbuzzLibrary {
     return _font_funcs_set_glyph_h_kerning_func(ffuncs, func, user_data, destroy);
   }
 
-  late final _font_funcs_set_glyph_h_kerning_funcPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(
-        ffi.Pointer<hb_font_funcs>,
-        hb_font_get_glyph_h_kerning_func,
-        ffi.Pointer<ffi.Void>,
-        hb_destroy_func,
-      )
-    >
-  >('hb_font_funcs_set_glyph_h_kerning_func');
-  late final _font_funcs_set_glyph_h_kerning_func =
-      _font_funcs_set_glyph_h_kerning_funcPtr
-          .asFunction<
-            void Function(
-              ffi.Pointer<hb_font_funcs>,
-              hb_font_get_glyph_h_kerning_func,
-              ffi.Pointer<ffi.Void>,
-              hb_destroy_func,
-            )
-          >();
+  late final _font_funcs_set_glyph_h_kerning_funcPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<hb_font_funcs>,
+            hb_font_get_glyph_h_kerning_func,
+            ffi.Pointer<ffi.Void>,
+            hb_destroy_func,
+          )
+        >
+      >('hb_font_funcs_set_glyph_h_kerning_func');
+  late final _font_funcs_set_glyph_h_kerning_func = _font_funcs_set_glyph_h_kerning_funcPtr
+      .asFunction<
+        void Function(
+          ffi.Pointer<hb_font_funcs>,
+          hb_font_get_glyph_h_kerning_func,
+          ffi.Pointer<ffi.Void>,
+          hb_destroy_func,
+        )
+      >();
 
   void font_funcs_set_glyph_extents_func(
     ffi.Pointer<hb_font_funcs> ffuncs,
@@ -1154,26 +1146,26 @@ class HarfbuzzLibrary {
     return _font_funcs_set_glyph_extents_func(ffuncs, func, user_data, destroy);
   }
 
-  late final _font_funcs_set_glyph_extents_funcPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(
-        ffi.Pointer<hb_font_funcs>,
-        hb_font_get_glyph_extents_func,
-        ffi.Pointer<ffi.Void>,
-        hb_destroy_func,
-      )
-    >
-  >('hb_font_funcs_set_glyph_extents_func');
-  late final _font_funcs_set_glyph_extents_func =
-      _font_funcs_set_glyph_extents_funcPtr
-          .asFunction<
-            void Function(
-              ffi.Pointer<hb_font_funcs>,
-              hb_font_get_glyph_extents_func,
-              ffi.Pointer<ffi.Void>,
-              hb_destroy_func,
-            )
-          >();
+  late final _font_funcs_set_glyph_extents_funcPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<hb_font_funcs>,
+            hb_font_get_glyph_extents_func,
+            ffi.Pointer<ffi.Void>,
+            hb_destroy_func,
+          )
+        >
+      >('hb_font_funcs_set_glyph_extents_func');
+  late final _font_funcs_set_glyph_extents_func = _font_funcs_set_glyph_extents_funcPtr
+      .asFunction<
+        void Function(
+          ffi.Pointer<hb_font_funcs>,
+          hb_font_get_glyph_extents_func,
+          ffi.Pointer<ffi.Void>,
+          hb_destroy_func,
+        )
+      >();
 
   void font_funcs_set_glyph_contour_point_func(
     ffi.Pointer<hb_font_funcs> ffuncs,
@@ -1184,26 +1176,26 @@ class HarfbuzzLibrary {
     return _font_funcs_set_glyph_contour_point_func(ffuncs, func, user_data, destroy);
   }
 
-  late final _font_funcs_set_glyph_contour_point_funcPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(
-        ffi.Pointer<hb_font_funcs>,
-        hb_font_get_glyph_contour_point_func,
-        ffi.Pointer<ffi.Void>,
-        hb_destroy_func,
-      )
-    >
-  >('hb_font_funcs_set_glyph_contour_point_func');
-  late final _font_funcs_set_glyph_contour_point_func =
-      _font_funcs_set_glyph_contour_point_funcPtr
-          .asFunction<
-            void Function(
-              ffi.Pointer<hb_font_funcs>,
-              hb_font_get_glyph_contour_point_func,
-              ffi.Pointer<ffi.Void>,
-              hb_destroy_func,
-            )
-          >();
+  late final _font_funcs_set_glyph_contour_point_funcPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<hb_font_funcs>,
+            hb_font_get_glyph_contour_point_func,
+            ffi.Pointer<ffi.Void>,
+            hb_destroy_func,
+          )
+        >
+      >('hb_font_funcs_set_glyph_contour_point_func');
+  late final _font_funcs_set_glyph_contour_point_func = _font_funcs_set_glyph_contour_point_funcPtr
+      .asFunction<
+        void Function(
+          ffi.Pointer<hb_font_funcs>,
+          hb_font_get_glyph_contour_point_func,
+          ffi.Pointer<ffi.Void>,
+          hb_destroy_func,
+        )
+      >();
 
   void font_funcs_set_glyph_name_func(
     ffi.Pointer<hb_font_funcs> ffuncs,
@@ -1214,21 +1206,21 @@ class HarfbuzzLibrary {
     return _font_funcs_set_glyph_name_func(ffuncs, func, user_data, destroy);
   }
 
-  late final _font_funcs_set_glyph_name_funcPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(ffi.Pointer<hb_font_funcs>, hb_font_get_glyph_name_func, ffi.Pointer<ffi.Void>, hb_destroy_func)
-    >
-  >('hb_font_funcs_set_glyph_name_func');
-  late final _font_funcs_set_glyph_name_func =
-      _font_funcs_set_glyph_name_funcPtr
-          .asFunction<
-            void Function(
-              ffi.Pointer<hb_font_funcs>,
-              hb_font_get_glyph_name_func,
-              ffi.Pointer<ffi.Void>,
-              hb_destroy_func,
-            )
-          >();
+  late final _font_funcs_set_glyph_name_funcPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<hb_font_funcs>,
+            hb_font_get_glyph_name_func,
+            ffi.Pointer<ffi.Void>,
+            hb_destroy_func,
+          )
+        >
+      >('hb_font_funcs_set_glyph_name_func');
+  late final _font_funcs_set_glyph_name_func = _font_funcs_set_glyph_name_funcPtr
+      .asFunction<
+        void Function(ffi.Pointer<hb_font_funcs>, hb_font_get_glyph_name_func, ffi.Pointer<ffi.Void>, hb_destroy_func)
+      >();
 
   void font_funcs_set_glyph_from_name_func(
     ffi.Pointer<hb_font_funcs> ffuncs,
@@ -1239,26 +1231,26 @@ class HarfbuzzLibrary {
     return _font_funcs_set_glyph_from_name_func(ffuncs, func, user_data, destroy);
   }
 
-  late final _font_funcs_set_glyph_from_name_funcPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(
-        ffi.Pointer<hb_font_funcs>,
-        hb_font_get_glyph_from_name_func,
-        ffi.Pointer<ffi.Void>,
-        hb_destroy_func,
-      )
-    >
-  >('hb_font_funcs_set_glyph_from_name_func');
-  late final _font_funcs_set_glyph_from_name_func =
-      _font_funcs_set_glyph_from_name_funcPtr
-          .asFunction<
-            void Function(
-              ffi.Pointer<hb_font_funcs>,
-              hb_font_get_glyph_from_name_func,
-              ffi.Pointer<ffi.Void>,
-              hb_destroy_func,
-            )
-          >();
+  late final _font_funcs_set_glyph_from_name_funcPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<hb_font_funcs>,
+            hb_font_get_glyph_from_name_func,
+            ffi.Pointer<ffi.Void>,
+            hb_destroy_func,
+          )
+        >
+      >('hb_font_funcs_set_glyph_from_name_func');
+  late final _font_funcs_set_glyph_from_name_func = _font_funcs_set_glyph_from_name_funcPtr
+      .asFunction<
+        void Function(
+          ffi.Pointer<hb_font_funcs>,
+          hb_font_get_glyph_from_name_func,
+          ffi.Pointer<ffi.Void>,
+          hb_destroy_func,
+        )
+      >();
 
   void font_funcs_set_glyph_shape_func(
     ffi.Pointer<hb_font_funcs> ffuncs,
@@ -1269,26 +1261,21 @@ class HarfbuzzLibrary {
     return _font_funcs_set_glyph_shape_func(ffuncs, func, user_data, destroy);
   }
 
-  late final _font_funcs_set_glyph_shape_funcPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(
-        ffi.Pointer<hb_font_funcs>,
-        hb_font_get_glyph_shape_func,
-        ffi.Pointer<ffi.Void>,
-        hb_destroy_func,
-      )
-    >
-  >('hb_font_funcs_set_glyph_shape_func');
-  late final _font_funcs_set_glyph_shape_func =
-      _font_funcs_set_glyph_shape_funcPtr
-          .asFunction<
-            void Function(
-              ffi.Pointer<hb_font_funcs>,
-              hb_font_get_glyph_shape_func,
-              ffi.Pointer<ffi.Void>,
-              hb_destroy_func,
-            )
-          >();
+  late final _font_funcs_set_glyph_shape_funcPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<hb_font_funcs>,
+            hb_font_get_glyph_shape_func,
+            ffi.Pointer<ffi.Void>,
+            hb_destroy_func,
+          )
+        >
+      >('hb_font_funcs_set_glyph_shape_func');
+  late final _font_funcs_set_glyph_shape_func = _font_funcs_set_glyph_shape_funcPtr
+      .asFunction<
+        void Function(ffi.Pointer<hb_font_funcs>, hb_font_get_glyph_shape_func, ffi.Pointer<ffi.Void>, hb_destroy_func)
+      >();
 
   int font_get_h_extents(ffi.Pointer<hb_font> font, ffi.Pointer<hb_font_extents> extents) {
     return _font_get_h_extents(font, extents);
@@ -1298,8 +1285,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<hb_bool Function(ffi.Pointer<hb_font>, ffi.Pointer<hb_font_extents>)>>(
         'hb_font_get_h_extents',
       );
-  late final _font_get_h_extents =
-      _font_get_h_extentsPtr.asFunction<int Function(ffi.Pointer<hb_font>, ffi.Pointer<hb_font_extents>)>();
+  late final _font_get_h_extents = _font_get_h_extentsPtr
+      .asFunction<int Function(ffi.Pointer<hb_font>, ffi.Pointer<hb_font_extents>)>();
 
   int font_get_v_extents(ffi.Pointer<hb_font> font, ffi.Pointer<hb_font_extents> extents) {
     return _font_get_v_extents(font, extents);
@@ -1309,8 +1296,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<hb_bool Function(ffi.Pointer<hb_font>, ffi.Pointer<hb_font_extents>)>>(
         'hb_font_get_v_extents',
       );
-  late final _font_get_v_extents =
-      _font_get_v_extentsPtr.asFunction<int Function(ffi.Pointer<hb_font>, ffi.Pointer<hb_font_extents>)>();
+  late final _font_get_v_extents = _font_get_v_extentsPtr
+      .asFunction<int Function(ffi.Pointer<hb_font>, ffi.Pointer<hb_font_extents>)>();
 
   int font_get_nominal_glyph(ffi.Pointer<hb_font> font, int unicode, ffi.Pointer<hb_codepoint> glyph) {
     return _font_get_nominal_glyph(font, unicode, glyph);
@@ -1320,8 +1307,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<hb_bool Function(ffi.Pointer<hb_font>, hb_codepoint, ffi.Pointer<hb_codepoint>)>>(
         'hb_font_get_nominal_glyph',
       );
-  late final _font_get_nominal_glyph =
-      _font_get_nominal_glyphPtr.asFunction<int Function(ffi.Pointer<hb_font>, int, ffi.Pointer<hb_codepoint>)>();
+  late final _font_get_nominal_glyph = _font_get_nominal_glyphPtr
+      .asFunction<int Function(ffi.Pointer<hb_font>, int, ffi.Pointer<hb_codepoint>)>();
 
   int font_get_variation_glyph(
     ffi.Pointer<hb_font> font,
@@ -1332,12 +1319,14 @@ class HarfbuzzLibrary {
     return _font_get_variation_glyph(font, unicode, variation_selector, glyph);
   }
 
-  late final _font_get_variation_glyphPtr = _lookup<
-    ffi.NativeFunction<hb_bool Function(ffi.Pointer<hb_font>, hb_codepoint, hb_codepoint, ffi.Pointer<hb_codepoint>)>
-  >('hb_font_get_variation_glyph');
-  late final _font_get_variation_glyph =
-      _font_get_variation_glyphPtr
-          .asFunction<int Function(ffi.Pointer<hb_font>, int, int, ffi.Pointer<hb_codepoint>)>();
+  late final _font_get_variation_glyphPtr =
+      _lookup<
+        ffi.NativeFunction<
+          hb_bool Function(ffi.Pointer<hb_font>, hb_codepoint, hb_codepoint, ffi.Pointer<hb_codepoint>)
+        >
+      >('hb_font_get_variation_glyph');
+  late final _font_get_variation_glyph = _font_get_variation_glyphPtr
+      .asFunction<int Function(ffi.Pointer<hb_font>, int, int, ffi.Pointer<hb_codepoint>)>();
 
   int font_get_nominal_glyphs(
     ffi.Pointer<hb_font> font,
@@ -1350,23 +1339,23 @@ class HarfbuzzLibrary {
     return _font_get_nominal_glyphs(font, count, first_unicode, unicode_stride, first_glyph, glyph_stride);
   }
 
-  late final _font_get_nominal_glyphsPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.UnsignedInt Function(
-        ffi.Pointer<hb_font>,
-        ffi.UnsignedInt,
-        ffi.Pointer<hb_codepoint>,
-        ffi.UnsignedInt,
-        ffi.Pointer<hb_codepoint>,
-        ffi.UnsignedInt,
-      )
-    >
-  >('hb_font_get_nominal_glyphs');
-  late final _font_get_nominal_glyphs =
-      _font_get_nominal_glyphsPtr
-          .asFunction<
-            int Function(ffi.Pointer<hb_font>, int, ffi.Pointer<hb_codepoint>, int, ffi.Pointer<hb_codepoint>, int)
-          >();
+  late final _font_get_nominal_glyphsPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.UnsignedInt Function(
+            ffi.Pointer<hb_font>,
+            ffi.UnsignedInt,
+            ffi.Pointer<hb_codepoint>,
+            ffi.UnsignedInt,
+            ffi.Pointer<hb_codepoint>,
+            ffi.UnsignedInt,
+          )
+        >
+      >('hb_font_get_nominal_glyphs');
+  late final _font_get_nominal_glyphs = _font_get_nominal_glyphsPtr
+      .asFunction<
+        int Function(ffi.Pointer<hb_font>, int, ffi.Pointer<hb_codepoint>, int, ffi.Pointer<hb_codepoint>, int)
+      >();
 
   int font_get_glyph_h_advance(ffi.Pointer<hb_font> font, int glyph) {
     return _font_get_glyph_h_advance(font, glyph);
@@ -1376,8 +1365,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<hb_position Function(ffi.Pointer<hb_font>, hb_codepoint)>>(
         'hb_font_get_glyph_h_advance',
       );
-  late final _font_get_glyph_h_advance =
-      _font_get_glyph_h_advancePtr.asFunction<int Function(ffi.Pointer<hb_font>, int)>();
+  late final _font_get_glyph_h_advance = _font_get_glyph_h_advancePtr
+      .asFunction<int Function(ffi.Pointer<hb_font>, int)>();
 
   int font_get_glyph_v_advance(ffi.Pointer<hb_font> font, int glyph) {
     return _font_get_glyph_v_advance(font, glyph);
@@ -1387,8 +1376,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<hb_position Function(ffi.Pointer<hb_font>, hb_codepoint)>>(
         'hb_font_get_glyph_v_advance',
       );
-  late final _font_get_glyph_v_advance =
-      _font_get_glyph_v_advancePtr.asFunction<int Function(ffi.Pointer<hb_font>, int)>();
+  late final _font_get_glyph_v_advance = _font_get_glyph_v_advancePtr
+      .asFunction<int Function(ffi.Pointer<hb_font>, int)>();
 
   void font_get_glyph_h_advances(
     ffi.Pointer<hb_font> font,
@@ -1401,23 +1390,23 @@ class HarfbuzzLibrary {
     return _font_get_glyph_h_advances(font, count, first_glyph, glyph_stride, first_advance, advance_stride);
   }
 
-  late final _font_get_glyph_h_advancesPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(
-        ffi.Pointer<hb_font>,
-        ffi.UnsignedInt,
-        ffi.Pointer<hb_codepoint>,
-        ffi.UnsignedInt,
-        ffi.Pointer<hb_position>,
-        ffi.UnsignedInt,
-      )
-    >
-  >('hb_font_get_glyph_h_advances');
-  late final _font_get_glyph_h_advances =
-      _font_get_glyph_h_advancesPtr
-          .asFunction<
-            void Function(ffi.Pointer<hb_font>, int, ffi.Pointer<hb_codepoint>, int, ffi.Pointer<hb_position>, int)
-          >();
+  late final _font_get_glyph_h_advancesPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<hb_font>,
+            ffi.UnsignedInt,
+            ffi.Pointer<hb_codepoint>,
+            ffi.UnsignedInt,
+            ffi.Pointer<hb_position>,
+            ffi.UnsignedInt,
+          )
+        >
+      >('hb_font_get_glyph_h_advances');
+  late final _font_get_glyph_h_advances = _font_get_glyph_h_advancesPtr
+      .asFunction<
+        void Function(ffi.Pointer<hb_font>, int, ffi.Pointer<hb_codepoint>, int, ffi.Pointer<hb_position>, int)
+      >();
 
   void font_get_glyph_v_advances(
     ffi.Pointer<hb_font> font,
@@ -1430,23 +1419,23 @@ class HarfbuzzLibrary {
     return _font_get_glyph_v_advances(font, count, first_glyph, glyph_stride, first_advance, advance_stride);
   }
 
-  late final _font_get_glyph_v_advancesPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(
-        ffi.Pointer<hb_font>,
-        ffi.UnsignedInt,
-        ffi.Pointer<hb_codepoint>,
-        ffi.UnsignedInt,
-        ffi.Pointer<hb_position>,
-        ffi.UnsignedInt,
-      )
-    >
-  >('hb_font_get_glyph_v_advances');
-  late final _font_get_glyph_v_advances =
-      _font_get_glyph_v_advancesPtr
-          .asFunction<
-            void Function(ffi.Pointer<hb_font>, int, ffi.Pointer<hb_codepoint>, int, ffi.Pointer<hb_position>, int)
-          >();
+  late final _font_get_glyph_v_advancesPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<hb_font>,
+            ffi.UnsignedInt,
+            ffi.Pointer<hb_codepoint>,
+            ffi.UnsignedInt,
+            ffi.Pointer<hb_position>,
+            ffi.UnsignedInt,
+          )
+        >
+      >('hb_font_get_glyph_v_advances');
+  late final _font_get_glyph_v_advances = _font_get_glyph_v_advancesPtr
+      .asFunction<
+        void Function(ffi.Pointer<hb_font>, int, ffi.Pointer<hb_codepoint>, int, ffi.Pointer<hb_position>, int)
+      >();
 
   int font_get_glyph_h_origin(
     ffi.Pointer<hb_font> font,
@@ -1457,14 +1446,14 @@ class HarfbuzzLibrary {
     return _font_get_glyph_h_origin(font, glyph, x, y);
   }
 
-  late final _font_get_glyph_h_originPtr = _lookup<
-    ffi.NativeFunction<
-      hb_bool Function(ffi.Pointer<hb_font>, hb_codepoint, ffi.Pointer<hb_position>, ffi.Pointer<hb_position>)
-    >
-  >('hb_font_get_glyph_h_origin');
-  late final _font_get_glyph_h_origin =
-      _font_get_glyph_h_originPtr
-          .asFunction<int Function(ffi.Pointer<hb_font>, int, ffi.Pointer<hb_position>, ffi.Pointer<hb_position>)>();
+  late final _font_get_glyph_h_originPtr =
+      _lookup<
+        ffi.NativeFunction<
+          hb_bool Function(ffi.Pointer<hb_font>, hb_codepoint, ffi.Pointer<hb_position>, ffi.Pointer<hb_position>)
+        >
+      >('hb_font_get_glyph_h_origin');
+  late final _font_get_glyph_h_origin = _font_get_glyph_h_originPtr
+      .asFunction<int Function(ffi.Pointer<hb_font>, int, ffi.Pointer<hb_position>, ffi.Pointer<hb_position>)>();
 
   int font_get_glyph_v_origin(
     ffi.Pointer<hb_font> font,
@@ -1475,14 +1464,14 @@ class HarfbuzzLibrary {
     return _font_get_glyph_v_origin(font, glyph, x, y);
   }
 
-  late final _font_get_glyph_v_originPtr = _lookup<
-    ffi.NativeFunction<
-      hb_bool Function(ffi.Pointer<hb_font>, hb_codepoint, ffi.Pointer<hb_position>, ffi.Pointer<hb_position>)
-    >
-  >('hb_font_get_glyph_v_origin');
-  late final _font_get_glyph_v_origin =
-      _font_get_glyph_v_originPtr
-          .asFunction<int Function(ffi.Pointer<hb_font>, int, ffi.Pointer<hb_position>, ffi.Pointer<hb_position>)>();
+  late final _font_get_glyph_v_originPtr =
+      _lookup<
+        ffi.NativeFunction<
+          hb_bool Function(ffi.Pointer<hb_font>, hb_codepoint, ffi.Pointer<hb_position>, ffi.Pointer<hb_position>)
+        >
+      >('hb_font_get_glyph_v_origin');
+  late final _font_get_glyph_v_origin = _font_get_glyph_v_originPtr
+      .asFunction<int Function(ffi.Pointer<hb_font>, int, ffi.Pointer<hb_position>, ffi.Pointer<hb_position>)>();
 
   int font_get_glyph_h_kerning(ffi.Pointer<hb_font> font, int left_glyph, int right_glyph) {
     return _font_get_glyph_h_kerning(font, left_glyph, right_glyph);
@@ -1492,8 +1481,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<hb_position Function(ffi.Pointer<hb_font>, hb_codepoint, hb_codepoint)>>(
         'hb_font_get_glyph_h_kerning',
       );
-  late final _font_get_glyph_h_kerning =
-      _font_get_glyph_h_kerningPtr.asFunction<int Function(ffi.Pointer<hb_font>, int, int)>();
+  late final _font_get_glyph_h_kerning = _font_get_glyph_h_kerningPtr
+      .asFunction<int Function(ffi.Pointer<hb_font>, int, int)>();
 
   int font_get_glyph_extents(ffi.Pointer<hb_font> font, int glyph, ffi.Pointer<hb_glyph_extents> extents) {
     return _font_get_glyph_extents(font, glyph, extents);
@@ -1503,8 +1492,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<hb_bool Function(ffi.Pointer<hb_font>, hb_codepoint, ffi.Pointer<hb_glyph_extents>)>>(
         'hb_font_get_glyph_extents',
       );
-  late final _font_get_glyph_extents =
-      _font_get_glyph_extentsPtr.asFunction<int Function(ffi.Pointer<hb_font>, int, ffi.Pointer<hb_glyph_extents>)>();
+  late final _font_get_glyph_extents = _font_get_glyph_extentsPtr
+      .asFunction<int Function(ffi.Pointer<hb_font>, int, ffi.Pointer<hb_glyph_extents>)>();
 
   int font_get_glyph_contour_point(
     ffi.Pointer<hb_font> font,
@@ -1516,32 +1505,31 @@ class HarfbuzzLibrary {
     return _font_get_glyph_contour_point(font, glyph, point_index, x, y);
   }
 
-  late final _font_get_glyph_contour_pointPtr = _lookup<
-    ffi.NativeFunction<
-      hb_bool Function(
-        ffi.Pointer<hb_font>,
-        hb_codepoint,
-        ffi.UnsignedInt,
-        ffi.Pointer<hb_position>,
-        ffi.Pointer<hb_position>,
-      )
-    >
-  >('hb_font_get_glyph_contour_point');
-  late final _font_get_glyph_contour_point =
-      _font_get_glyph_contour_pointPtr
-          .asFunction<
-            int Function(ffi.Pointer<hb_font>, int, int, ffi.Pointer<hb_position>, ffi.Pointer<hb_position>)
-          >();
+  late final _font_get_glyph_contour_pointPtr =
+      _lookup<
+        ffi.NativeFunction<
+          hb_bool Function(
+            ffi.Pointer<hb_font>,
+            hb_codepoint,
+            ffi.UnsignedInt,
+            ffi.Pointer<hb_position>,
+            ffi.Pointer<hb_position>,
+          )
+        >
+      >('hb_font_get_glyph_contour_point');
+  late final _font_get_glyph_contour_point = _font_get_glyph_contour_pointPtr
+      .asFunction<int Function(ffi.Pointer<hb_font>, int, int, ffi.Pointer<hb_position>, ffi.Pointer<hb_position>)>();
 
   int font_get_glyph_name(ffi.Pointer<hb_font> font, int glyph, ffi.Pointer<ffi.Char> name, int size) {
     return _font_get_glyph_name(font, glyph, name, size);
   }
 
-  late final _font_get_glyph_namePtr = _lookup<
-    ffi.NativeFunction<hb_bool Function(ffi.Pointer<hb_font>, hb_codepoint, ffi.Pointer<ffi.Char>, ffi.UnsignedInt)>
-  >('hb_font_get_glyph_name');
-  late final _font_get_glyph_name =
-      _font_get_glyph_namePtr.asFunction<int Function(ffi.Pointer<hb_font>, int, ffi.Pointer<ffi.Char>, int)>();
+  late final _font_get_glyph_namePtr =
+      _lookup<
+        ffi.NativeFunction<hb_bool Function(ffi.Pointer<hb_font>, hb_codepoint, ffi.Pointer<ffi.Char>, ffi.UnsignedInt)>
+      >('hb_font_get_glyph_name');
+  late final _font_get_glyph_name = _font_get_glyph_namePtr
+      .asFunction<int Function(ffi.Pointer<hb_font>, int, ffi.Pointer<ffi.Char>, int)>();
 
   int font_get_glyph_from_name(
     ffi.Pointer<hb_font> font,
@@ -1552,14 +1540,14 @@ class HarfbuzzLibrary {
     return _font_get_glyph_from_name(font, name, len, glyph);
   }
 
-  late final _font_get_glyph_from_namePtr = _lookup<
-    ffi.NativeFunction<
-      hb_bool Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.Char>, ffi.Int, ffi.Pointer<hb_codepoint>)
-    >
-  >('hb_font_get_glyph_from_name');
-  late final _font_get_glyph_from_name =
-      _font_get_glyph_from_namePtr
-          .asFunction<int Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.Char>, int, ffi.Pointer<hb_codepoint>)>();
+  late final _font_get_glyph_from_namePtr =
+      _lookup<
+        ffi.NativeFunction<
+          hb_bool Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.Char>, ffi.Int, ffi.Pointer<hb_codepoint>)
+        >
+      >('hb_font_get_glyph_from_name');
+  late final _font_get_glyph_from_name = _font_get_glyph_from_namePtr
+      .asFunction<int Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.Char>, int, ffi.Pointer<hb_codepoint>)>();
 
   void font_get_glyph_shape(
     ffi.Pointer<hb_font> font,
@@ -1570,24 +1558,27 @@ class HarfbuzzLibrary {
     return _font_get_glyph_shape(font, glyph, dfuncs, draw_data);
   }
 
-  late final _font_get_glyph_shapePtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(ffi.Pointer<hb_font>, hb_codepoint, ffi.Pointer<hb_draw_funcs>, ffi.Pointer<ffi.Void>)
-    >
-  >('hb_font_get_glyph_shape');
-  late final _font_get_glyph_shape =
-      _font_get_glyph_shapePtr
-          .asFunction<void Function(ffi.Pointer<hb_font>, int, ffi.Pointer<hb_draw_funcs>, ffi.Pointer<ffi.Void>)>();
+  late final _font_get_glyph_shapePtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<hb_font>, hb_codepoint, ffi.Pointer<hb_draw_funcs>, ffi.Pointer<ffi.Void>)
+        >
+      >('hb_font_get_glyph_shape');
+  late final _font_get_glyph_shape = _font_get_glyph_shapePtr
+      .asFunction<void Function(ffi.Pointer<hb_font>, int, ffi.Pointer<hb_draw_funcs>, ffi.Pointer<ffi.Void>)>();
 
   int font_get_glyph(ffi.Pointer<hb_font> font, int unicode, int variation_selector, ffi.Pointer<hb_codepoint> glyph) {
     return _font_get_glyph(font, unicode, variation_selector, glyph);
   }
 
-  late final _font_get_glyphPtr = _lookup<
-    ffi.NativeFunction<hb_bool Function(ffi.Pointer<hb_font>, hb_codepoint, hb_codepoint, ffi.Pointer<hb_codepoint>)>
-  >('hb_font_get_glyph');
-  late final _font_get_glyph =
-      _font_get_glyphPtr.asFunction<int Function(ffi.Pointer<hb_font>, int, int, ffi.Pointer<hb_codepoint>)>();
+  late final _font_get_glyphPtr =
+      _lookup<
+        ffi.NativeFunction<
+          hb_bool Function(ffi.Pointer<hb_font>, hb_codepoint, hb_codepoint, ffi.Pointer<hb_codepoint>)
+        >
+      >('hb_font_get_glyph');
+  late final _font_get_glyph = _font_get_glyphPtr
+      .asFunction<int Function(ffi.Pointer<hb_font>, int, int, ffi.Pointer<hb_codepoint>)>();
 
   void font_get_extents_for_direction(ffi.Pointer<hb_font> font, int direction, ffi.Pointer<hb_font_extents> extents) {
     return _font_get_extents_for_direction(font, direction, extents);
@@ -1597,9 +1588,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_font>, ffi.Int32, ffi.Pointer<hb_font_extents>)>>(
         'hb_font_get_extents_for_direction',
       );
-  late final _font_get_extents_for_direction =
-      _font_get_extents_for_directionPtr
-          .asFunction<void Function(ffi.Pointer<hb_font>, int, ffi.Pointer<hb_font_extents>)>();
+  late final _font_get_extents_for_direction = _font_get_extents_for_directionPtr
+      .asFunction<void Function(ffi.Pointer<hb_font>, int, ffi.Pointer<hb_font_extents>)>();
 
   void font_get_glyph_advance_for_direction(
     ffi.Pointer<hb_font> font,
@@ -1611,22 +1601,20 @@ class HarfbuzzLibrary {
     return _font_get_glyph_advance_for_direction(font, glyph, direction, x, y);
   }
 
-  late final _font_get_glyph_advance_for_directionPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(
-        ffi.Pointer<hb_font>,
-        hb_codepoint,
-        ffi.Int32,
-        ffi.Pointer<hb_position>,
-        ffi.Pointer<hb_position>,
-      )
-    >
-  >('hb_font_get_glyph_advance_for_direction');
-  late final _font_get_glyph_advance_for_direction =
-      _font_get_glyph_advance_for_directionPtr
-          .asFunction<
-            void Function(ffi.Pointer<hb_font>, int, int, ffi.Pointer<hb_position>, ffi.Pointer<hb_position>)
-          >();
+  late final _font_get_glyph_advance_for_directionPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<hb_font>,
+            hb_codepoint,
+            ffi.Int32,
+            ffi.Pointer<hb_position>,
+            ffi.Pointer<hb_position>,
+          )
+        >
+      >('hb_font_get_glyph_advance_for_direction');
+  late final _font_get_glyph_advance_for_direction = _font_get_glyph_advance_for_directionPtr
+      .asFunction<void Function(ffi.Pointer<hb_font>, int, int, ffi.Pointer<hb_position>, ffi.Pointer<hb_position>)>();
 
   void font_get_glyph_advances_for_direction(
     ffi.Pointer<hb_font> font,
@@ -1648,24 +1636,24 @@ class HarfbuzzLibrary {
     );
   }
 
-  late final _font_get_glyph_advances_for_directionPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(
-        ffi.Pointer<hb_font>,
-        ffi.Int32,
-        ffi.UnsignedInt,
-        ffi.Pointer<hb_codepoint>,
-        ffi.UnsignedInt,
-        ffi.Pointer<hb_position>,
-        ffi.UnsignedInt,
-      )
-    >
-  >('hb_font_get_glyph_advances_for_direction');
-  late final _font_get_glyph_advances_for_direction =
-      _font_get_glyph_advances_for_directionPtr
-          .asFunction<
-            void Function(ffi.Pointer<hb_font>, int, int, ffi.Pointer<hb_codepoint>, int, ffi.Pointer<hb_position>, int)
-          >();
+  late final _font_get_glyph_advances_for_directionPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<hb_font>,
+            ffi.Int32,
+            ffi.UnsignedInt,
+            ffi.Pointer<hb_codepoint>,
+            ffi.UnsignedInt,
+            ffi.Pointer<hb_position>,
+            ffi.UnsignedInt,
+          )
+        >
+      >('hb_font_get_glyph_advances_for_direction');
+  late final _font_get_glyph_advances_for_direction = _font_get_glyph_advances_for_directionPtr
+      .asFunction<
+        void Function(ffi.Pointer<hb_font>, int, int, ffi.Pointer<hb_codepoint>, int, ffi.Pointer<hb_position>, int)
+      >();
 
   void font_get_glyph_origin_for_direction(
     ffi.Pointer<hb_font> font,
@@ -1677,22 +1665,20 @@ class HarfbuzzLibrary {
     return _font_get_glyph_origin_for_direction(font, glyph, direction, x, y);
   }
 
-  late final _font_get_glyph_origin_for_directionPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(
-        ffi.Pointer<hb_font>,
-        hb_codepoint,
-        ffi.Int32,
-        ffi.Pointer<hb_position>,
-        ffi.Pointer<hb_position>,
-      )
-    >
-  >('hb_font_get_glyph_origin_for_direction');
-  late final _font_get_glyph_origin_for_direction =
-      _font_get_glyph_origin_for_directionPtr
-          .asFunction<
-            void Function(ffi.Pointer<hb_font>, int, int, ffi.Pointer<hb_position>, ffi.Pointer<hb_position>)
-          >();
+  late final _font_get_glyph_origin_for_directionPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<hb_font>,
+            hb_codepoint,
+            ffi.Int32,
+            ffi.Pointer<hb_position>,
+            ffi.Pointer<hb_position>,
+          )
+        >
+      >('hb_font_get_glyph_origin_for_direction');
+  late final _font_get_glyph_origin_for_direction = _font_get_glyph_origin_for_directionPtr
+      .asFunction<void Function(ffi.Pointer<hb_font>, int, int, ffi.Pointer<hb_position>, ffi.Pointer<hb_position>)>();
 
   void font_add_glyph_origin_for_direction(
     ffi.Pointer<hb_font> font,
@@ -1704,22 +1690,20 @@ class HarfbuzzLibrary {
     return _font_add_glyph_origin_for_direction(font, glyph, direction, x, y);
   }
 
-  late final _font_add_glyph_origin_for_directionPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(
-        ffi.Pointer<hb_font>,
-        hb_codepoint,
-        ffi.Int32,
-        ffi.Pointer<hb_position>,
-        ffi.Pointer<hb_position>,
-      )
-    >
-  >('hb_font_add_glyph_origin_for_direction');
-  late final _font_add_glyph_origin_for_direction =
-      _font_add_glyph_origin_for_directionPtr
-          .asFunction<
-            void Function(ffi.Pointer<hb_font>, int, int, ffi.Pointer<hb_position>, ffi.Pointer<hb_position>)
-          >();
+  late final _font_add_glyph_origin_for_directionPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<hb_font>,
+            hb_codepoint,
+            ffi.Int32,
+            ffi.Pointer<hb_position>,
+            ffi.Pointer<hb_position>,
+          )
+        >
+      >('hb_font_add_glyph_origin_for_direction');
+  late final _font_add_glyph_origin_for_direction = _font_add_glyph_origin_for_directionPtr
+      .asFunction<void Function(ffi.Pointer<hb_font>, int, int, ffi.Pointer<hb_position>, ffi.Pointer<hb_position>)>();
 
   void font_subtract_glyph_origin_for_direction(
     ffi.Pointer<hb_font> font,
@@ -1731,22 +1715,20 @@ class HarfbuzzLibrary {
     return _font_subtract_glyph_origin_for_direction(font, glyph, direction, x, y);
   }
 
-  late final _font_subtract_glyph_origin_for_directionPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(
-        ffi.Pointer<hb_font>,
-        hb_codepoint,
-        ffi.Int32,
-        ffi.Pointer<hb_position>,
-        ffi.Pointer<hb_position>,
-      )
-    >
-  >('hb_font_subtract_glyph_origin_for_direction');
-  late final _font_subtract_glyph_origin_for_direction =
-      _font_subtract_glyph_origin_for_directionPtr
-          .asFunction<
-            void Function(ffi.Pointer<hb_font>, int, int, ffi.Pointer<hb_position>, ffi.Pointer<hb_position>)
-          >();
+  late final _font_subtract_glyph_origin_for_directionPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<hb_font>,
+            hb_codepoint,
+            ffi.Int32,
+            ffi.Pointer<hb_position>,
+            ffi.Pointer<hb_position>,
+          )
+        >
+      >('hb_font_subtract_glyph_origin_for_direction');
+  late final _font_subtract_glyph_origin_for_direction = _font_subtract_glyph_origin_for_directionPtr
+      .asFunction<void Function(ffi.Pointer<hb_font>, int, int, ffi.Pointer<hb_position>, ffi.Pointer<hb_position>)>();
 
   void font_get_glyph_kerning_for_direction(
     ffi.Pointer<hb_font> font,
@@ -1759,23 +1741,23 @@ class HarfbuzzLibrary {
     return _font_get_glyph_kerning_for_direction(font, first_glyph, second_glyph, direction, x, y);
   }
 
-  late final _font_get_glyph_kerning_for_directionPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(
-        ffi.Pointer<hb_font>,
-        hb_codepoint,
-        hb_codepoint,
-        ffi.Int32,
-        ffi.Pointer<hb_position>,
-        ffi.Pointer<hb_position>,
-      )
-    >
-  >('hb_font_get_glyph_kerning_for_direction');
-  late final _font_get_glyph_kerning_for_direction =
-      _font_get_glyph_kerning_for_directionPtr
-          .asFunction<
-            void Function(ffi.Pointer<hb_font>, int, int, int, ffi.Pointer<hb_position>, ffi.Pointer<hb_position>)
-          >();
+  late final _font_get_glyph_kerning_for_directionPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<hb_font>,
+            hb_codepoint,
+            hb_codepoint,
+            ffi.Int32,
+            ffi.Pointer<hb_position>,
+            ffi.Pointer<hb_position>,
+          )
+        >
+      >('hb_font_get_glyph_kerning_for_direction');
+  late final _font_get_glyph_kerning_for_direction = _font_get_glyph_kerning_for_directionPtr
+      .asFunction<
+        void Function(ffi.Pointer<hb_font>, int, int, int, ffi.Pointer<hb_position>, ffi.Pointer<hb_position>)
+      >();
 
   int font_get_glyph_extents_for_origin(
     ffi.Pointer<hb_font> font,
@@ -1786,12 +1768,14 @@ class HarfbuzzLibrary {
     return _font_get_glyph_extents_for_origin(font, glyph, direction, extents);
   }
 
-  late final _font_get_glyph_extents_for_originPtr = _lookup<
-    ffi.NativeFunction<hb_bool Function(ffi.Pointer<hb_font>, hb_codepoint, ffi.Int32, ffi.Pointer<hb_glyph_extents>)>
-  >('hb_font_get_glyph_extents_for_origin');
-  late final _font_get_glyph_extents_for_origin =
-      _font_get_glyph_extents_for_originPtr
-          .asFunction<int Function(ffi.Pointer<hb_font>, int, int, ffi.Pointer<hb_glyph_extents>)>();
+  late final _font_get_glyph_extents_for_originPtr =
+      _lookup<
+        ffi.NativeFunction<
+          hb_bool Function(ffi.Pointer<hb_font>, hb_codepoint, ffi.Int32, ffi.Pointer<hb_glyph_extents>)
+        >
+      >('hb_font_get_glyph_extents_for_origin');
+  late final _font_get_glyph_extents_for_origin = _font_get_glyph_extents_for_originPtr
+      .asFunction<int Function(ffi.Pointer<hb_font>, int, int, ffi.Pointer<hb_glyph_extents>)>();
 
   int font_get_glyph_contour_point_for_origin(
     ffi.Pointer<hb_font> font,
@@ -1804,33 +1788,36 @@ class HarfbuzzLibrary {
     return _font_get_glyph_contour_point_for_origin(font, glyph, point_index, direction, x, y);
   }
 
-  late final _font_get_glyph_contour_point_for_originPtr = _lookup<
-    ffi.NativeFunction<
-      hb_bool Function(
-        ffi.Pointer<hb_font>,
-        hb_codepoint,
-        ffi.UnsignedInt,
-        ffi.Int32,
-        ffi.Pointer<hb_position>,
-        ffi.Pointer<hb_position>,
-      )
-    >
-  >('hb_font_get_glyph_contour_point_for_origin');
-  late final _font_get_glyph_contour_point_for_origin =
-      _font_get_glyph_contour_point_for_originPtr
-          .asFunction<
-            int Function(ffi.Pointer<hb_font>, int, int, int, ffi.Pointer<hb_position>, ffi.Pointer<hb_position>)
-          >();
+  late final _font_get_glyph_contour_point_for_originPtr =
+      _lookup<
+        ffi.NativeFunction<
+          hb_bool Function(
+            ffi.Pointer<hb_font>,
+            hb_codepoint,
+            ffi.UnsignedInt,
+            ffi.Int32,
+            ffi.Pointer<hb_position>,
+            ffi.Pointer<hb_position>,
+          )
+        >
+      >('hb_font_get_glyph_contour_point_for_origin');
+  late final _font_get_glyph_contour_point_for_origin = _font_get_glyph_contour_point_for_originPtr
+      .asFunction<
+        int Function(ffi.Pointer<hb_font>, int, int, int, ffi.Pointer<hb_position>, ffi.Pointer<hb_position>)
+      >();
 
   void font_glyph_to_string(ffi.Pointer<hb_font> font, int glyph, ffi.Pointer<ffi.Char> s, int size) {
     return _font_glyph_to_string(font, glyph, s, size);
   }
 
-  late final _font_glyph_to_stringPtr = _lookup<
-    ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_font>, hb_codepoint, ffi.Pointer<ffi.Char>, ffi.UnsignedInt)>
-  >('hb_font_glyph_to_string');
-  late final _font_glyph_to_string =
-      _font_glyph_to_stringPtr.asFunction<void Function(ffi.Pointer<hb_font>, int, ffi.Pointer<ffi.Char>, int)>();
+  late final _font_glyph_to_stringPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<hb_font>, hb_codepoint, ffi.Pointer<ffi.Char>, ffi.UnsignedInt)
+        >
+      >('hb_font_glyph_to_string');
+  late final _font_glyph_to_string = _font_glyph_to_stringPtr
+      .asFunction<void Function(ffi.Pointer<hb_font>, int, ffi.Pointer<ffi.Char>, int)>();
 
   int font_glyph_from_string(
     ffi.Pointer<hb_font> font,
@@ -1841,14 +1828,14 @@ class HarfbuzzLibrary {
     return _font_glyph_from_string(font, s, len, glyph);
   }
 
-  late final _font_glyph_from_stringPtr = _lookup<
-    ffi.NativeFunction<
-      hb_bool Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.Char>, ffi.Int, ffi.Pointer<hb_codepoint>)
-    >
-  >('hb_font_glyph_from_string');
-  late final _font_glyph_from_string =
-      _font_glyph_from_stringPtr
-          .asFunction<int Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.Char>, int, ffi.Pointer<hb_codepoint>)>();
+  late final _font_glyph_from_stringPtr =
+      _lookup<
+        ffi.NativeFunction<
+          hb_bool Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.Char>, ffi.Int, ffi.Pointer<hb_codepoint>)
+        >
+      >('hb_font_glyph_from_string');
+  late final _font_glyph_from_string = _font_glyph_from_stringPtr
+      .asFunction<int Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.Char>, int, ffi.Pointer<hb_codepoint>)>();
 
   ffi.Pointer<hb_font> font_create(ffi.Pointer<hb_face> face) {
     return _font_create(face);
@@ -1865,8 +1852,8 @@ class HarfbuzzLibrary {
 
   late final _font_create_sub_fontPtr =
       _lookup<ffi.NativeFunction<ffi.Pointer<hb_font> Function(ffi.Pointer<hb_font>)>>('hb_font_create_sub_font');
-  late final _font_create_sub_font =
-      _font_create_sub_fontPtr.asFunction<ffi.Pointer<hb_font> Function(ffi.Pointer<hb_font>)>();
+  late final _font_create_sub_font = _font_create_sub_fontPtr
+      .asFunction<ffi.Pointer<hb_font> Function(ffi.Pointer<hb_font>)>();
 
   ffi.Pointer<hb_font> font_get_empty() {
     return _font_get_empty();
@@ -1901,28 +1888,22 @@ class HarfbuzzLibrary {
     return _font_set_user_data(font, key, data, destroy, replace);
   }
 
-  late final _font_set_user_dataPtr = _lookup<
-    ffi.NativeFunction<
-      hb_bool Function(
-        ffi.Pointer<hb_font>,
-        ffi.Pointer<hb_user_data_key>,
-        ffi.Pointer<ffi.Void>,
-        hb_destroy_func,
-        hb_bool,
-      )
-    >
-  >('hb_font_set_user_data');
-  late final _font_set_user_data =
-      _font_set_user_dataPtr
-          .asFunction<
-            int Function(
-              ffi.Pointer<hb_font>,
-              ffi.Pointer<hb_user_data_key>,
-              ffi.Pointer<ffi.Void>,
-              hb_destroy_func,
-              int,
-            )
-          >();
+  late final _font_set_user_dataPtr =
+      _lookup<
+        ffi.NativeFunction<
+          hb_bool Function(
+            ffi.Pointer<hb_font>,
+            ffi.Pointer<hb_user_data_key>,
+            ffi.Pointer<ffi.Void>,
+            hb_destroy_func,
+            hb_bool,
+          )
+        >
+      >('hb_font_set_user_data');
+  late final _font_set_user_data = _font_set_user_dataPtr
+      .asFunction<
+        int Function(ffi.Pointer<hb_font>, ffi.Pointer<hb_user_data_key>, ffi.Pointer<ffi.Void>, hb_destroy_func, int)
+      >();
 
   ffi.Pointer<ffi.Void> font_get_user_data(ffi.Pointer<hb_font> font, ffi.Pointer<hb_user_data_key> key) {
     return _font_get_user_data(font, key);
@@ -1932,9 +1913,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<hb_font>, ffi.Pointer<hb_user_data_key>)>>(
         'hb_font_get_user_data',
       );
-  late final _font_get_user_data =
-      _font_get_user_dataPtr
-          .asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<hb_font>, ffi.Pointer<hb_user_data_key>)>();
+  late final _font_get_user_data = _font_get_user_dataPtr
+      .asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<hb_font>, ffi.Pointer<hb_user_data_key>)>();
 
   void font_make_immutable(ffi.Pointer<hb_font> font) {
     return _font_make_immutable(font);
@@ -1976,8 +1956,8 @@ class HarfbuzzLibrary {
 
   late final _font_set_parentPtr =
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_font>, ffi.Pointer<hb_font>)>>('hb_font_set_parent');
-  late final _font_set_parent =
-      _font_set_parentPtr.asFunction<void Function(ffi.Pointer<hb_font>, ffi.Pointer<hb_font>)>();
+  late final _font_set_parent = _font_set_parentPtr
+      .asFunction<void Function(ffi.Pointer<hb_font>, ffi.Pointer<hb_font>)>();
 
   ffi.Pointer<hb_font> font_get_parent(ffi.Pointer<hb_font> font) {
     return _font_get_parent(font);
@@ -2014,16 +1994,16 @@ class HarfbuzzLibrary {
     return _font_set_funcs(font, klass, font_data, destroy);
   }
 
-  late final _font_set_funcsPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(ffi.Pointer<hb_font>, ffi.Pointer<hb_font_funcs>, ffi.Pointer<ffi.Void>, hb_destroy_func)
-    >
-  >('hb_font_set_funcs');
-  late final _font_set_funcs =
-      _font_set_funcsPtr
-          .asFunction<
-            void Function(ffi.Pointer<hb_font>, ffi.Pointer<hb_font_funcs>, ffi.Pointer<ffi.Void>, hb_destroy_func)
-          >();
+  late final _font_set_funcsPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<hb_font>, ffi.Pointer<hb_font_funcs>, ffi.Pointer<ffi.Void>, hb_destroy_func)
+        >
+      >('hb_font_set_funcs');
+  late final _font_set_funcs = _font_set_funcsPtr
+      .asFunction<
+        void Function(ffi.Pointer<hb_font>, ffi.Pointer<hb_font_funcs>, ffi.Pointer<ffi.Void>, hb_destroy_func)
+      >();
 
   void font_set_funcs_data(ffi.Pointer<hb_font> font, ffi.Pointer<ffi.Void> font_data, hb_destroy_func destroy) {
     return _font_set_funcs_data(font, font_data, destroy);
@@ -2033,8 +2013,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.Void>, hb_destroy_func)>>(
         'hb_font_set_funcs_data',
       );
-  late final _font_set_funcs_data =
-      _font_set_funcs_dataPtr.asFunction<void Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.Void>, hb_destroy_func)>();
+  late final _font_set_funcs_data = _font_set_funcs_dataPtr
+      .asFunction<void Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.Void>, hb_destroy_func)>();
 
   void font_set_scale(ffi.Pointer<hb_font> font, int x_scale, int y_scale) {
     return _font_set_scale(font, x_scale, y_scale);
@@ -2052,8 +2032,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>>(
         'hb_font_get_scale',
       );
-  late final _font_get_scale =
-      _font_get_scalePtr.asFunction<void Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>();
+  late final _font_get_scale = _font_get_scalePtr
+      .asFunction<void Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.Int>, ffi.Pointer<ffi.Int>)>();
 
   void font_set_ppem(ffi.Pointer<hb_font> font, int x_ppem, int y_ppem) {
     return _font_set_ppem(font, x_ppem, y_ppem);
@@ -2073,16 +2053,14 @@ class HarfbuzzLibrary {
     return _font_get_ppem(font, x_ppem, y_ppem);
   }
 
-  late final _font_get_ppemPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.UnsignedInt>, ffi.Pointer<ffi.UnsignedInt>)
-    >
-  >('hb_font_get_ppem');
-  late final _font_get_ppem =
-      _font_get_ppemPtr
-          .asFunction<
-            void Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.UnsignedInt>, ffi.Pointer<ffi.UnsignedInt>)
-          >();
+  late final _font_get_ppemPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.UnsignedInt>, ffi.Pointer<ffi.UnsignedInt>)
+        >
+      >('hb_font_get_ppem');
+  late final _font_get_ppem = _font_get_ppemPtr
+      .asFunction<void Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.UnsignedInt>, ffi.Pointer<ffi.UnsignedInt>)>();
 
   void font_set_ptem(ffi.Pointer<hb_font> font, double ptem) {
     return _font_set_ptem(font, ptem);
@@ -2108,8 +2086,8 @@ class HarfbuzzLibrary {
 
   late final _font_set_synthetic_slantPtr =
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_font>, ffi.Float)>>('hb_font_set_synthetic_slant');
-  late final _font_set_synthetic_slant =
-      _font_set_synthetic_slantPtr.asFunction<void Function(ffi.Pointer<hb_font>, double)>();
+  late final _font_set_synthetic_slant = _font_set_synthetic_slantPtr
+      .asFunction<void Function(ffi.Pointer<hb_font>, double)>();
 
   double font_get_synthetic_slant(ffi.Pointer<hb_font> font) {
     return _font_get_synthetic_slant(font);
@@ -2118,8 +2096,8 @@ class HarfbuzzLibrary {
   late final _font_get_synthetic_slantPtr = _lookup<ffi.NativeFunction<ffi.Float Function(ffi.Pointer<hb_font>)>>(
     'hb_font_get_synthetic_slant',
   );
-  late final _font_get_synthetic_slant =
-      _font_get_synthetic_slantPtr.asFunction<double Function(ffi.Pointer<hb_font>)>();
+  late final _font_get_synthetic_slant = _font_get_synthetic_slantPtr
+      .asFunction<double Function(ffi.Pointer<hb_font>)>();
 
   void font_set_variations(ffi.Pointer<hb_font> font, ffi.Pointer<hb_variation> variations, int variations_length) {
     return _font_set_variations(font, variations, variations_length);
@@ -2129,8 +2107,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_font>, ffi.Pointer<hb_variation>, ffi.UnsignedInt)>>(
         'hb_font_set_variations',
       );
-  late final _font_set_variations =
-      _font_set_variationsPtr.asFunction<void Function(ffi.Pointer<hb_font>, ffi.Pointer<hb_variation>, int)>();
+  late final _font_set_variations = _font_set_variationsPtr
+      .asFunction<void Function(ffi.Pointer<hb_font>, ffi.Pointer<hb_variation>, int)>();
 
   void font_set_var_coords_design(ffi.Pointer<hb_font> font, ffi.Pointer<ffi.Float> coords, int coords_length) {
     return _font_set_var_coords_design(font, coords, coords_length);
@@ -2140,8 +2118,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.Float>, ffi.UnsignedInt)>>(
         'hb_font_set_var_coords_design',
       );
-  late final _font_set_var_coords_design =
-      _font_set_var_coords_designPtr.asFunction<void Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.Float>, int)>();
+  late final _font_set_var_coords_design = _font_set_var_coords_designPtr
+      .asFunction<void Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.Float>, int)>();
 
   ffi.Pointer<ffi.Float> font_get_var_coords_design(ffi.Pointer<hb_font> font, ffi.Pointer<ffi.UnsignedInt> length) {
     return _font_get_var_coords_design(font, length);
@@ -2151,9 +2129,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Float> Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.UnsignedInt>)>>(
         'hb_font_get_var_coords_design',
       );
-  late final _font_get_var_coords_design =
-      _font_get_var_coords_designPtr
-          .asFunction<ffi.Pointer<ffi.Float> Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.UnsignedInt>)>();
+  late final _font_get_var_coords_design = _font_get_var_coords_designPtr
+      .asFunction<ffi.Pointer<ffi.Float> Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.UnsignedInt>)>();
 
   void font_set_var_coords_normalized(ffi.Pointer<hb_font> font, ffi.Pointer<ffi.Int> coords, int coords_length) {
     return _font_set_var_coords_normalized(font, coords, coords_length);
@@ -2163,8 +2140,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.Int>, ffi.UnsignedInt)>>(
         'hb_font_set_var_coords_normalized',
       );
-  late final _font_set_var_coords_normalized =
-      _font_set_var_coords_normalizedPtr.asFunction<void Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.Int>, int)>();
+  late final _font_set_var_coords_normalized = _font_set_var_coords_normalizedPtr
+      .asFunction<void Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.Int>, int)>();
 
   ffi.Pointer<ffi.Int> font_get_var_coords_normalized(ffi.Pointer<hb_font> font, ffi.Pointer<ffi.UnsignedInt> length) {
     return _font_get_var_coords_normalized(font, length);
@@ -2174,9 +2151,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Int> Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.UnsignedInt>)>>(
         'hb_font_get_var_coords_normalized',
       );
-  late final _font_get_var_coords_normalized =
-      _font_get_var_coords_normalizedPtr
-          .asFunction<ffi.Pointer<ffi.Int> Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.UnsignedInt>)>();
+  late final _font_get_var_coords_normalized = _font_get_var_coords_normalizedPtr
+      .asFunction<ffi.Pointer<ffi.Int> Function(ffi.Pointer<hb_font>, ffi.Pointer<ffi.UnsignedInt>)>();
 
   void font_set_var_named_instance(ffi.Pointer<hb_font> font, int instance_index) {
     return _font_set_var_named_instance(font, instance_index);
@@ -2186,8 +2162,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_font>, ffi.UnsignedInt)>>(
         'hb_font_set_var_named_instance',
       );
-  late final _font_set_var_named_instance =
-      _font_set_var_named_instancePtr.asFunction<void Function(ffi.Pointer<hb_font>, int)>();
+  late final _font_set_var_named_instance = _font_set_var_named_instancePtr
+      .asFunction<void Function(ffi.Pointer<hb_font>, int)>();
 
   int glyph_info_get_glyph_flags(ffi.Pointer<hb_glyph_info> info) {
     return _glyph_info_get_glyph_flags(info);
@@ -2195,19 +2171,19 @@ class HarfbuzzLibrary {
 
   late final _glyph_info_get_glyph_flagsPtr =
       _lookup<ffi.NativeFunction<ffi.Int32 Function(ffi.Pointer<hb_glyph_info>)>>('hb_glyph_info_get_glyph_flags');
-  late final _glyph_info_get_glyph_flags =
-      _glyph_info_get_glyph_flagsPtr.asFunction<int Function(ffi.Pointer<hb_glyph_info>)>();
+  late final _glyph_info_get_glyph_flags = _glyph_info_get_glyph_flagsPtr
+      .asFunction<int Function(ffi.Pointer<hb_glyph_info>)>();
 
   int segment_properties_equal(ffi.Pointer<hb_segment_properties> a, ffi.Pointer<hb_segment_properties> b) {
     return _segment_properties_equal(a, b);
   }
 
-  late final _segment_properties_equalPtr = _lookup<
-    ffi.NativeFunction<hb_bool Function(ffi.Pointer<hb_segment_properties>, ffi.Pointer<hb_segment_properties>)>
-  >('hb_segment_properties_equal');
-  late final _segment_properties_equal =
-      _segment_properties_equalPtr
-          .asFunction<int Function(ffi.Pointer<hb_segment_properties>, ffi.Pointer<hb_segment_properties>)>();
+  late final _segment_properties_equalPtr =
+      _lookup<
+        ffi.NativeFunction<hb_bool Function(ffi.Pointer<hb_segment_properties>, ffi.Pointer<hb_segment_properties>)>
+      >('hb_segment_properties_equal');
+  late final _segment_properties_equal = _segment_properties_equalPtr
+      .asFunction<int Function(ffi.Pointer<hb_segment_properties>, ffi.Pointer<hb_segment_properties>)>();
 
   int segment_properties_hash(ffi.Pointer<hb_segment_properties> p) {
     return _segment_properties_hash(p);
@@ -2217,19 +2193,19 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.UnsignedInt Function(ffi.Pointer<hb_segment_properties>)>>(
         'hb_segment_properties_hash',
       );
-  late final _segment_properties_hash =
-      _segment_properties_hashPtr.asFunction<int Function(ffi.Pointer<hb_segment_properties>)>();
+  late final _segment_properties_hash = _segment_properties_hashPtr
+      .asFunction<int Function(ffi.Pointer<hb_segment_properties>)>();
 
   void segment_properties_overlay(ffi.Pointer<hb_segment_properties> p, ffi.Pointer<hb_segment_properties> src) {
     return _segment_properties_overlay(p, src);
   }
 
-  late final _segment_properties_overlayPtr = _lookup<
-    ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_segment_properties>, ffi.Pointer<hb_segment_properties>)>
-  >('hb_segment_properties_overlay');
-  late final _segment_properties_overlay =
-      _segment_properties_overlayPtr
-          .asFunction<void Function(ffi.Pointer<hb_segment_properties>, ffi.Pointer<hb_segment_properties>)>();
+  late final _segment_properties_overlayPtr =
+      _lookup<
+        ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_segment_properties>, ffi.Pointer<hb_segment_properties>)>
+      >('hb_segment_properties_overlay');
+  late final _segment_properties_overlay = _segment_properties_overlayPtr
+      .asFunction<void Function(ffi.Pointer<hb_segment_properties>, ffi.Pointer<hb_segment_properties>)>();
 
   ffi.Pointer<hb_buffer> buffer_create() {
     return _buffer_create();
@@ -2244,8 +2220,8 @@ class HarfbuzzLibrary {
 
   late final _buffer_create_similarPtr =
       _lookup<ffi.NativeFunction<ffi.Pointer<hb_buffer> Function(ffi.Pointer<hb_buffer>)>>('hb_buffer_create_similar');
-  late final _buffer_create_similar =
-      _buffer_create_similarPtr.asFunction<ffi.Pointer<hb_buffer> Function(ffi.Pointer<hb_buffer>)>();
+  late final _buffer_create_similar = _buffer_create_similarPtr
+      .asFunction<ffi.Pointer<hb_buffer> Function(ffi.Pointer<hb_buffer>)>();
 
   void buffer_reset(ffi.Pointer<hb_buffer> buffer) {
     return _buffer_reset(buffer);
@@ -2271,8 +2247,8 @@ class HarfbuzzLibrary {
 
   late final _buffer_referencePtr =
       _lookup<ffi.NativeFunction<ffi.Pointer<hb_buffer> Function(ffi.Pointer<hb_buffer>)>>('hb_buffer_reference');
-  late final _buffer_reference =
-      _buffer_referencePtr.asFunction<ffi.Pointer<hb_buffer> Function(ffi.Pointer<hb_buffer>)>();
+  late final _buffer_reference = _buffer_referencePtr
+      .asFunction<ffi.Pointer<hb_buffer> Function(ffi.Pointer<hb_buffer>)>();
 
   void buffer_destroy(ffi.Pointer<hb_buffer> buffer) {
     return _buffer_destroy(buffer);
@@ -2293,39 +2269,33 @@ class HarfbuzzLibrary {
     return _buffer_set_user_data(buffer, key, data, destroy, replace);
   }
 
-  late final _buffer_set_user_dataPtr = _lookup<
-    ffi.NativeFunction<
-      hb_bool Function(
-        ffi.Pointer<hb_buffer>,
-        ffi.Pointer<hb_user_data_key>,
-        ffi.Pointer<ffi.Void>,
-        hb_destroy_func,
-        hb_bool,
-      )
-    >
-  >('hb_buffer_set_user_data');
-  late final _buffer_set_user_data =
-      _buffer_set_user_dataPtr
-          .asFunction<
-            int Function(
-              ffi.Pointer<hb_buffer>,
-              ffi.Pointer<hb_user_data_key>,
-              ffi.Pointer<ffi.Void>,
-              hb_destroy_func,
-              int,
-            )
-          >();
+  late final _buffer_set_user_dataPtr =
+      _lookup<
+        ffi.NativeFunction<
+          hb_bool Function(
+            ffi.Pointer<hb_buffer>,
+            ffi.Pointer<hb_user_data_key>,
+            ffi.Pointer<ffi.Void>,
+            hb_destroy_func,
+            hb_bool,
+          )
+        >
+      >('hb_buffer_set_user_data');
+  late final _buffer_set_user_data = _buffer_set_user_dataPtr
+      .asFunction<
+        int Function(ffi.Pointer<hb_buffer>, ffi.Pointer<hb_user_data_key>, ffi.Pointer<ffi.Void>, hb_destroy_func, int)
+      >();
 
   ffi.Pointer<ffi.Void> buffer_get_user_data(ffi.Pointer<hb_buffer> buffer, ffi.Pointer<hb_user_data_key> key) {
     return _buffer_get_user_data(buffer, key);
   }
 
-  late final _buffer_get_user_dataPtr = _lookup<
-    ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<hb_buffer>, ffi.Pointer<hb_user_data_key>)>
-  >('hb_buffer_get_user_data');
-  late final _buffer_get_user_data =
-      _buffer_get_user_dataPtr
-          .asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<hb_buffer>, ffi.Pointer<hb_user_data_key>)>();
+  late final _buffer_get_user_dataPtr =
+      _lookup<
+        ffi.NativeFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<hb_buffer>, ffi.Pointer<hb_user_data_key>)>
+      >('hb_buffer_get_user_data');
+  late final _buffer_get_user_data = _buffer_get_user_dataPtr
+      .asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<hb_buffer>, ffi.Pointer<hb_user_data_key>)>();
 
   void buffer_set_content_type(ffi.Pointer<hb_buffer> buffer, int content_type) {
     return _buffer_set_content_type(buffer, content_type);
@@ -2333,8 +2303,8 @@ class HarfbuzzLibrary {
 
   late final _buffer_set_content_typePtr =
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_buffer>, ffi.Int32)>>('hb_buffer_set_content_type');
-  late final _buffer_set_content_type =
-      _buffer_set_content_typePtr.asFunction<void Function(ffi.Pointer<hb_buffer>, int)>();
+  late final _buffer_set_content_type = _buffer_set_content_typePtr
+      .asFunction<void Function(ffi.Pointer<hb_buffer>, int)>();
 
   int buffer_get_content_type(ffi.Pointer<hb_buffer> buffer) {
     return _buffer_get_content_type(buffer);
@@ -2353,8 +2323,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<hb_unicode_funcs>)>>(
         'hb_buffer_set_unicode_funcs',
       );
-  late final _buffer_set_unicode_funcs =
-      _buffer_set_unicode_funcsPtr.asFunction<void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<hb_unicode_funcs>)>();
+  late final _buffer_set_unicode_funcs = _buffer_set_unicode_funcsPtr
+      .asFunction<void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<hb_unicode_funcs>)>();
 
   ffi.Pointer<hb_unicode_funcs> buffer_get_unicode_funcs(ffi.Pointer<hb_buffer> buffer) {
     return _buffer_get_unicode_funcs(buffer);
@@ -2364,8 +2334,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Pointer<hb_unicode_funcs> Function(ffi.Pointer<hb_buffer>)>>(
         'hb_buffer_get_unicode_funcs',
       );
-  late final _buffer_get_unicode_funcs =
-      _buffer_get_unicode_funcsPtr.asFunction<ffi.Pointer<hb_unicode_funcs> Function(ffi.Pointer<hb_buffer>)>();
+  late final _buffer_get_unicode_funcs = _buffer_get_unicode_funcsPtr
+      .asFunction<ffi.Pointer<hb_unicode_funcs> Function(ffi.Pointer<hb_buffer>)>();
 
   void buffer_set_direction(ffi.Pointer<hb_buffer> buffer, int direction) {
     return _buffer_set_direction(buffer, direction);
@@ -2408,8 +2378,8 @@ class HarfbuzzLibrary {
 
   late final _buffer_set_languagePtr =
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_buffer>, hb_language)>>('hb_buffer_set_language');
-  late final _buffer_set_language =
-      _buffer_set_languagePtr.asFunction<void Function(ffi.Pointer<hb_buffer>, hb_language)>();
+  late final _buffer_set_language = _buffer_set_languagePtr
+      .asFunction<void Function(ffi.Pointer<hb_buffer>, hb_language)>();
 
   hb_language buffer_get_language(ffi.Pointer<hb_buffer> buffer) {
     return _buffer_get_language(buffer);
@@ -2428,9 +2398,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<hb_segment_properties>)>>(
         'hb_buffer_set_segment_properties',
       );
-  late final _buffer_set_segment_properties =
-      _buffer_set_segment_propertiesPtr
-          .asFunction<void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<hb_segment_properties>)>();
+  late final _buffer_set_segment_properties = _buffer_set_segment_propertiesPtr
+      .asFunction<void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<hb_segment_properties>)>();
 
   void buffer_get_segment_properties(ffi.Pointer<hb_buffer> buffer, ffi.Pointer<hb_segment_properties> props) {
     return _buffer_get_segment_properties(buffer, props);
@@ -2440,9 +2409,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<hb_segment_properties>)>>(
         'hb_buffer_get_segment_properties',
       );
-  late final _buffer_get_segment_properties =
-      _buffer_get_segment_propertiesPtr
-          .asFunction<void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<hb_segment_properties>)>();
+  late final _buffer_get_segment_properties = _buffer_get_segment_propertiesPtr
+      .asFunction<void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<hb_segment_properties>)>();
 
   void buffer_guess_segment_properties(ffi.Pointer<hb_buffer> buffer) {
     return _buffer_guess_segment_properties(buffer);
@@ -2450,8 +2418,8 @@ class HarfbuzzLibrary {
 
   late final _buffer_guess_segment_propertiesPtr =
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_buffer>)>>('hb_buffer_guess_segment_properties');
-  late final _buffer_guess_segment_properties =
-      _buffer_guess_segment_propertiesPtr.asFunction<void Function(ffi.Pointer<hb_buffer>)>();
+  late final _buffer_guess_segment_properties = _buffer_guess_segment_propertiesPtr
+      .asFunction<void Function(ffi.Pointer<hb_buffer>)>();
 
   void buffer_set_flags(ffi.Pointer<hb_buffer> buffer, int flags) {
     return _buffer_set_flags(buffer, flags);
@@ -2477,8 +2445,8 @@ class HarfbuzzLibrary {
 
   late final _buffer_set_cluster_levelPtr =
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_buffer>, ffi.Int32)>>('hb_buffer_set_cluster_level');
-  late final _buffer_set_cluster_level =
-      _buffer_set_cluster_levelPtr.asFunction<void Function(ffi.Pointer<hb_buffer>, int)>();
+  late final _buffer_set_cluster_level = _buffer_set_cluster_levelPtr
+      .asFunction<void Function(ffi.Pointer<hb_buffer>, int)>();
 
   int buffer_get_cluster_level(ffi.Pointer<hb_buffer> buffer) {
     return _buffer_get_cluster_level(buffer);
@@ -2487,8 +2455,8 @@ class HarfbuzzLibrary {
   late final _buffer_get_cluster_levelPtr = _lookup<ffi.NativeFunction<ffi.Int32 Function(ffi.Pointer<hb_buffer>)>>(
     'hb_buffer_get_cluster_level',
   );
-  late final _buffer_get_cluster_level =
-      _buffer_get_cluster_levelPtr.asFunction<int Function(ffi.Pointer<hb_buffer>)>();
+  late final _buffer_get_cluster_level = _buffer_get_cluster_levelPtr
+      .asFunction<int Function(ffi.Pointer<hb_buffer>)>();
 
   void buffer_set_replacement_codepoint(ffi.Pointer<hb_buffer> buffer, int replacement) {
     return _buffer_set_replacement_codepoint(buffer, replacement);
@@ -2498,8 +2466,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_buffer>, hb_codepoint)>>(
         'hb_buffer_set_replacement_codepoint',
       );
-  late final _buffer_set_replacement_codepoint =
-      _buffer_set_replacement_codepointPtr.asFunction<void Function(ffi.Pointer<hb_buffer>, int)>();
+  late final _buffer_set_replacement_codepoint = _buffer_set_replacement_codepointPtr
+      .asFunction<void Function(ffi.Pointer<hb_buffer>, int)>();
 
   int buffer_get_replacement_codepoint(ffi.Pointer<hb_buffer> buffer) {
     return _buffer_get_replacement_codepoint(buffer);
@@ -2507,8 +2475,8 @@ class HarfbuzzLibrary {
 
   late final _buffer_get_replacement_codepointPtr =
       _lookup<ffi.NativeFunction<hb_codepoint Function(ffi.Pointer<hb_buffer>)>>('hb_buffer_get_replacement_codepoint');
-  late final _buffer_get_replacement_codepoint =
-      _buffer_get_replacement_codepointPtr.asFunction<int Function(ffi.Pointer<hb_buffer>)>();
+  late final _buffer_get_replacement_codepoint = _buffer_get_replacement_codepointPtr
+      .asFunction<int Function(ffi.Pointer<hb_buffer>)>();
 
   void buffer_set_invisible_glyph(ffi.Pointer<hb_buffer> buffer, int invisible) {
     return _buffer_set_invisible_glyph(buffer, invisible);
@@ -2518,8 +2486,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_buffer>, hb_codepoint)>>(
         'hb_buffer_set_invisible_glyph',
       );
-  late final _buffer_set_invisible_glyph =
-      _buffer_set_invisible_glyphPtr.asFunction<void Function(ffi.Pointer<hb_buffer>, int)>();
+  late final _buffer_set_invisible_glyph = _buffer_set_invisible_glyphPtr
+      .asFunction<void Function(ffi.Pointer<hb_buffer>, int)>();
 
   int buffer_get_invisible_glyph(ffi.Pointer<hb_buffer> buffer) {
     return _buffer_get_invisible_glyph(buffer);
@@ -2527,8 +2495,8 @@ class HarfbuzzLibrary {
 
   late final _buffer_get_invisible_glyphPtr =
       _lookup<ffi.NativeFunction<hb_codepoint Function(ffi.Pointer<hb_buffer>)>>('hb_buffer_get_invisible_glyph');
-  late final _buffer_get_invisible_glyph =
-      _buffer_get_invisible_glyphPtr.asFunction<int Function(ffi.Pointer<hb_buffer>)>();
+  late final _buffer_get_invisible_glyph = _buffer_get_invisible_glyphPtr
+      .asFunction<int Function(ffi.Pointer<hb_buffer>)>();
 
   void buffer_set_not_found_glyph(ffi.Pointer<hb_buffer> buffer, int not_found) {
     return _buffer_set_not_found_glyph(buffer, not_found);
@@ -2538,8 +2506,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_buffer>, hb_codepoint)>>(
         'hb_buffer_set_not_found_glyph',
       );
-  late final _buffer_set_not_found_glyph =
-      _buffer_set_not_found_glyphPtr.asFunction<void Function(ffi.Pointer<hb_buffer>, int)>();
+  late final _buffer_set_not_found_glyph = _buffer_set_not_found_glyphPtr
+      .asFunction<void Function(ffi.Pointer<hb_buffer>, int)>();
 
   int buffer_get_not_found_glyph(ffi.Pointer<hb_buffer> buffer) {
     return _buffer_get_not_found_glyph(buffer);
@@ -2547,8 +2515,8 @@ class HarfbuzzLibrary {
 
   late final _buffer_get_not_found_glyphPtr =
       _lookup<ffi.NativeFunction<hb_codepoint Function(ffi.Pointer<hb_buffer>)>>('hb_buffer_get_not_found_glyph');
-  late final _buffer_get_not_found_glyph =
-      _buffer_get_not_found_glyphPtr.asFunction<int Function(ffi.Pointer<hb_buffer>)>();
+  late final _buffer_get_not_found_glyph = _buffer_get_not_found_glyphPtr
+      .asFunction<int Function(ffi.Pointer<hb_buffer>)>();
 
   void buffer_clear_contents(ffi.Pointer<hb_buffer> buffer) {
     return _buffer_clear_contents(buffer);
@@ -2574,8 +2542,8 @@ class HarfbuzzLibrary {
   late final _buffer_allocation_successfulPtr = _lookup<ffi.NativeFunction<hb_bool Function(ffi.Pointer<hb_buffer>)>>(
     'hb_buffer_allocation_successful',
   );
-  late final _buffer_allocation_successful =
-      _buffer_allocation_successfulPtr.asFunction<int Function(ffi.Pointer<hb_buffer>)>();
+  late final _buffer_allocation_successful = _buffer_allocation_successfulPtr
+      .asFunction<int Function(ffi.Pointer<hb_buffer>)>();
 
   void buffer_reverse(ffi.Pointer<hb_buffer> buffer) {
     return _buffer_reverse(buffer);
@@ -2594,8 +2562,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_buffer>, ffi.UnsignedInt, ffi.UnsignedInt)>>(
         'hb_buffer_reverse_range',
       );
-  late final _buffer_reverse_range =
-      _buffer_reverse_rangePtr.asFunction<void Function(ffi.Pointer<hb_buffer>, int, int)>();
+  late final _buffer_reverse_range = _buffer_reverse_rangePtr
+      .asFunction<void Function(ffi.Pointer<hb_buffer>, int, int)>();
 
   void buffer_reverse_clusters(ffi.Pointer<hb_buffer> buffer) {
     return _buffer_reverse_clusters(buffer);
@@ -2626,13 +2594,14 @@ class HarfbuzzLibrary {
     return _buffer_add_utf8(buffer, text, text_length, item_offset, item_length);
   }
 
-  late final _buffer_add_utf8Ptr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<ffi.Char>, ffi.Int, ffi.UnsignedInt, ffi.Int)
-    >
-  >('hb_buffer_add_utf8');
-  late final _buffer_add_utf8 =
-      _buffer_add_utf8Ptr.asFunction<void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<ffi.Char>, int, int, int)>();
+  late final _buffer_add_utf8Ptr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<ffi.Char>, ffi.Int, ffi.UnsignedInt, ffi.Int)
+        >
+      >('hb_buffer_add_utf8');
+  late final _buffer_add_utf8 = _buffer_add_utf8Ptr
+      .asFunction<void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<ffi.Char>, int, int, int)>();
 
   void buffer_add_utf16(
     ffi.Pointer<hb_buffer> buffer,
@@ -2644,13 +2613,14 @@ class HarfbuzzLibrary {
     return _buffer_add_utf16(buffer, text, text_length, item_offset, item_length);
   }
 
-  late final _buffer_add_utf16Ptr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<ffi.Uint16>, ffi.Int, ffi.UnsignedInt, ffi.Int)
-    >
-  >('hb_buffer_add_utf16');
-  late final _buffer_add_utf16 =
-      _buffer_add_utf16Ptr.asFunction<void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<ffi.Uint16>, int, int, int)>();
+  late final _buffer_add_utf16Ptr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<ffi.Uint16>, ffi.Int, ffi.UnsignedInt, ffi.Int)
+        >
+      >('hb_buffer_add_utf16');
+  late final _buffer_add_utf16 = _buffer_add_utf16Ptr
+      .asFunction<void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<ffi.Uint16>, int, int, int)>();
 
   void buffer_add_utf32(
     ffi.Pointer<hb_buffer> buffer,
@@ -2662,13 +2632,14 @@ class HarfbuzzLibrary {
     return _buffer_add_utf32(buffer, text, text_length, item_offset, item_length);
   }
 
-  late final _buffer_add_utf32Ptr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<ffi.Uint32>, ffi.Int, ffi.UnsignedInt, ffi.Int)
-    >
-  >('hb_buffer_add_utf32');
-  late final _buffer_add_utf32 =
-      _buffer_add_utf32Ptr.asFunction<void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<ffi.Uint32>, int, int, int)>();
+  late final _buffer_add_utf32Ptr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<ffi.Uint32>, ffi.Int, ffi.UnsignedInt, ffi.Int)
+        >
+      >('hb_buffer_add_utf32');
+  late final _buffer_add_utf32 = _buffer_add_utf32Ptr
+      .asFunction<void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<ffi.Uint32>, int, int, int)>();
 
   void buffer_add_latin1(
     ffi.Pointer<hb_buffer> buffer,
@@ -2680,13 +2651,14 @@ class HarfbuzzLibrary {
     return _buffer_add_latin1(buffer, text, text_length, item_offset, item_length);
   }
 
-  late final _buffer_add_latin1Ptr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<ffi.Uint8>, ffi.Int, ffi.UnsignedInt, ffi.Int)
-    >
-  >('hb_buffer_add_latin1');
-  late final _buffer_add_latin1 =
-      _buffer_add_latin1Ptr.asFunction<void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<ffi.Uint8>, int, int, int)>();
+  late final _buffer_add_latin1Ptr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<ffi.Uint8>, ffi.Int, ffi.UnsignedInt, ffi.Int)
+        >
+      >('hb_buffer_add_latin1');
+  late final _buffer_add_latin1 = _buffer_add_latin1Ptr
+      .asFunction<void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<ffi.Uint8>, int, int, int)>();
 
   void buffer_add_codepoints(
     ffi.Pointer<hb_buffer> buffer,
@@ -2698,26 +2670,27 @@ class HarfbuzzLibrary {
     return _buffer_add_codepoints(buffer, text, text_length, item_offset, item_length);
   }
 
-  late final _buffer_add_codepointsPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<hb_codepoint>, ffi.Int, ffi.UnsignedInt, ffi.Int)
-    >
-  >('hb_buffer_add_codepoints');
-  late final _buffer_add_codepoints =
-      _buffer_add_codepointsPtr
-          .asFunction<void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<hb_codepoint>, int, int, int)>();
+  late final _buffer_add_codepointsPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<hb_codepoint>, ffi.Int, ffi.UnsignedInt, ffi.Int)
+        >
+      >('hb_buffer_add_codepoints');
+  late final _buffer_add_codepoints = _buffer_add_codepointsPtr
+      .asFunction<void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<hb_codepoint>, int, int, int)>();
 
   void buffer_append(ffi.Pointer<hb_buffer> buffer, ffi.Pointer<hb_buffer> source, int start, int end) {
     return _buffer_append(buffer, source, start, end);
   }
 
-  late final _buffer_appendPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<hb_buffer>, ffi.UnsignedInt, ffi.UnsignedInt)
-    >
-  >('hb_buffer_append');
-  late final _buffer_append =
-      _buffer_appendPtr.asFunction<void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<hb_buffer>, int, int)>();
+  late final _buffer_appendPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<hb_buffer>, ffi.UnsignedInt, ffi.UnsignedInt)
+        >
+      >('hb_buffer_append');
+  late final _buffer_append = _buffer_appendPtr
+      .asFunction<void Function(ffi.Pointer<hb_buffer>, ffi.Pointer<hb_buffer>, int, int)>();
 
   int buffer_set_length(ffi.Pointer<hb_buffer> buffer, int length) {
     return _buffer_set_length(buffer, length);
@@ -2743,12 +2716,12 @@ class HarfbuzzLibrary {
     return _buffer_get_glyph_infos(buffer, length);
   }
 
-  late final _buffer_get_glyph_infosPtr = _lookup<
-    ffi.NativeFunction<ffi.Pointer<hb_glyph_info> Function(ffi.Pointer<hb_buffer>, ffi.Pointer<ffi.UnsignedInt>)>
-  >('hb_buffer_get_glyph_infos');
-  late final _buffer_get_glyph_infos =
-      _buffer_get_glyph_infosPtr
-          .asFunction<ffi.Pointer<hb_glyph_info> Function(ffi.Pointer<hb_buffer>, ffi.Pointer<ffi.UnsignedInt>)>();
+  late final _buffer_get_glyph_infosPtr =
+      _lookup<
+        ffi.NativeFunction<ffi.Pointer<hb_glyph_info> Function(ffi.Pointer<hb_buffer>, ffi.Pointer<ffi.UnsignedInt>)>
+      >('hb_buffer_get_glyph_infos');
+  late final _buffer_get_glyph_infos = _buffer_get_glyph_infosPtr
+      .asFunction<ffi.Pointer<hb_glyph_info> Function(ffi.Pointer<hb_buffer>, ffi.Pointer<ffi.UnsignedInt>)>();
 
   ffi.Pointer<hb_glyph_position> buffer_get_glyph_positions(
     ffi.Pointer<hb_buffer> buffer,
@@ -2757,12 +2730,14 @@ class HarfbuzzLibrary {
     return _buffer_get_glyph_positions(buffer, length);
   }
 
-  late final _buffer_get_glyph_positionsPtr = _lookup<
-    ffi.NativeFunction<ffi.Pointer<hb_glyph_position> Function(ffi.Pointer<hb_buffer>, ffi.Pointer<ffi.UnsignedInt>)>
-  >('hb_buffer_get_glyph_positions');
-  late final _buffer_get_glyph_positions =
-      _buffer_get_glyph_positionsPtr
-          .asFunction<ffi.Pointer<hb_glyph_position> Function(ffi.Pointer<hb_buffer>, ffi.Pointer<ffi.UnsignedInt>)>();
+  late final _buffer_get_glyph_positionsPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Pointer<hb_glyph_position> Function(ffi.Pointer<hb_buffer>, ffi.Pointer<ffi.UnsignedInt>)
+        >
+      >('hb_buffer_get_glyph_positions');
+  late final _buffer_get_glyph_positions = _buffer_get_glyph_positionsPtr
+      .asFunction<ffi.Pointer<hb_glyph_position> Function(ffi.Pointer<hb_buffer>, ffi.Pointer<ffi.UnsignedInt>)>();
 
   int buffer_has_positions(ffi.Pointer<hb_buffer> buffer) {
     return _buffer_has_positions(buffer);
@@ -2790,8 +2765,8 @@ class HarfbuzzLibrary {
       _lookup<ffi.NativeFunction<ffi.Int32 Function(ffi.Pointer<ffi.Char>, ffi.Int)>>(
         'hb_buffer_serialize_format_from_string',
       );
-  late final _buffer_serialize_format_from_string =
-      _buffer_serialize_format_from_stringPtr.asFunction<int Function(ffi.Pointer<ffi.Char>, int)>();
+  late final _buffer_serialize_format_from_string = _buffer_serialize_format_from_stringPtr
+      .asFunction<int Function(ffi.Pointer<ffi.Char>, int)>();
 
   ffi.Pointer<ffi.Char> buffer_serialize_format_to_string(int format) {
     return _buffer_serialize_format_to_string(format);
@@ -2799,8 +2774,8 @@ class HarfbuzzLibrary {
 
   late final _buffer_serialize_format_to_stringPtr =
       _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Char> Function(ffi.Int32)>>('hb_buffer_serialize_format_to_string');
-  late final _buffer_serialize_format_to_string =
-      _buffer_serialize_format_to_stringPtr.asFunction<ffi.Pointer<ffi.Char> Function(int)>();
+  late final _buffer_serialize_format_to_string = _buffer_serialize_format_to_stringPtr
+      .asFunction<ffi.Pointer<ffi.Char> Function(int)>();
 
   ffi.Pointer<ffi.Pointer<ffi.Char>> buffer_serialize_list_formats() {
     return _buffer_serialize_list_formats();
@@ -2808,8 +2783,8 @@ class HarfbuzzLibrary {
 
   late final _buffer_serialize_list_formatsPtr =
       _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Pointer<ffi.Char>> Function()>>('hb_buffer_serialize_list_formats');
-  late final _buffer_serialize_list_formats =
-      _buffer_serialize_list_formatsPtr.asFunction<ffi.Pointer<ffi.Pointer<ffi.Char>> Function()>();
+  late final _buffer_serialize_list_formats = _buffer_serialize_list_formatsPtr
+      .asFunction<ffi.Pointer<ffi.Pointer<ffi.Char>> Function()>();
 
   int buffer_serialize_glyphs(
     ffi.Pointer<hb_buffer> buffer,
@@ -2825,36 +2800,36 @@ class HarfbuzzLibrary {
     return _buffer_serialize_glyphs(buffer, start, end, buf, buf_size, buf_consumed, font, format, flags);
   }
 
-  late final _buffer_serialize_glyphsPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.UnsignedInt Function(
-        ffi.Pointer<hb_buffer>,
-        ffi.UnsignedInt,
-        ffi.UnsignedInt,
-        ffi.Pointer<ffi.Char>,
-        ffi.UnsignedInt,
-        ffi.Pointer<ffi.UnsignedInt>,
-        ffi.Pointer<hb_font>,
-        ffi.Int32,
-        ffi.Int32,
-      )
-    >
-  >('hb_buffer_serialize_glyphs');
-  late final _buffer_serialize_glyphs =
-      _buffer_serialize_glyphsPtr
-          .asFunction<
-            int Function(
-              ffi.Pointer<hb_buffer>,
-              int,
-              int,
-              ffi.Pointer<ffi.Char>,
-              int,
-              ffi.Pointer<ffi.UnsignedInt>,
-              ffi.Pointer<hb_font>,
-              int,
-              int,
-            )
-          >();
+  late final _buffer_serialize_glyphsPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.UnsignedInt Function(
+            ffi.Pointer<hb_buffer>,
+            ffi.UnsignedInt,
+            ffi.UnsignedInt,
+            ffi.Pointer<ffi.Char>,
+            ffi.UnsignedInt,
+            ffi.Pointer<ffi.UnsignedInt>,
+            ffi.Pointer<hb_font>,
+            ffi.Int32,
+            ffi.Int32,
+          )
+        >
+      >('hb_buffer_serialize_glyphs');
+  late final _buffer_serialize_glyphs = _buffer_serialize_glyphsPtr
+      .asFunction<
+        int Function(
+          ffi.Pointer<hb_buffer>,
+          int,
+          int,
+          ffi.Pointer<ffi.Char>,
+          int,
+          ffi.Pointer<ffi.UnsignedInt>,
+          ffi.Pointer<hb_font>,
+          int,
+          int,
+        )
+      >();
 
   int buffer_serialize_unicode(
     ffi.Pointer<hb_buffer> buffer,
@@ -2869,34 +2844,34 @@ class HarfbuzzLibrary {
     return _buffer_serialize_unicode(buffer, start, end, buf, buf_size, buf_consumed, format, flags);
   }
 
-  late final _buffer_serialize_unicodePtr = _lookup<
-    ffi.NativeFunction<
-      ffi.UnsignedInt Function(
-        ffi.Pointer<hb_buffer>,
-        ffi.UnsignedInt,
-        ffi.UnsignedInt,
-        ffi.Pointer<ffi.Char>,
-        ffi.UnsignedInt,
-        ffi.Pointer<ffi.UnsignedInt>,
-        ffi.Int32,
-        ffi.Int32,
-      )
-    >
-  >('hb_buffer_serialize_unicode');
-  late final _buffer_serialize_unicode =
-      _buffer_serialize_unicodePtr
-          .asFunction<
-            int Function(
-              ffi.Pointer<hb_buffer>,
-              int,
-              int,
-              ffi.Pointer<ffi.Char>,
-              int,
-              ffi.Pointer<ffi.UnsignedInt>,
-              int,
-              int,
-            )
-          >();
+  late final _buffer_serialize_unicodePtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.UnsignedInt Function(
+            ffi.Pointer<hb_buffer>,
+            ffi.UnsignedInt,
+            ffi.UnsignedInt,
+            ffi.Pointer<ffi.Char>,
+            ffi.UnsignedInt,
+            ffi.Pointer<ffi.UnsignedInt>,
+            ffi.Int32,
+            ffi.Int32,
+          )
+        >
+      >('hb_buffer_serialize_unicode');
+  late final _buffer_serialize_unicode = _buffer_serialize_unicodePtr
+      .asFunction<
+        int Function(
+          ffi.Pointer<hb_buffer>,
+          int,
+          int,
+          ffi.Pointer<ffi.Char>,
+          int,
+          ffi.Pointer<ffi.UnsignedInt>,
+          int,
+          int,
+        )
+      >();
 
   int buffer_serialize(
     ffi.Pointer<hb_buffer> buffer,
@@ -2912,36 +2887,36 @@ class HarfbuzzLibrary {
     return _buffer_serialize(buffer, start, end, buf, buf_size, buf_consumed, font, format, flags);
   }
 
-  late final _buffer_serializePtr = _lookup<
-    ffi.NativeFunction<
-      ffi.UnsignedInt Function(
-        ffi.Pointer<hb_buffer>,
-        ffi.UnsignedInt,
-        ffi.UnsignedInt,
-        ffi.Pointer<ffi.Char>,
-        ffi.UnsignedInt,
-        ffi.Pointer<ffi.UnsignedInt>,
-        ffi.Pointer<hb_font>,
-        ffi.Int32,
-        ffi.Int32,
-      )
-    >
-  >('hb_buffer_serialize');
-  late final _buffer_serialize =
-      _buffer_serializePtr
-          .asFunction<
-            int Function(
-              ffi.Pointer<hb_buffer>,
-              int,
-              int,
-              ffi.Pointer<ffi.Char>,
-              int,
-              ffi.Pointer<ffi.UnsignedInt>,
-              ffi.Pointer<hb_font>,
-              int,
-              int,
-            )
-          >();
+  late final _buffer_serializePtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.UnsignedInt Function(
+            ffi.Pointer<hb_buffer>,
+            ffi.UnsignedInt,
+            ffi.UnsignedInt,
+            ffi.Pointer<ffi.Char>,
+            ffi.UnsignedInt,
+            ffi.Pointer<ffi.UnsignedInt>,
+            ffi.Pointer<hb_font>,
+            ffi.Int32,
+            ffi.Int32,
+          )
+        >
+      >('hb_buffer_serialize');
+  late final _buffer_serialize = _buffer_serializePtr
+      .asFunction<
+        int Function(
+          ffi.Pointer<hb_buffer>,
+          int,
+          int,
+          ffi.Pointer<ffi.Char>,
+          int,
+          ffi.Pointer<ffi.UnsignedInt>,
+          ffi.Pointer<hb_font>,
+          int,
+          int,
+        )
+      >();
 
   int buffer_deserialize_glyphs(
     ffi.Pointer<hb_buffer> buffer,
@@ -2954,30 +2929,30 @@ class HarfbuzzLibrary {
     return _buffer_deserialize_glyphs(buffer, buf, buf_len, end_ptr, font, format);
   }
 
-  late final _buffer_deserialize_glyphsPtr = _lookup<
-    ffi.NativeFunction<
-      hb_bool Function(
-        ffi.Pointer<hb_buffer>,
-        ffi.Pointer<ffi.Char>,
-        ffi.Int,
-        ffi.Pointer<ffi.Pointer<ffi.Char>>,
-        ffi.Pointer<hb_font>,
-        ffi.Int32,
-      )
-    >
-  >('hb_buffer_deserialize_glyphs');
-  late final _buffer_deserialize_glyphs =
-      _buffer_deserialize_glyphsPtr
-          .asFunction<
-            int Function(
-              ffi.Pointer<hb_buffer>,
-              ffi.Pointer<ffi.Char>,
-              int,
-              ffi.Pointer<ffi.Pointer<ffi.Char>>,
-              ffi.Pointer<hb_font>,
-              int,
-            )
-          >();
+  late final _buffer_deserialize_glyphsPtr =
+      _lookup<
+        ffi.NativeFunction<
+          hb_bool Function(
+            ffi.Pointer<hb_buffer>,
+            ffi.Pointer<ffi.Char>,
+            ffi.Int,
+            ffi.Pointer<ffi.Pointer<ffi.Char>>,
+            ffi.Pointer<hb_font>,
+            ffi.Int32,
+          )
+        >
+      >('hb_buffer_deserialize_glyphs');
+  late final _buffer_deserialize_glyphs = _buffer_deserialize_glyphsPtr
+      .asFunction<
+        int Function(
+          ffi.Pointer<hb_buffer>,
+          ffi.Pointer<ffi.Char>,
+          int,
+          ffi.Pointer<ffi.Pointer<ffi.Char>>,
+          ffi.Pointer<hb_font>,
+          int,
+        )
+      >();
 
   int buffer_deserialize_unicode(
     ffi.Pointer<hb_buffer> buffer,
@@ -2989,22 +2964,22 @@ class HarfbuzzLibrary {
     return _buffer_deserialize_unicode(buffer, buf, buf_len, end_ptr, format);
   }
 
-  late final _buffer_deserialize_unicodePtr = _lookup<
-    ffi.NativeFunction<
-      hb_bool Function(
-        ffi.Pointer<hb_buffer>,
-        ffi.Pointer<ffi.Char>,
-        ffi.Int,
-        ffi.Pointer<ffi.Pointer<ffi.Char>>,
-        ffi.Int32,
-      )
-    >
-  >('hb_buffer_deserialize_unicode');
-  late final _buffer_deserialize_unicode =
-      _buffer_deserialize_unicodePtr
-          .asFunction<
-            int Function(ffi.Pointer<hb_buffer>, ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Pointer<ffi.Char>>, int)
-          >();
+  late final _buffer_deserialize_unicodePtr =
+      _lookup<
+        ffi.NativeFunction<
+          hb_bool Function(
+            ffi.Pointer<hb_buffer>,
+            ffi.Pointer<ffi.Char>,
+            ffi.Int,
+            ffi.Pointer<ffi.Pointer<ffi.Char>>,
+            ffi.Int32,
+          )
+        >
+      >('hb_buffer_deserialize_unicode');
+  late final _buffer_deserialize_unicode = _buffer_deserialize_unicodePtr
+      .asFunction<
+        int Function(ffi.Pointer<hb_buffer>, ffi.Pointer<ffi.Char>, int, ffi.Pointer<ffi.Pointer<ffi.Char>>, int)
+      >();
 
   int buffer_diff(
     ffi.Pointer<hb_buffer> buffer,
@@ -3015,13 +2990,14 @@ class HarfbuzzLibrary {
     return _buffer_diff(buffer, reference, dottedcircle_glyph, position_fuzz);
   }
 
-  late final _buffer_diffPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Int32 Function(ffi.Pointer<hb_buffer>, ffi.Pointer<hb_buffer>, hb_codepoint, ffi.UnsignedInt)
-    >
-  >('hb_buffer_diff');
-  late final _buffer_diff =
-      _buffer_diffPtr.asFunction<int Function(ffi.Pointer<hb_buffer>, ffi.Pointer<hb_buffer>, int, int)>();
+  late final _buffer_diffPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int32 Function(ffi.Pointer<hb_buffer>, ffi.Pointer<hb_buffer>, hb_codepoint, ffi.UnsignedInt)
+        >
+      >('hb_buffer_diff');
+  late final _buffer_diff = _buffer_diffPtr
+      .asFunction<int Function(ffi.Pointer<hb_buffer>, ffi.Pointer<hb_buffer>, int, int)>();
 
   void buffer_set_message_func(
     ffi.Pointer<hb_buffer> buffer,
@@ -3032,16 +3008,16 @@ class HarfbuzzLibrary {
     return _buffer_set_message_func(buffer, func, user_data, destroy);
   }
 
-  late final _buffer_set_message_funcPtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(ffi.Pointer<hb_buffer>, hb_buffer_message_func, ffi.Pointer<ffi.Void>, hb_destroy_func)
-    >
-  >('hb_buffer_set_message_func');
-  late final _buffer_set_message_func =
-      _buffer_set_message_funcPtr
-          .asFunction<
-            void Function(ffi.Pointer<hb_buffer>, hb_buffer_message_func, ffi.Pointer<ffi.Void>, hb_destroy_func)
-          >();
+  late final _buffer_set_message_funcPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<hb_buffer>, hb_buffer_message_func, ffi.Pointer<ffi.Void>, hb_destroy_func)
+        >
+      >('hb_buffer_set_message_func');
+  late final _buffer_set_message_func = _buffer_set_message_funcPtr
+      .asFunction<
+        void Function(ffi.Pointer<hb_buffer>, hb_buffer_message_func, ffi.Pointer<ffi.Void>, hb_destroy_func)
+      >();
 
   void shape(
     ffi.Pointer<hb_font> font,
@@ -3052,13 +3028,14 @@ class HarfbuzzLibrary {
     return _shape(font, buffer, features, num_features);
   }
 
-  late final _shapePtr = _lookup<
-    ffi.NativeFunction<
-      ffi.Void Function(ffi.Pointer<hb_font>, ffi.Pointer<hb_buffer>, ffi.Pointer<hb_feature>, ffi.UnsignedInt)
-    >
-  >('hb_shape');
-  late final _shape =
-      _shapePtr.asFunction<void Function(ffi.Pointer<hb_font>, ffi.Pointer<hb_buffer>, ffi.Pointer<hb_feature>, int)>();
+  late final _shapePtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<hb_font>, ffi.Pointer<hb_buffer>, ffi.Pointer<hb_feature>, ffi.UnsignedInt)
+        >
+      >('hb_shape');
+  late final _shape = _shapePtr
+      .asFunction<void Function(ffi.Pointer<hb_font>, ffi.Pointer<hb_buffer>, ffi.Pointer<hb_feature>, int)>();
 
   int shape_full(
     ffi.Pointer<hb_font> font,
@@ -3070,28 +3047,28 @@ class HarfbuzzLibrary {
     return _shape_full(font, buffer, features, num_features, shaper_list);
   }
 
-  late final _shape_fullPtr = _lookup<
-    ffi.NativeFunction<
-      hb_bool Function(
-        ffi.Pointer<hb_font>,
-        ffi.Pointer<hb_buffer>,
-        ffi.Pointer<hb_feature>,
-        ffi.UnsignedInt,
-        ffi.Pointer<ffi.Pointer<ffi.Char>>,
-      )
-    >
-  >('hb_shape_full');
-  late final _shape_full =
-      _shape_fullPtr
-          .asFunction<
-            int Function(
-              ffi.Pointer<hb_font>,
-              ffi.Pointer<hb_buffer>,
-              ffi.Pointer<hb_feature>,
-              int,
-              ffi.Pointer<ffi.Pointer<ffi.Char>>,
-            )
-          >();
+  late final _shape_fullPtr =
+      _lookup<
+        ffi.NativeFunction<
+          hb_bool Function(
+            ffi.Pointer<hb_font>,
+            ffi.Pointer<hb_buffer>,
+            ffi.Pointer<hb_feature>,
+            ffi.UnsignedInt,
+            ffi.Pointer<ffi.Pointer<ffi.Char>>,
+          )
+        >
+      >('hb_shape_full');
+  late final _shape_full = _shape_fullPtr
+      .asFunction<
+        int Function(
+          ffi.Pointer<hb_font>,
+          ffi.Pointer<hb_buffer>,
+          ffi.Pointer<hb_feature>,
+          int,
+          ffi.Pointer<ffi.Pointer<ffi.Char>>,
+        )
+      >();
 
   ffi.Pointer<ffi.Pointer<ffi.Char>> shape_list_shapers() {
     return _shape_list_shapers();
@@ -3127,8 +3104,8 @@ class HarfbuzzLibrary {
   late final _ft_face_create_referencedPtr = _lookup<ffi.NativeFunction<ffi.Pointer<hb_face> Function(FT_Face)>>(
     'hb_ft_face_create_referenced',
   );
-  late final _ft_face_create_referenced =
-      _ft_face_create_referencedPtr.asFunction<ffi.Pointer<hb_face> Function(FT_Face)>();
+  late final _ft_face_create_referenced = _ft_face_create_referencedPtr
+      .asFunction<ffi.Pointer<hb_face> Function(FT_Face)>();
 
   ffi.Pointer<hb_font> ft_font_create(FT_Face ft_face, hb_destroy_func destroy) {
     return _ft_font_create(ft_face, destroy);
@@ -3146,8 +3123,8 @@ class HarfbuzzLibrary {
   late final _ft_font_create_referencedPtr = _lookup<ffi.NativeFunction<ffi.Pointer<hb_font> Function(FT_Face)>>(
     'hb_ft_font_create_referenced',
   );
-  late final _ft_font_create_referenced =
-      _ft_font_create_referencedPtr.asFunction<ffi.Pointer<hb_font> Function(FT_Face)>();
+  late final _ft_font_create_referenced = _ft_font_create_referencedPtr
+      .asFunction<ffi.Pointer<hb_font> Function(FT_Face)>();
 
   FT_Face ft_font_get_face(ffi.Pointer<hb_font> font) {
     return _ft_font_get_face(font);
@@ -3183,8 +3160,8 @@ class HarfbuzzLibrary {
   late final _ft_font_set_load_flagsPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<hb_font>, ffi.Int)>>(
     'hb_ft_font_set_load_flags',
   );
-  late final _ft_font_set_load_flags =
-      _ft_font_set_load_flagsPtr.asFunction<void Function(ffi.Pointer<hb_font>, int)>();
+  late final _ft_font_set_load_flags = _ft_font_set_load_flagsPtr
+      .asFunction<void Function(ffi.Pointer<hb_font>, int)>();
 
   int ft_font_get_load_flags(ffi.Pointer<hb_font> font) {
     return _ft_font_get_load_flags(font);

@@ -96,10 +96,8 @@ final class Span {
   final SpanStyle style;
   const Span(this.content, this.style);
 
-  (Span, Span) _split(int at, {int? to, bool keepSplit = true}) => (
-    Span(content.substring(0, at), style),
-    Span(content.substring(keepSplit ? at : (to ?? at + 1)), style),
-  );
+  (Span, Span) _split(int at, {int? to, bool keepSplit = true}) =>
+      (Span(content.substring(0, at), style), Span(content.substring(keepSplit ? at : (to ?? at + 1)), style));
 
   static SpanComparison compare(Span a, Span b) {
     if (a.content != b.content) return SpanComparison.layoutChanged;

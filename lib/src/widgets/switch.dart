@@ -113,12 +113,11 @@ class Switch extends StatelessWidget {
           easing: Easing.inOutCubic,
           duration: const Duration(milliseconds: 250),
           cornerRadius: const CornerRadius.all(12.5),
-          color:
-              onClick != null
-                  ? on
-                      ? style.backgroundOnColor!
-                      : style.backgroundOffColor!
-                  : style.backgroundDisabledColor!,
+          color: onClick != null
+              ? on
+                    ? style.backgroundOnColor!
+                    : style.backgroundOffColor!
+              : style.backgroundDisabledColor!,
           child: AnimatedAlign(
             easing: Easing.inOutCubic,
             duration: const Duration(milliseconds: 250),
@@ -132,12 +131,11 @@ class Switch extends StatelessWidget {
                   easing: Easing.inOutCubic,
                   duration: const Duration(milliseconds: 250),
                   cornerRadius: const CornerRadius.all(8),
-                  color:
-                      onClick != null
-                          ? on
-                              ? style.switchOnColor!
-                              : style.switchOffColor!
-                          : style.switchDisabledColor!,
+                  color: onClick != null
+                      ? on
+                            ? style.switchOnColor!
+                            : style.switchOffColor!
+                      : style.switchDisabledColor!,
                 ),
               ),
             ),

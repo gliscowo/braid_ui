@@ -62,9 +62,10 @@ class FreetypeLibrary {
     return _New_Memory_Face(library1, file_base, file_size, face_index, aface);
   }
 
-  late final _New_Memory_FacePtr = _lookup<
-    ffi.NativeFunction<FT_Error Function(FT_Library, ffi.Pointer<FT_Byte>, FT_Long, FT_Long, ffi.Pointer<FT_Face>)>
-  >('FT_New_Memory_Face');
+  late final _New_Memory_FacePtr =
+      _lookup<
+        ffi.NativeFunction<FT_Error Function(FT_Library, ffi.Pointer<FT_Byte>, FT_Long, FT_Long, ffi.Pointer<FT_Face>)>
+      >('FT_New_Memory_Face');
   late final _New_Memory_Face =
       _New_Memory_FacePtr.asFunction<int Function(FT_Library, ffi.Pointer<FT_Byte>, int, int, ffi.Pointer<FT_Face>)>();
 
@@ -72,9 +73,10 @@ class FreetypeLibrary {
     return _Open_Face(library1, args, face_index, aface);
   }
 
-  late final _Open_FacePtr = _lookup<
-    ffi.NativeFunction<FT_Error Function(FT_Library, ffi.Pointer<FT_Open_Args>, FT_Long, ffi.Pointer<FT_Face>)>
-  >('FT_Open_Face');
+  late final _Open_FacePtr =
+      _lookup<
+        ffi.NativeFunction<FT_Error Function(FT_Library, ffi.Pointer<FT_Open_Args>, FT_Long, ffi.Pointer<FT_Face>)>
+      >('FT_Open_Face');
   late final _Open_Face =
       _Open_FacePtr.asFunction<int Function(FT_Library, ffi.Pointer<FT_Open_Args>, int, ffi.Pointer<FT_Face>)>();
 
@@ -309,19 +311,20 @@ class FreetypeLibrary {
     return _Get_SubGlyph_Info(glyph, sub_index, p_index, p_flags, p_arg1, p_arg2, p_transform);
   }
 
-  late final _Get_SubGlyph_InfoPtr = _lookup<
-    ffi.NativeFunction<
-      FT_Error Function(
-        FT_GlyphSlot,
-        FT_UInt,
-        ffi.Pointer<FT_Int>,
-        ffi.Pointer<FT_UInt>,
-        ffi.Pointer<FT_Int>,
-        ffi.Pointer<FT_Int>,
-        ffi.Pointer<FT_Matrix>,
-      )
-    >
-  >('FT_Get_SubGlyph_Info');
+  late final _Get_SubGlyph_InfoPtr =
+      _lookup<
+        ffi.NativeFunction<
+          FT_Error Function(
+            FT_GlyphSlot,
+            FT_UInt,
+            ffi.Pointer<FT_Int>,
+            ffi.Pointer<FT_UInt>,
+            ffi.Pointer<FT_Int>,
+            ffi.Pointer<FT_Int>,
+            ffi.Pointer<FT_Matrix>,
+          )
+        >
+      >('FT_Get_SubGlyph_Info');
   late final _Get_SubGlyph_Info =
       _Get_SubGlyph_InfoPtr.asFunction<
         int Function(
@@ -450,9 +453,10 @@ class FreetypeLibrary {
     return _Library_Version(library1, amajor, aminor, apatch);
   }
 
-  late final _Library_VersionPtr = _lookup<
-    ffi.NativeFunction<ffi.Void Function(FT_Library, ffi.Pointer<FT_Int>, ffi.Pointer<FT_Int>, ffi.Pointer<FT_Int>)>
-  >('FT_Library_Version');
+  late final _Library_VersionPtr =
+      _lookup<
+        ffi.NativeFunction<ffi.Void Function(FT_Library, ffi.Pointer<FT_Int>, ffi.Pointer<FT_Int>, ffi.Pointer<FT_Int>)>
+      >('FT_Library_Version');
   late final _Library_Version =
       _Library_VersionPtr.asFunction<
         void Function(FT_Library, ffi.Pointer<FT_Int>, ffi.Pointer<FT_Int>, ffi.Pointer<FT_Int>)

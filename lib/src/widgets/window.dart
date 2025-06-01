@@ -63,14 +63,13 @@ class _WindowState extends WidgetState<Window> {
       x: controller.x,
       y: controller.y,
       child: MouseArea(
-        cursorStyleSupplier:
-            (x, y) => switch (_edgesAt(x, y).toList()) {
-              [_WindowEdge.top] || [_WindowEdge.bottom] => CursorStyle.verticalResize,
-              [_WindowEdge.left] || [_WindowEdge.right] => CursorStyle.horizontalResize,
-              [_WindowEdge.top, _WindowEdge.left] || [_WindowEdge.bottom, _WindowEdge.right] => CursorStyle.nwseResize,
-              [_WindowEdge.bottom, _WindowEdge.left] || [_WindowEdge.top, _WindowEdge.right] => CursorStyle.neswResize,
-              _ => null,
-            },
+        cursorStyleSupplier: (x, y) => switch (_edgesAt(x, y).toList()) {
+          [_WindowEdge.top] || [_WindowEdge.bottom] => CursorStyle.verticalResize,
+          [_WindowEdge.left] || [_WindowEdge.right] => CursorStyle.horizontalResize,
+          [_WindowEdge.top, _WindowEdge.left] || [_WindowEdge.bottom, _WindowEdge.right] => CursorStyle.nwseResize,
+          [_WindowEdge.bottom, _WindowEdge.left] || [_WindowEdge.top, _WindowEdge.right] => CursorStyle.neswResize,
+          _ => null,
+        },
         clickCallback: (x, y, _) {
           draggingEdges = _edgesAt(x, y);
           return true;
@@ -81,11 +80,10 @@ class _WindowState extends WidgetState<Window> {
           insets: const Insets.all(10),
           child: HitTestTrap(
             child: MouseArea(
-              dragCallback:
-                  (_, _, dx, dy) => setState(() {
-                    controller.x += dx;
-                    controller.y += dy;
-                  }),
+              dragCallback: (_, _, dx, dy) => setState(() {
+                controller.x += dx;
+                controller.y += dy;
+              }),
               child: Column(
                 children: [
                   Sized(
@@ -104,7 +102,7 @@ class _WindowState extends WidgetState<Window> {
                                 onClick: () => setState(() => controller.expanded = !controller.expanded),
                                 child: Icon(icon: controller.expanded ? Icons.arrow_drop_down : Icons.arrow_drop_up),
                               ),
-                            Text(widget.title, style: TextStyle(fontSize: 14.0, bold: true)),
+                            Text(widget.title, style: const TextStyle(fontSize: 14.0, bold: true)),
                             Flexible(child: Padding(insets: const Insets())),
                             if (widget.onClose != null)
                               Actions.click(
@@ -125,7 +123,9 @@ class _WindowState extends WidgetState<Window> {
                       child: Sized(
                         width: controller.size.width,
                         height: controller.size.height,
-                        child: Clip(child: Padding(insets: const Insets.all(10), child: widget.content)),
+                        child: Clip(
+                          child: Padding(insets: const Insets.all(10), child: widget.content),
+                        ),
                       ),
                     ),
                   ),

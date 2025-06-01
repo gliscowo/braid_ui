@@ -100,10 +100,9 @@ class _InspectableTreeState extends WidgetState<InspectableTree> {
                               child: Padding(
                                 insets: const Insets(bottom: 10),
                                 child: ScrollWithSlider(
-                                  content:
-                                      tree == _Tree.proxy
-                                          ? _constructProxyTree(widget.inspector.rootProxy!)
-                                          : _constructInstanceTree(widget.inspector.rootInstance!),
+                                  content: tree == _Tree.proxy
+                                      ? _constructProxyTree(widget.inspector.rootProxy!)
+                                      : _constructInstanceTree(widget.inspector.rootInstance!),
                                 ),
                               ),
                             ),
@@ -143,11 +142,17 @@ class _InspectableTreeState extends WidgetState<InspectableTree> {
     from.visitChildren(children.add);
 
     return children.isNotEmpty
-        ? CollapsibleEntry(title: title, content: Column(children: children.map(_constructProxyTree).toList()))
+        ? CollapsibleEntry(
+            title: title,
+            content: Column(children: children.map(_constructProxyTree).toList()),
+          )
         : Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [Icon(icon: Icons.fiber_manual_record, size: 18), title],
-        );
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(icon: Icons.fiber_manual_record, size: 18),
+              title,
+            ],
+          );
   }
 
   Widget _constructInstanceTree(WidgetInstance from) {
@@ -157,11 +162,17 @@ class _InspectableTreeState extends WidgetState<InspectableTree> {
     from.visitChildren(children.add);
 
     return children.isNotEmpty
-        ? CollapsibleEntry(title: title, content: Column(children: children.map(_constructInstanceTree).toList()))
+        ? CollapsibleEntry(
+            title: title,
+            content: Column(children: children.map(_constructInstanceTree).toList()),
+          )
         : Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [Icon(icon: Icons.fiber_manual_record, size: 18), title],
-        );
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(icon: Icons.fiber_manual_record, size: 18),
+              title,
+            ],
+          );
   }
 
   int _countProxies(WidgetProxy proxy) {
@@ -208,10 +219,9 @@ class _CollapsibleEntryState extends WidgetState<CollapsibleEntry> {
   Widget build(BuildContext context) {
     return Collapsible(
       collapsed: collapsed,
-      onToggled:
-          (nowCollapsed) => setState(() {
-            collapsed = nowCollapsed;
-          }),
+      onToggled: (nowCollapsed) => setState(() {
+        collapsed = nowCollapsed;
+      }),
       title: widget.title,
       content: widget.content,
     );
@@ -243,16 +253,14 @@ class _InstanceTitleState extends WidgetState<InstanceTitle> {
     );
 
     return MouseArea(
-      enterCallback:
-          () => setState(() {
-            widget.instance.debugHighlighted = true;
-            hovered = true;
-          }),
-      exitCallback:
-          () => setState(() {
-            widget.instance.debugHighlighted = false;
-            hovered = false;
-          }),
+      enterCallback: () => setState(() {
+        widget.instance.debugHighlighted = true;
+        hovered = true;
+      }),
+      exitCallback: () => setState(() {
+        widget.instance.debugHighlighted = false;
+        hovered = false;
+      }),
       cursorStyle: CursorStyle.crosshair,
       child: title,
     );

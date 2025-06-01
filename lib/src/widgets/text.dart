@@ -1,4 +1,5 @@
 import 'package:diamond_gl/diamond_gl.dart';
+import 'package:meta/meta.dart';
 
 import '../context.dart';
 import '../core/constraints.dart';
@@ -18,6 +19,7 @@ class TextStyle {
   final double? lineHeight;
   final Alignment? alignment;
 
+  @literal
   const TextStyle({
     this.color,
     this.fontSize,

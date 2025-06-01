@@ -97,12 +97,11 @@ class _CheckboxState extends WidgetState<Checkbox> {
         width: 20,
         height: 20,
         child: Panel(
-          color:
-              widget.checked
-                  ? _hovered
-                      ? style.checkedHighlightColor!
-                      : style.checkedColor!
-                  : style.borderColor!,
+          color: widget.checked
+              ? _hovered
+                    ? style.checkedHighlightColor!
+                    : style.checkedColor!
+              : style.borderColor!,
           cornerRadius: style.cornerRadius!,
           outlineThickness: !widget.checked ? .5 : null,
           child: widget.checked ? const Icon(icon: Icons.close, size: 16) : null,

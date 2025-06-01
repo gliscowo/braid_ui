@@ -7,6 +7,7 @@ import 'package:source_helper/source_helper.dart';
 Future<void> main(List<String> args) async {
   final out = File('lib/src/baked_assets.g.dart').openWrite();
   out.writeln('''
+// dart format off
 // ignore_for_file: constant_identifier_names
 ''');
 
@@ -73,7 +74,8 @@ final segmentBuilders = <SegmentBuilder>[
 
     return (
       imports: const ['dart:convert', 'package:image/image.dart'],
-      code: '''
+      code:
+          '''
 const _braidIconBase64 = '${base64Encode(iconBytes)}';
 final braidIcon = decodePng(base64Decode(_braidIconBase64))!;
 ''',
@@ -92,15 +94,14 @@ final braidIcon = decodePng(base64Decode(_braidIconBase64))!;
       }
 
       final shaderName = shaderPath.quoted;
-      final shaderCode =
-          shader.$2
-              .replaceAllMapped(whitespacePattern, (match) => match[0]![0])
-              .split('\n')
-              .map((e) => e.trim())
-              .where((e) => !e.startsWith('//'))
-              .map((e) => e.startsWith('#') ? '$e\n' : e)
-              .join()
-              .quoted;
+      final shaderCode = shader.$2
+          .replaceAllMapped(whitespacePattern, (match) => match[0]![0])
+          .split('\n')
+          .map((e) => e.trim())
+          .where((e) => !e.startsWith('//'))
+          .map((e) => e.startsWith('#') ? '$e\n' : e)
+          .join()
+          .quoted;
 
       codeOut.writeln('  $shaderName: $shaderCode,');
     }

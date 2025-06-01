@@ -156,12 +156,11 @@ class _RawButtonState extends WidgetState<RawButton> {
     Widget result = AnimatedPanel(
       duration: const Duration(milliseconds: 100),
       cornerRadius: style.cornerRadius!,
-      color:
-          widget.onClick != null
-              ? _hovered
-                  ? style.highlightColor!
-                  : style.color!
-              : style.disabledColor!,
+      color: widget.onClick != null
+          ? _hovered
+                ? style.highlightColor!
+                : style.color!
+          : style.disabledColor!,
       child: Padding(insets: style.padding!, child: widget.child),
     );
 

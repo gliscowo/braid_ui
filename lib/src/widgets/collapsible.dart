@@ -35,7 +35,10 @@ class Collapsible extends StatelessWidget {
             Sized(height: 24, child: title),
           ],
         ),
-        Visibility(visible: !collapsed, child: Padding(insets: const Insets(left: 24), child: content)),
+        Visibility(
+          visible: !collapsed,
+          child: Padding(insets: const Insets(left: 24), child: content),
+        ),
       ],
     );
   }
