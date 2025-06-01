@@ -459,15 +459,15 @@ node [shape="box"];
       final listener = hit.instance as MouseListener;
 
       nowHovered.add(listener);
-      if (listener.lastMousePosition != hit.coordinates) {
-        listener.lastMousePosition = hit.coordinates;
-        listener.onMouseMove(hit.coordinates.x, hit.coordinates.y);
-      }
-
       if (_hovered.contains(listener)) {
         _hovered.remove(listener);
       } else {
         listener.onMouseEnter();
+      }
+
+      if (listener.lastMousePosition != hit.coordinates) {
+        listener.lastMousePosition = hit.coordinates;
+        listener.onMouseMove(hit.coordinates.x, hit.coordinates.y);
       }
     }
 
