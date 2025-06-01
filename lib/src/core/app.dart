@@ -299,6 +299,11 @@ class AppState implements InstanceHost, ProxyHost {
       window.onMouseButton.where((event) => event.action == glfwPress).listen((event) {
         final state = _hitTest();
 
+        _updateFocus(
+          state.occludedTrace.map((e) => e.instance).firstWhereOrNull((element) => element is KeyboardListener)
+              as KeyboardListener?,
+        );
+
         final clicked = state.firstWhere(
           (hit) =>
               hit.instance is MouseListener &&
@@ -314,8 +319,6 @@ class AppState implements InstanceHost, ProxyHost {
           );
           _dragStarted = false;
         }
-
-        _updateFocus(state.occludedTrace.map((e) => e.instance).whereType<KeyboardListener>().toList());
       }),
       window.onMouseMove.listen((event) {
         if (_dragging == null) return;
@@ -325,7 +328,7 @@ class AppState implements InstanceHost, ProxyHost {
           _dragStarted = true;
         }
 
-        final globalTransform = _dragging!.computeGlobalTransform();
+        final globalTransform = _dragging!.computeTransformFrom(ancestor: null);
         final (x, y) = globalTransform.transform2(window.cursorX, window.cursorY);
 
         // apply *only the rotation* of the instance's transform
@@ -501,7 +504,11 @@ node [shape="box"];
     cursorController.style = activeStyle ?? CursorStyle.none;
   }
 
-  void _updateFocus(List<KeyboardListener> nowFocused) {
+  void _updateFocus(KeyboardListener? listener) {
+    final nowFocused = listener != null
+        ? [listener].followedBy(listener.ancestors.whereType<KeyboardListener>()).toList()
+        : const <KeyboardListener>[];
+
     for (final listener in nowFocused) {
       if (_focused.contains(listener)) {
         _focused.remove(listener);
@@ -606,7 +613,7 @@ node [shape="box"];
 
   @override
   void moveFocusTo(KeyboardListener<InstanceWidget> focusTarget) {
-    _updateFocus([focusTarget].followedBy(focusTarget.ancestors.whereType<KeyboardListener>()).toList());
+    _updateFocus(focusTarget);
   }
 
   @override
