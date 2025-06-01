@@ -9,7 +9,7 @@ uniform float uAngleTo;
 in vec2 vPos;
 out vec4 fragColor;
 
-#define PI 3.1415926535
+const float PI = 3.1415926535;
 
 void main() {
     vec2 center = vec2(uRadius);
