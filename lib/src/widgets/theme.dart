@@ -175,7 +175,13 @@ class BraidTheme extends StatelessWidget {
   static const defaultBackgroundColor = Color.rgb(0x0f0f0f);
   static const defaultElevatedColor = Color.rgb(0x161616);
 
-  static const defaultTextStyle = TextStyle(color: Color.white, fontSize: 16.0, bold: false, italic: false);
+  static const defaultTextStyle = TextStyle(
+    color: Color.white,
+    fontSize: 16.0,
+    bold: false,
+    italic: false,
+    underline: false,
+  );
   static const defaultButtonStyle = ButtonStyle(
     padding: Insets.axis(horizontal: 6, vertical: 3),
     cornerRadius: CornerRadius.all(5),

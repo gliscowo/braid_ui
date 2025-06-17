@@ -30,6 +30,18 @@ final VertexDescriptor<PosVertexFunction> posVertexDescriptor = VertexDescriptor
       (pos) => buffer.f32x3(pos.x, pos.y, pos.z),
 );
 
+typedef PosColorVertexFunction = void Function(Vector3 pos, Color color);
+final VertexDescriptor<PosColorVertexFunction> posColorVertexDescriptor = VertexDescriptor(
+  (attribute) {
+    attribute('aPos', VertexElement.float, 3);
+    attribute('aColor', VertexElement.float, 4);
+  },
+  (buffer) => (pos, color) {
+    buffer.f32x3(pos.x, pos.y, pos.z);
+    buffer.f32x4(color.r, color.g, color.b, color.a);
+  },
+);
+
 typedef TextVertexFunction = void Function(double x, double y, double u, double v, Color color);
 final VertexDescriptor<TextVertexFunction> textVertexDescriptor = VertexDescriptor(
   (attribute) {

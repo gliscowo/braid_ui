@@ -1,6 +1,8 @@
 export 'package:diamond_gl/diamond_gl.dart' show Color;
 
+export 'src/animation/automatic_animation.dart';
 export 'src/animation/easings.dart';
+export 'src/animation/lerp.dart';
 export 'src/baked_assets.g.dart' show BakedAssetResources;
 export 'src/context.dart';
 export 'src/core/app.dart';
@@ -26,6 +28,7 @@ export 'src/widgets/flex.dart';
 export 'src/widgets/icon.dart';
 export 'src/widgets/inspector.dart';
 export 'src/widgets/layout_builder.dart';
+export 'src/widgets/progress_indicator.dart';
 export 'src/widgets/scroll.dart';
 export 'src/widgets/shared_state.dart';
 export 'src/widgets/slider.dart';

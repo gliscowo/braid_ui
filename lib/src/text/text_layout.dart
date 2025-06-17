@@ -43,6 +43,7 @@ class SpanStyle {
   final String? fontFamily;
   final bool bold;
   final bool italic;
+  final bool underline;
   final double? lineHeight;
 
   const SpanStyle({
@@ -51,18 +52,27 @@ class SpanStyle {
     required this.fontFamily,
     required this.bold,
     required this.italic,
+    required this.underline,
     this.lineHeight,
   });
 
-  SpanStyle copy({Color? color, double? fontSize, String? fontFamily, bool? bold, bool? italic, double? lineHeight}) =>
-      SpanStyle(
-        color: color ?? this.color,
-        fontSize: fontSize ?? this.fontSize,
-        fontFamily: fontFamily ?? this.fontFamily,
-        bold: bold ?? this.bold,
-        italic: italic ?? this.italic,
-        lineHeight: lineHeight ?? this.lineHeight,
-      );
+  SpanStyle copy({
+    Color? color,
+    double? fontSize,
+    String? fontFamily,
+    bool? bold,
+    bool? italic,
+    bool? underline,
+    double? lineHeight,
+  }) => SpanStyle(
+    color: color ?? this.color,
+    fontSize: fontSize ?? this.fontSize,
+    fontFamily: fontFamily ?? this.fontFamily,
+    bold: bold ?? this.bold,
+    italic: italic ?? this.italic,
+    underline: underline ?? this.underline,
+    lineHeight: lineHeight ?? this.lineHeight,
+  );
 
   static SpanComparison compare(SpanStyle a, SpanStyle b) {
     if (a.fontSize != b.fontSize ||
@@ -73,7 +83,7 @@ class SpanStyle {
       return SpanComparison.layoutChanged;
     }
 
-    if (a.color != b.color) {
+    if (a.color != b.color || a.underline != b.underline) {
       return SpanComparison.visualsChanged;
     }
 

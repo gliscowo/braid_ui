@@ -72,6 +72,7 @@ Future<void> runBraidApp({required AppState app, int targetFps = 60, bool reload
 
 Future<AppState> createBraidApp({
   required BraidResources resources,
+  required String defaultFontFamily,
   String name = 'braid app',
   Window? window,
   int windowWidth = 1000,
@@ -79,8 +80,8 @@ Future<AppState> createBraidApp({
   Logger? baseLogger,
   required Widget widget,
 }) async {
-  loadOpenGL();
-  loadGLFW(BraidNatives.activeLibraries.spec.glfw);
+  loadOpenGLFromPath();
+  loadGLFW(BraidNatives.activeLibraries.glfw);
 
   if (!diamondGLInitialized) {
     initDiamondGL(logger: baseLogger);
@@ -121,22 +122,24 @@ Future<AppState> createBraidApp({
       BraidShader(source: resources, name: 'blit', vert: 'blit', frag: 'blit'),
       BraidShader(source: resources, name: 'text', vert: 'text', frag: 'text'),
       BraidShader(source: resources, name: 'solid_fill', vert: 'pos', frag: 'solid_fill'),
+      BraidShader(source: resources, name: 'colored_fill', vert: 'pos_color', frag: 'colored_fill'),
       BraidShader(source: resources, name: 'texture_fill', vert: 'pos_uv', frag: 'texture_fill'),
       BraidShader(source: resources, name: 'rounded_rect_solid', vert: 'pos', frag: 'rounded_rect_solid'),
       BraidShader(source: resources, name: 'rounded_rect_outline', vert: 'pos', frag: 'rounded_rect_outline'),
       BraidShader(source: resources, name: 'circle_solid', vert: 'pos', frag: 'circle_solid'),
       BraidShader(source: resources, name: 'circle_sector', vert: 'pos', frag: 'circle_sector'),
       BraidShader(source: resources, name: 'gradient_fill', vert: 'pos_uv', frag: 'gradient_fill'),
+      BraidShader(source: resources, name: 'blur', vert: 'pos', frag: 'blur'),
     ].map((shader) => renderContext.addShader(shader)).toList(),
   );
 
-  final (notoSans, materialSymbols) = await (
-    FontFamily.load(resources, 'NotoSans'),
+  final (defaultFont, materialSymbols) = await (
+    FontFamily.load(resources, defaultFontFamily),
     FontFamily.load(resources, 'MaterialSymbols'),
   ).wait;
 
-  final textRenderer = TextRenderer(renderContext, notoSans, {
-    'Noto Sans': notoSans,
+  final textRenderer = TextRenderer(renderContext, defaultFont, {
+    'default': defaultFont,
     'MaterialSymbols': materialSymbols,
   });
 

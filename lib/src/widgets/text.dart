@@ -16,6 +16,7 @@ class TextStyle {
   final String? fontFamily;
   final bool? bold;
   final bool? italic;
+  final bool? underline;
   final double? lineHeight;
   final Alignment? alignment;
 
@@ -26,6 +27,7 @@ class TextStyle {
     this.fontFamily,
     this.bold,
     this.italic,
+    this.underline,
     this.lineHeight,
     this.alignment,
   });
@@ -36,6 +38,7 @@ class TextStyle {
     String? fontFamily,
     bool? bold,
     bool? italic,
+    bool? underline,
     double? lineHeight,
     Alignment? alignment,
   }) => TextStyle(
@@ -44,6 +47,7 @@ class TextStyle {
     fontFamily: fontFamily ?? this.fontFamily,
     bold: bold ?? this.bold,
     italic: italic ?? this.italic,
+    underline: underline ?? this.underline,
     lineHeight: lineHeight ?? this.lineHeight,
     alignment: alignment ?? this.alignment,
   );
@@ -54,6 +58,7 @@ class TextStyle {
     fontFamily: fontFamily ?? other.fontFamily,
     bold: bold ?? other.bold,
     italic: italic ?? other.italic,
+    underline: underline ?? other.underline,
     lineHeight: lineHeight ?? other.lineHeight,
     alignment: alignment ?? other.alignment,
   );
@@ -70,6 +75,7 @@ class TextStyle {
       fontFamily: fontFamily,
       bold: bold!,
       italic: italic!,
+      underline: underline!,
       lineHeight: lineHeight,
     );
   }
@@ -77,7 +83,7 @@ class TextStyle {
   // for now we'll leave it at this, since it's a lot nicer to implement and shorter.
   // however, quick benchmarks indicate that this is ~4x slower than a full manual
   // impl so we might change it in the future should it ever becomer relevant
-  get _props => (color, fontSize, fontFamily, bold, italic, lineHeight);
+  get _props => (color, fontSize, fontFamily, bold, italic, underline, lineHeight);
 
   @override
   int get hashCode => _props.hashCode;

@@ -1,9 +1,4 @@
-import 'package:diamond_gl/diamond_gl.dart';
-
-import '../framework/widget.dart';
-import '../text/text_layout.dart';
-import 'basic.dart';
-import 'text.dart';
+import '../../braid_ui.dart';
 
 export '../baked_assets.g.dart' show Icons;
 
@@ -14,17 +9,26 @@ extension type const IconSpec(int _codepoint) {
 class Icon extends StatelessWidget {
   final double size;
   final IconSpec icon;
-  final Color color;
+  final Color? color;
 
-  const Icon({super.key, this.size = 24, this.color = Color.white, required this.icon});
+  const Icon({super.key, this.size = 24, this.color, required this.icon});
 
-  Span toSpan() => Span(
+  Span toSpan(Color color) => Span(
     icon.asString(),
-    SpanStyle(fontFamily: 'MaterialSymbols', fontSize: size, lineHeight: 1.0, color: color, bold: false, italic: false),
+    SpanStyle(
+      fontFamily: 'MaterialSymbols',
+      fontSize: size,
+      lineHeight: 1.0,
+      color: color,
+      bold: false,
+      italic: false,
+      underline: false,
+    ),
   );
 
   @override
   Widget build(BuildContext context) {
-    return RawText(spans: [toSpan()], softWrap: false, alignment: Alignment.center);
+    final color = this.color ?? DefaultTextStyle.of(context).color!;
+    return RawText(spans: [toSpan(color)], softWrap: false, alignment: Alignment.center);
   }
 }

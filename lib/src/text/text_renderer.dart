@@ -6,7 +6,6 @@ import 'dart:typed_data';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:diamond_gl/opengl.dart';
 import 'package:ffi/ffi.dart';
-import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math.dart';
 
@@ -22,7 +21,6 @@ import 'text_layout.dart';
 final freetype = FreetypeLibrary(BraidNatives.activeLibraries.freetype);
 final harfbuzz = HarfbuzzLibrary(BraidNatives.activeLibraries.harfbuzz);
 
-final _logger = Logger('cutesy.text_handler');
 const _hbScale = 64;
 
 @internal
@@ -38,16 +36,11 @@ class FontFamily {
   static Future<FontFamily> load(BraidResources resources, String familyName) async {
     final fonts = await resources.loadFontFamily(familyName).map((fontBytes) => Font(fontBytes)).toList();
 
-    Font warn(String type, Font font) {
-      _logger.warning('Could not find a "$type" font in family $familyName');
-      return font;
-    }
-
     return FontFamily(
       fonts.firstWhere((font) => !font.bold && !font.italic, orElse: () => fonts.first),
-      fonts.firstWhere((font) => font.bold && !font.italic, orElse: () => warn('bold', fonts.first)),
-      fonts.firstWhere((font) => !font.bold && font.italic, orElse: () => warn('italic', fonts.first)),
-      fonts.firstWhere((font) => font.bold && font.italic, orElse: () => warn('bold & italic', fonts.first)),
+      fonts.firstWhere((font) => font.bold && !font.italic, orElse: () => fonts.first),
+      fonts.firstWhere((font) => !font.bold && font.italic, orElse: () => fonts.first),
+      fonts.firstWhere((font) => font.bold && font.italic, orElse: () => fonts.first),
     );
   }
 
@@ -110,6 +103,11 @@ class Font {
 
   double get ascender => _nativeResources.ftFace.ref.ascender / _nativeResources.ftFace.ref.units_per_EM;
   double get descender => _nativeResources.ftFace.ref.descender / _nativeResources.ftFace.ref.units_per_EM;
+
+  double get underlinePosition =>
+      _nativeResources.ftFace.ref.underline_position / _nativeResources.ftFace.ref.units_per_EM;
+  double get underlineThickness =>
+      _nativeResources.ftFace.ref.underline_thickness / _nativeResources.ftFace.ref.units_per_EM;
 
   Glyph getGlyph(int index, double size) {
     final pixelSize = toPixelSize(size);
@@ -260,8 +258,10 @@ class Glyph {
 }
 
 class TextRenderer {
-  final _cachedBuffers = HashMap<int, MeshBuffer<TextVertexFunction>>();
+  final HashMap<int, MeshBuffer<TextVertexFunction>> _cachedBuffers = HashMap();
+  MeshBuffer<PosColorVertexFunction>? _lineBuffer;
   final GlProgram _textProgram;
+  final GlProgram _lineProgram;
 
   final Map<String, FontFamily> _fontStorage;
   FontFamily _defaultFont;
@@ -269,6 +269,7 @@ class TextRenderer {
 
   TextRenderer(RenderContext context, this._defaultFont, Map<String, FontFamily> fontStorage)
     : _textProgram = context.findProgram('text'),
+      _lineProgram = context.findProgram('colored_fill'),
       _fontStorage = fontStorage;
 
   /// Fetch the font family stored under [familyName], or return
@@ -355,7 +356,9 @@ class TextRenderer {
           (_cachedBuffers[texture] = MeshBuffer(textVertexDescriptor, _textProgram)));
     }
 
-    for (final shapedGlyph in text.glyphs) {
+    final lineBuffer = (_lineBuffer ??= MeshBuffer(posColorVertexDescriptor, _lineProgram))..clear();
+
+    for (final (glyphIdx, shapedGlyph) in text.glyphs.indexed) {
       final glyphStyle = text.styleFor(shapedGlyph);
       final glyph = shapedGlyph.font.getGlyph(shapedGlyph.index, glyphStyle.fontSize);
       final glyphColor = glyphStyle.color;
@@ -380,6 +383,30 @@ class TextRenderer {
         ..vertex(xPos + width, yPos, u1, v0, glyphColor)
         ..vertex(xPos, yPos + height, u0, v1, glyphColor)
         ..vertex(xPos + width, yPos + height, u1, v1, glyphColor);
+
+      if (glyphStyle.underline) {
+        final underlineThickness = (shapedGlyph.font.underlineThickness * glyphStyle.fontSize).ceil();
+        final underlinePos = (-(shapedGlyph.font.underlinePosition * glyphStyle.fontSize) - underlineThickness / 2)
+            .ceil();
+
+        final xPos = shapedGlyph.position.x + lineOffsets[shapedGlyph.line];
+        final yPos = shapedGlyph.position.y + initialY;
+        var underlineWidth = shapedGlyph.advance.x;
+
+        final nextGlyph = (glyphIdx + 1) < text.glyphs.length ? text.glyphs[glyphIdx + 1] : null;
+        if (nextGlyph != null) {
+          final nextGlyphStyle = text.styleFor(nextGlyph);
+          if (nextGlyphStyle.underline) underlineWidth = nextGlyph.position.x - shapedGlyph.position.x;
+        }
+
+        lineBuffer
+          ..vertex(Vector3(xPos, yPos + underlinePos, 0), glyphColor)
+          ..vertex(Vector3(xPos, yPos + underlinePos + underlineThickness, 0), glyphColor)
+          ..vertex(Vector3(xPos + underlineWidth, yPos + underlinePos, 0), glyphColor)
+          ..vertex(Vector3(xPos + underlineWidth, yPos + underlinePos, 0), glyphColor)
+          ..vertex(Vector3(xPos, yPos + underlinePos + underlineThickness, 0), glyphColor)
+          ..vertex(Vector3(xPos + underlineWidth, yPos + underlinePos + underlineThickness, 0), glyphColor);
+      }
     }
 
     gl.blendFunc(glSrc1Color, glOneMinusSrc1Color);
@@ -392,5 +419,16 @@ class TextRenderer {
     });
 
     gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
+
+    if (!lineBuffer.isEmpty) {
+      lineBuffer.program
+        ..uniformMat4('uTransform', transform)
+        ..uniformMat4('uProjection', projection)
+        ..use();
+
+      lineBuffer
+        ..upload(dynamic: true)
+        ..draw();
+    }
   }
 }
