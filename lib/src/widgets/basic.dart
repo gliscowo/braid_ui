@@ -17,7 +17,7 @@ import '../framework/proxy.dart';
 import '../framework/widget.dart';
 import 'flex.dart';
 
-typedef VoidCallback = void Function();
+typedef Callback = void Function();
 
 // ---
 
@@ -388,12 +388,12 @@ class CustomDrawInstance extends LeafWidgetInstance<CustomDraw> {
 class MouseArea extends SingleChildInstanceWidget {
   final bool Function(double x, double y, int button)? clickCallback;
   final bool Function(double x, double y, int button)? unClickCallback;
-  final VoidCallback? enterCallback;
+  final Callback? enterCallback;
   final void Function(double toX, double toY)? moveCallback;
-  final VoidCallback? exitCallback;
+  final Callback? exitCallback;
   final void Function(int button)? dragStartCallback;
   final void Function(double x, double y, double dx, double dy)? dragCallback;
-  final VoidCallback? dragEndCallback;
+  final Callback? dragEndCallback;
   final bool Function(double horizontal, double vertical)? scrollCallback;
   final CursorStyle? Function(double x, double y)? cursorStyleSupplier;
 
@@ -461,8 +461,8 @@ class KeyboardInput extends SingleChildInstanceWidget {
   final bool Function(int keyCode, KeyModifiers modifiers)? keyDownCallback;
   final bool Function(int keyCode, KeyModifiers modifiers)? keyUpCallback;
   final bool Function(int charCode, KeyModifiers modifiers)? charCallback;
-  final VoidCallback? focusGainedCallback;
-  final VoidCallback? focusLostCallback;
+  final Callback? focusGainedCallback;
+  final Callback? focusLostCallback;
 
   const KeyboardInput({
     super.key,
@@ -533,14 +533,14 @@ extension type const ActionTrigger._(({Set<int> mouseButtons, Set<int> keyCodes,
 }
 
 class Actions extends StatefulWidget {
-  final VoidCallback? enterCallback;
-  final VoidCallback? exitCallback;
+  final Callback? enterCallback;
+  final Callback? exitCallback;
   final CursorStyle? cursorStyle;
 
-  final VoidCallback? focusGainedCallback;
-  final VoidCallback? focusLostCallback;
+  final Callback? focusGainedCallback;
+  final Callback? focusLostCallback;
 
-  final Map<List<ActionTrigger>, VoidCallback> actions;
+  final Map<List<ActionTrigger>, Callback> actions;
 
   final Widget child;
 
@@ -562,7 +562,7 @@ class Actions extends StatefulWidget {
     this.cursorStyle,
     this.focusGainedCallback,
     this.focusLostCallback,
-    required VoidCallback? onClick,
+    required Callback? onClick,
     required this.child,
   }) : actions = {
          if (onClick != null) const [ActionTrigger.click]: onClick,
@@ -716,7 +716,7 @@ enum _ActionSequenceStep { ignore, advance, complete }
 
 class _ActionSequence {
   final List<ActionTrigger> triggers;
-  final VoidCallback callback;
+  final Callback callback;
 
   /// whether this sequence is singular, i.e. it only has
   /// a single trigger and can be completed at any time
