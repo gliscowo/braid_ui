@@ -1,6 +1,22 @@
 import 'dart:math';
 
+import 'package:collection/collection.dart';
+
 import '../../braid_ui.dart';
+
+class StackBase extends VisitorWidget {
+  const StackBase({super.key, required super.child});
+
+  static void _visitor(StackBase widget, WidgetInstance instance) {
+    if (instance.parentData is! _StackParentData) {
+      instance.parentData = const _StackParentData();
+      instance.markNeedsLayout();
+    }
+  }
+
+  @override
+  VisitorProxy proxy() => VisitorProxy<StackBase>(this, _visitor);
+}
 
 class Stack extends MultiChildInstanceWidget {
   final Alignment alignment;
@@ -9,6 +25,10 @@ class Stack extends MultiChildInstanceWidget {
 
   @override
   MultiChildWidgetInstance<Stack> instantiate() => _StackInstance(widget: this);
+}
+
+class _StackParentData {
+  const _StackParentData();
 }
 
 class _StackInstance extends MultiChildWidgetInstance<Stack> {
@@ -24,15 +44,27 @@ class _StackInstance extends MultiChildWidgetInstance<Stack> {
 
   @override
   void doLayout(Constraints constraints) {
-    final maxSize = children.fold(Size.zero, (size, child) => size = Size.max(size, child.layout(constraints)));
+    final sizingBase = children.firstWhereOrNull((child) => child.parentData is _StackParentData);
+
+    Size selfSize;
+    if (sizingBase != null) {
+      selfSize = sizingBase.layout(constraints);
+
+      final childConstraints = Constraints.tight(selfSize).respecting(constraints);
+      for (final child in children.where((child) => child != sizingBase)) {
+        child.layout(childConstraints);
+      }
+    } else {
+      selfSize = children.fold(Size.zero, (size, child) => size = Size.max(size, child.layout(constraints)));
+    }
 
     for (final child in children) {
-      final (childX, childY) = widget.alignment.align(maxSize, child.transform.toSize());
+      final (childX, childY) = widget.alignment.align(selfSize, child.transform.toSize());
       child.transform.x = childX;
       child.transform.y = childY;
     }
 
-    transform.setSize(maxSize);
+    transform.setSize(selfSize);
   }
 
   @override
