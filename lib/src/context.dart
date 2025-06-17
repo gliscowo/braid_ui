@@ -16,7 +16,7 @@ class BraidShader {
 
   BraidShader({required this.source, required this.name, required this.vert, required this.frag});
 
-  Future<GlProgram> compileAndLoad() async {
+  Future<GlProgram> loadAndCompile() async {
     final (vertSource, fragSource) = await (source.loadShader('$vert.vert'), source.loadShader('$frag.frag')).wait;
 
     final shaders = [
@@ -50,7 +50,7 @@ class RenderContext {
   Future<void> reloadShaders() => Future.wait(_shaderStore.values.map(_reloadShader).toList());
 
   Future<void> _reloadShader(BraidShader shader) async {
-    final program = await shader.compileAndLoad();
+    final program = await shader.loadAndCompile();
     _programStore[shader.name] = program;
   }
 

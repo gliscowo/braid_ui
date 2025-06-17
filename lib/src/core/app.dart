@@ -70,6 +70,22 @@ Future<void> runBraidApp({required AppState app, int targetFps = 60, bool reload
   reloadCancelCallback?.call();
 }
 
+/// Initialize all state necessary to drive the braid application
+/// represented by [widget]. This function will:
+/// 1. Ensure OpenGL and GLFW are available and loaded, loading them if
+///    necessary
+/// 2. If necessary, initialize DiamondGL logging with [baseLogger]
+/// 3. If no [window] was provided, create one and associate it with
+///    the application
+/// 4. Load the defauĺt shaders and fonts
+///
+/// If everything succeeds, an [AppState] encapsulating all application state
+/// is created and returned
+///
+/// See also:
+/// - [runBraidApp]
+/// - [AppState]
+/// - [Widget]
 Future<AppState> createBraidApp({
   required BraidResources resources,
   required String defaultFontFamily,
@@ -130,7 +146,7 @@ Future<AppState> createBraidApp({
       BraidShader(source: resources, name: 'circle_sector', vert: 'pos', frag: 'circle_sector'),
       BraidShader(source: resources, name: 'gradient_fill', vert: 'pos_uv', frag: 'gradient_fill'),
       BraidShader(source: resources, name: 'blur', vert: 'pos', frag: 'blur'),
-    ].map((shader) => renderContext.addShader(shader)).toList(),
+    ].map(renderContext.addShader).toList(),
   );
 
   final (defaultFont, materialSymbols) = await (
@@ -233,6 +249,35 @@ class _UserRoot extends VisitorWidget {
 
 // ---
 
+/// ### Overview
+/// An app state manages all resources required to drive a braid application
+/// and provides the necessary functionality to draw frames and perform layout.
+/// It is also responsible for dispatching input events and acts as the application's
+/// [InstanceHost] and [ProxyHost].
+///
+/// For users, the app state is the central and only handle necessary to implement a
+/// braid application - other part of the framework is managed by and accessible through it.
+///
+/// ### Lifecycle
+/// Upon construction, the app state bootstraps the widget, proxy and instance trees. It also subscribes
+/// the the [window]'s input events and sets up appropriate forwarding to the instance tree.
+///
+/// After initialization, [updateWidgetsAndInteractions] can be called for the first time to perform
+/// the initial layout pass. Subsequently, the app is ready for drawing with [draw]. This is an idemoptent
+/// operation and may be invoked multiple times.
+///
+/// To begin the next frame, invoke [updateWidgetsAndInteractions] again to flush the rebuild and layout
+/// queues. After completion, the next frame can now be drawn with [draw]. This update/draw loop continues
+/// until the end of the application's life.
+///
+/// Once the application is no longer needed, call [dispose] to clean up all resources associated with it.
+/// This invalidates the app state.
+///
+/// ### See also:
+/// - [createBraidApp]
+/// - [runBraidApp]
+/// - [rebuildRoot]
+/// - [loadFontFamily]
 class AppState implements InstanceHost, ProxyHost {
   final BraidResources resources;
   final Logger? logger;
@@ -551,7 +596,6 @@ node [shape="box"];
 
     rootInstance.clearLayoutCache();
     scheduleLayout(rootInstance);
-    // _doScaffoldLayout(force: true);
   }
 
   void dispose() {
