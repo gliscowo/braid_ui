@@ -10,14 +10,6 @@ import 'basic.dart';
 import 'flex.dart';
 import 'slider.dart';
 
-class ScrollWithSlider extends StatefulWidget {
-  final Widget content;
-  const ScrollWithSlider({super.key, required this.content});
-
-  @override
-  WidgetState<ScrollWithSlider> createState() => _ScrollWithSliderState();
-}
-
 class ListenableBuilder extends StatefulWidget {
   final Listenable listenable;
   final Widget Function(BuildContext context, Widget? child) builder;
@@ -54,6 +46,14 @@ class _ListenableBuilderState extends WidgetState<ListenableBuilder> {
   }
 
   void _listener() => setState(() => {});
+}
+
+class ScrollWithSlider extends StatefulWidget {
+  final Widget content;
+  const ScrollWithSlider({super.key, required this.content});
+
+  @override
+  WidgetState<ScrollWithSlider> createState() => _ScrollWithSliderState();
 }
 
 class _ScrollWithSliderState extends WidgetState<ScrollWithSlider> {
@@ -196,6 +196,10 @@ class _ScrollableState extends WidgetState<Scrollable> {
     return Clip(
       child: MouseArea(
         scrollCallback: (horizontal, vertical) {
+          if (horizontalController != null && verticalController == null && horizontal == 0) {
+            horizontal = vertical;
+          }
+
           horizontalController?.offset += -horizontal * 25;
           verticalController?.offset += -vertical * 25;
           return horizontalController != null && verticalController != null;
