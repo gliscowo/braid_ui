@@ -14,6 +14,7 @@ Future<void> main(List<String> args) async {
     windowWidth: 600,
     windowHeight: 400,
     resources: BraidResources.filesystem(fontDirectory: 'resources/font', shaderDirectory: 'resources/shader'),
+    defaultFontFamily: 'NotoSans',
     widget: const RegulatingDeviceApp(),
   );
 
@@ -41,7 +42,10 @@ class RegulatingDeviceApp extends StatelessWidget {
           children: [
             Padding(
               insets: const Insets.all(15.0).copy(bottom: 25.0),
-              child: Text("Regulating Device", style: TextStyle(bold: true, fontFamily: "Nunito", color: Color.white)),
+              child: Text(
+                "Regulating Device",
+                style: TextStyle(bold: true, fontFamily: "Nunito", color: Color.white),
+              ),
             ),
             Padding(
               insets: const Insets.axis(horizontal: 10.0),

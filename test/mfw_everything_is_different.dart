@@ -42,7 +42,10 @@ class Clock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Panel(color: Color.blue, child: const Padding(insets: Insets.all(10), child: TimeText()));
+    return Panel(
+      color: Color.blue,
+      child: const Padding(insets: Insets.all(10), child: TimeText()),
+    );
   }
 }
 
@@ -51,7 +54,12 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BraidTheme(child: Panel(color: Color.white, child: const Center(child: Clock())));
+    return BraidTheme(
+      child: Panel(
+        color: Color.white,
+        child: const Center(child: Clock()),
+      ),
+    );
   }
 }
 
@@ -68,6 +76,7 @@ Future<void> main(List<String> args) async {
     windowWidth: 300,
     windowHeight: 200,
     resources: BraidResources.filesystem(fontDirectory: 'resources/font', shaderDirectory: 'resources/shader'),
+    defaultFontFamily: 'NotoSans',
     widget: const App(),
   );
 

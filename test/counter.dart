@@ -14,6 +14,7 @@ Future<void> main() async {
     windowWidth: 500,
     windowHeight: 400,
     resources: BraidResources.filesystem(fontDirectory: 'resources/font', shaderDirectory: 'resources/shader'),
+    defaultFontFamily: 'NotoSans',
     widget: const CounterApp(),
   );
 
@@ -27,7 +28,10 @@ class CounterApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const BraidTheme(
       textStyle: TextStyle(fontSize: 32),
-      child: Panel(color: BraidTheme.defaultBackgroundColor, child: Center(child: Counter())),
+      child: Panel(
+        color: BraidTheme.defaultBackgroundColor,
+        child: Center(child: Counter()),
+      ),
     );
   }
 }

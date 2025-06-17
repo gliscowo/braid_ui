@@ -13,6 +13,7 @@ Future<void> main(List<String> args) async {
   final app = await createBraidApp(
     baseLogger: Logger('text-sizes'),
     resources: BraidResources.filesystem(fontDirectory: 'resources/font', shaderDirectory: 'resources/shader'),
+    defaultFontFamily: 'NotoSans',
     widget: const TextSizesApp(),
   );
 
@@ -45,7 +46,10 @@ class TextSizesApp extends StatelessWidget {
                       ),
                       Flex(
                         mainAxis: LayoutAxis.vertical,
-                        children: [for (var size = 8.0; size < 52; size += 2) _testLabel(size, 'cascadia')],
+                        children: [
+                          for (var size = 8.0; size < 52; size += 2)
+                            _testLabel(size, fontFamily: 'cascadia', underline: true),
+                        ],
                       ),
                     ],
                   ),
@@ -59,9 +63,61 @@ class TextSizesApp extends StatelessWidget {
   }
 }
 
-Widget _testLabel(double size, [String fontFamily = 'Noto Sans']) => Padding(
+Widget _testLabel(double size, {String fontFamily = 'NotoSans', bool underline = false}) => Padding(
   insets: const Insets.all(10),
-  child: Text('bruhve ${size}px', style: TextStyle(fontSize: size, fontFamily: fontFamily)),
+  child: /* Text(
+    'bruhve ${size}px',
+    style: TextStyle(fontSize: size, fontFamily: fontFamily, underline: underline),
+  ), */ RawText(
+    softWrap: false,
+    alignment: Alignment.left,
+    spans: [
+      Span(
+        'bruhve',
+        SpanStyle(
+          color: Color.white,
+          fontSize: size,
+          fontFamily: fontFamily,
+          bold: false,
+          italic: false,
+          underline: underline,
+        ),
+      ),
+      Span(
+        ' ',
+        SpanStyle(
+          color: Color.white,
+          fontSize: size,
+          fontFamily: fontFamily,
+          bold: false,
+          italic: false,
+          underline: false,
+        ),
+      ),
+      Span(
+        '$size',
+        SpanStyle(
+          color: const Color.rgb(0x56DFCF),
+          fontSize: size,
+          fontFamily: fontFamily,
+          bold: false,
+          italic: false,
+          underline: underline,
+        ),
+      ),
+      Span(
+        'px',
+        SpanStyle(
+          color: Color.white,
+          fontSize: size,
+          fontFamily: fontFamily,
+          bold: false,
+          italic: false,
+          underline: false,
+        ),
+      ),
+    ],
+  ),
 );
 
 // class TextField extends SingleChildWidgetInstance with ShrinkWrapLayout {

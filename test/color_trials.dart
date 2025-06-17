@@ -7,7 +7,6 @@ import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:braid_ui/braid_ui.dart';
 import 'package:braid_ui/src/animation/lerp.dart';
-import 'package:braid_ui/src/widgets/progress_indicator.dart';
 import 'package:diamond_gl/glfw.dart';
 import 'package:endec/endec.dart';
 import 'package:endec_json/endec_json.dart';
@@ -29,6 +28,7 @@ Future<void> main() async {
     name: 'colors !!',
     baseLogger: Logger('colors_app'),
     resources: BraidResources.filesystem(fontDirectory: 'resources/font', shaderDirectory: 'resources/shader'),
+    defaultFontFamily: 'NotoSans',
     widget: const ColorApp(),
   );
 
@@ -320,7 +320,20 @@ class CursorTest extends StatelessWidget {
         children: [
           const Padding(insets: Insets.all(10), child: ProgressIndicator.indeterminate()),
           const ProgressIndicatorTest(),
-          Sized(width: 100, height: 100, child: MouseArea(cursorStyle: cursor, child: Panel(color: Color.white))),
+          Sized(
+            width: 100,
+            height: 100,
+            child: MouseArea(
+              cursorStyle: cursor,
+              child: Panel(color: Color.white),
+            ),
+          ),
+          const Stack(
+            children: [
+              Panel(color: Color.green),
+              StackBase(child: Text(key: Key('a'), 'some text')),
+            ],
+          ),
         ],
       ),
     );
@@ -404,10 +417,19 @@ class TextWrappingTest extends StatelessWidget {
                     ],
                   ),
                 ),
-                Panel(color: Color.black, child: Text(' and some\nwrapped text', style: TextStyle(fontSize: 14))),
-                Panel(color: Color.black, child: Text(' and more\ntext', style: TextStyle(bold: true, fontSize: 32))),
+                Panel(
+                  color: Color.black,
+                  child: Text(' and some\nwrapped text', style: TextStyle(fontSize: 14)),
+                ),
+                Panel(
+                  color: Color.black,
+                  child: Text(' and more\ntext', style: TextStyle(bold: true, fontSize: 32)),
+                ),
                 Panel(color: Color.black, child: Text('and an icon')),
-                Panel(color: Color.black, child: Icon(icon: Icons.ac_unit)),
+                Panel(
+                  color: Color.black,
+                  child: Icon(icon: Icons.ac_unit),
+                ),
               ],
             ),
           ),
@@ -537,6 +559,7 @@ class _TextInputTestState extends WidgetState<TextInputTest> {
                         fontFamily: 'cascadia',
                         bold: true,
                         italic: false,
+                        underline: false,
                       ),
                     );
                   },
@@ -571,7 +594,12 @@ class CollapsibleTest extends StatelessWidget {
                 ),
               ),
             ),
-            Row(children: [Icon(icon: Icons.fiber_manual_record), Text('just some text')]),
+            Row(
+              children: [
+                Icon(icon: Icons.fiber_manual_record),
+                Text('just some text'),
+              ],
+            ),
             CollapsibleThing(
               title: Text('b'),
               content: Sized(
@@ -582,42 +610,49 @@ class CollapsibleTest extends StatelessWidget {
                     [ActionTrigger.click]: () => print('primary hi'),
                     [ActionTrigger.secondaryClick]: () => print('hi'),
                     [ActionTrigger.secondaryClick, ActionTrigger.secondaryClick]: () => print('double hi'),
-                    [ActionTrigger.secondaryClick, ActionTrigger.secondaryClick, ActionTrigger.secondaryClick]:
-                        () => print('triple hi'),
-                    [ActionTrigger.secondaryClick, ActionTrigger.secondaryClick, ActionTrigger.click]:
-                        () => print('triple hi 2'),
-                    [ActionTrigger.click, ActionTrigger.click, ActionTrigger.secondaryClick]:
-                        () => print('triple hi 3'),
+                    [ActionTrigger.secondaryClick, ActionTrigger.secondaryClick, ActionTrigger.secondaryClick]: () =>
+                        print('triple hi'),
+                    [ActionTrigger.secondaryClick, ActionTrigger.secondaryClick, ActionTrigger.click]: () =>
+                        print('triple hi 2'),
+                    [ActionTrigger.click, ActionTrigger.click, ActionTrigger.secondaryClick]: () =>
+                        print('triple hi 3'),
                     [
                       ActionTrigger(keyCodes: {glfwKey1}),
-                    ]: () => print('1'),
+                    ]: () =>
+                        print('1'),
                     [
                       ActionTrigger(keyCodes: {glfwKey2}),
-                    ]: () => print('2'),
+                    ]: () =>
+                        print('2'),
                     [
                       ActionTrigger(keyCodes: {glfwKey1}),
                       ActionTrigger.click,
                       ActionTrigger(keyCodes: {glfwKey2}),
-                    ]: () => print('1 click 2'),
+                    ]: () =>
+                        print('1 click 2'),
                     [
                       ActionTrigger(keyCodes: {glfwKeyB}),
-                    ]: () => print('b'),
+                    ]: () =>
+                        print('b'),
                     [
                       ActionTrigger(keyCodes: {glfwKeyR}),
-                    ]: () => print('r'),
+                    ]: () =>
+                        print('r'),
                     [
                       ActionTrigger(keyCodes: {glfwKeyB}),
                       ActionTrigger(keyCodes: {glfwKeyR}),
                       ActionTrigger(keyCodes: {glfwKeyU}),
                       ActionTrigger(keyCodes: {glfwKeyH}),
-                    ]: () => print('bruh'),
+                    ]: () =>
+                        print('bruh'),
                     [
                       ActionTrigger.secondaryClick,
                       ActionTrigger.secondaryClick,
                       ActionTrigger(keyCodes: {glfwKey1}),
                       ActionTrigger.click,
                       ActionTrigger(keyCodes: {glfwKey2}),
-                    ]: () => print('yeah uhh'),
+                    ]: () =>
+                        print('yeah uhh'),
                   },
                   child: Panel(color: Color.blue),
                 ),
@@ -647,10 +682,9 @@ class _CollapsibleTestState extends WidgetState<CollapsibleThing> {
   Widget build(BuildContext context) {
     return Collapsible(
       collapsed: collapsed,
-      onToggled:
-          (nowCollapsed) => setState(() {
-            collapsed = nowCollapsed;
-          }),
+      onToggled: (nowCollapsed) => setState(() {
+        collapsed = nowCollapsed;
+      }),
       title: widget.title,
       content: widget.content,
     );

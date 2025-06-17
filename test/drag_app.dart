@@ -15,6 +15,7 @@ Future<void> main(List<String> args) async {
     windowWidth: 600,
     windowHeight: 400,
     resources: BraidResources.filesystem(fontDirectory: 'resources/font', shaderDirectory: 'resources/shader'),
+    defaultFontFamily: 'NotoSans',
     widget: const DragApp(),
   );
 

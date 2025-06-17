@@ -18,6 +18,7 @@ Future<void> main(List<String> args) async {
     windowWidth: 600,
     windowHeight: 400,
     resources: BraidResources.filesystem(fontDirectory: 'resources/font', shaderDirectory: 'resources/shader'),
+    defaultFontFamily: 'NotoSans',
     widget: const ClockApp(),
   );
 
@@ -50,7 +51,10 @@ class ClockApp extends StatelessWidget {
               child: Center(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [TimeText(), Button(onClick: () => print('yup'), child: Text('a'))],
+                  children: [
+                    TimeText(),
+                    Button(onClick: () => print('yup'), child: Text('a')),
+                  ],
                 ),
               ),
             ),
@@ -58,25 +62,27 @@ class ClockApp extends StatelessWidget {
           Flexible(
             key: Key('b'),
             child: LayoutBuilder(
-              builder:
-                  (context, constraints) => Panel(
-                    color: constraints.maxWidth > 600 ? Color.green : Color.blue,
-                    child: const AnimatedPadding(
-                      easing: Easing.inOutExpo,
-                      duration: Duration(milliseconds: 1000),
-                      insets: Insets(top: 10, bottom: 10, left: 10, right: 10),
-                      child: AnimatedPanel(
-                        easing: Easing.outExpo,
-                        duration: Duration(seconds: 1),
-                        cornerRadius: CornerRadius.all(15),
-                        color: Color.white,
-                      ),
-                    ),
+              builder: (context, constraints) => Panel(
+                color: constraints.maxWidth > 600 ? Color.green : Color.blue,
+                child: const AnimatedPadding(
+                  easing: Easing.inOutExpo,
+                  duration: Duration(milliseconds: 1000),
+                  insets: Insets(top: 10, bottom: 10, left: 10, right: 10),
+                  child: AnimatedPanel(
+                    easing: Easing.outExpo,
+                    duration: Duration(seconds: 1),
+                    cornerRadius: CornerRadius.all(15),
+                    color: Color.white,
                   ),
+                ),
+              ),
             ),
             flexFactor: .5,
           ),
-          Constrain(constraints: Constraints.tightOnAxis(vertical: 75), child: Panel(color: Color.black)),
+          Constrain(
+            constraints: Constraints.tightOnAxis(vertical: 75),
+            child: Panel(color: Color.black),
+          ),
           AnimatedAlign(
             duration: Duration(milliseconds: 1000),
             easing: Easing.inOutCubic,
@@ -120,13 +126,15 @@ class DependencyTestState extends WidgetState<DependencyTest> {
       child: Row(
         children: [
           Button(
-            onClick:
-                () => setState(() {
-                  color = color == Color.red ? Color.green : Color.red;
-                }),
+            onClick: () => setState(() {
+              color = color == Color.red ? Color.green : Color.red;
+            }),
             child: Text('toggle'),
           ),
-          Constrain(constraints: Constraints.only(minWidth: 10), child: Panel(color: color)),
+          Constrain(
+            constraints: Constraints.only(minWidth: 10),
+            child: Panel(color: color),
+          ),
           const Flexible(child: Builder(builder: _innerBuild)),
         ],
       ),

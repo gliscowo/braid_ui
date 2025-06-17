@@ -13,6 +13,7 @@ Future<void> main() async {
     name: 'colors !!',
     baseLogger: Logger('colors_app'),
     resources: BraidResources.filesystem(fontDirectory: 'resources/font', shaderDirectory: 'resources/shader'),
+    defaultFontFamily: 'NotoSans',
     widget: const DragArenaApp(),
   );
 
@@ -28,7 +29,11 @@ class DragArenaApp extends StatelessWidget {
       child: PanArena(
         children: [
           const FunnyDraggable(
-            child: Sized(width: 50, height: 50, child: Panel(color: Color.red, cornerRadius: CornerRadius.all(5))),
+            child: Sized(
+              width: 50,
+              height: 50,
+              child: Panel(color: Color.red, cornerRadius: CornerRadius.all(5)),
+            ),
           ),
           FunnyDraggable(
             child: Panel(
@@ -67,7 +72,11 @@ class DragArenaApp extends StatelessWidget {
             ),
           ),
           const FunnyDraggable(
-            child: Sized(width: 50, height: 50, child: Panel(color: Color.blue, cornerRadius: CornerRadius.all(5))),
+            child: Sized(
+              width: 50,
+              height: 50,
+              child: Panel(color: Color.blue, cornerRadius: CornerRadius.all(5)),
+            ),
           ),
         ],
       ),
@@ -139,6 +148,8 @@ class _PanArenaState extends WidgetState<PanArena> {
             scale += scale * .1 * vertical;
             _recompute();
           });
+
+          return true;
         },
         child: Stack(
           children: [
@@ -155,7 +166,10 @@ class _PanArenaState extends WidgetState<PanArena> {
                 });
               },
             ),
-            Transform(matrix: _matrix, child: DragArena(children: widget.children)),
+            Transform(
+              matrix: _matrix,
+              child: DragArena(children: widget.children),
+            ),
           ],
         ),
       ),
@@ -202,10 +216,9 @@ class _ResizableState extends WidgetState<Resizable> {
                 Flexible(child: widget.child),
                 MouseArea(
                   cursorStyle: CursorStyle.verticalResize,
-                  dragCallback:
-                      (_, _, _, dy) => setState(() {
-                        size = size.copy(height: size.height + dy);
-                      }),
+                  dragCallback: (_, _, _, dy) => setState(() {
+                    size = size.copy(height: size.height + dy);
+                  }),
                   child: Padding(insets: const Insets(top: 1)),
                 ),
               ],
@@ -213,10 +226,9 @@ class _ResizableState extends WidgetState<Resizable> {
           ),
           MouseArea(
             cursorStyle: CursorStyle.horizontalResize,
-            dragCallback:
-                (_, _, dx, _) => setState(() {
-                  size = size.copy(width: size.width + dx);
-                }),
+            dragCallback: (_, _, dx, _) => setState(() {
+              size = size.copy(width: size.width + dx);
+            }),
             child: Padding(insets: const Insets(left: 1)),
           ),
         ],

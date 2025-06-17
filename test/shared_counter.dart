@@ -14,6 +14,7 @@ Future<void> main() async {
     windowWidth: 500,
     windowHeight: 400,
     resources: BraidResources.filesystem(fontDirectory: 'resources/font', shaderDirectory: 'resources/shader'),
+    defaultFontFamily: 'NotoSans',
     widget: const InheritedStateApp(),
   );
 
@@ -32,7 +33,12 @@ class InheritedStateApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return BraidTheme(
       textStyle: TextStyle(fontSize: 24.0),
-      child: Column(children: [Flexible(child: TheApp()), Flexible(child: TheApp(nest: true))]),
+      child: Column(
+        children: [
+          Flexible(child: TheApp()),
+          Flexible(child: TheApp(nest: true)),
+        ],
+      ),
     );
   }
 }
