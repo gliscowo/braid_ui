@@ -281,6 +281,12 @@ mixin InstanceListenerProxy on WidgetProxy {
 /// can only be terminated by an instance proxy
 abstract class ComposedProxy extends WidgetProxy with SingleChildWidgetProxy {
   ComposedProxy(super.widget);
+
+  @override
+  void updateSlot(Object? newSlot) {
+    super.updateSlot(newSlot);
+    child?.updateSlot(newSlot);
+  }
 }
 
 /// A proxy which immediately spawns, owns and manages a [WidgetInstance]
