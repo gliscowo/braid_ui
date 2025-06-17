@@ -110,27 +110,83 @@ class PrimitiveRenderer {
       ..draw();
   }
 
-  // void blur(double width, double height, Color color, Matrix4 transform, Matrix4 projection) {
-  //   _blurFramebuffer.clear(color: Color.black);
-  //   gl.blitNamedFramebuffer(0, _blurFramebuffer.fbo, 0, 0, _context.window.width, _context.window.height, 0, 0,
-  //       _blurFramebuffer.width, _blurFramebuffer.height, glColorBufferBit, glLinear);
+  GlFramebuffer? _blurFramebuffer;
+  BufferWriter? _kernelBuffer;
+  GlBufferObject? _kernelSsbo;
 
-  //   _blurBuffer.program
-  //     ..uniformMat4('uTransform', transform)
-  //     ..uniformMat4('uProjection', projection)
-  //     ..uniformSampler('uInput', _blurFramebuffer.colorAttachment, 0)
-  //     ..use();
+  static double _gaussKernel(double x, double sigma) {
+    return (1 / sqrt(2 * pi * sigma * sigma)) * pow(e, -((x * x) / (2 * sigma * sigma)));
+  }
 
-  //   gl.disable(glBlend);
+  void blur(double width, double height, double radius, Matrix4 transform, Matrix4 projection) {
+    {
+      final ssboWriter = _kernelBuffer ??= BufferWriter.native();
+      ssboWriter.rewind();
 
-  //   _solidBuffer.clear();
-  //   buildRect(_solidBuffer.vertex, 0, 0, width, height, color);
-  //   _solidBuffer
-  //     ..upload(dynamic: true)
-  //     ..draw();
+      for (var x = 0; x <= radius.ceil(); x++) {
+        ssboWriter.f32(_gaussKernel(x.toDouble(), radius / 3));
+      }
 
-  //   gl.enable(glBlend);
-  // }
+      final ssbo = _kernelSsbo ??= GlBufferObject.shaderStorage();
+      ssbo.upload(ssboWriter, BufferUsage.streamDraw);
+    }
+
+    final framebuffer = _blurFramebuffer ??= GlFramebuffer.trackingWindow(_context.window);
+    final buffer = _getBuffer(#blur, posVertexDescriptor, 'blur');
+
+    gl.blitNamedFramebuffer(
+      0,
+      framebuffer.fbo,
+      0,
+      0,
+      _context.window.width,
+      _context.window.height,
+      0,
+      0,
+      framebuffer.width,
+      framebuffer.height,
+      glColorBufferBit,
+      glLinear,
+    );
+
+    buffer.program
+      ..uniformMat4('uTransform', transform)
+      ..uniformMat4('uProjection', projection)
+      ..uniformSampler('uInput', framebuffer.colorAttachment, 0)
+      ..uniform2i('uInputSize', framebuffer.width - 1, framebuffer.height - 1)
+      ..uniform1i('uKernelSize', radius.ceil())
+      ..uniform2i('uBlurDirection', 0, 1)
+      ..ssbo(0, _kernelSsbo!.id)
+      ..use();
+
+    gl.disable(glBlend);
+
+    buffer.clear();
+    buildRect(buffer.vertex, 0, 0, width, height);
+    buffer
+      ..upload(dynamic: true)
+      ..draw();
+
+    gl.blitNamedFramebuffer(
+      0,
+      framebuffer.fbo,
+      0,
+      0,
+      _context.window.width,
+      _context.window.height,
+      0,
+      0,
+      framebuffer.width,
+      framebuffer.height,
+      glColorBufferBit,
+      glLinear,
+    );
+
+    buffer.program.uniform2i('uBlurDirection', 1, 0);
+    buffer.draw();
+
+    gl.enable(glBlend);
+  }
 
   void circle(
     double radius,
