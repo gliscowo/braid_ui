@@ -11,9 +11,18 @@ class Container extends StatelessWidget {
   final Insets? margin;
   final Color? color;
   final CornerRadius? cornerRadius;
+  final double? outlineThickness;
   final Widget child;
 
-  Container({super.key, this.padding, this.margin, this.color, this.cornerRadius, required this.child});
+  Container({
+    super.key,
+    this.padding,
+    this.margin,
+    this.color,
+    this.cornerRadius,
+    this.outlineThickness,
+    required this.child,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +33,12 @@ class Container extends StatelessWidget {
     }
 
     if (color != null) {
-      result = Panel(color: color!, cornerRadius: cornerRadius ?? const CornerRadius(), child: result);
+      result = Panel(
+        color: color!,
+        cornerRadius: cornerRadius ?? const CornerRadius(),
+        outlineThickness: outlineThickness,
+        child: result,
+      );
     }
 
     if (margin != null) {
@@ -40,6 +54,7 @@ class AnimatedContainer extends StatelessWidget {
   final Insets? margin;
   final Color? color;
   final CornerRadius? cornerRadius;
+  final double? outlineThickness;
   final Duration duration;
   final Easing easing;
   final Widget child;
@@ -50,6 +65,7 @@ class AnimatedContainer extends StatelessWidget {
     this.margin,
     this.color,
     this.cornerRadius,
+    this.outlineThickness,
     this.easing = Easing.linear,
     required this.duration,
     required this.child,
@@ -69,6 +85,7 @@ class AnimatedContainer extends StatelessWidget {
         duration: duration,
         color: color!,
         cornerRadius: cornerRadius ?? const CornerRadius(),
+        outlineThickness: outlineThickness,
         child: result,
       );
     }
