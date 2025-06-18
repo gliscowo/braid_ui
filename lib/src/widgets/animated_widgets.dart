@@ -55,11 +55,13 @@ class AnimatedPanel extends AutomaticallyAnimatedWidget {
 class _AnimatedPanelState extends AutomaticallyAnimatedWidgetState<AnimatedPanel> {
   ColorLerp? _color;
   CornerRadiusLerp? _cornerRadius;
+  Lerp<double?>? _outlineThickness;
 
   @override
   void updateLerps() {
     _color = visitLerp(_color, widget.color, ColorLerp.new);
     _cornerRadius = visitLerp(_cornerRadius, widget.cornerRadius, CornerRadiusLerp.new);
+    _outlineThickness = visitNullableLerp(_outlineThickness, widget.outlineThickness, DoubleLerp.new);
   }
 
   @override
@@ -67,7 +69,7 @@ class _AnimatedPanelState extends AutomaticallyAnimatedWidgetState<AnimatedPanel
     return Panel(
       color: _color!.compute(animationValue),
       cornerRadius: _cornerRadius!.compute(animationValue),
-      outlineThickness: widget.outlineThickness,
+      outlineThickness: _outlineThickness!.compute(animationValue),
       child: widget.child,
     );
   }
