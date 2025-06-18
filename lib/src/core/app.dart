@@ -255,8 +255,8 @@ class _UserRoot extends VisitorWidget {
 /// It is also responsible for dispatching input events and acts as the application's
 /// [InstanceHost] and [ProxyHost].
 ///
-/// For users, the app state is the central and only handle necessary to implement a
-/// braid application - other part of the framework is managed by and accessible through it.
+/// For users, the app state is the central and only handle necessary to implement a braid
+/// application - all other parts of the framework is managed by and accessible through it.
 ///
 /// ### Lifecycle
 /// Upon construction, the app state bootstraps the widget, proxy and instance trees. It also subscribes

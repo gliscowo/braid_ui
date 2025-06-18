@@ -12,6 +12,7 @@ Future<void> main() async {
     name: 'baselines',
     baseLogger: Logger('baseline_app'),
     resources: BraidResources.filesystem(fontDirectory: 'resources/font', shaderDirectory: 'resources/shader'),
+    defaultFontFamily: 'NotoSans',
     widget: const BaselineApp(),
   );
 
