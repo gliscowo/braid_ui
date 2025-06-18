@@ -119,7 +119,7 @@ String getShaderSource(String shaderName) {
 
 class BakedAssetResources implements BraidResources {
   final BraidResources _fontDelegate;
-  BakedAssetResources(this._fontDelegate);
+  BakedAssetResources({required BraidResources fontDelegate}) : _fontDelegate = fontDelegate;
 
   @override
   Future<String> loadShader(String path) => Future.value(getShaderSource(path));
