@@ -203,11 +203,21 @@ class FlexInstance extends MultiChildWidgetInstance<Flex> {
     // to divvy up the remaining space properly later
     final flexChildren = children.where((element) => element.parentData is FlexParentData);
     final totalFlexFactor = flexChildren.map((element) => (element.parentData as FlexParentData).flexFactor).sum;
+    var accumulatedPartialSpace = 0.0;
 
     // lay out all flex children with tight constraints
     // on the main axis according to their allotted space
     for (final child in flexChildren) {
-      final space = remainingSpace * ((child.parentData as FlexParentData).flexFactor / totalFlexFactor);
+      var space = remainingSpace * ((child.parentData as FlexParentData).flexFactor / totalFlexFactor);
+
+      accumulatedPartialSpace += space - space.floorToDouble();
+      space = space.floorToDouble();
+
+      if (accumulatedPartialSpace >= 1) {
+        space += 1;
+        accumulatedPartialSpace -= 1;
+      }
+
       childSizes.add(
         layoutChild(
           child,
