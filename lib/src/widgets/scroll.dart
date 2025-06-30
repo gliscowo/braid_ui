@@ -230,7 +230,7 @@ class RawScrollView extends SingleChildInstanceWidget {
   SingleChildWidgetInstance<InstanceWidget> instantiate() => RawScrollViewInstance(widget: this);
 }
 
-class RawScrollViewInstance extends SingleChildWidgetInstance<RawScrollView> with MouseListener {
+class RawScrollViewInstance extends SingleChildWidgetInstance<RawScrollView> {
   double horizontalOffset = 0, maxHorizontalOffset = 0;
   double verticalOffset = 0, maxVerticalOffset = 0;
 

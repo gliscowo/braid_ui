@@ -477,12 +477,27 @@ node [shape="box"];
     gl.enable(glBlend);
 
     ctx.transform.scopedTransform(rootInstance.transform.transformToParent, (_) => rootInstance.draw(ctx));
+
+    // TODO: this really shouldn't force a
+    // buffer swap on the context window
+    //
+    // in fact, braid doing gl context management
+    // front and center in the app state draw loop like
+    // this is definitely terrible for embeddability
     context.nextFrame();
 
     glfw.makeContextCurrent(ffi.nullptr);
   }
 
   void updateWidgetsAndInteractions(double delta) {
+    // TODO: relying on glfw event polling for ordering
+    // braid events is extremely fragile, especially in an
+    // embedded context where we don't own the pipeline
+    //
+    // likely, events need to be buffered by the app state itself
+    // to dispatch in [updateWidgetsAndInteractions]
+    glfw.pollEvents();
+
     if (_callbacks.isNotEmpty) {
       final callbacksForThisFrame = _callbacks;
       _callbacks = DoubleLinkedQueue();

@@ -55,7 +55,11 @@ class RenderContext {
   }
 
   void nextFrame() {
-    window.nextFrame();
+    // window.nextFrame();
+
+    // TODO: investigate whether there is a better
+    // approach to splitting buffer swap and event gathering
+    glfw.swapBuffers(window.handle);
     _frameEventsContoller.add(const ());
   }
 

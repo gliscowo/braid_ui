@@ -93,6 +93,11 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
     if (widget.autoFocus) requestFocus();
   }
 
+  ({double x, double y}) get cursorPosition {
+    final (x, y, _) = _coordinatesAtRuneIdx(_selection.end);
+    return (x: x, y: y);
+  }
+
   @override
   set widget(TextInput value) {
     if (!(_text == value.controller.text &&
@@ -116,7 +121,7 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
     _paragraph = Paragraph(widget.controller.createSpans(widget.style));
     host!.textRenderer.layoutParagraph(_paragraph, widget.softWrap ? maxWidth : double.infinity);
 
-    var size = Size(_paragraph.metrics.width, _paragraph.metrics.height).constrained(constraints);
+    var size = Size(_paragraph.metrics.width + 2, _paragraph.metrics.height).constrained(constraints);
     transform.setSize(size);
 
     final newLineIdx = _lineIdxAtRuneIdx(_selection.end);
@@ -125,7 +130,10 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
 
   @override
   double measureIntrinsicWidth(double height) =>
-      host!.textRenderer.layoutParagraph(Paragraph(widget.controller.createSpans(widget.style)), double.infinity).width;
+      host!.textRenderer
+          .layoutParagraph(Paragraph(widget.controller.createSpans(widget.style)), double.infinity)
+          .width +
+      2;
 
   @override
   double measureIntrinsicHeight(double width) => host!.textRenderer
@@ -226,8 +234,6 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
     return (x, y, line.height);
   }
 
-  double _computeCursorX() => _coordinatesAtRuneIdx(_selection.end).$1;
-
   void _insert(String insertion) {
     final runes = _text.runes.toList();
     runes.replaceRange(_selection.lower, _selection.upper, insertion.runes);
@@ -240,7 +246,7 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
 
   void _moveCursorVertically(int byLines, bool selecting) {
     final newLineIdx = (_cursorLocation.line + byLines).clamp(0, _paragraph.metrics.lineMetrics.length - 1);
-    final currentX = _computeCursorX();
+    final currentX = cursorPosition.x;
 
     final newLine = _paragraph.metrics.lineMetrics[newLineIdx];
     var newLocalRune = 0;
