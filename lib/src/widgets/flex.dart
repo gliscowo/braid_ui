@@ -57,6 +57,8 @@ class Flex extends MultiChildInstanceWidget {
 
 // ---
 
+// TODO: move these somewhere else
+
 extension ConstraintsAxisOperations on Constraints {
   double minOnAxis(LayoutAxis axis) => switch (axis) {
     LayoutAxis.horizontal => minWidth,

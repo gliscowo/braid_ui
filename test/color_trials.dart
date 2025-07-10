@@ -6,6 +6,7 @@ import 'dart:math';
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:braid_ui/braid_ui.dart';
+import 'package:braid_ui/src/widgets/grid.dart';
 import 'package:diamond_gl/glfw.dart';
 import 'package:endec/endec.dart';
 import 'package:endec_json/endec_json.dart';
@@ -77,7 +78,7 @@ class AppBody extends StatefulWidget {
   WidgetState<AppBody> createState() => _AppBodyState();
 }
 
-enum Test { checkboxes, cursors, textWrapping, textInput, collapsible }
+enum Test { checkboxes, cursors, textWrapping, textInput, collapsible, grids }
 
 class _AppBodyState extends WidgetState<AppBody> {
   static final _windowEndec = structEndec<(String, WindowController)>().with2Fields(
@@ -127,6 +128,7 @@ class _AppBodyState extends WidgetState<AppBody> {
                         Test.textWrapping => const TextWrappingTest(),
                         Test.textInput => const TextInputTest(),
                         Test.collapsible => const CollapsibleTest(),
+                        Test.grids => const GridsTest(),
                       },
                       Align(
                         alignment: Alignment.left,
@@ -765,6 +767,28 @@ class _ToggleBoxState extends WidgetState<ToggleBox> {
         const Padding(insets: Insets.all(5)),
         Checkbox(onClick: () => setState(() => _checked = !_checked), checked: _checked),
       ],
+    );
+  }
+}
+
+class GridsTest extends StatelessWidget {
+  const GridsTest({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Grid(
+        mainAxis: LayoutAxis.vertical,
+        crossAxisCells: 2,
+        children: [
+          Sized(width: 100, height: 100, child: Panel(color: Color.white)),
+          Sized(width: 50, height: 50, child: Panel(color: Color.white)),
+          Sized(width: 50, height: 50, child: Panel(color: Color.white)),
+          Sized(width: 100, height: 100, child: Panel(color: Color.white)),
+          Sized(width: 100, height: 100, child: Panel(color: Color.white)),
+          Sized(width: 50, height: 50, child: Panel(color: Color.white)),
+        ],
+      ),
     );
   }
 }

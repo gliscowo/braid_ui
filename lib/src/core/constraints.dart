@@ -42,7 +42,9 @@ class Constraints {
   bool get hasLooseHeight => minHeight == 0;
   bool get isLoose => hasLooseWidth && hasLooseHeight;
 
-  bool get isTight => minWidth == maxWidth && minHeight == maxHeight;
+  bool get hasTightWidth => minWidth == maxWidth;
+  bool get hasTightHeight => minHeight == maxHeight;
+  bool get isTight => hasTightWidth && hasTightHeight;
 
   bool get hasBoundedWidth => maxWidth < double.infinity;
   bool get hasBoundedHeight => maxHeight < double.infinity;
