@@ -84,7 +84,7 @@ class _SharedStateProvider<T extends ShareableState> extends InheritedWidget {
 typedef _StateAspect<T extends ShareableState> = ({Object? capturedValue, Object? Function(T) selector});
 
 class _SharedStateProviderProxy<T extends ShareableState> extends InheritedProxy {
-  _SharedStateProviderProxy(super.widget);
+  _SharedStateProviderProxy(_SharedStateProvider<T> super.widget);
 
   final Map<WidgetProxy, Object> _dependenciesByDependent = HashMap();
 
@@ -112,7 +112,7 @@ class _SharedStateProviderProxy<T extends ShareableState> extends InheritedProxy
     final dependency = _dependenciesByDependent[dependent];
     if (dependency is List<_StateAspect<T>>) {
       return dependency.any(
-        (element) => element.capturedValue != element.selector((widget as _SharedStateProvider).state.state as T),
+        (element) => element.capturedValue != element.selector((widget as _SharedStateProvider<T>).state.state),
       );
     } else {
       return true;

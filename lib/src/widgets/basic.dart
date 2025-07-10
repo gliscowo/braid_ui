@@ -75,12 +75,14 @@ class Flexible extends VisitorWidget {
 
   static void _visitor(Flexible widget, WidgetInstance instance) {
     if (instance.parentData case FlexParentData data) {
-      data.flexFactor = widget.flexFactor;
+      if (data.flexFactor != widget.flexFactor) {
+        data.flexFactor = widget.flexFactor;
+        instance.markNeedsLayout();
+      }
     } else {
       instance.parentData = FlexParentData(widget.flexFactor);
+      instance.markNeedsLayout();
     }
-
-    instance.markNeedsLayout();
   }
 
   @override
@@ -138,14 +140,14 @@ class PaddingInstance extends OptionalChildWidgetInstance<Padding> {
   }
 
   @override
-  double measureIntrinsicWidth(double height) => (child?.measureIntrinsicWidth(height) ?? 0) + widget.insets.horizontal;
+  double measureIntrinsicWidth(double height) => (child?.getIntrinsicWidth(height) ?? 0) + widget.insets.horizontal;
 
   @override
-  double measureIntrinsicHeight(double width) => (child?.measureIntrinsicHeight(width) ?? 0) + widget.insets.vertical;
+  double measureIntrinsicHeight(double width) => (child?.getIntrinsicHeight(width) ?? 0) + widget.insets.vertical;
 
   @override
   double? measureBaselineOffset() {
-    final childBaseline = child?.measureBaselineOffset();
+    final childBaseline = child?.getBaselineOffset();
     if (childBaseline == null) return null;
 
     return childBaseline + widget.insets.top;
@@ -199,13 +201,15 @@ class ConstrainedInstance extends SingleChildWidgetInstance<ConstraintWidget> {
   }
 
   @override
-  double measureIntrinsicWidth(double height) => child.measureIntrinsicWidth(height);
+  double measureIntrinsicWidth(double height) =>
+      child.getIntrinsicWidth(height).clamp(widget.constraints.minWidth, widget.constraints.maxWidth);
 
   @override
-  double measureIntrinsicHeight(double width) => child.measureIntrinsicHeight(width);
+  double measureIntrinsicHeight(double width) =>
+      child.getIntrinsicHeight(width).clamp(widget.constraints.minHeight, widget.constraints.maxHeight);
 
   @override
-  double? measureBaselineOffset() => child.measureBaselineOffset();
+  double? measureBaselineOffset() => child.getBaselineOffset();
 }
 
 // ---
@@ -296,13 +300,18 @@ class _AlignInstance extends SingleChildWidgetInstance<Align> {
   }
 
   @override
-  double measureIntrinsicWidth(double height) => child.measureIntrinsicWidth(height) * (widget.widthFactor ?? 1);
+  double measureIntrinsicWidth(double height) => child.getIntrinsicWidth(height) * (widget.widthFactor ?? 1);
 
   @override
-  double measureIntrinsicHeight(double width) => child.measureIntrinsicHeight(width) * (widget.heightFactor ?? 1);
+  double measureIntrinsicHeight(double width) => child.getIntrinsicHeight(width) * (widget.heightFactor ?? 1);
 
   @override
-  double? measureBaselineOffset() => child.measureBaselineOffset();
+  double? measureBaselineOffset() {
+    final childOffset = child.getBaselineOffset();
+    if (childOffset == null) return null;
+
+    return childOffset + child.transform.y;
+  }
 }
 
 // ---
@@ -856,13 +865,13 @@ class SizeToAABBInstance extends SingleChildWidgetInstance<SizeToAABB> {
   // TODO: these implementations are not correct
 
   @override
-  double measureIntrinsicWidth(double height) => child.measureIntrinsicWidth(height);
+  double measureIntrinsicWidth(double height) => child.getIntrinsicWidth(height);
 
   @override
-  double measureIntrinsicHeight(double width) => child.measureIntrinsicHeight(width);
+  double measureIntrinsicHeight(double width) => child.getIntrinsicHeight(width);
 
   @override
-  double? measureBaselineOffset() => child.measureBaselineOffset();
+  double? measureBaselineOffset() => child.getBaselineOffset();
 }
 
 // ---
@@ -1008,14 +1017,14 @@ class _VisibilityInstance extends SingleChildWidgetInstance<Visibility> {
 
   @override
   double measureIntrinsicWidth(double height) =>
-      widget.visible || widget.reportSize ? child.measureIntrinsicWidth(height) : 0;
+      widget.visible || widget.reportSize ? child.getIntrinsicWidth(height) : 0;
 
   @override
   double measureIntrinsicHeight(double width) =>
-      widget.visible || widget.reportSize ? child.measureIntrinsicHeight(width) : 0;
+      widget.visible || widget.reportSize ? child.getIntrinsicHeight(width) : 0;
 
   @override
-  double? measureBaselineOffset() => widget.visible || widget.reportSize ? child.measureBaselineOffset() : null;
+  double? measureBaselineOffset() => widget.visible || widget.reportSize ? child.getBaselineOffset() : null;
 
   @override
   void draw(DrawContext ctx) {
@@ -1057,13 +1066,13 @@ class _IntrinsicWidthInstance extends SingleChildWidgetInstance {
   }
 
   @override
-  double measureIntrinsicWidth(double height) => child.measureIntrinsicWidth(height);
+  double measureIntrinsicWidth(double height) => child.getIntrinsicWidth(height);
 
   @override
-  double measureIntrinsicHeight(double width) => child.measureIntrinsicHeight(width);
+  double measureIntrinsicHeight(double width) => child.getIntrinsicHeight(width);
 
   @override
-  double? measureBaselineOffset() => child.measureBaselineOffset();
+  double? measureBaselineOffset() => child.getBaselineOffset();
 }
 
 // ---
@@ -1093,11 +1102,11 @@ class _IntrinsicHeightInstance extends SingleChildWidgetInstance {
   }
 
   @override
-  double measureIntrinsicWidth(double height) => child.measureIntrinsicWidth(height);
+  double measureIntrinsicWidth(double height) => child.getIntrinsicWidth(height);
 
   @override
-  double measureIntrinsicHeight(double width) => child.measureIntrinsicHeight(width);
+  double measureIntrinsicHeight(double width) => child.getIntrinsicHeight(width);
 
   @override
-  double? measureBaselineOffset() => child.measureBaselineOffset();
+  double? measureBaselineOffset() => child.getBaselineOffset();
 }

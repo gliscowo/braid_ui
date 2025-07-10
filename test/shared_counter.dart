@@ -55,7 +55,7 @@ class TheApp extends StatelessWidget {
         children: [
           Flexible(child: LeftBody()),
           Flexible(child: Center(child: RightBody())),
-          if (nest) Flexible(child: TheApp(), flexFactor: 2),
+          if (nest) Flexible(flexFactor: 2, child: TheApp()),
         ],
       ),
     );

@@ -8,7 +8,7 @@ class StackBase extends VisitorWidget {
   const StackBase({super.key, required super.child});
 
   static void _visitor(StackBase widget, WidgetInstance instance) {
-    if (instance.parentData is! _StackParentData) {
+    if (instance.parentData != const _StackParentData()) {
       instance.parentData = const _StackParentData();
       instance.markNeedsLayout();
     }
@@ -44,7 +44,7 @@ class _StackInstance extends MultiChildWidgetInstance<Stack> {
 
   @override
   void doLayout(Constraints constraints) {
-    final sizingBase = children.firstWhereOrNull((child) => child.parentData is _StackParentData);
+    final sizingBase = children.firstWhereOrNull((child) => child.parentData == const _StackParentData());
 
     Size selfSize;
     if (sizingBase != null) {
@@ -55,7 +55,7 @@ class _StackInstance extends MultiChildWidgetInstance<Stack> {
         child.layout(childConstraints);
       }
     } else {
-      selfSize = children.fold(Size.zero, (size, child) => size = Size.max(size, child.layout(constraints)));
+      selfSize = children.fold(Size.zero, (size, child) => Size.max(size, child.layout(constraints)));
     }
 
     for (final child in children) {
@@ -68,16 +68,12 @@ class _StackInstance extends MultiChildWidgetInstance<Stack> {
   }
 
   @override
-  double measureIntrinsicWidth(double height) => children.fold(
-    0.0,
-    (width, child) => max(child.measureIntrinsicWidth(height), child.measureIntrinsicWidth(height)),
-  );
+  double measureIntrinsicWidth(double height) =>
+      children.fold(0.0, (width, child) => max(child.getIntrinsicWidth(height), width));
 
   @override
-  double measureIntrinsicHeight(double width) => children.fold(
-    0.0,
-    (height, child) => max(child.measureIntrinsicHeight(width), child.measureIntrinsicHeight(width)),
-  );
+  double measureIntrinsicHeight(double width) =>
+      children.fold(0.0, (height, child) => max(child.getIntrinsicHeight(width), height));
 
   @override
   double? measureBaselineOffset() => computeHighestBaselineOffset();

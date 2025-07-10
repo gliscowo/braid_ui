@@ -39,7 +39,7 @@ class Flex extends MultiChildInstanceWidget {
 
   @override
   List<Widget> get children {
-    if (separator == null || super.children.isEmpty) {
+    if (separator == null || super.children.length < 2) {
       return super.children;
     }
 
@@ -295,23 +295,28 @@ class FlexInstance extends MultiChildWidgetInstance<Flex> {
     final horizontal = widget.mainAxis == LayoutAxis.horizontal;
     final nonFlexSize = children
         .where((element) => element.parentData is! FlexParentData)
-        .map((e) => horizontal ? e.measureIntrinsicWidth(crossExtent) : e.measureIntrinsicHeight(crossExtent))
+        .map((e) => horizontal ? e.getIntrinsicWidth(crossExtent) : e.getIntrinsicHeight(crossExtent))
         .sum;
 
     var totalFlexFactor = 0.0;
-    (WidgetInstance child, double size, double flexFactor)? largestFlexChild;
+    ({WidgetInstance child, double size, double flexFactor})? largestFlexChild;
+
     for (final flexChild in children.where((element) => element.parentData is FlexParentData)) {
       totalFlexFactor += (flexChild.parentData as FlexParentData).flexFactor;
 
-      final size = horizontal
-          ? flexChild.measureIntrinsicWidth(crossExtent)
-          : flexChild.measureIntrinsicHeight(crossExtent);
-      if (size > (largestFlexChild?.$2 ?? 0)) {
-        largestFlexChild = (flexChild, size, (flexChild.parentData as FlexParentData).flexFactor);
+      final size = horizontal ? flexChild.getIntrinsicWidth(crossExtent) : flexChild.getIntrinsicHeight(crossExtent);
+      if (size > (largestFlexChild?.size ?? 0)) {
+        largestFlexChild = (
+          child: flexChild,
+          size: size,
+          flexFactor: (flexChild.parentData as FlexParentData).flexFactor,
+        );
       }
     }
 
-    final flexSize = largestFlexChild != null ? (totalFlexFactor / largestFlexChild.$3) * largestFlexChild.$2 : 0;
+    final flexSize = largestFlexChild != null
+        ? (totalFlexFactor / largestFlexChild.flexFactor) * largestFlexChild.size
+        : 0;
 
     return nonFlexSize + flexSize;
   }
@@ -323,7 +328,7 @@ class FlexInstance extends MultiChildWidgetInstance<Flex> {
 
     var nonFlexSize = 0.0;
     for (final child in children.where((element) => element.parentData is! FlexParentData)) {
-      final childSize = horizontal ? child.measureIntrinsicHeight(mainExtent) : child.measureIntrinsicWidth(mainExtent);
+      final childSize = horizontal ? child.getIntrinsicHeight(mainExtent) : child.getIntrinsicWidth(mainExtent);
 
       nonFlexSize += childSize;
       crossSize = max(crossSize, childSize);
@@ -337,7 +342,7 @@ class FlexInstance extends MultiChildWidgetInstance<Flex> {
           (mainExtent - nonFlexSize) * (totalFlexFactor / (child.parentData as FlexParentData).flexFactor);
       crossSize = max(
         crossSize,
-        horizontal ? child.measureIntrinsicHeight(childSpace) : child.measureIntrinsicWidth(childSpace),
+        horizontal ? child.getIntrinsicHeight(childSpace) : child.getIntrinsicWidth(childSpace),
       );
     }
 

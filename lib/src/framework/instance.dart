@@ -466,13 +466,13 @@ mixin ShrinkWrapLayout<T extends InstanceWidget> on WidgetInstance<T>, SingleChi
   }
 
   @override
-  double measureIntrinsicWidth(double height) => child.measureIntrinsicWidth(height);
+  double measureIntrinsicWidth(double height) => child.getIntrinsicWidth(height);
 
   @override
-  double measureIntrinsicHeight(double width) => child.measureIntrinsicHeight(width);
+  double measureIntrinsicHeight(double width) => child.getIntrinsicHeight(width);
 
   @override
-  double? measureBaselineOffset() => child.measureBaselineOffset();
+  double? measureBaselineOffset() => child.getBaselineOffset();
 }
 
 mixin OptionalShrinkWrapLayout<T extends InstanceWidget> on WidgetInstance<T>, OptionalChildProvider<T> {
