@@ -3,11 +3,10 @@ import 'dart:ffi' hide Size;
 import 'dart:math';
 
 import 'package:collection/collection.dart';
-import 'package:diamond_gl/diamond_gl.dart';
 import 'package:ffi/ffi.dart';
 import 'package:meta/meta.dart';
 
-import '../core/math.dart';
+import '../../braid_ui.dart';
 import '../native/harfbuzz.dart';
 import 'text_renderer.dart';
 
@@ -206,7 +205,9 @@ class Paragraph {
     _shapedGlyphs.clear();
 
     final features = malloc<hb_feature>();
-    'calt on'.withAsNative((flag) => harfbuzz.feature_from_string(flag.cast(), -1, features));
+    malloc.arena((arena) {
+      harfbuzz.feature_from_string('calt on'.toNativeUtf8(allocator: arena).cast(), -1, features);
+    });
 
     final session = _LayoutSession(features, fontLookup, maxWidth);
 

@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:diamond_gl/glfw.dart';
-import 'package:ffi/ffi.dart';
 import 'package:unicode/unicode.dart';
 
 import '../context.dart';
@@ -13,7 +12,6 @@ import '../core/listenable.dart';
 import '../core/math.dart';
 import '../framework/instance.dart';
 import '../framework/widget.dart';
-import '../native/arena.dart';
 import '../text/text_layout.dart';
 import 'basic.dart';
 
@@ -355,25 +353,27 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
 
       return true;
     } else if (keyCode == glfwKeyV && modifiers.ctrl) {
-      final clipboardString = glfw.getClipboardString(host!.window.handle);
-      if (clipboardString.address != 0) {
-        _insert(clipboardString.cast<Utf8>().toDartString());
-      }
+      // TODO: abstract clipboard handling
+
+      // final clipboardString = glfw.getClipboardString(host!.surface.handle);
+      // if (clipboardString.address != 0) {
+      //   _insert(clipboardString.cast<Utf8>().toDartString());
+      // }
 
       return true;
     } else if ((keyCode == glfwKeyC || keyCode == glfwKeyX) && modifiers.ctrl) {
-      if (!_selection.collapsed) {
-        malloc.arena((arena) {
-          glfw.setClipboardString(
-            host!.window.handle,
-            _text.substring(_selection.lower, _selection.upper).toNativeUtf8(allocator: arena).cast(),
-          );
-        });
+      // if (!_selection.collapsed) {
+      //   malloc.arena((arena) {
+      //     glfw.setClipboardString(
+      //       host!.surface.handle,
+      //       _text.substring(_selection.lower, _selection.upper).toNativeUtf8(allocator: arena).cast(),
+      //     );
+      //   });
 
-        if (keyCode == glfwKeyX) {
-          _deleteSelection();
-        }
-      }
+      //   if (keyCode == glfwKeyX) {
+      //     _deleteSelection();
+      //   }
+      // }
 
       return true;
     } else if (keyCode == glfwKeyA && modifiers.ctrl) {
@@ -448,7 +448,7 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
       widget.controller.selection = TextSelection(max(0, start), end);
     } else {
       _lastClickTime = DateTime.now();
-      _moveCursor(clickedIdx, glfw.getKey(host!.window.handle, glfwKeyLeftShift) == glfwPress);
+      _moveCursor(clickedIdx, host!.eventsBinding.isKeyPressed(glfwKeyLeftShift));
     }
 
     return true;

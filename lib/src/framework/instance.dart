@@ -10,6 +10,8 @@ import '../core/constraints.dart';
 import '../core/cursors.dart';
 import '../core/key_modifiers.dart';
 import '../core/math.dart';
+import '../events_binding.dart';
+import '../surface.dart';
 import '../text/text_renderer.dart';
 import 'proxy.dart';
 import 'widget.dart';
@@ -173,7 +175,9 @@ extension type const InstanceFlags._(int _value) {
 }
 
 abstract interface class InstanceHost {
-  Window get window;
+  Surface get surface;
+  EventsBinding get eventsBinding;
+
   TextRenderer get textRenderer;
 
   /// Schedule a [WidgetInstance.layout] invocation for [instance],

@@ -12,11 +12,11 @@ Future<void> main(List<String> args) async {
 
   loadNatives('resources/lib');
 
-  final app = await createBraidApp(
+  final (app, _) = await createBraidAppWithWindow(
     name: 'fancy clock moment',
     baseLogger: Logger('yep'),
-    windowWidth: 600,
-    windowHeight: 400,
+    width: 600,
+    height: 400,
     resources: BraidResources.filesystem(fontDirectory: 'resources/font', shaderDirectory: 'resources/shader'),
     defaultFontFamily: 'NotoSans',
     widget: const ClockApp(),

@@ -38,7 +38,7 @@ mixin NodeWithDepth {
 
 // ---
 
-typedef AnimationCallback = void Function(double delta);
+typedef AnimationCallback = void Function(Duration delta);
 
 abstract interface class ProxyHost {
   void scheduleAnimationCallback(AnimationCallback callback);

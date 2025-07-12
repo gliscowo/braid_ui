@@ -9,7 +9,7 @@ Future<void> main() async {
 
   loadNatives('resources/lib');
 
-  final app = await createBraidApp(
+  final (app, _) = await createBraidAppWithWindow(
     name: 'colors !!',
     baseLogger: Logger('colors_app'),
     resources: BraidResources.filesystem(fontDirectory: 'resources/font', shaderDirectory: 'resources/shader'),

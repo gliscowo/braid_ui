@@ -24,7 +24,7 @@ Future<void> main() async {
   loadNatives('resources/lib');
   final icon = decodePngFile('test/color_trials_icon.png');
 
-  app = await createBraidApp(
+  final (appState, window) = await createBraidAppWithWindow(
     name: 'colors !!',
     baseLogger: Logger('colors_app'),
     resources: BraidResources.filesystem(fontDirectory: 'resources/font', shaderDirectory: 'resources/shader'),
@@ -32,7 +32,9 @@ Future<void> main() async {
     widget: const ColorApp(),
   );
 
-  app!.window.setIcon((await icon)!);
+  app = appState;
+
+  window.setIcon((await icon)!);
   cursor = CursorStyle.custom((await icon)!, 32, 32);
   await app!.loadFontFamily('CascadiaCode', 'cascadia');
 

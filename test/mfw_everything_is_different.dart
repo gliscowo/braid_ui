@@ -71,10 +71,10 @@ Future<void> main(List<String> args) async {
 
   loadNatives('resources/lib');
 
-  final app = await createBraidApp(
+  final (app, _) = await createBraidAppWithWindow(
     baseLogger: Logger('yep'),
-    windowWidth: 300,
-    windowHeight: 200,
+    width: 300,
+    height: 200,
     resources: BraidResources.filesystem(fontDirectory: 'resources/font', shaderDirectory: 'resources/shader'),
     defaultFontFamily: 'NotoSans',
     widget: const App(),

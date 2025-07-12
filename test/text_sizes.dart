@@ -10,7 +10,7 @@ Future<void> main(List<String> args) async {
   });
 
   loadNatives('resources/lib');
-  final app = await createBraidApp(
+  final (app, _) = await createBraidAppWithWindow(
     baseLogger: Logger('text-sizes'),
     resources: BraidResources.filesystem(fontDirectory: 'resources/font', shaderDirectory: 'resources/shader'),
     defaultFontFamily: 'NotoSans',

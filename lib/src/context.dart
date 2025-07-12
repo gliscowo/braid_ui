@@ -54,12 +54,8 @@ class RenderContext {
     _programStore[shader.name] = program;
   }
 
+  // TODO: this might wanna move
   void nextFrame() {
-    // window.nextFrame();
-
-    // TODO: investigate whether there is a better
-    // approach to splitting buffer swap and event gathering
-    glfw.swapBuffers(window.handle);
     _frameEventsContoller.add(const ());
   }
 

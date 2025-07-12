@@ -20,7 +20,7 @@ abstract class AutomaticallyAnimatedWidget extends StatefulWidget {
 typedef _LerpVisitor<L extends Lerp<V>, V> = L Function(Lerp<V>? previous, V targetValue, LerpFactory<L, V> factory);
 
 abstract class AutomaticallyAnimatedWidgetState<T extends AutomaticallyAnimatedWidget> extends WidgetState<T> {
-  double _elapsedTime = 0;
+  Duration _elapsedTime = Duration.zero;
   double _progress = 0;
 
   @protected
@@ -51,7 +51,7 @@ abstract class AutomaticallyAnimatedWidgetState<T extends AutomaticallyAnimatedW
     if (restartAnimation) {
       _visitLerps((previous, targetValue, factory) => factory(previous!.compute(_progress), targetValue));
 
-      _elapsedTime = 0;
+      _elapsedTime = Duration.zero;
       _progress = 0;
       scheduleAnimationCallback(_callback);
     }
@@ -62,9 +62,9 @@ abstract class AutomaticallyAnimatedWidgetState<T extends AutomaticallyAnimatedW
     updateLerps();
   }
 
-  void _callback(double delta) {
+  void _callback(Duration delta) {
     _elapsedTime += delta;
-    setState(() => _progress = min(1, widget.easing(_elapsedTime / (widget.duration.inMilliseconds / 1000))));
+    setState(() => _progress = min(1, widget.easing(_elapsedTime.inMicroseconds / widget.duration.inMicroseconds)));
 
     if (_progress + 1e-3 < 1) {
       scheduleAnimationCallback(_callback);

@@ -21,18 +21,18 @@ class _ProgressIndicatorState extends WidgetState<ProgressIndicator> {
 
   @override
   void init() {
-    if (widget.indeterminate) _trackTime(0);
+    if (widget.indeterminate) _trackTime(Duration.zero);
   }
 
   @override
   void didUpdateWidget(ProgressIndicator oldWidget) {
     if (!oldWidget.indeterminate && widget.indeterminate) {
-      _trackTime(0);
+      _trackTime(Duration.zero);
     }
   }
 
-  void _trackTime(double delta) {
-    setState(() => time += delta);
+  void _trackTime(Duration delta) {
+    setState(() => time += delta.inMicroseconds / Duration.microsecondsPerSecond);
 
     if (widget.indeterminate) scheduleAnimationCallback(_trackTime);
   }

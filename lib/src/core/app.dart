@@ -2,10 +2,9 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:ffi' as ffi;
 import 'dart:io';
-import 'dart:math';
 
 import 'package:collection/collection.dart';
-import 'package:diamond_gl/diamond_gl.dart';
+import 'package:diamond_gl/diamond_gl.dart' as dgl;
 import 'package:diamond_gl/glfw.dart';
 import 'package:diamond_gl/opengl.dart';
 import 'package:ffi/ffi.dart' as ffi;
@@ -14,17 +13,18 @@ import 'package:vector_math/vector_math.dart';
 
 import '../baked_assets.g.dart' as assets;
 import '../context.dart';
+import '../events_binding.dart';
 import '../framework/instance.dart';
 import '../framework/proxy.dart';
 import '../framework/widget.dart';
 import '../primitive_renderer.dart';
 import '../resources.dart';
+import '../surface.dart';
 import '../text/text_renderer.dart';
 import '../widgets/basic.dart';
 import '../widgets/inspector.dart';
 import 'constraints.dart';
 import 'cursors.dart';
-import 'key_modifiers.dart';
 import 'math.dart';
 import 'reload_hook.dart';
 
@@ -41,33 +41,88 @@ Future<void> runBraidApp({required AppState app, int targetFps = 60, bool reload
     }
   }
 
-  final oneFrame = 1 / targetFps;
-  var lastFrameTimestamp = glfw.getTime();
+  final timeSource = Stopwatch()..start();
 
-  glfw.swapInterval(0);
+  final oneFrame = Duration(microseconds: Duration.microsecondsPerSecond ~/ targetFps);
+  var lastFrameTimestamp = timeSource.elapsedMicroseconds;
 
-  while (glfw.windowShouldClose(app.window.handle) != glfwTrue && app._running) {
-    final measuredDelta = glfw.getTime() - lastFrameTimestamp;
+  // TODO: properly initialize window and context
+  // handle separate platform windows in the same app state via
+  // `PlatformWindow` widget - ideally we don't special-case the root
 
-    await Future.delayed(Duration(microseconds: max(((oneFrame - measuredDelta) * 1_000_000).toInt(), 0)));
+  while (app._running) {
+    final measuredDelta = Duration(microseconds: timeSource.elapsedMicroseconds - lastFrameTimestamp);
 
-    final effectiveDelta = glfw.getTime() - lastFrameTimestamp;
-    lastFrameTimestamp = glfw.getTime();
+    var waitTime = oneFrame - measuredDelta;
+    if (waitTime.isNegative) {
+      waitTime = Duration.zero;
+    }
+
+    await Future.delayed(waitTime);
+
+    final effectiveDelta = Duration(microseconds: timeSource.elapsedMicroseconds - lastFrameTimestamp);
+    lastFrameTimestamp = timeSource.elapsedMicroseconds;
 
     app.updateWidgetsAndInteractions(effectiveDelta);
 
-    glfw.makeContextCurrent(app.window.handle);
-    gl.viewport(0, 0, app.context.window.width, app.context.window.height);
-    gl.clearColor(0, 0, 0, 1);
-    gl.clear(glColorBufferBit);
-    glfw.makeContextCurrent(ffi.nullptr);
-
-    await app.draw();
+    app.surface.beginFrame();
+    app.draw();
+    app.surface.endFrame();
   }
 
   app.dispose();
 
   reloadCancelCallback?.call();
+}
+
+Future<(AppState, dgl.Window)> createBraidAppWithWindow({
+  String name = 'braid app',
+  Logger? baseLogger,
+  int width = 1000,
+  int height = 750,
+  required BraidResources resources,
+  required String defaultFontFamily,
+  required Widget widget,
+}) async {
+  loadOpenGLFromPath();
+  loadGLFW(BraidNatives.activeLibraries.glfw);
+
+  if (!dgl.diamondGLInitialized) {
+    dgl.initDiamondGL(logger: baseLogger);
+  }
+  if (dgl.glfw.init() != glfwTrue) {
+    dgl.glfw.terminate();
+
+    final errorPointer = ffi.malloc<ffi.Pointer<ffi.Char>>();
+    dgl.glfw.getError(errorPointer);
+
+    final errorString = errorPointer.cast<ffi.Utf8>().toDartString();
+    ffi.malloc.free(errorPointer);
+
+    throw BraidInitializationException('GLFW initialization error: $errorString');
+  }
+
+  if (baseLogger != null) {
+    dgl.attachGlfwErrorCallback();
+  }
+
+  final braidWindow = dgl.Window(width, height, name);
+  braidWindow.setIcon(assets.braidIcon);
+
+  braidWindow.activateContext();
+  if (baseLogger != null) {
+    dgl.attachGlErrorCallback();
+  }
+
+  final app = await createBraidApp(
+    surface: WindowSurface(window: braidWindow),
+    eventsBinding: WindowEventsBinding(window: braidWindow),
+    resources: resources,
+    defaultFontFamily: defaultFontFamily,
+    widget: widget,
+  );
+
+  return (app, braidWindow);
 }
 
 /// Initialize all state necessary to drive the braid application
@@ -77,7 +132,7 @@ Future<void> runBraidApp({required AppState app, int targetFps = 60, bool reload
 /// 2. If necessary, initialize DiamondGL logging with [baseLogger]
 /// 3. If no [window] was provided, create one and associate it with
 ///    the application
-/// 4. Load the defauĺt shaders and fonts
+/// 4. Load the default shaders and fonts
 ///
 /// If everything succeeds, an [AppState] encapsulating all application state
 /// is created and returned
@@ -87,52 +142,15 @@ Future<void> runBraidApp({required AppState app, int targetFps = 60, bool reload
 /// - [AppState]
 /// - [Widget]
 Future<AppState> createBraidApp({
+  String name = 'braid app',
+  Logger? baseLogger,
+  required Surface surface,
+  required EventsBinding eventsBinding,
   required BraidResources resources,
   required String defaultFontFamily,
-  String name = 'braid app',
-  Window? window,
-  int windowWidth = 1000,
-  int windowHeight = 750,
-  Logger? baseLogger,
   required Widget widget,
 }) async {
-  loadOpenGLFromPath();
-  loadGLFW(BraidNatives.activeLibraries.glfw);
-
-  if (!diamondGLInitialized) {
-    initDiamondGL(logger: baseLogger);
-  }
-
-  Window braidWindow;
-  if (window == null) {
-    if (glfw.init() != glfwTrue) {
-      glfw.terminate();
-
-      final errorPointer = ffi.malloc<ffi.Pointer<ffi.Char>>();
-      glfw.getError(errorPointer);
-
-      final errorString = errorPointer.cast<ffi.Utf8>().toDartString();
-      ffi.malloc.free(errorPointer);
-
-      throw BraidInitializationException('GLFW initialization error: $errorString');
-    }
-
-    if (baseLogger != null) {
-      attachGlfwErrorCallback();
-    }
-
-    braidWindow = Window(windowWidth, windowHeight, name);
-    braidWindow.setIcon(assets.braidIcon);
-  } else {
-    braidWindow = window;
-  }
-
-  braidWindow.activateContext();
-  if (baseLogger != null && window == null) {
-    attachGlErrorCallback();
-  }
-
-  final renderContext = RenderContext(braidWindow);
+  final renderContext = surface.createRenderContext();
   await Future.wait(
     [
       BraidShader(source: resources, name: 'blit', vert: 'blit', frag: 'blit'),
@@ -159,14 +177,15 @@ Future<AppState> createBraidApp({
     'MaterialSymbols': materialSymbols,
   });
 
-  final projection = makeOrthographicMatrix(0, braidWindow.width.toDouble(), braidWindow.height.toDouble(), 0, -10, 10);
-  braidWindow.onResize.listen((event) {
-    setOrthographicMatrix(projection, 0, event.width.toDouble(), event.height.toDouble(), 0, -10, 10);
+  final projection = makeOrthographicMatrix(0, surface.width.toDouble(), surface.height.toDouble(), 0, -10, 10);
+  surface.onResize.listen((event) {
+    setOrthographicMatrix(projection, 0, event.newWidth.toDouble(), event.newHeight.toDouble(), 0, -10, 10);
   });
 
   return AppState(
     resources,
-    braidWindow,
+    surface,
+    eventsBinding,
     projection,
     renderContext,
     textRenderer,
@@ -256,11 +275,11 @@ class _UserRoot extends VisitorWidget {
 /// [InstanceHost] and [ProxyHost].
 ///
 /// For users, the app state is the central and only handle necessary to implement a braid
-/// application - all other parts of the framework is managed by and accessible through it.
+/// application - all other parts of the framework are managed by and accessible through it.
 ///
 /// ### Lifecycle
 /// Upon construction, the app state bootstraps the widget, proxy and instance trees. It also subscribes
-/// the the [window]'s input events and sets up appropriate forwarding to the instance tree.
+/// the the [surface]'s input events and sets up appropriate forwarding to the instance tree.
 ///
 /// After initialization, [updateWidgetsAndInteractions] can be called for the first time to perform
 /// the initial layout pass. Subsequently, the app is ready for drawing with [draw]. This is an idemoptent
@@ -283,8 +302,10 @@ class AppState implements InstanceHost, ProxyHost {
   final Logger? logger;
 
   @override
-  final Window window;
-  final CursorController cursorController;
+  final Surface surface;
+  @override
+  final EventsBinding eventsBinding;
+
   final Matrix4 projection;
 
   final RenderContext context;
@@ -295,6 +316,8 @@ class AppState implements InstanceHost, ProxyHost {
   final BuildScope _rootBuildScope = BuildScope();
   Queue<AnimationCallback> _callbacks = DoubleLinkedQueue();
   late _RootProxy _root;
+
+  ({double x, double y}) _cursorPosition = const (x: 0, y: 0);
 
   Set<MouseListener> _hovered = {};
   MouseListener? _dragging;
@@ -318,14 +341,15 @@ class AppState implements InstanceHost, ProxyHost {
 
   AppState(
     this.resources,
-    this.window,
+    this.surface,
+    this.eventsBinding,
     this.projection,
     this.context,
     this.textRenderer,
     this.primitives,
     Widget root, {
     this.logger,
-  }) : cursorController = CursorController.ofWindow(window) {
+  }) {
     _root = _RootWidget(
       child: InspectableTree(
         inspector: _inspector,
@@ -340,163 +364,29 @@ class AppState implements InstanceHost, ProxyHost {
     _root.bootstrap(this, this);
     scheduleLayout(rootInstance);
 
-    _subscriptions.add(window.onResize.listen((event) => rootInstance.markNeedsLayout()));
-
-    // ---
-
-    _subscriptions.addAll([
-      window.onMouseButton.where((event) => event.action == glfwPress).listen((event) {
-        final state = _hitTest();
-
-        _updateFocus(
-          state.occludedTrace.map((e) => e.instance).firstWhereOrNull((element) => element is KeyboardListener)
-              as KeyboardListener?,
-        );
-
-        final clicked = state.firstWhere(
-          (hit) =>
-              hit.instance is MouseListener &&
-              (hit.instance as MouseListener).onMouseDown(hit.coordinates.x, hit.coordinates.y, event.button),
-        );
-
-        if (clicked != null) {
-          _dragging = clicked.instance as MouseListener;
-          _draggingButton = event.button;
-          _draggingCursorStyle = (clicked.instance as MouseListener).cursorStyleAt(
-            clicked.coordinates.x,
-            clicked.coordinates.y,
-          );
-          _dragStarted = false;
-        }
-      }),
-      window.onMouseMove.listen((event) {
-        if (_dragging == null) return;
-
-        if (!_dragStarted) {
-          _dragging!.onMouseDragStart(_draggingButton!);
-          _dragStarted = true;
-        }
-
-        final globalTransform = _dragging!.computeTransformFrom(ancestor: null);
-        final (x, y) = globalTransform.transform2(window.cursorX, window.cursorY);
-
-        // apply *only the rotation* of the instance's transform
-        // to the mouse movement
-        final delta = Vector4(event.deltaX, event.deltaY, 0, 0);
-        globalTransform.transform(delta);
-
-        _dragging!.onMouseDrag(x, y, delta.x, delta.y);
-      }),
-      window.onMouseButton.where((event) => event.action == glfwRelease).listen((event) {
-        if (event.button == _draggingButton) {
-          if (_dragStarted) {
-            _dragging?.onMouseDragEnd();
-          }
-
-          _dragging = null;
-        }
-      }),
-      // ---
-      window.onMouseScroll.listen((event) {
-        _hitTest().firstWhere(
-          (hit) =>
-              hit.instance is MouseListener &&
-              (hit.instance as MouseListener).onMouseScroll(
-                hit.coordinates.x,
-                hit.coordinates.y,
-                event.xOffset,
-                event.yOffset,
-              ),
-        );
-      }),
-      // ---
-      window.onKey.listen((event) {
-        final modifiers = KeyModifiers(event.mods);
-
-        if (event.action == glfwPress &&
-            (event.key == glfwKeyI || event.key == glfwKeyP) &&
-            modifiers.alt &&
-            modifiers.shift) {
-          final treeFile = File('widget_tree.dot');
-          final out = treeFile.openWrite();
-          out.writeln('''
-digraph {
-splines=false;
-node [shape="box"];
-''');
-          event.key == glfwKeyI ? dumpInstancesGraphviz(rootInstance, out) : dumpProxiesGraphviz(_root, out);
-          out
-            ..writeln('}')
-            ..flush().then((value) {
-              Process.start('dot', [
-                '-Tsvg',
-                '-owidget_tree.svg',
-                'widget_tree.dot',
-              ], mode: ProcessStartMode.inheritStdio).then(
-                (proc) => proc.exitCode.then((_) {
-                  return treeFile.delete();
-                }),
-              );
-            });
-        }
-
-        if (event.action == glfwPress && event.key == glfwKeyI && modifiers.ctrl && modifiers.shift) {
-          _inspector.activate();
-          return;
-        }
-
-        if (event.action == glfwPress && event.key == glfwKeyR && modifiers.ctrl && modifiers.shift) {
-          debugReloadShadersNextFrame = true;
-          return;
-        }
-
-        if (event.action == glfwPress || event.action == glfwRepeat) {
-          _focused.firstWhereOrNull((listener) => listener.onKeyDown(event.key, KeyModifiers(event.mods)));
-        } else if (event.action == glfwRelease) {
-          _focused.firstWhereOrNull((listener) => listener.onKeyUp(event.key, KeyModifiers(event.mods)));
-        }
-      }),
-      // ---
-      window.onCharMods.listen((event) {
-        _focused.firstWhereOrNull((listener) => listener.onChar(event.codepoint, KeyModifiers(event.mods)));
-      }),
-    ]);
+    _subscriptions.add(surface.onResize.listen((event) => rootInstance.markNeedsLayout()));
   }
 
-  Future<void> draw() async {
-    if (debugReloadShadersNextFrame) {
-      debugReloadShadersNextFrame = false;
+  void draw() {
+    // TODO: reimplement
+    // if (debugReloadShadersNextFrame) {
+    //   debugReloadShadersNextFrame = false;
 
-      await context.reloadShaders();
-      primitives.clearShaderCache();
-    }
+    //   await context.reloadShaders();
+    //   primitives.clearShaderCache();
+    // }
 
     final ctx = DrawContext(context, primitives, projection, textRenderer, drawBoundingBoxes: debugDrawInstanceBoxes);
 
-    glfw.makeContextCurrent(window.handle);
-    gl.enable(glBlend);
+    dgl.gl.enable(glBlend);
 
     ctx.transform.scopedTransform(rootInstance.transform.transformToParent, (_) => rootInstance.draw(ctx));
 
-    // TODO: this really shouldn't force a
-    // buffer swap on the context window
-    //
-    // in fact, braid doing gl context management
-    // front and center in the app state draw loop like
-    // this is definitely terrible for embeddability
     context.nextFrame();
-
-    glfw.makeContextCurrent(ffi.nullptr);
   }
 
-  void updateWidgetsAndInteractions(double delta) {
-    // TODO: relying on glfw event polling for ordering
-    // braid events is extremely fragile, especially in an
-    // embedded context where we don't own the pipeline
-    //
-    // likely, events need to be buffered by the app state itself
-    // to dispatch in [updateWidgetsAndInteractions]
-    glfw.pollEvents();
+  void updateWidgetsAndInteractions(Duration delta) {
+    _pollAndDispatchEvents();
 
     if (_callbacks.isNotEmpty) {
       final callbacksForThisFrame = _callbacks;
@@ -572,7 +462,117 @@ node [shape="box"];
       }
     }
 
-    cursorController.style = activeStyle ?? CursorStyle.none;
+    surface.cursorStyle = activeStyle ?? CursorStyle.none;
+  }
+
+  void _pollAndDispatchEvents() {
+    final events = eventsBinding.poll();
+    for (final event in events) {
+      switch (event) {
+        case MouseButtonPressEvent(:final button):
+          final state = _hitTest();
+
+          _updateFocus(
+            state.occludedTrace.map((e) => e.instance).firstWhereOrNull((element) => element is KeyboardListener)
+                as KeyboardListener?,
+          );
+
+          final clicked = state.firstWhere(
+            (hit) =>
+                hit.instance is MouseListener &&
+                (hit.instance as MouseListener).onMouseDown(hit.coordinates.x, hit.coordinates.y, button),
+          );
+
+          if (clicked != null) {
+            _dragging = clicked.instance as MouseListener;
+            _draggingButton = button;
+            _draggingCursorStyle = (clicked.instance as MouseListener).cursorStyleAt(
+              clicked.coordinates.x,
+              clicked.coordinates.y,
+            );
+            _dragStarted = false;
+          }
+        case MouseMoveEvent(x: final cursorX, y: final cursorY, :final deltaX, :final deltaY):
+          _cursorPosition = (x: cursorX, y: cursorY);
+
+          if (_dragging == null) return;
+
+          if (!_dragStarted) {
+            _dragging!.onMouseDragStart(_draggingButton!);
+            _dragStarted = true;
+          }
+
+          final globalTransform = _dragging!.computeTransformFrom(ancestor: null);
+          final (x, y) = globalTransform.transform2(cursorX, cursorY);
+
+          // apply *only the rotation* of the instance's transform
+          // to the mouse movement
+          final delta = Vector4(deltaX, deltaY, 0, 0);
+          globalTransform.transform(delta);
+
+          _dragging!.onMouseDrag(x, y, delta.x, delta.y);
+        case MouseButtonReleaseEvent(:final button):
+          if (button == _draggingButton) {
+            if (_dragStarted) {
+              _dragging?.onMouseDragEnd();
+            }
+
+            _dragging = null;
+          }
+        case MouseScrollEvent(:final xOffset, :final yOffset):
+          _hitTest().firstWhere(
+            (hit) =>
+                hit.instance is MouseListener &&
+                (hit.instance as MouseListener).onMouseScroll(hit.coordinates.x, hit.coordinates.y, xOffset, yOffset),
+          );
+        case KeyPressEvent(:final glfwKeycode, :final modifiers):
+          if ((glfwKeycode == glfwKeyI || glfwKeycode == glfwKeyP) && modifiers.alt && modifiers.shift) {
+            final treeFile = File('widget_tree.dot');
+            final out = treeFile.openWrite();
+            out.writeln('''
+digraph {
+splines=false;
+node [shape="box"];
+''');
+            glfwKeycode == glfwKeyI ? dumpInstancesGraphviz(rootInstance, out) : dumpProxiesGraphviz(_root, out);
+            out
+              ..writeln('}')
+              ..flush().then((value) {
+                Process.start('dot', [
+                  '-Tsvg',
+                  '-owidget_tree.svg',
+                  'widget_tree.dot',
+                ], mode: ProcessStartMode.inheritStdio).then(
+                  (proc) => proc.exitCode.then((_) {
+                    return treeFile.delete();
+                  }),
+                );
+              });
+          }
+
+          if (glfwKeycode == glfwKeyI && modifiers.ctrl && modifiers.shift) {
+            _inspector.activate();
+            return;
+          }
+
+          if (glfwKeycode == glfwKeyR && modifiers.ctrl && modifiers.shift) {
+            debugReloadShadersNextFrame = true;
+            return;
+          }
+
+          _focused.firstWhereOrNull((listener) => listener.onKeyDown(glfwKeycode, modifiers));
+        case KeyReleaseEvent(:final glfwKeycode, :final modifiers):
+          _focused.firstWhereOrNull((listener) => listener.onKeyUp(glfwKeycode, modifiers));
+        case CharInputEvent(:final codepoint, :final modifiers):
+          _focused.firstWhereOrNull((listener) => listener.onChar(codepoint, modifiers));
+        // ignore: unused_local_variable
+        case FilesDroppedEvent(:final paths):
+          // TODO: consider adding a mechanism for forwarding this event
+          throw UnimplementedError();
+        case CloseEvent():
+          _running = false;
+      }
+    }
   }
 
   void _updateFocus(KeyboardListener? listener) {
@@ -614,12 +614,14 @@ node [shape="box"];
   }
 
   void dispose() {
-    cursorController.dispose();
     for (final subscription in _subscriptions) {
       subscription.cancel();
     }
 
     _root.unmount();
+
+    surface.dispose();
+    eventsBinding.dispose();
   }
 
   void scheduleShutdown() {
@@ -633,7 +635,7 @@ node [shape="box"];
   // ---
 
   HitTestState _hitTest() {
-    final (x, y) = (window.cursorX, window.cursorY);
+    final (:x, :y) = _cursorPosition;
 
     final state = HitTestState();
     rootInstance.hitTest(x, y, state);
@@ -666,7 +668,7 @@ node [shape="box"];
           instance.layout(
             instance.hasParent
                 ? instance.constraints!
-                : Constraints.tight(Size(window.width.toDouble(), window.height.toDouble())),
+                : Constraints.tight(Size(surface.width.toDouble(), surface.height.toDouble())),
           );
         }
       }

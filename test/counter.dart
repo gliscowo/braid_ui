@@ -8,11 +8,11 @@ Future<void> main() async {
 
   loadNatives('resources/lib');
 
-  final app = await createBraidApp(
+  final (app, _) = await createBraidAppWithWindow(
     name: 'counter',
     baseLogger: Logger('counter_app'),
-    windowWidth: 500,
-    windowHeight: 400,
+    width: 500,
+    height: 400,
     resources: BraidResources.filesystem(fontDirectory: 'resources/font', shaderDirectory: 'resources/shader'),
     defaultFontFamily: 'NotoSans',
     widget: const CounterApp(),

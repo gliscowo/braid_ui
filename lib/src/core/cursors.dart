@@ -71,6 +71,7 @@ class CursorController {
 
   CursorController.ofWindow(this._window);
 
+  CursorStyle get style => _lastCursorStyle;
   set style(CursorStyle style) {
     if (_disposed || _lastCursorStyle == style) return;
 
