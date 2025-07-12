@@ -314,7 +314,8 @@ class AppState implements InstanceHost, ProxyHost {
   final PrimitiveRenderer primitives;
 
   final BuildScope _rootBuildScope = BuildScope();
-  Queue<AnimationCallback> _callbacks = DoubleLinkedQueue();
+  Queue<AnimationCallback> _animationCallbacks = DoubleLinkedQueue();
+  Queue<Callback> _postLayoutCallbacks = DoubleLinkedQueue();
   late _RootProxy _root;
 
   ({double x, double y}) _cursorPosition = const (x: 0, y: 0);
@@ -388,9 +389,9 @@ class AppState implements InstanceHost, ProxyHost {
   void updateWidgetsAndInteractions(Duration delta) {
     _pollAndDispatchEvents();
 
-    if (_callbacks.isNotEmpty) {
-      final callbacksForThisFrame = _callbacks;
-      _callbacks = DoubleLinkedQueue();
+    if (_animationCallbacks.isNotEmpty) {
+      final callbacksForThisFrame = _animationCallbacks;
+      _animationCallbacks = DoubleLinkedQueue();
 
       while (callbacksForThisFrame.isNotEmpty) {
         final callback = callbacksForThisFrame.removeFirst();
@@ -412,6 +413,16 @@ class AppState implements InstanceHost, ProxyHost {
     } else {
       _rootBuildScope.rebuildDirtyProxies();
       flushLayoutQueue();
+    }
+
+    if (_postLayoutCallbacks.isNotEmpty) {
+      final callbacksForThisFrame = _postLayoutCallbacks;
+      _postLayoutCallbacks = DoubleLinkedQueue();
+
+      while (callbacksForThisFrame.isNotEmpty) {
+        final callback = callbacksForThisFrame.removeFirst();
+        callback();
+      }
     }
 
     // ---
@@ -463,6 +474,19 @@ class AppState implements InstanceHost, ProxyHost {
     }
 
     surface.cursorStyle = activeStyle ?? CursorStyle.none;
+  }
+
+  static Iterable<WidgetProxy> _gatherDescendants(WidgetProxy proxy) sync* {
+    yield proxy;
+
+    final descendants = <Iterable<WidgetProxy>>[];
+    proxy.visitChildren((child) {
+      descendants.add(_gatherDescendants(child));
+    });
+
+    for (final iterable in descendants) {
+      yield* iterable;
+    }
   }
 
   void _pollAndDispatchEvents() {
@@ -689,7 +713,10 @@ node [shape="box"];
   }
 
   @override
-  void scheduleAnimationCallback(AnimationCallback callback) => _callbacks.add(callback);
+  void scheduleAnimationCallback(AnimationCallback callback) => _animationCallbacks.add(callback);
+
+  @override
+  void schedulePostLayoutCallback(Callback callback) => _postLayoutCallbacks.add(callback);
 }
 
 class _RebuildTimingTracker {

@@ -13,6 +13,7 @@ import '../core/math.dart';
 import '../events_binding.dart';
 import '../surface.dart';
 import '../text/text_renderer.dart';
+import '../widgets/basic.dart';
 import 'proxy.dart';
 import 'widget.dart';
 
@@ -201,6 +202,8 @@ abstract interface class InstanceHost {
   /// executed immediately and the listener is ready to receive
   /// input events from the next frame onwards
   void moveFocusTo(KeyboardListener focusTarget) {}
+
+  void schedulePostLayoutCallback(Callback callback);
 }
 
 typedef WidgetInstanceVisitor = void Function(WidgetInstance child);

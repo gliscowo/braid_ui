@@ -101,13 +101,19 @@ class ScrollController with Listenable {
   }
 
   double get maxOffset => _maxOffset;
-  void _setMaxOffset(double value) {
-    if (_maxOffset == value) return;
+  bool _setMaxOffset(double value) {
+    if (_maxOffset == value) return false;
 
     _maxOffset = value;
     _offset = offset.clamp(0, _maxOffset);
 
+    return true;
+  }
+
+  bool _maxOffsetNotificationScheduled = false;
+  void _sendMaxOffsetNotification() {
     notifyListeners();
+    _maxOffsetNotificationScheduled = false;
   }
 }
 
@@ -274,8 +280,8 @@ class RawScrollViewInstance extends SingleChildWidgetInstance<RawScrollView> {
       ),
     );
 
-    widget.horizontalController?._setMaxOffset(max(0, childSize.width - constraints.maxWidth));
-    widget.verticalController?._setMaxOffset(max(0, childSize.height - constraints.maxHeight));
+    _updateMaxOffset(widget.horizontalController, max(0, childSize.width - constraints.maxWidth));
+    _updateMaxOffset(widget.verticalController, max(0, childSize.height - constraints.maxHeight));
 
     child.transform.x = -horizontalOffset.roundToDouble();
     child.transform.y = -verticalOffset.roundToDouble();
@@ -294,6 +300,29 @@ class RawScrollViewInstance extends SingleChildWidgetInstance<RawScrollView> {
     ).constrained(constraints);
 
     transform.setSize(selfSize);
+  }
+
+  /// Delay the actual invocation of scroll controller listeners until
+  /// after the current layout cycle.
+  ///
+  /// This is important, because for one nobody could react to it anyways
+  /// (since we are in the layout phase, the build phase for this frame
+  /// is over) but *also* it actually breaks instances which descend from
+  /// a layout builder. This happens because such a descendant would now
+  /// mark itself dirty during the layout phase, but before the layout builder
+  /// instance is marked clean. Thus, the `markNeedsLayout()` invocation on
+  /// that layout builder instance gets swallowed and the widget is now stuck
+  /// in improperly-rebuilt limbo until the layout builder happens to re-layout
+  /// for other reasons. That is especially problematic because there is
+  /// potential for this effect to mask legitimate rebuilds said descendant
+  /// requires - it won't mark itself as needing a rebuild again because it
+  /// is still dutifully waiting for such a rebuild to occur.
+  void _updateMaxOffset(ScrollController? controller, double offset) {
+    if (controller == null) return;
+
+    if (controller._setMaxOffset(offset) && !controller._maxOffsetNotificationScheduled) {
+      host!.schedulePostLayoutCallback(() => controller._sendMaxOffsetNotification());
+    }
   }
 
   // we might actually want to put false assertions here and in [DragArena]

@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:meta/meta.dart';
 
+import '../widgets/basic.dart';
 import 'instance.dart';
 import 'widget.dart';
 
@@ -42,6 +43,7 @@ typedef AnimationCallback = void Function(Duration delta);
 
 abstract interface class ProxyHost {
   void scheduleAnimationCallback(AnimationCallback callback);
+  void schedulePostLayoutCallback(Callback callback);
 }
 
 class BuildScope {
@@ -494,6 +496,9 @@ abstract class WidgetState<T extends StatefulWidget> {
   // TODO: this is not really the ideal way of doing this
   @nonVirtual
   void scheduleAnimationCallback(AnimationCallback callback) => _owner!.host!.scheduleAnimationCallback(callback);
+
+  @nonVirtual
+  void schedulePostLayoutCallback(Callback callback) => _owner!.host!.schedulePostLayoutCallback(callback);
 }
 
 // ---
