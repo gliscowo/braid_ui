@@ -43,6 +43,7 @@ class ButtonStyle {
   final Insets? padding;
   final CornerRadius? cornerRadius;
   final TextStyle? textStyle;
+  final TextStyle? highlightTextStyle;
   final TextStyle? disabledTextStyle;
 
   const ButtonStyle({
@@ -52,6 +53,7 @@ class ButtonStyle {
     this.padding,
     this.cornerRadius,
     this.textStyle,
+    this.highlightTextStyle,
     this.disabledTextStyle,
   });
 
@@ -62,6 +64,7 @@ class ButtonStyle {
     Insets? padding,
     CornerRadius? cornerRadius,
     TextStyle? textStyle,
+    TextStyle? highlightTextStyle,
     TextStyle? disabledTextStyle,
   }) => ButtonStyle(
     color: color ?? this.color,
@@ -70,6 +73,7 @@ class ButtonStyle {
     padding: padding ?? this.padding,
     cornerRadius: cornerRadius ?? this.cornerRadius,
     textStyle: textStyle ?? this.textStyle,
+    highlightTextStyle: highlightTextStyle ?? this.highlightTextStyle,
     disabledTextStyle: disabledTextStyle ?? this.disabledTextStyle,
   );
 
@@ -79,6 +83,12 @@ class ButtonStyle {
       textStyle = textStyle.overriding(other.textStyle!);
     }
     textStyle ??= other.textStyle;
+
+    var highlightTextStyle = this.highlightTextStyle;
+    if (highlightTextStyle != null && other.highlightTextStyle != null) {
+      highlightTextStyle = highlightTextStyle.overriding(other.highlightTextStyle!);
+    }
+    highlightTextStyle ??= other.highlightTextStyle;
 
     var disabledTextStyle = this.disabledTextStyle;
     if (disabledTextStyle != null && other.disabledTextStyle != null) {
@@ -93,12 +103,22 @@ class ButtonStyle {
       padding: padding ?? other.padding,
       cornerRadius: cornerRadius ?? other.cornerRadius,
       textStyle: textStyle,
+      highlightTextStyle: highlightTextStyle,
       disabledTextStyle: disabledTextStyle,
     );
   }
 
   @override
-  int get hashCode => Object.hash(color, highlightColor, disabledColor, padding, cornerRadius, textStyle);
+  int get hashCode => Object.hash(
+    color,
+    highlightColor,
+    disabledColor,
+    padding,
+    cornerRadius,
+    textStyle,
+    highlightTextStyle,
+    disabledTextStyle,
+  );
 
   @override
   bool operator ==(Object other) =>
@@ -109,6 +129,7 @@ class ButtonStyle {
       other.padding == padding &&
       other.cornerRadius == cornerRadius &&
       other.textStyle == textStyle &&
+      other.highlightTextStyle == highlightTextStyle &&
       other.disabledTextStyle == disabledTextStyle;
 }
 
@@ -124,14 +145,7 @@ class Button extends StatelessWidget {
     final contextStyle = DefaultButtonStyle.of(context);
     final style = this.style?.overriding(contextStyle) ?? contextStyle;
 
-    Widget result = RawButton(style: style, onClick: onClick, child: child);
-
-    final textStyle = onClick != null ? style.textStyle : style.disabledTextStyle;
-    if (textStyle != null) {
-      result = DefaultTextStyle.merge(style: textStyle, child: result);
-    }
-
-    return result;
+    return RawButton(style: style, onClick: onClick, child: child);
   }
 }
 
@@ -151,9 +165,24 @@ class _RawButtonState extends WidgetState<RawButton> {
 
   @override
   Widget build(BuildContext context) {
-    final style = widget.style;
+    Widget result = widget.child;
 
-    Widget result = AnimatedPanel(
+    final style = widget.style;
+    final textStyle = widget.onClick != null
+        ? _hovered
+              ? style.highlightTextStyle ?? style.textStyle
+              : style.textStyle
+        : style.disabledTextStyle;
+
+    if (textStyle != null) {
+      result = AnimatedDefaultTextStyle.merge(
+        duration: const Duration(milliseconds: 100),
+        style: textStyle,
+        child: result,
+      );
+    }
+
+    result = AnimatedPanel(
       duration: const Duration(milliseconds: 100),
       cornerRadius: style.cornerRadius!,
       color: widget.onClick != null
@@ -161,7 +190,7 @@ class _RawButtonState extends WidgetState<RawButton> {
                 ? style.highlightColor!
                 : style.color!
           : style.disabledColor!,
-      child: Padding(insets: style.padding!, child: widget.child),
+      child: Padding(insets: style.padding!, child: result),
     );
 
     if (widget.onClick != null) {
