@@ -8,6 +8,7 @@ export 'src/context.dart';
 export 'src/core/app.dart';
 export 'src/core/constraints.dart';
 export 'src/core/cursors.dart';
+export 'src/core/listenable.dart';
 export 'src/core/math.dart';
 export 'src/framework/instance.dart';
 export 'src/framework/proxy.dart';
