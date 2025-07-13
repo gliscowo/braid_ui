@@ -230,7 +230,7 @@ class RawScrollView extends SingleChildInstanceWidget {
   final ScrollController? horizontalController;
   final ScrollController? verticalController;
 
-  RawScrollView({required super.child, required this.horizontalController, required this.verticalController});
+  RawScrollView({required this.horizontalController, required this.verticalController, required super.child});
 
   @override
   SingleChildWidgetInstance<InstanceWidget> instantiate() => RawScrollViewInstance(widget: this);

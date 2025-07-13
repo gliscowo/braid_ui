@@ -9,6 +9,7 @@ import 'drag_arena.dart';
 import 'flex.dart';
 import 'icon.dart';
 import 'text.dart';
+import 'theme.dart';
 
 class Window extends StatefulWidget {
   final bool collapsible;
@@ -90,7 +91,7 @@ class _WindowState extends WidgetState<Window> {
                     width: controller.size.width,
                     height: 25,
                     child: Panel(
-                      color: const Color.rgb(0x5f43b2),
+                      color: BraidTheme.of(context).accentColor,
                       cornerRadius: controller.expanded ? const CornerRadius.top(10.0) : const CornerRadius.all(10.0),
                       child: Padding(
                         insets: const Insets.axis(horizontal: 5),
