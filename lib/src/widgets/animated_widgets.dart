@@ -1,10 +1,12 @@
 import 'package:diamond_gl/diamond_gl.dart';
 
 import '../animation/automatic_animation.dart';
+import '../animation/easings.dart';
 import '../animation/lerp.dart';
 import '../core/math.dart';
 import '../framework/widget.dart';
 import 'basic.dart';
+import 'text.dart';
 
 class AnimatedPadding extends AutomaticallyAnimatedWidget {
   final Insets insets;
@@ -144,6 +146,67 @@ class _AnimatedAlignState extends AutomaticallyAnimatedWidgetState<AnimatedAlign
       widthFactor: _widthFactor!.compute(animationValue),
       heightFactor: _heightFactor!.compute(animationValue),
       alignment: _alignment!.compute(animationValue),
+      child: widget.child,
+    );
+  }
+}
+
+// ---
+
+class AnimatedDefaultTextStyle extends AutomaticallyAnimatedWidget {
+  final TextStyle style;
+  final Widget child;
+
+  AnimatedDefaultTextStyle({
+    super.key,
+    super.easing,
+    required super.duration,
+    required this.style,
+    required this.child,
+  });
+
+  static Widget merge({
+    Easing easing = Easing.linear,
+    required Duration duration,
+    required TextStyle style,
+    required Widget child,
+  }) {
+    return Builder(
+      builder: (context) {
+        return AnimatedDefaultTextStyle(
+          easing: easing,
+          duration: duration,
+          style: style.overriding(DefaultTextStyle.of(context)),
+          child: child,
+        );
+      },
+    );
+  }
+
+  @override
+  AutomaticallyAnimatedWidgetState<AutomaticallyAnimatedWidget> createState() => _AnimatedDefaultTextStyleState();
+}
+
+class _AnimatedDefaultTextStyleState extends AutomaticallyAnimatedWidgetState<AnimatedDefaultTextStyle> {
+  Lerp<Color?>? _color;
+  Lerp<double?>? _fontSize;
+  Lerp<Alignment?>? _alignment;
+
+  @override
+  void updateLerps() {
+    _color = visitNullableLerp(_color, widget.style.color, ColorLerp.new);
+    _fontSize = visitNullableLerp(_fontSize, widget.style.fontSize, DoubleLerp.new);
+    _alignment = visitNullableLerp(_alignment, widget.style.alignment, AlignmentLerp.new);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTextStyle(
+      style: widget.style.copy(
+        color: _color!.compute(animationValue),
+        fontSize: _fontSize!.compute(animationValue),
+        alignment: _alignment!.compute(animationValue),
+      ),
       child: widget.child,
     );
   }
