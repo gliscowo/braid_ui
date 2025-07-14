@@ -81,13 +81,19 @@ typedef _CursorLocation = ({int line, int rune});
 class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListener, MouseListener {
   String _text;
   TextSelection _selection;
+
+  String _layoutText;
+  TextSelection _layoutSelection;
+
   _CursorLocation _cursorLocation = (line: 0, rune: 0);
 
   late Paragraph _paragraph;
 
   TextInputInstance({required super.widget})
     : _text = widget.controller.text,
-      _selection = widget.controller.selection {
+      _selection = widget.controller.selection,
+      _layoutText = widget.controller.text,
+      _layoutSelection = widget.controller.selection {
     if (widget.autoFocus) requestFocus();
   }
 
@@ -96,15 +102,17 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
     return (x: x, y: y);
   }
 
+  LineMetrics get currentLine => _paragraph.metrics.lineMetrics[_cursorLocation.line];
+
   @override
   set widget(TextInput value) {
-    if (!(_text == value.controller.text &&
-        _selection == value.controller.selection &&
+    if (!(_layoutText == value.controller.text &&
+        _layoutSelection == value.controller.selection &&
         widget.softWrap == value.softWrap &&
         widget.allowMultipleLines == value.allowMultipleLines &&
         SpanStyle.compare(widget.style, value.style) == SpanComparison.equal)) {
-      _text = widget.controller.text;
-      _selection = widget.controller.selection;
+      _layoutText = _text = widget.controller.text;
+      _layoutSelection = _selection = widget.controller.selection;
 
       markNeedsLayout();
     }
@@ -143,8 +151,6 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
 
   @override
   double? measureBaselineOffset() => _paragraph.metrics.initialBaselineY;
-
-  LineMetrics get _currentLine => _paragraph.metrics.lineMetrics[_cursorLocation.line];
 
   @override
   void draw(DrawContext ctx) {
@@ -232,12 +238,17 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
     return (x, y, line.height);
   }
 
+  static final _lineBreaks = RegExp('[\r\n]');
   void _insert(String insertion) {
+    if (!widget.allowMultipleLines) {
+      insertion = insertion.replaceAll(_lineBreaks, '');
+    }
+
     final runes = _text.runes.toList();
     runes.replaceRange(_selection.lower, _selection.upper, insertion.runes);
 
-    widget.controller.text = String.fromCharCodes(runes);
-    widget.controller.selection = TextSelection.collapsed(_selection.lower + insertion.runes.length);
+    _text = widget.controller.text = String.fromCharCodes(runes);
+    _selection = widget.controller.selection = TextSelection.collapsed(_selection.lower + insertion.runes.length);
   }
 
   void _deleteSelection() => _insert('');
@@ -294,9 +305,9 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
 
   void _moveCursor(int toRune, bool selecting) {
     if (selecting) {
-      widget.controller.selection = TextSelection(_selection.start, toRune);
+      _selection = widget.controller.selection = TextSelection(_selection.start, toRune);
     } else {
-      widget.controller.selection = TextSelection.collapsed(toRune);
+      _selection = widget.controller.selection = TextSelection.collapsed(toRune);
     }
   }
 
@@ -336,8 +347,8 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
         final runes = _text.runes.toList();
         runes.removeAt(cursorPosition - 1);
 
-        widget.controller.selection = TextSelection.collapsed(cursorPosition - 1);
-        widget.controller.text = String.fromCharCodes(runes);
+        _selection = widget.controller.selection = TextSelection.collapsed(cursorPosition - 1);
+        _text = widget.controller.text = String.fromCharCodes(runes);
       }
 
       return true;
@@ -348,7 +359,7 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
         final runes = _text.runes.toList();
         runes.removeAt(cursorPosition);
 
-        widget.controller.text = String.fromCharCodes(runes);
+        _text = widget.controller.text = String.fromCharCodes(runes);
       }
 
       return true;
@@ -377,7 +388,7 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
 
       return true;
     } else if (keyCode == glfwKeyA && modifiers.ctrl) {
-      widget.controller.selection = TextSelection(0, _text.length);
+      _selection = widget.controller.selection = TextSelection(0, _text.length);
       return true;
     } else if (keyCode == glfwKeyLeft) {
       final endingSelection = !_selection.collapsed && !modifiers.shift;
@@ -408,10 +419,10 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
       );
       return true;
     } else if (keyCode == glfwKeyHome) {
-      _moveCursor(_currentLine.startRune, modifiers.shift);
+      _moveCursor(currentLine.startRune, modifiers.shift);
       return true;
     } else if (keyCode == glfwKeyEnd) {
-      _moveCursor(_currentLine.endRune, modifiers.shift);
+      _moveCursor(currentLine.endRune, modifiers.shift);
       return true;
     }
 
@@ -445,7 +456,7 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
       final start = _nextWordBoundary(false, fromRuneIdx: clickedIdx);
       final end = _nextWordBoundary(true, fromRuneIdx: clickedIdx);
 
-      widget.controller.selection = TextSelection(max(0, start), end);
+      _selection = widget.controller.selection = TextSelection(max(0, start), end);
     } else {
       _lastClickTime = DateTime.now();
       _moveCursor(clickedIdx, host!.eventsBinding.isKeyPressed(glfwKeyLeftShift));
