@@ -321,6 +321,7 @@ class RawScrollViewInstance extends SingleChildWidgetInstance<RawScrollView> {
     if (controller == null) return;
 
     if (controller._setMaxOffset(offset) && !controller._maxOffsetNotificationScheduled) {
+      controller._maxOffsetNotificationScheduled = true;
       host!.schedulePostLayoutCallback(() => controller._sendMaxOffsetNotification());
     }
   }
