@@ -1,17 +1,14 @@
 import 'dart:async';
 import 'dart:collection';
-import 'dart:ffi' as ffi;
 import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:diamond_gl/diamond_gl.dart' as dgl;
 import 'package:diamond_gl/glfw.dart';
 import 'package:diamond_gl/opengl.dart';
-import 'package:ffi/ffi.dart' as ffi;
 import 'package:logging/logging.dart';
 import 'package:vector_math/vector_math.dart';
 
-import '../baked_assets.g.dart' as assets;
 import '../context.dart';
 import '../events_binding.dart';
 import '../framework/instance.dart';
@@ -84,45 +81,18 @@ Future<(AppState, dgl.Window)> createBraidAppWithWindow({
   required String defaultFontFamily,
   required Widget widget,
 }) async {
-  loadOpenGLFromPath();
-  loadGLFW(BraidNatives.activeLibraries.glfw);
-
-  if (!dgl.diamondGLInitialized) {
-    dgl.initDiamondGL(logger: baseLogger);
-  }
-  if (dgl.glfw.init() != glfwTrue) {
-    dgl.glfw.terminate();
-
-    final errorPointer = ffi.malloc<ffi.Pointer<ffi.Char>>();
-    dgl.glfw.getError(errorPointer);
-
-    final errorString = errorPointer.cast<ffi.Utf8>().toDartString();
-    ffi.malloc.free(errorPointer);
-
-    throw BraidInitializationException('GLFW initialization error: $errorString');
-  }
-
-  if (baseLogger != null) {
-    dgl.attachGlfwErrorCallback();
-  }
-
-  final braidWindow = dgl.Window(width, height, name);
-  braidWindow.setIcon(assets.braidIcon);
-
-  braidWindow.activateContext();
-  if (baseLogger != null) {
-    dgl.attachGlErrorCallback();
-  }
+  final surface = WindowSurface.createWindow(title: name, width: width, height: height);
+  final events = WindowEventsBinding(window: surface.window);
 
   final app = await createBraidApp(
-    surface: WindowSurface(window: braidWindow),
-    eventsBinding: WindowEventsBinding(window: braidWindow),
+    surface: surface,
+    eventsBinding: events,
     resources: resources,
     defaultFontFamily: defaultFontFamily,
     widget: widget,
   );
 
-  return (app, braidWindow);
+  return (app, surface.window);
 }
 
 /// Initialize all state necessary to drive the braid application
@@ -150,22 +120,7 @@ Future<AppState> createBraidApp({
   required String defaultFontFamily,
   required Widget widget,
 }) async {
-  final renderContext = surface.createRenderContext();
-  await Future.wait(
-    [
-      BraidShader(source: resources, name: 'blit', vert: 'blit', frag: 'blit'),
-      BraidShader(source: resources, name: 'text', vert: 'text', frag: 'text'),
-      BraidShader(source: resources, name: 'solid_fill', vert: 'pos', frag: 'solid_fill'),
-      BraidShader(source: resources, name: 'colored_fill', vert: 'pos_color', frag: 'colored_fill'),
-      BraidShader(source: resources, name: 'texture_fill', vert: 'pos_uv', frag: 'texture_fill'),
-      BraidShader(source: resources, name: 'rounded_rect_solid', vert: 'pos', frag: 'rounded_rect_solid'),
-      BraidShader(source: resources, name: 'rounded_rect_outline', vert: 'pos', frag: 'rounded_rect_outline'),
-      BraidShader(source: resources, name: 'circle_solid', vert: 'pos', frag: 'circle_solid'),
-      BraidShader(source: resources, name: 'circle_sector', vert: 'pos', frag: 'circle_sector'),
-      BraidShader(source: resources, name: 'gradient_fill', vert: 'pos_uv', frag: 'gradient_fill'),
-      BraidShader(source: resources, name: 'blur', vert: 'pos', frag: 'blur'),
-    ].map(renderContext.addShader).toList(),
-  );
+  final renderContext = await surface.createRenderContext(resources);
 
   final (defaultFont, materialSymbols) = await (
     FontFamily.load(resources, defaultFontFamily),
@@ -193,20 +148,6 @@ Future<AppState> createBraidApp({
     widget,
     logger: baseLogger,
   );
-}
-
-final class BraidInitializationException implements Exception {
-  final String message;
-  final Object? cause;
-  BraidInitializationException(this.message, {this.cause});
-
-  @override
-  String toString() => cause != null
-      ? '''
-error during braid initialization: $message
-cause: $cause
-'''
-      : 'error during braid initialization: $message';
 }
 
 // ---
@@ -312,6 +253,7 @@ class AppState implements InstanceHost, ProxyHost {
   @override
   final TextRenderer textRenderer;
   final PrimitiveRenderer primitives;
+  final Queue<GlCall> _queuedGlCalls = Queue();
 
   final BuildScope _rootBuildScope = BuildScope();
   Queue<AnimationCallback> _animationCallbacks = DoubleLinkedQueue();
@@ -336,7 +278,6 @@ class AppState implements InstanceHost, ProxyHost {
   final BraidInspector _inspector = BraidInspector();
   final _RebuildTimingTracker _rebuildTimingTracker = _RebuildTimingTracker();
   bool debugDrawInstanceBoxes = false;
-  bool debugReloadShadersNextFrame = false;
 
   // ------------------------
 
@@ -369,13 +310,9 @@ class AppState implements InstanceHost, ProxyHost {
   }
 
   void draw() {
-    // TODO: reimplement
-    // if (debugReloadShadersNextFrame) {
-    //   debugReloadShadersNextFrame = false;
-
-    //   await context.reloadShaders();
-    //   primitives.clearShaderCache();
-    // }
+    while (_queuedGlCalls.isNotEmpty) {
+      _queuedGlCalls.removeFirst()();
+    }
 
     final ctx = DrawContext(context, primitives, projection, textRenderer, drawBoundingBoxes: debugDrawInstanceBoxes);
 
@@ -476,19 +413,6 @@ class AppState implements InstanceHost, ProxyHost {
     surface.cursorStyle = activeStyle ?? CursorStyle.none;
   }
 
-  static Iterable<WidgetProxy> _gatherDescendants(WidgetProxy proxy) sync* {
-    yield proxy;
-
-    final descendants = <Iterable<WidgetProxy>>[];
-    proxy.visitChildren((child) {
-      descendants.add(_gatherDescendants(child));
-    });
-
-    for (final iterable in descendants) {
-      yield* iterable;
-    }
-  }
-
   void _pollAndDispatchEvents() {
     final events = eventsBinding.poll();
     for (final event in events) {
@@ -519,7 +443,7 @@ class AppState implements InstanceHost, ProxyHost {
         case MouseMoveEvent(x: final cursorX, y: final cursorY, :final deltaX, :final deltaY):
           _cursorPosition = (x: cursorX, y: cursorY);
 
-          if (_dragging == null) return;
+          if (_dragging == null) continue;
 
           if (!_dragStarted) {
             _dragging!.onMouseDragStart(_draggingButton!);
@@ -576,12 +500,12 @@ node [shape="box"];
 
           if (glfwKeycode == glfwKeyI && modifiers.ctrl && modifiers.shift) {
             _inspector.activate();
-            return;
+            continue;
           }
 
           if (glfwKeycode == glfwKeyR && modifiers.ctrl && modifiers.shift) {
-            debugReloadShadersNextFrame = true;
-            return;
+            context.reloadShaders().then(_queuedGlCalls.add);
+            continue;
           }
 
           _focused.firstWhereOrNull((listener) => listener.onKeyDown(glfwKeycode, modifiers));

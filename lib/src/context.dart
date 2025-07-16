@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ffi';
 
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:vector_math/vector_math.dart';
@@ -8,6 +9,33 @@ import 'primitive_renderer.dart';
 import 'resources.dart';
 import 'text/text_renderer.dart';
 
+/// A function which requires an active OpenGL context
+/// in order to run. In debug builds, this preconditions
+/// is asserted through an explicit check - in production
+/// it falls through directly to the representation type
+///
+/// Note: This type should be used by asynchronous functions
+/// which must perform some type of OpenGL setup after they
+/// have crossed their async gap(s). Only the minimal amount
+/// of code (ie. only the actual calls to OpenGL functions)
+/// should be in the returned closure
+extension type const GlCall<T>(T Function() _fn) {
+  T call() {
+    assert(glfw.getCurrentContext() != nullptr, 'an OpenGL context must be active to invoke a GlCall');
+    return _fn();
+  }
+
+  /// Create a new GlCall which completes with the
+  /// result of calling [fn] on the result of [this]
+  GlCall<S> then<S>(S Function(T) fn) => GlCall(() => fn(_fn()));
+
+  /// Create a new GlCall wichh completes with a list
+  /// of all results from invoking every call in [calls]
+  static GlCall<List<T>> allOf<T>(Iterable<GlCall<T>> calls) => GlCall(() => calls.map((e) => e()).toList());
+}
+
+// ---
+
 class BraidShader {
   final BraidResources source;
   final String name;
@@ -16,15 +44,17 @@ class BraidShader {
 
   BraidShader({required this.source, required this.name, required this.vert, required this.frag});
 
-  Future<GlProgram> loadAndCompile() async {
+  Future<GlCall<GlProgram>> loadAndCompile() async {
     final (vertSource, fragSource) = await (source.loadShader('$vert.vert'), source.loadShader('$frag.frag')).wait;
 
-    final shaders = [
-      GlShader('$vert.vert', vertSource, GlShaderType.vertex),
-      GlShader('$frag.frag', fragSource, GlShaderType.fragment),
-    ];
+    return GlCall(() {
+      final shaders = [
+        GlShader('$vert.vert', vertSource, GlShaderType.vertex),
+        GlShader('$frag.frag', fragSource, GlShaderType.fragment),
+      ];
 
-    return GlProgram(name, shaders);
+      return GlProgram(name, shaders);
+    });
   }
 }
 
@@ -38,7 +68,7 @@ class RenderContext {
 
   RenderContext(this.window);
 
-  Future<void> addShader(BraidShader shader) {
+  Future<GlCall<void>> addShader(BraidShader shader) {
     if (_programStore.containsKey(shader.name)) {
       throw ArgumentError('Duplicate shader name ${shader.name}', 'shader');
     }
@@ -47,11 +77,11 @@ class RenderContext {
     return _reloadShader(shader);
   }
 
-  Future<void> reloadShaders() => Future.wait(_shaderStore.values.map(_reloadShader).toList());
+  Future<GlCall<void>> reloadShaders() async => GlCall.allOf(await Future.wait(_shaderStore.values.map(_reloadShader)));
 
-  Future<void> _reloadShader(BraidShader shader) async {
+  Future<GlCall<void>> _reloadShader(BraidShader shader) async {
     final program = await shader.loadAndCompile();
-    _programStore[shader.name] = program;
+    return program.then((program) => _programStore[shader.name] = program);
   }
 
   // TODO: this might wanna move

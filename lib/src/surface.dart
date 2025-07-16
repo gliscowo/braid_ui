@@ -1,8 +1,16 @@
-import 'package:diamond_gl/diamond_gl.dart' as dgl;
-import 'package:diamond_gl/opengl.dart';
+import 'dart:ffi' as ffi;
 
+import 'package:diamond_gl/diamond_gl.dart' as dgl;
+import 'package:diamond_gl/glfw.dart';
+import 'package:diamond_gl/opengl.dart';
+import 'package:ffi/ffi.dart' as ffi;
+import 'package:logging/logging.dart';
+
+import 'baked_assets.g.dart' as assets;
 import 'context.dart';
 import 'core/cursors.dart';
+import 'errors.dart';
+import 'resources.dart';
 
 typedef SurfaceResizeEvent = ({int newWidth, int newHeight});
 
@@ -15,7 +23,7 @@ abstract interface class Surface {
   CursorStyle get cursorStyle;
   set cursorStyle(CursorStyle value);
 
-  RenderContext createRenderContext();
+  Future<RenderContext> createRenderContext(BraidResources resources);
 
   void beginFrame();
   void endFrame();
@@ -27,7 +35,42 @@ class WindowSurface implements Surface {
   final dgl.Window window;
   final CursorController _cursorController;
 
-  WindowSurface({required this.window}) : _cursorController = CursorController.ofWindow(window);
+  WindowSurface.ofWindow({required this.window}) : _cursorController = CursorController.ofWindow(window);
+
+  factory WindowSurface.createWindow({required String title, int width = 1000, int height = 750, Logger? logger}) {
+    loadOpenGLFromPath();
+    loadGLFW(BraidNatives.activeLibraries.glfw);
+
+    if (!dgl.diamondGLInitialized) {
+      dgl.initDiamondGL(logger: logger);
+    }
+
+    if (dgl.glfw.init() != glfwTrue) {
+      dgl.glfw.terminate();
+
+      final errorPointer = ffi.malloc<ffi.Pointer<ffi.Char>>();
+      dgl.glfw.getError(errorPointer);
+
+      final errorString = errorPointer.cast<ffi.Utf8>().toDartString();
+      ffi.malloc.free(errorPointer);
+
+      throw BraidInitializationException('GLFW initialization error: $errorString');
+    }
+
+    if (logger != null) {
+      dgl.attachGlfwErrorCallback();
+    }
+
+    final window = dgl.Window(width, height, title);
+    window.setIcon(assets.braidIcon);
+
+    window.activateContext();
+    if (logger != null) {
+      dgl.attachGlErrorCallback();
+    }
+
+    return WindowSurface.ofWindow(window: window);
+  }
 
   @override
   int get width => window.width;
@@ -45,7 +88,31 @@ class WindowSurface implements Surface {
   set cursorStyle(CursorStyle value) => _cursorController.style = value;
 
   @override
-  RenderContext createRenderContext() => RenderContext(window);
+  Future<RenderContext> createRenderContext(BraidResources resources) async {
+    final context = RenderContext(window);
+
+    final shaderSetup = await Future.wait(
+      [
+        BraidShader(source: resources, name: 'blit', vert: 'blit', frag: 'blit'),
+        BraidShader(source: resources, name: 'text', vert: 'text', frag: 'text'),
+        BraidShader(source: resources, name: 'solid_fill', vert: 'pos', frag: 'solid_fill'),
+        BraidShader(source: resources, name: 'colored_fill', vert: 'pos_color', frag: 'colored_fill'),
+        BraidShader(source: resources, name: 'texture_fill', vert: 'pos_uv', frag: 'texture_fill'),
+        BraidShader(source: resources, name: 'rounded_rect_solid', vert: 'pos', frag: 'rounded_rect_solid'),
+        BraidShader(source: resources, name: 'rounded_rect_outline', vert: 'pos', frag: 'rounded_rect_outline'),
+        BraidShader(source: resources, name: 'circle_solid', vert: 'pos', frag: 'circle_solid'),
+        BraidShader(source: resources, name: 'circle_sector', vert: 'pos', frag: 'circle_sector'),
+        BraidShader(source: resources, name: 'gradient_fill', vert: 'pos_uv', frag: 'gradient_fill'),
+        BraidShader(source: resources, name: 'blur', vert: 'pos', frag: 'blur'),
+      ].map(context.addShader).toList(),
+    );
+
+    window.activateContext();
+    GlCall.allOf(shaderSetup)();
+    dgl.Window.dropContext();
+
+    return context;
+  }
 
   @override
   void beginFrame() {

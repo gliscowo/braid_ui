@@ -5,7 +5,7 @@ import 'dart:typed_data';
 
 import 'package:path/path.dart';
 
-import 'core/app.dart';
+import 'errors.dart';
 
 /// Load the native libraries required for braid to function,
 /// fetching ones shipped with the application from [baseDirectory]
