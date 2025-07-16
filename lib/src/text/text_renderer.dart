@@ -57,8 +57,6 @@ class FontFamily {
 typedef _NativeFontResources = ({Map<int, Pointer<hb_font>> hbFonts, FT_Face ftFace, Pointer<Uint8> fontMemory});
 
 class Font {
-  static const atlasSize = 2048;
-
   static final _finalizer = Finalizer<_NativeFontResources>((resources) {
     freetype.Done_Face(resources.ftFace);
     malloc.free(resources.fontMemory);
@@ -69,15 +67,10 @@ class Font {
   });
 
   static FT_Library? _ftInstance;
-  static final List<int> _glyphTextures = [];
-  static int _nextGlyphX = atlasSize, _nextGlyphY = atlasSize;
-  static int _currentRowHeight = 0;
 
   // --- instance fields ---
 
   late final _NativeFontResources _nativeResources;
-
-  final Map<(int, int), Glyph> _glyphs = {};
 
   late final bool bold, italic;
 
@@ -109,11 +102,6 @@ class Font {
   double get underlineThickness =>
       _nativeResources.ftFace.ref.underline_thickness / _nativeResources.ftFace.ref.units_per_EM;
 
-  Glyph getGlyph(int index, double size) {
-    final pixelSize = toPixelSize(size);
-    return _glyphs[(index, pixelSize)] ?? _loadGlyph(index, pixelSize);
-  }
-
   /// Retrieve a harfbuzz font instance configured
   /// for use at [size]
   Pointer<hb_font> getHbFont(double size) {
@@ -121,8 +109,7 @@ class Font {
     return _nativeResources.hbFonts[pixelSize] ??= _createHbFont(pixelSize);
   }
 
-  // TODO consider switching to SDF rendering
-  Glyph _loadGlyph(int index, int size) {
+  GlpyhBuffer rasterizeGlyph(int index, int size) {
     final ftFace = _nativeResources.ftFace;
 
     freetype.Set_Pixel_Sizes(ftFace, size, size);
@@ -133,33 +120,31 @@ class Font {
     final width = ftFace.ref.glyph.ref.bitmap.width ~/ 3;
     final pitch = ftFace.ref.glyph.ref.bitmap.pitch;
     final rows = ftFace.ref.glyph.ref.bitmap.rows;
-    final (texture, u, v) = _allocateGlyphPosition(width, rows);
 
     final glyphPixels = ftFace.ref.glyph.ref.bitmap.buffer.cast<Uint8>().asTypedList(pitch * rows);
     final pixelBuffer = malloc<Uint8>(width * rows * 3);
     final pixels = pixelBuffer.asTypedList(width * rows * 3);
 
-    for (var y = 0; y < rows; y++) {
-      for (var x = 0; x < width; x++) {
-        pixels[y * width * 3 + x * 3] = glyphPixels[y * pitch + x * 3];
-        pixels[y * width * 3 + x * 3 + 1] = glyphPixels[y * pitch + x * 3 + 1];
-        pixels[y * width * 3 + x * 3 + 2] = glyphPixels[y * pitch + x * 3 + 2];
+    final rowStride = width * 3;
+    if (pitch != rowStride) {
+      for (var y = 0; y < rows; y++) {
+        for (var x = 0; x < width; x++) {
+          final targetRowIdx = y * width * 3;
+          final sourceRowIdx = y * pitch;
+
+          pixels.setRange(targetRowIdx, targetRowIdx + rowStride, glyphPixels, sourceRowIdx);
+        }
       }
+    } else {
+      pixels.setRange(0, pixels.length, glyphPixels);
     }
 
-    gl.pixelStorei(glUnpackAlignment, 1);
-    gl.textureSubImage2D(texture, 0, u, v, width, rows, glRgb, glUnsignedByte, pixelBuffer.cast());
-
-    malloc.free(pixelBuffer);
-
-    return _glyphs[(index, size)] = Glyph(
-      texture,
-      u,
-      v,
-      width,
-      rows,
-      ftFace.ref.glyph.ref.bitmap_left,
-      ftFace.ref.glyph.ref.bitmap_top,
+    return GlpyhBuffer(
+      width: width,
+      height: rows,
+      bearingX: ftFace.ref.glyph.ref.bitmap_left,
+      bearingY: ftFace.ref.glyph.ref.bitmap_top,
+      pixels: pixelBuffer,
     );
   }
 
@@ -167,66 +152,9 @@ class Font {
 
   /// Determine the pixel size at which glyphs for
   /// rendering at [renderSize] are baked
-  // old impl for sadness:
-  // ```dart
-  // renderSize <= 12
-  // ? renderSize.ceil()
-  // : renderSize <= 20
-  //     ? (renderSize / 2).ceil() * 2
-  //     : (renderSize / 4).ceil() * 4
-  // ```
   static int toPixelSize(double renderSize) => renderSize.ceil();
 
   static double compensateForGlyphSize(double renderSize) => renderSize / toPixelSize(renderSize);
-
-  static (int, int, int) _allocateGlyphPosition(int width, int height) {
-    if (_nextGlyphX + width >= atlasSize) {
-      _nextGlyphX = 0;
-      _nextGlyphY += _currentRowHeight + 2;
-    }
-
-    if (_nextGlyphY + height >= atlasSize) {
-      _glyphTextures.add(_createGlyphAtlasTexture());
-      _nextGlyphX = 0;
-      _nextGlyphY = 0;
-    }
-
-    final textureId = _glyphTextures.last;
-    final location = (textureId, _nextGlyphX, _nextGlyphY);
-
-    _nextGlyphX += width + 2;
-    _currentRowHeight = max(_currentRowHeight, height);
-
-    return location;
-  }
-
-  static int _createGlyphAtlasTexture() {
-    final texture = malloc<UnsignedInt>();
-    gl.createTextures(glTexture2d, 1, texture);
-    final textureId = texture.value;
-    malloc.free(texture);
-
-    gl.pixelStorei(glUnpackAlignment, 1);
-    gl.textureStorage2D(textureId, 1, glRgb8, atlasSize, atlasSize);
-
-    // turns out that zero-initializing the texture
-    // memory is actually very important to prevent
-    // cross-sampling artifacts. why does this not happen
-    // when running with renderdoc? who knows
-    //
-    // glisco, 28.09.2024
-
-    final emptyBuffer = calloc<Char>(atlasSize * atlasSize * 3);
-    gl.textureSubImage2D(textureId, 0, 0, 0, atlasSize, atlasSize, glRgb, glUnsignedByte, emptyBuffer.cast());
-    calloc.free(emptyBuffer);
-
-    gl.textureParameteri(textureId, glTextureWrapS, glClampToEdge);
-    gl.textureParameteri(textureId, glTextureWrapT, glClampToEdge);
-    gl.textureParameteri(textureId, glTextureMinFilter, glLinear);
-    gl.textureParameteri(textureId, glTextureMagFilter, glLinear);
-
-    return textureId;
-  }
 
   Pointer<hb_font> _createHbFont(int pixelSize) {
     freetype.Set_Pixel_Sizes(_nativeResources.ftFace, pixelSize, pixelSize);
@@ -249,12 +177,21 @@ class Font {
   }
 }
 
-class Glyph {
-  final int textureId;
-  final int u, v;
+class GlpyhBuffer {
   final int width, height;
   final int bearingX, bearingY;
-  Glyph(this.textureId, this.u, this.v, this.width, this.height, this.bearingX, this.bearingY);
+
+  final Pointer<Uint8> pixels;
+
+  GlpyhBuffer({
+    required this.width,
+    required this.height,
+    required this.bearingX,
+    required this.bearingY,
+    required this.pixels,
+  });
+
+  void delete() => malloc.free(pixels);
 }
 
 class TextRenderer {
@@ -266,6 +203,8 @@ class TextRenderer {
   final Map<String, FontFamily> _fontStorage;
   FontFamily _defaultFont;
   int _fontStorageGeneration = 0;
+
+  final GlyphAtlas _glyphAtlas = GlyphAtlas();
 
   TextRenderer(RenderContext context, this._defaultFont, Map<String, FontFamily> fontStorage)
     : _textProgram = context.findProgram('text'),
@@ -360,7 +299,7 @@ class TextRenderer {
 
     for (final (glyphIdx, shapedGlyph) in text.glyphs.indexed) {
       final glyphStyle = text.styleFor(shapedGlyph);
-      final glyph = shapedGlyph.font.getGlyph(shapedGlyph.index, glyphStyle.fontSize);
+      final glyph = _glyphAtlas.getGlyph(shapedGlyph.font, shapedGlyph.index, glyphStyle.fontSize);
       final glyphColor = glyphStyle.color;
 
       final renderScale = Font.compensateForGlyphSize(glyphStyle.fontSize);
@@ -373,8 +312,8 @@ class TextRenderer {
       final width = glyph.width * renderScale;
       final height = glyph.height * renderScale;
 
-      final u0 = (glyph.u / Font.atlasSize), u1 = u0 + (glyph.width / Font.atlasSize);
-      final v0 = (glyph.v / Font.atlasSize), v1 = v0 + (glyph.height / Font.atlasSize);
+      final u0 = glyph.u, u1 = u0 + (glyph.width / GlyphAtlas.textureSize);
+      final v0 = glyph.v, v1 = v0 + (glyph.height / GlyphAtlas.textureSize);
 
       buffer(glyph.textureId)
         ..vertex(xPos, yPos, u0, v0, glyphColor)
@@ -431,4 +370,100 @@ class TextRenderer {
         ..draw();
     }
   }
+}
+
+typedef _AtlasKey = ({Font font, int index, int size});
+
+class GlyphAtlas {
+  static const textureSize = 2048;
+
+  final List<int> _textures = [];
+  int _nextGlyphX = textureSize, _nextGlyphY = textureSize;
+  int _currentRowHeight = 0;
+
+  final Map<_AtlasKey, BakedGlyph> _bakedGlyphs = {};
+
+  BakedGlyph getGlyph(Font font, int index, double size) {
+    final pixelSize = Font.toPixelSize(size);
+    final key = (font: font, index: index, size: pixelSize);
+
+    return _bakedGlyphs[key] ??= _storeGlyph(font, index, pixelSize);
+  }
+
+  BakedGlyph _storeGlyph(Font font, int index, int size) {
+    final buffer = font.rasterizeGlyph(index, size);
+    final (texture, u, v) = _allocateSpace(buffer.width, buffer.height);
+
+    gl.pixelStorei(glUnpackAlignment, 1);
+    gl.textureSubImage2D(texture, 0, u, v, buffer.width, buffer.height, glRgb, glUnsignedByte, buffer.pixels.cast());
+
+    buffer.delete();
+
+    return _bakedGlyphs[(font: font, index: index, size: size)] = BakedGlyph(
+      texture,
+      u / textureSize,
+      v / textureSize,
+      buffer.width,
+      buffer.height,
+      buffer.bearingX,
+      buffer.bearingY,
+    );
+  }
+
+  (int, int, int) _allocateSpace(int width, int height) {
+    if (_nextGlyphX + width >= textureSize) {
+      _nextGlyphX = 0;
+      _nextGlyphY += _currentRowHeight + 2;
+    }
+
+    if (_nextGlyphY + height >= textureSize) {
+      _textures.add(_allocateTexture());
+      _nextGlyphX = 0;
+      _nextGlyphY = 0;
+    }
+
+    final textureId = _textures.last;
+    final location = (textureId, _nextGlyphX, _nextGlyphY);
+
+    _nextGlyphX += width + 2;
+    _currentRowHeight = max(_currentRowHeight, height);
+
+    return location;
+  }
+
+  static int _allocateTexture() {
+    final texture = malloc<UnsignedInt>();
+    gl.createTextures(glTexture2d, 1, texture);
+    final textureId = texture.value;
+    malloc.free(texture);
+
+    gl.pixelStorei(glUnpackAlignment, 1);
+    gl.textureStorage2D(textureId, 1, glRgb8, textureSize, textureSize);
+
+    // turns out that zero-initializing the texture
+    // memory is actually very important to prevent
+    // cross-sampling artifacts. why does this not happen
+    // when running with renderdoc? who knows
+    //
+    // glisco, 28.09.2024
+
+    final emptyBuffer = calloc<Char>(textureSize * textureSize * 3);
+    gl.textureSubImage2D(textureId, 0, 0, 0, textureSize, textureSize, glRgb, glUnsignedByte, emptyBuffer.cast());
+    calloc.free(emptyBuffer);
+
+    gl.textureParameteri(textureId, glTextureWrapS, glClampToEdge);
+    gl.textureParameteri(textureId, glTextureWrapT, glClampToEdge);
+    gl.textureParameteri(textureId, glTextureMinFilter, glLinear);
+    gl.textureParameteri(textureId, glTextureMagFilter, glLinear);
+
+    return textureId;
+  }
+}
+
+class BakedGlyph {
+  final int textureId;
+  final double u, v;
+  final int width, height;
+  final int bearingX, bearingY;
+  BakedGlyph(this.textureId, this.u, this.v, this.width, this.height, this.bearingX, this.bearingY);
 }
