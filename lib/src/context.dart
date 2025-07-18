@@ -10,7 +10,7 @@ import 'resources.dart';
 import 'text/text_renderer.dart';
 
 /// A function which requires an active OpenGL context
-/// in order to run. In debug builds, this preconditions
+/// in order to run. In debug builds, this precondition
 /// is asserted through an explicit check - in production
 /// it falls through directly to the representation type
 ///
@@ -80,8 +80,8 @@ class RenderContext {
   Future<GlCall<void>> reloadShaders() async => GlCall.allOf(await Future.wait(_shaderStore.values.map(_reloadShader)));
 
   Future<GlCall<void>> _reloadShader(BraidShader shader) async {
-    final program = await shader.loadAndCompile();
-    return program.then((program) => _programStore[shader.name] = program);
+    final compileCall = await shader.loadAndCompile();
+    return compileCall.then((program) => _programStore[shader.name] = program);
   }
 
   // TODO: this might wanna move

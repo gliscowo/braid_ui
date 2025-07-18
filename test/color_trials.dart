@@ -59,7 +59,7 @@ class ColorApp extends StatelessWidget {
                     insets: const Insets.all(10).copy(left: 15),
                     child: Align(
                       alignment: Alignment.left,
-                      child: Text('cool & based colors test :o', style: TextStyle(bold: true)),
+                      child: Text('cool & based colors test :o', style: const TextStyle(bold: true)),
                     ),
                   ),
                 ),
@@ -235,6 +235,23 @@ class _AppBodyState extends WidgetState<AppBody> {
                 ),
             ],
           ),
+          Align(
+            alignment: Alignment.topRight,
+            child: Padding(
+              insets: const Insets.all(15),
+              child: Sized(
+                width: 35.0,
+                height: 35.0,
+                child: Button(
+                  onClick: () async {
+                    final screenshot = await app!.debugCapture();
+                    encodePngFile('screenshot.png', screenshot);
+                  },
+                  child: Icon(icon: Icons.screenshot),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -297,7 +314,7 @@ class CheckBoxesTest extends StatelessWidget {
                         insets: const Insets.all(5),
                         child: Text(
                           '0x${color.toHexString(false)}',
-                          style: TextStyle(fontSize: 14, fontFamily: 'cascadia'),
+                          style: const TextStyle(fontSize: 14, fontFamily: 'cascadia'),
                         ),
                       ),
                     ),

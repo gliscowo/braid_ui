@@ -6,6 +6,7 @@ import 'package:collection/collection.dart';
 import 'package:diamond_gl/diamond_gl.dart' as dgl;
 import 'package:diamond_gl/glfw.dart';
 import 'package:diamond_gl/opengl.dart';
+import 'package:image/image.dart';
 import 'package:logging/logging.dart';
 import 'package:vector_math/vector_math.dart';
 
@@ -62,9 +63,9 @@ Future<void> runBraidApp({required AppState app, int targetFps = 60, bool reload
 
     app.updateWidgetsAndInteractions(effectiveDelta);
 
-    app.surface.beginFrame();
+    app.surface.beginDrawing();
     app.draw();
-    app.surface.endFrame();
+    app.surface.endDrawing();
   }
 
   app.dispose();
@@ -310,15 +311,15 @@ class AppState implements InstanceHost, ProxyHost {
   }
 
   void draw() {
-    while (_queuedGlCalls.isNotEmpty) {
-      _queuedGlCalls.removeFirst()();
-    }
-
     final ctx = DrawContext(context, primitives, projection, textRenderer, drawBoundingBoxes: debugDrawInstanceBoxes);
 
     dgl.gl.enable(glBlend);
 
     ctx.transform.scopedTransform(rootInstance.transform.transformToParent, (_) => rootInstance.draw(ctx));
+
+    while (_queuedGlCalls.isNotEmpty) {
+      _queuedGlCalls.removeFirst()();
+    }
 
     context.nextFrame();
   }
@@ -504,7 +505,10 @@ node [shape="box"];
           }
 
           if (glfwKeycode == glfwKeyR && modifiers.ctrl && modifiers.shift) {
-            context.reloadShaders().then(_queuedGlCalls.add);
+            context.reloadShaders().then((call) {
+              _queuedGlCalls.add(call);
+              _queuedGlCalls.add(GlCall(() => primitives.clearShaderCache()));
+            });
             continue;
           }
 
@@ -574,6 +578,13 @@ node [shape="box"];
 
   void scheduleShutdown() {
     _running = false;
+  }
+
+  Future<Image> debugCapture() {
+    final completer = Completer<Image>();
+    _queuedGlCalls.add(surface.capture().then((capture) => completer.complete(capture)));
+
+    return completer.future;
   }
 
   // ---

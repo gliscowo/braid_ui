@@ -4,12 +4,15 @@ import 'package:diamond_gl/diamond_gl.dart' as dgl;
 import 'package:diamond_gl/glfw.dart';
 import 'package:diamond_gl/opengl.dart';
 import 'package:ffi/ffi.dart' as ffi;
+import 'package:image/image.dart';
 import 'package:logging/logging.dart';
 
+import '../diamond_gl.dart';
 import 'baked_assets.g.dart' as assets;
 import 'context.dart';
 import 'core/cursors.dart';
 import 'errors.dart';
+import 'native/arena.dart';
 import 'resources.dart';
 
 typedef SurfaceResizeEvent = ({int newWidth, int newHeight});
@@ -25,10 +28,12 @@ abstract interface class Surface {
 
   Future<RenderContext> createRenderContext(BraidResources resources);
 
-  void beginFrame();
-  void endFrame();
+  void beginDrawing();
+  void endDrawing();
 
   void dispose();
+
+  GlCall<Image> capture();
 }
 
 class WindowSurface implements Surface {
@@ -65,9 +70,13 @@ class WindowSurface implements Surface {
     window.setIcon(assets.braidIcon);
 
     window.activateContext();
+    dgl.glfw.swapInterval(0);
+
     if (logger != null) {
       dgl.attachGlErrorCallback();
     }
+
+    Window.dropContext();
 
     return WindowSurface.ofWindow(window: window);
   }
@@ -115,7 +124,7 @@ class WindowSurface implements Surface {
   }
 
   @override
-  void beginFrame() {
+  void beginDrawing() {
     window.activateContext();
 
     dgl.gl.viewport(0, 0, window.width, window.height);
@@ -125,14 +134,30 @@ class WindowSurface implements Surface {
   }
 
   @override
-  void endFrame() {
+  void endDrawing() {
     window.nextFrame();
     dgl.Window.dropContext();
   }
 
   @override
   void dispose() {
-    // this is a no-op for now, although once the surface manages
-    // the window, this is where we get rid of it
+    window.dispose();
   }
+
+  // ---
+
+  @override
+  GlCall<Image> capture() => GlCall(
+    () => ffi.malloc.arena((arena) {
+      final bufferSize = width * height * 4;
+
+      final pixelBuffer = arena<ffi.Uint8>(bufferSize);
+      gl.readPixels(0, 0, width, height, glRgba, glUnsignedByte, pixelBuffer.cast());
+
+      final pixels = pixelBuffer.asTypedList(bufferSize);
+      final image = Image.fromBytes(width: width, height: height, bytes: pixels.buffer, numChannels: 4);
+
+      return flipVertical(image);
+    }),
+  );
 }
