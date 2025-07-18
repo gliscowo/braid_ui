@@ -32,7 +32,7 @@ class TimeTextState extends WidgetState<TimeText> {
     return MouseArea(
       cursorStyle: CursorStyle.hand,
       // clickCallback: () => setState(() => _time = DateTime.now()),
-      child: Text(DateFormat('Hms').format(_time), style: TextStyle(fontSize: 40.0, bold: true)),
+      child: Text(DateFormat('Hms').format(_time), style: const TextStyle(fontSize: 40.0, bold: true)),
     );
   }
 }

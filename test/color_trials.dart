@@ -13,7 +13,6 @@ import 'package:endec_json/endec_json.dart';
 import 'package:image/image.dart' hide Color;
 import 'package:logging/logging.dart';
 
-AppState? app;
 CursorStyle? cursor;
 
 Future<void> main() async {
@@ -24,7 +23,7 @@ Future<void> main() async {
   loadNatives('resources/lib');
   final icon = decodePngFile('test/color_trials_icon.png');
 
-  final (appState, window) = await createBraidAppWithWindow(
+  final (app, window) = await createBraidAppWithWindow(
     name: 'colors !!',
     baseLogger: Logger('colors_app'),
     resources: BraidResources.filesystem(fontDirectory: 'resources/font', shaderDirectory: 'resources/shader'),
@@ -32,13 +31,11 @@ Future<void> main() async {
     widget: const ColorApp(),
   );
 
-  app = appState;
-
   window.setIcon((await icon)!);
   cursor = CursorStyle.custom((await icon)!, 32, 32);
-  await app!.loadFontFamily('CascadiaCode', 'cascadia');
+  await app.loadFontFamily('CascadiaCode', 'cascadia');
 
-  runBraidApp(app: app!, reloadHook: true);
+  runBraidApp(app: app, reloadHook: true);
 }
 
 class ColorApp extends StatelessWidget {
@@ -204,7 +201,7 @@ class _AppBodyState extends WidgetState<AppBody> {
                       Padding(insets: const Insets.axis(horizontal: 5)),
                       Button(onClick: _loadWindowState, child: Text('Load')),
                       Padding(insets: const Insets.axis(horizontal: 5)),
-                      Button(onClick: () => app!.scheduleShutdown(), child: Text('Quit')),
+                      Button(onClick: () => AppState.of(context).scheduleShutdown(), child: Text('Quit')),
                     ],
                   ),
                 ),
@@ -244,7 +241,7 @@ class _AppBodyState extends WidgetState<AppBody> {
                 height: 35.0,
                 child: Button(
                   onClick: () async {
-                    final screenshot = await app!.debugCapture();
+                    final screenshot = await AppState.of(context).debugCapture();
                     encodePngFile('screenshot.png', screenshot);
                   },
                   child: Icon(icon: Icons.screenshot),
@@ -762,9 +759,11 @@ class DebugToggle extends StatefulWidget {
 class _DebugToggleState extends WidgetState<DebugToggle> {
   @override
   Widget build(BuildContext context) {
+    final app = AppState.of(context);
+
     return Checkbox(
-      onClick: () => setState(() => app!.debugDrawInstanceBoxes = !app!.debugDrawInstanceBoxes),
-      checked: app?.debugDrawInstanceBoxes ?? false,
+      onClick: () => setState(() => app.debugDrawInstanceBoxes = !app.debugDrawInstanceBoxes),
+      checked: app.debugDrawInstanceBoxes,
     );
   }
 }

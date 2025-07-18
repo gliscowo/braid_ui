@@ -32,7 +32,7 @@ class InheritedStateApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BraidTheme(
-      textStyle: TextStyle(fontSize: 24.0),
+      textStyle: const TextStyle(fontSize: 24.0),
       child: Column(
         children: [
           Flexible(child: TheApp()),

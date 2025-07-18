@@ -201,6 +201,20 @@ class _UserRoot extends VisitorWidget {
   }
 }
 
+class _AppWidget extends InheritedWidget {
+  final AppState app;
+  _AppWidget({required this.app, required super.child});
+
+  @override
+  bool mustRebuildDependents(covariant _AppWidget newWidget) {
+    if (newWidget.app != app) {
+      throw UnsupportedError('changing the AppState of a widget tree is not supported');
+    }
+
+    return false;
+  }
+}
+
 // ---
 
 /// ### Overview
@@ -287,12 +301,15 @@ class AppState implements InstanceHost, ProxyHost {
     this.logger,
   }) {
     _root = _RootWidget(
-      child: InspectableTree(
-        inspector: _inspector,
-        tree: _UserRoot(
-          proxyCallback: (userRootProxy) => _inspector.rootProxy = userRootProxy,
-          instanceCallback: (userRootInstance) => _inspector.rootInstance = userRootInstance,
-          child: root,
+      child: _AppWidget(
+        app: this,
+        child: InspectableTree(
+          inspector: _inspector,
+          tree: _UserRoot(
+            proxyCallback: (userRootProxy) => _inspector.rootProxy = userRootProxy,
+            instanceCallback: (userRootInstance) => _inspector.rootInstance = userRootInstance,
+            child: root,
+          ),
         ),
       ),
       rootBuildScope: _rootBuildScope,
@@ -645,6 +662,12 @@ node [shape="box"];
 
   @override
   void schedulePostLayoutCallback(Callback callback) => _postLayoutCallbacks.add(callback);
+
+  // ---
+
+  static AppState of(BuildContext context) {
+    return context.getAncestor<_AppWidget>()!.app;
+  }
 }
 
 class _RebuildTimingTracker {

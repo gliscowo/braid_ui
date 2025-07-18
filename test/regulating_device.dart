@@ -44,7 +44,7 @@ class RegulatingDeviceApp extends StatelessWidget {
               insets: const Insets.all(15.0).copy(bottom: 25.0),
               child: Text(
                 "Regulating Device",
-                style: TextStyle(bold: true, fontFamily: "Nunito", color: Color.white),
+                style: const TextStyle(bold: true, fontFamily: "Nunito", color: Color.white),
               ),
             ),
             Padding(
@@ -86,7 +86,7 @@ Widget buttonPanel(Icon icon, String name, List<Widget> buttons) {
                     children: [
                       icon,
                       Padding(insets: const Insets.all(10.0)),
-                      Text(name, style: TextStyle(fontSize: 18.0)),
+                      Text(name, style: const TextStyle(fontSize: 18.0)),
                     ],
                   ),
                   Padding(
