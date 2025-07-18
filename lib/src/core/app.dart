@@ -27,36 +27,27 @@ import 'math.dart';
 import 'reload_hook.dart';
 
 Future<void> runBraidApp({required AppState app, int targetFps = 60, bool reloadHook = false}) async {
-  void Function()? reloadCancelCallback;
+  StreamSubscription<()>? reloadSubscription;
 
   if (reloadHook) {
-    reloadCancelCallback = await setupReloadHook(() {
+    reloadSubscription = (await getReloadHook()).listen((event) {
       app.rebuildRoot();
     });
-
-    if (reloadCancelCallback != null) {
-      app.logger?.info('reload hook attached successfully');
-    }
   }
 
-  final timeSource = Stopwatch()..start();
-
   final oneFrame = Duration(microseconds: Duration.microsecondsPerSecond ~/ targetFps);
+
+  final timeSource = Stopwatch()..start();
   var lastFrameTimestamp = timeSource.elapsedMicroseconds;
 
-  // TODO: properly initialize window and context
-  // handle separate platform windows in the same app state via
-  // `PlatformWindow` widget - ideally we don't special-case the root
+  final finished = Completer();
+  Timer.periodic(oneFrame, (timer) {
+    if (!app._running) {
+      timer.cancel();
+      finished.complete();
 
-  while (app._running) {
-    final measuredDelta = Duration(microseconds: timeSource.elapsedMicroseconds - lastFrameTimestamp);
-
-    var waitTime = oneFrame - measuredDelta;
-    if (waitTime.isNegative) {
-      waitTime = Duration.zero;
+      return;
     }
-
-    await Future.delayed(waitTime);
 
     final effectiveDelta = Duration(microseconds: timeSource.elapsedMicroseconds - lastFrameTimestamp);
     lastFrameTimestamp = timeSource.elapsedMicroseconds;
@@ -66,11 +57,13 @@ Future<void> runBraidApp({required AppState app, int targetFps = 60, bool reload
     app.surface.beginDrawing();
     app.draw();
     app.surface.endDrawing();
-  }
+  });
+
+  await finished.future;
 
   app.dispose();
 
-  reloadCancelCallback?.call();
+  reloadSubscription?.cancel();
 }
 
 Future<(AppState, dgl.Window)> createBraidAppWithWindow({
