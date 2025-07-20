@@ -28,7 +28,7 @@ Future<StreamController<()>?> _setupReloadHook() async {
   await service.streamListen(EventStreams.kIsolate);
 
   var refCount = 0;
-  final controller = StreamController<()>(
+  final controller = StreamController<()>.broadcast(
     onListen: () => refCount++,
     onCancel: () {
       if (--refCount <= 0) {
