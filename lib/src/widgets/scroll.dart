@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:vector_math/vector_math.dart';
+
 import '../core/constraints.dart';
 import '../core/listenable.dart';
 import '../core/math.dart';
@@ -7,8 +9,6 @@ import '../framework/instance.dart';
 import '../framework/proxy.dart';
 import '../framework/widget.dart';
 import 'basic.dart';
-import 'flex.dart';
-import 'slider.dart';
 
 class ListenableBuilder extends StatefulWidget {
   final Listenable listenable;
@@ -46,44 +46,6 @@ class _ListenableBuilderState extends WidgetState<ListenableBuilder> {
   }
 
   void _listener() => setState(() => {});
-}
-
-class ScrollWithSlider extends StatefulWidget {
-  final Widget content;
-  const ScrollWithSlider({super.key, required this.content});
-
-  @override
-  WidgetState<ScrollWithSlider> createState() => _ScrollWithSliderState();
-}
-
-class _ScrollWithSliderState extends WidgetState<ScrollWithSlider> {
-  final ScrollController controller = ScrollController();
-
-  @override
-  Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: controller,
-      builder: (context, child) {
-        return Row(
-          children: [
-            child!,
-            if (controller.maxOffset != 0)
-              Slider(
-                axis: LayoutAxis.vertical,
-                min: controller.maxOffset,
-                max: 0,
-                step: 1,
-                value: controller.offset,
-                onUpdate: (value) => setState(() => controller.offset = value),
-              ),
-          ],
-        );
-      },
-      child: Flexible(
-        child: Scrollable.vertical(controller: controller, child: widget.content),
-      ),
-    );
-  }
 }
 
 class ScrollController with Listenable {
@@ -150,27 +112,69 @@ class Scrollable extends StatefulWidget {
       vertical = true;
 
   @override
-  WidgetState<Scrollable> createState() => _ScrollableState();
+  WidgetState<Scrollable> createState() => ScrollableState();
+
+  // ---
+
+  static void reveal(BuildContext context) => of(context)._reveal(context);
+  static void revealAabb(BuildContext context, Aabb3 box) => of(context)._revealAabb(context, box);
+
+  static ScrollableState? maybeOf(BuildContext context) => context.dependOnAncestor<_ScrollableProvider>()?.state;
+  static ScrollableState of(BuildContext context) => maybeOf(context)!;
 }
 
-class _ScrollableState extends WidgetState<Scrollable> {
-  final CompoundListenable listenable = CompoundListenable();
+class ScrollableState extends WidgetState<Scrollable> {
+  final CompoundListenable _listenable = CompoundListenable();
 
   ScrollController? horizontalController;
   ScrollController? verticalController;
+
+  void _reveal(BuildContext context) {
+    _revealAabb(context, context.instance!.transform.aabb);
+  }
+
+  void _revealAabb(BuildContext context, Aabb3 box) {
+    final scrollInstance = this.context.instance!;
+    final revealInstance = context.instance!;
+
+    final transform = revealInstance.computeTransformFrom(ancestor: scrollInstance)
+      ..invert()
+      ..translate(horizontalController?.offset ?? 0, verticalController?.offset ?? 0);
+    final revealBox = Aabb3.copy(box)..transform(transform);
+
+    if (horizontalController case var controller?) {
+      if (revealBox.min.x < controller.offset) {
+        controller.offset = revealBox.min.x;
+      }
+
+      if (revealBox.max.x > scrollInstance.transform.width + controller.offset) {
+        controller.offset = revealBox.max.x - scrollInstance.transform.width;
+      }
+    }
+
+    if (verticalController case var controller?) {
+      if (revealBox.min.y < controller.offset) {
+        controller.offset = revealBox.min.y;
+      }
+
+      if (revealBox.max.y > scrollInstance.transform.height + controller.offset) {
+        controller.offset = revealBox.max.y - scrollInstance.transform.height;
+      }
+    }
+  }
 
   @override
   void init() {
     horizontalController = widget.horizontal ? widget.horizontalController ?? ScrollController() : null;
     verticalController = widget.vertical ? widget.verticalController ?? ScrollController() : null;
 
-    if (horizontalController != null) listenable.addChild(horizontalController!);
-    if (verticalController != null) listenable.addChild(verticalController!);
+    if (horizontalController != null) _listenable.addChild(horizontalController!);
+    if (verticalController != null) _listenable.addChild(verticalController!);
   }
 
   @override
   void didUpdateWidget(Scrollable oldWidget) {
-    listenable.clear();
+    _listenable.clear();
 
     if (widget.horizontal) {
       if (widget.horizontalController != null) {
@@ -179,7 +183,7 @@ class _ScrollableState extends WidgetState<Scrollable> {
         horizontalController = ScrollController();
       }
 
-      listenable.addChild(horizontalController!);
+      _listenable.addChild(horizontalController!);
     } else {
       horizontalController = null;
     }
@@ -191,7 +195,7 @@ class _ScrollableState extends WidgetState<Scrollable> {
         verticalController = ScrollController();
       }
 
-      listenable.addChild(verticalController!);
+      _listenable.addChild(verticalController!);
     } else {
       verticalController = null;
     }
@@ -211,12 +215,12 @@ class _ScrollableState extends WidgetState<Scrollable> {
           return horizontalController != null && verticalController != null;
         },
         child: ListenableBuilder(
-          listenable: listenable,
+          listenable: _listenable,
           builder: (context, child) {
             return RawScrollView(
               horizontalController: horizontalController,
               verticalController: verticalController,
-              child: child!,
+              child: _ScrollableProvider(state: this, child: child!),
             );
           },
           child: widget.child,
@@ -224,6 +228,14 @@ class _ScrollableState extends WidgetState<Scrollable> {
       ),
     );
   }
+}
+
+class _ScrollableProvider extends InheritedWidget {
+  final ScrollableState state;
+  _ScrollableProvider({required this.state, required super.child});
+
+  @override
+  bool mustRebuildDependents(covariant InheritedWidget newWidget) => false;
 }
 
 class RawScrollView extends SingleChildInstanceWidget {
