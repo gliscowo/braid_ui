@@ -32,7 +32,7 @@ abstract class VisitorWidget extends Widget {
 
 typedef InstanceVisitor<T> = void Function(T widget, WidgetInstance instance);
 
-class VisitorProxy<T extends VisitorWidget> extends ComposedProxy with InstanceListenerProxy {
+class VisitorProxy<T extends VisitorWidget> extends ComposedProxy {
   final InstanceVisitor<T> visitor;
   WidgetInstance? descendantInstance;
 
@@ -62,6 +62,7 @@ class VisitorProxy<T extends VisitorWidget> extends ComposedProxy with InstanceL
 
   @override
   void notifyDescendantInstance(WidgetInstance<InstanceWidget>? instance, covariant Object? slot) {
+    super.notifyDescendantInstance(instance, slot);
     visitor(widget as T, descendantInstance = instance!);
   }
 }

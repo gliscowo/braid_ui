@@ -77,7 +77,7 @@ class AppBody extends StatefulWidget {
   WidgetState<AppBody> createState() => _AppBodyState();
 }
 
-enum Test { checkboxes, cursors, textWrapping, textInput, collapsible, grids }
+enum Test { checkboxes, cursors, textWrapping, textInput, collapsible, grids, swapnite }
 
 class _AppBodyState extends WidgetState<AppBody> {
   static final _windowEndec = structEndec<(String, WindowController)>().with2Fields(
@@ -128,6 +128,7 @@ class _AppBodyState extends WidgetState<AppBody> {
                         Test.textInput => const TextInputTest(),
                         Test.collapsible => const CollapsibleTest(),
                         Test.grids => const GridsTest(),
+                        Test.swapnite => const SwapTest(),
                       },
                       Align(
                         alignment: Alignment.left,
@@ -805,6 +806,55 @@ class GridsTest extends StatelessWidget {
           Sized(width: 100, height: 100, child: Panel(color: Color.white)),
           Sized(width: 100, height: 100, child: Panel(color: Color.white)),
           Sized(width: 50, height: 50, child: Panel(color: Color.white)),
+        ],
+      ),
+    );
+  }
+}
+
+class SwapTest extends StatefulWidget {
+  const SwapTest({super.key});
+
+  @override
+  WidgetState<SwapTest> createState() => _SwapTestState();
+}
+
+class _SwapTestState extends WidgetState<SwapTest> {
+  bool enabled = false;
+  int depth = 5;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget child = Text("it's all labels?");
+
+    for (var i = 0; i < depth; i++) {
+      child = Padding(insets: const Insets(top: 10), child: child);
+    }
+
+    return Align(
+      alignment: Alignment.top,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Button(
+            onClick: () => setState(() {
+              enabled = !enabled;
+            }),
+            child: Icon(icon: Icons.swap_horizontal_circle),
+          ),
+          Sized(
+            width: 300,
+            child: Slider(
+              value: depth.toDouble(),
+              step: 1,
+              min: 2,
+              max: 30,
+              onUpdate: (value) => setState(() {
+                depth = value.toInt();
+              }),
+            ),
+          ),
+          enabled ? Padding(insets: const Insets(), child: child) : Sized(child: child),
         ],
       ),
     );

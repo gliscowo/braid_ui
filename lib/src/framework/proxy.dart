@@ -68,7 +68,8 @@ class BuildScope {
   /// Thus if any descendant proxies introduce a new build scope,
   /// it is their responsibility to build the proxies in that scope
   /// when appropriate
-  void rebuildDirtyProxies() {
+  bool rebuildDirtyProxies() {
+    if (_dirtyProxies.isEmpty) return false;
     _dirtyProxies.sort();
 
     for (var idx = 0; idx < _dirtyProxies.length; idx = _nextDirtyindex(idx)) {
@@ -76,6 +77,7 @@ class BuildScope {
     }
 
     _dirtyProxies.clear();
+    return true;
   }
 
   int _nextDirtyindex(int idx) {
@@ -245,6 +247,11 @@ sealed class WidgetProxy with NodeWithDepth implements BuildContext, Comparable<
   @override
   void visitChildren(WidgetProxyVisitor visitor);
 
+  @override
+  WidgetInstance? get instance;
+
+  void notifyDescendantInstance(WidgetInstance? instance, covariant Object? slot);
+
   // ---
 
   @override
@@ -272,10 +279,6 @@ mixin SingleChildWidgetProxy on WidgetProxy {
   }
 }
 
-mixin InstanceListenerProxy on WidgetProxy {
-  void notifyDescendantInstance(WidgetInstance? instance, covariant Object? slot);
-}
-
 /// The opposite of an [InstanceWidgetProxy] - that is, a composed
 /// proxy is never directly responsible for a [WidgetInstance]. Instead,
 /// every composed proxy has a single child proxy and indirectly creates
@@ -289,19 +292,30 @@ abstract class ComposedProxy extends WidgetProxy with SingleChildWidgetProxy {
     super.updateSlot(newSlot);
     child?.updateSlot(newSlot);
   }
+
+  WidgetInstance? _descendantInstance;
+  @override
+  WidgetInstance? get instance => _descendantInstance;
+
+  @override
+  @mustCallSuper
+  void notifyDescendantInstance(WidgetInstance? instance, covariant Object? slot) {
+    _descendantInstance = instance;
+  }
 }
 
 /// A proxy which immediately spawns, owns and manages a [WidgetInstance]
 /// in the instance tree. This instance can then have 0-n children (depending
 /// on the type of instance) and thus every leaf of the proxy tree must be
 /// an instance proxy (ideally a [LeafInstanceWidgetProxy])
-abstract class InstanceWidgetProxy extends WidgetProxy with InstanceListenerProxy {
+abstract class InstanceWidgetProxy extends WidgetProxy {
   /// The instance owned and managed by this proxy. Immediately
   /// initialized upon proxy instantiation and available throughout
   /// its entire lifetime
+  @override
   WidgetInstance instance;
 
-  final List<InstanceListenerProxy> _ancestorInstanceListeners = [];
+  final List<WidgetProxy> _ancestorsUntilNextInstanceProxy = [];
 
   InstanceWidgetProxy(InstanceWidget super.widget) : instance = widget.instantiate();
 
@@ -311,11 +325,11 @@ abstract class InstanceWidgetProxy extends WidgetProxy with InstanceListenerProx
 
     var ancestor = parent;
     while (ancestor is! InstanceWidgetProxy) {
-      if (ancestor is InstanceListenerProxy) _ancestorInstanceListeners.add(ancestor);
+      _ancestorsUntilNextInstanceProxy.add(ancestor);
       ancestor = ancestor._parent!;
     }
 
-    _ancestorInstanceListeners.add(ancestor);
+    _ancestorsUntilNextInstanceProxy.add(ancestor);
 
     rebuild();
     _notifyAncestors();
@@ -331,7 +345,7 @@ abstract class InstanceWidgetProxy extends WidgetProxy with InstanceListenerProx
   void unmount() {
     super.unmount();
     instance.dispose();
-    _ancestorInstanceListeners.clear();
+    _ancestorsUntilNextInstanceProxy.clear();
   }
 
   @override
@@ -341,8 +355,8 @@ abstract class InstanceWidgetProxy extends WidgetProxy with InstanceListenerProx
   }
 
   void _notifyAncestors() {
-    for (final listener in _ancestorInstanceListeners) {
-      listener.notifyDescendantInstance(instance, slot);
+    for (final ancestor in _ancestorsUntilNextInstanceProxy) {
+      ancestor.notifyDescendantInstance(instance, slot);
     }
   }
 }
@@ -597,6 +611,11 @@ class MultiChildInstanceWidgetProxy extends InstanceWidgetProxy {
     // refreshChild calls always index into the correct list
     childInstances = List<WidgetInstance?>.filled(newChildren.length, null);
     List.copyRange(childInstances, 0, instance.children, 0, min(childInstances.length, instance.children.length));
+
+    if (childInstances.length < instance.children.length) {
+      instance.markNeedsLayout();
+    }
+
     instance.children = childInstances.cast();
 
     // sync from the top

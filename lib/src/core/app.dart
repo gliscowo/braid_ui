@@ -71,6 +71,7 @@ Future<(AppState, dgl.Window)> createBraidAppWithWindow({
   Logger? baseLogger,
   int width = 1000,
   int height = 750,
+  bool enableInspector = true,
   required BraidResources resources,
   required String defaultFontFamily,
   required Widget widget,
@@ -79,6 +80,8 @@ Future<(AppState, dgl.Window)> createBraidAppWithWindow({
   final events = WindowEventsBinding(window: surface.window);
 
   final app = await createBraidApp(
+    baseLogger: baseLogger,
+    enableInspector: enableInspector,
     surface: surface,
     eventsBinding: events,
     resources: resources,
@@ -106,8 +109,8 @@ Future<(AppState, dgl.Window)> createBraidAppWithWindow({
 /// - [AppState]
 /// - [Widget]
 Future<AppState> createBraidApp({
-  String name = 'braid app',
   Logger? baseLogger,
+  bool enableInspector = true,
   required Surface surface,
   required EventsBinding eventsBinding,
   required BraidResources resources,
@@ -139,6 +142,7 @@ Future<AppState> createBraidApp({
     renderContext,
     textRenderer,
     PrimitiveRenderer(renderContext),
+    enableInspector,
     widget,
     logger: baseLogger,
   );
@@ -283,7 +287,7 @@ class AppState implements InstanceHost, ProxyHost {
 
   // --- debug properties ---
 
-  final BraidInspector _inspector = BraidInspector();
+  final BraidInspector? _inspector;
   final _RebuildTimingTracker _rebuildTimingTracker = _RebuildTimingTracker();
   bool debugDrawInstanceBoxes = false;
 
@@ -297,17 +301,19 @@ class AppState implements InstanceHost, ProxyHost {
     this.context,
     this.textRenderer,
     this.primitives,
+    bool enableInspector,
     Widget root, {
     this.logger,
-  }) {
+  }) : _inspector = enableInspector ? BraidInspector() : null {
     _root = _RootWidget(
       child: _AppWidget(
         app: this,
-        child: InspectableTree(
-          inspector: _inspector,
-          tree: _UserRoot(
-            proxyCallback: (userRootProxy) => _inspector.rootProxy = userRootProxy,
-            instanceCallback: (userRootInstance) => _inspector.rootInstance = userRootInstance,
+        child: InstancePicker(
+          activateEvents: _inspector?.onPick ?? const Stream.empty(),
+          pickCallback: _inspector?.revealInstance ?? (_) {},
+          child: _UserRoot(
+            proxyCallback: (userRootProxy) => _inspector?.rootProxy = userRootProxy,
+            instanceCallback: (userRootInstance) => _inspector?.rootInstance = userRootInstance,
             child: root,
           ),
         ),
@@ -347,20 +353,26 @@ class AppState implements InstanceHost, ProxyHost {
       }
     }
 
+    var anyTreeMutations = false;
+
     if (_rebuildTimingTracker.trackNextIteration) {
       final watch = Stopwatch()..start();
-      _rootBuildScope.rebuildDirtyProxies();
+      anyTreeMutations |= _rootBuildScope.rebuildDirtyProxies();
       _rebuildTimingTracker.buildTime = watch.elapsed;
 
       watch.reset();
-      flushLayoutQueue();
+      anyTreeMutations |= flushLayoutQueue();
       _rebuildTimingTracker.layoutTime = watch.elapsed;
 
       _rebuildTimingTracker.trackNextIteration = false;
       logger?.info('completed full app rebuild in ${_rebuildTimingTracker.formatted}');
     } else {
-      _rootBuildScope.rebuildDirtyProxies();
-      flushLayoutQueue();
+      anyTreeMutations |= _rootBuildScope.rebuildDirtyProxies();
+      anyTreeMutations |= flushLayoutQueue();
+    }
+
+    if (anyTreeMutations) {
+      _inspector?.refresh();
     }
 
     if (_postLayoutCallbacks.isNotEmpty) {
@@ -478,7 +490,14 @@ class AppState implements InstanceHost, ProxyHost {
 
             _dragging = null;
           }
-        case MouseScrollEvent(:final xOffset, :final yOffset):
+        case MouseScrollEvent(:var xOffset, :var yOffset):
+          // whether enforcing this behavoir at the framework level is smart is... questionable
+          if (xOffset == 0 &&
+              (eventsBinding.isKeyPressed(glfwKeyLeftShift) || eventsBinding.isKeyPressed(glfwKeyRightShift))) {
+            xOffset = yOffset;
+            yOffset = 0;
+          }
+
           _hitTest().firstWhere(
             (hit) =>
                 hit.instance is MouseListener &&
@@ -509,7 +528,7 @@ node [shape="box"];
               });
           }
 
-          if (glfwKeycode == glfwKeyI && modifiers.ctrl && modifiers.shift) {
+          if (_inspector != null && glfwKeycode == glfwKeyI && modifiers.ctrl && modifiers.shift) {
             _inspector.activate();
             continue;
           }
@@ -576,6 +595,8 @@ node [shape="box"];
   }
 
   void dispose() {
+    _inspector?.close();
+
     for (final subscription in _subscriptions) {
       subscription.cancel();
     }
@@ -617,7 +638,9 @@ node [shape="box"];
   List<WidgetInstance> _layoutQueue = [];
   bool _mergeToLayoutQueue = false;
 
-  void flushLayoutQueue() {
+  bool flushLayoutQueue() {
+    if (_layoutQueue.isEmpty) return false;
+
     while (_layoutQueue.isNotEmpty) {
       final queue = _layoutQueue;
       _layoutQueue = <WidgetInstance>[];
@@ -644,6 +667,8 @@ node [shape="box"];
 
       _mergeToLayoutQueue = false;
     }
+
+    return true;
   }
 
   @override
