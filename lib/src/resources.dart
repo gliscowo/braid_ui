@@ -98,7 +98,7 @@ abstract interface class BraidResources {
   Future<String> loadShader(String path);
   Stream<Uint8List> loadFontFamily(String familyName);
 
-  factory BraidResources.fonts(String fontDirectpry) = _FontOnlyResources;
+  factory BraidResources.fonts(String fontDirectory) = _FontOnlyResources;
   factory BraidResources.filesystem({required String fontDirectory, required String shaderDirectory}) =
       FilesystemResources;
 }
