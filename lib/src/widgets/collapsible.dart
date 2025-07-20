@@ -30,14 +30,14 @@ class Collapsible extends StatelessWidget {
             Actions.click(
               cursorStyle: CursorStyle.hand,
               onClick: () => onToggled(!collapsed),
-              child: Icon(icon: collapsed ? Icons.arrow_right : Icons.arrow_drop_down, size: 24),
+              child: Icon(icon: collapsed ? Icons.arrow_right : Icons.arrow_drop_down, size: 20),
             ),
             Sized(height: 24, child: title),
           ],
         ),
         Visibility(
           visible: !collapsed,
-          child: Padding(insets: const Insets(left: 24), child: content),
+          child: Padding(insets: const Insets(left: 20), child: content),
         ),
       ],
     );
