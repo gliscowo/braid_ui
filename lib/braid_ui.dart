@@ -27,6 +27,7 @@ export 'src/widgets/collapsible.dart';
 export 'src/widgets/container.dart';
 export 'src/widgets/drag_arena.dart';
 export 'src/widgets/flex.dart';
+export 'src/widgets/grid.dart';
 export 'src/widgets/icon.dart';
 export 'src/widgets/inspector.dart';
 export 'src/widgets/layout_builder.dart';
