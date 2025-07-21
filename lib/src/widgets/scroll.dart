@@ -116,8 +116,8 @@ class Scrollable extends StatefulWidget {
 
   // ---
 
-  static void reveal(BuildContext context) => of(context)._reveal(context);
-  static void revealAabb(BuildContext context, Aabb3 box) => of(context)._revealAabb(context, box);
+  static void reveal(BuildContext context, {Insets padding = const Insets()}) => of(context)._reveal(context, padding);
+  static void revealAabb(BuildContext context, Aabb3 box) => of(context)._revealAabb(context, Aabb3.copy(box));
 
   static ScrollableState? maybeOf(BuildContext context) => context.dependOnAncestor<_ScrollableProvider>()?.state;
   static ScrollableState of(BuildContext context) => maybeOf(context)!;
@@ -129,8 +129,14 @@ class ScrollableState extends WidgetState<Scrollable> {
   ScrollController? horizontalController;
   ScrollController? verticalController;
 
-  void _reveal(BuildContext context) {
-    _revealAabb(context, context.instance!.transform.aabb);
+  void _reveal(BuildContext context, Insets padding) {
+    final box = Aabb3.copy(context.instance!.transform.aabb);
+    box.min.x -= padding.left;
+    box.min.y -= padding.top;
+    box.max.x += padding.right;
+    box.max.y += padding.bottom;
+
+    _revealAabb(context, box);
   }
 
   void _revealAabb(BuildContext context, Aabb3 box) {
@@ -140,25 +146,25 @@ class ScrollableState extends WidgetState<Scrollable> {
     final transform = revealInstance.computeTransformFrom(ancestor: scrollInstance)
       ..invert()
       ..translate(horizontalController?.offset ?? 0, verticalController?.offset ?? 0);
-    final revealBox = Aabb3.copy(box)..transform(transform);
+    box.transform(transform);
 
     if (horizontalController case var controller?) {
-      if (revealBox.min.x < controller.offset) {
-        controller.offset = revealBox.min.x;
+      if (box.min.x < controller.offset) {
+        controller.offset = box.min.x;
       }
 
-      if (revealBox.max.x > scrollInstance.transform.width + controller.offset) {
-        controller.offset = revealBox.max.x - scrollInstance.transform.width;
+      if (box.max.x > scrollInstance.transform.width + controller.offset) {
+        controller.offset = box.max.x - scrollInstance.transform.width;
       }
     }
 
     if (verticalController case var controller?) {
-      if (revealBox.min.y < controller.offset) {
-        controller.offset = revealBox.min.y;
+      if (box.min.y < controller.offset) {
+        controller.offset = box.min.y;
       }
 
-      if (revealBox.max.y > scrollInstance.transform.height + controller.offset) {
-        controller.offset = revealBox.max.y - scrollInstance.transform.height;
+      if (box.max.y > scrollInstance.transform.height + controller.offset) {
+        controller.offset = box.max.y - scrollInstance.transform.height;
       }
     }
   }
