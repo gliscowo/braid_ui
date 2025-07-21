@@ -170,7 +170,7 @@ class DefaultSliderStyle extends InheritedWidget {
   }
 }
 
-class RawSlider extends StatelessWidget {
+class RawSlider extends StatefulWidget {
   final double min;
   final double max;
   final double? step;
@@ -195,9 +195,19 @@ class RawSlider extends StatelessWidget {
   }) : normalizedValue = ((value - min) / (max - min)).clamp(0, 1);
 
   @override
+  WidgetState<RawSlider> createState() => _RawSliderState();
+}
+
+class _RawSliderState extends WidgetState<RawSlider> {
+  double dragValue = 0;
+
+  @override
   Widget build(BuildContext context) {
+    final style = widget.style;
+    final axis = widget.axis;
+
     final handleSize = style.handleSize!;
-    final enabled = onUpdate != null;
+    final enabled = widget.onUpdate != null;
 
     return Center(
       child: LayoutBuilder(
@@ -206,11 +216,20 @@ class RawSlider extends StatelessWidget {
             cursorStyle: enabled ? CursorStyle.hand : null,
             clickCallback: enabled
                 ? (x, y, _) {
-                    _updateForInput(constraints, x, y);
+                    y = axis == LayoutAxis.vertical ? constraints.maxOnAxis(axis) - y : y;
+                    if (!isInHandle(constraints, x, y)) {
+                      setAbsolute(constraints, x, y);
+                    }
+
                     return true;
                   }
                 : null,
-            dragCallback: enabled ? (x, y, dx, dy) => _updateForInput(constraints, x, y) : null,
+            dragCallback: enabled
+                ? (x, y, dx, dy) {
+                    move(constraints, dx, axis == LayoutAxis.vertical ? -dy : dy);
+                  }
+                : null,
+            dragStartCallback: (_) => dragValue = widget.normalizedValue,
             child: Stack(
               alignment: axis.choose(Alignment.left, Alignment.top),
               children: [
@@ -219,15 +238,15 @@ class RawSlider extends StatelessWidget {
                   height: axis.choose(style.trackThickness!, constraints.maxHeight),
                   child: Padding(
                     insets: axis.choose(Insets.axis(horizontal: handleSize / 2), Insets.axis(vertical: handleSize / 2)),
-                    child: track,
+                    child: widget.track,
                   ),
                 ),
                 Padding(
                   insets: axis.chooseCompute(
-                    () => Insets(left: normalizedValue * (constraints.maxWidth - handleSize)),
-                    () => Insets(top: (1 - normalizedValue) * (constraints.maxHeight - handleSize)),
+                    () => Insets(left: widget.normalizedValue * (constraints.maxWidth - handleSize)),
+                    () => Insets(top: (1 - widget.normalizedValue) * (constraints.maxHeight - handleSize)),
                   ),
-                  child: Sized(width: handleSize, height: handleSize, child: handle),
+                  child: Sized(width: handleSize, height: handleSize, child: widget.handle),
                 ),
               ],
             ),
@@ -237,20 +256,39 @@ class RawSlider extends StatelessWidget {
     );
   }
 
-  void _updateForInput(Constraints constraints, double x, double y) {
-    if (onUpdate == null) return;
+  bool isInHandle(Constraints constraints, double x, double y) {
+    final axis = widget.axis;
 
-    final handleSize = style.handleSize!;
-    var newNormalizedValue = ((axis.choose(x, y) - handleSize / 2) / (constraints.maxOnAxis(axis) - handleSize)).clamp(
-      0,
-      1,
-    );
+    final trackLength = constraints.maxOnAxis(axis) - widget.style.handleSize!;
+    final handleMin = widget.normalizedValue * trackLength;
+    final handleMax = handleMin + widget.style.handleSize!;
 
-    if (axis == LayoutAxis.vertical) {
-      newNormalizedValue = 1 - newNormalizedValue;
-    }
+    final coordinate = axis.choose(x, y);
+    return coordinate >= handleMin && coordinate <= handleMax;
+  }
 
-    final newValue = min + newNormalizedValue * (max - min);
-    onUpdate!(step != null ? (newValue / step!).roundToDouble() * step! : newValue);
+  void move(Constraints constraints, double dx, double dy) {
+    dragValue += widget.axis.choose(dx, dy) / (constraints.maxOnAxis(widget.axis) - widget.style.handleSize!);
+
+    applyValue(dragValue.clamp(0, 1));
+  }
+
+  void setAbsolute(Constraints constraints, double x, double y) {
+    if (widget.onUpdate == null) return;
+
+    final axis = widget.axis;
+    final handleSize = widget.style.handleSize!;
+
+    var newNormalizedValue = ((axis.choose(x, y) - handleSize / 2) / (constraints.maxOnAxis(axis) - handleSize))
+        .clamp(0, 1)
+        .toDouble();
+
+    applyValue(newNormalizedValue);
+  }
+
+  void applyValue(double newNormalizedValue) {
+    final step = widget.step;
+    final newValue = widget.min + newNormalizedValue * (widget.max - widget.min);
+    widget.onUpdate!(step != null ? (newValue / step).roundToDouble() * step : newValue);
   }
 }
