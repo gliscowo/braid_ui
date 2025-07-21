@@ -440,34 +440,38 @@ class InstanceDetails extends StatelessWidget {
     final theme = BraidTheme.of(context);
     final instance = SharedState.select<InspectorState, Object?>(context, (state) => state.evalContext);
 
-    Widget child;
+    List<Widget> children;
     if (instance is WidgetInstance) {
       final instanceTransform = instance.computeTransformFrom(ancestor: null)..invert();
       final (absX, absY) = instanceTransform.transform2(instance.transform.x, instance.transform.y);
 
-      child = Grid(
-        mainAxis: LayoutAxis.vertical,
-        crossAxisCells: 2,
-        cellFit: const CellFit.tight(),
-        children: _colorRows(
-          alternateColor: theme.elevatedColor,
+      children = [
+        Grid(
+          mainAxis: LayoutAxis.vertical,
           crossAxisCells: 2,
-          cells: [
-            Text('Rel. Position', style: const TextStyle(bold: true)),
-            Text('${instance.transform.x.toStringAsFixed(1)}, ${instance.transform.y.toStringAsFixed(1)}'),
-            Text('Abs. Position', style: const TextStyle(bold: true)),
-            Text('${absX.toStringAsFixed(1)}, ${absY.toStringAsFixed(1)}'),
-            Text('Width', style: const TextStyle(bold: true)),
-            Text('${instance.transform.width.toStringAsFixed(1)}px'),
-            Text('Height', style: const TextStyle(bold: true)),
-            Text('${instance.transform.height.toStringAsFixed(1)}px'),
-            Text('Widget', style: const TextStyle(bold: true)),
-            Text(instance.widget.runtimeType.toString()),
-          ],
+          cellFit: const CellFit.tight(),
+          children: _colorRows(
+            alternateColor: theme.elevatedColor,
+            crossAxisCells: 2,
+            cells: [
+              Text('Rel. Position', style: const TextStyle(bold: true)),
+              Text('${instance.transform.x.toStringAsFixed(1)}, ${instance.transform.y.toStringAsFixed(1)}'),
+              Text('Abs. Position', style: const TextStyle(bold: true)),
+              Text('${absX.toStringAsFixed(1)}, ${absY.toStringAsFixed(1)}'),
+              Text('Width', style: const TextStyle(bold: true)),
+              Text('${instance.transform.width.toStringAsFixed(1)}px'),
+              Text('Height', style: const TextStyle(bold: true)),
+              Text('${instance.transform.height.toStringAsFixed(1)}px'),
+              Text('Widget', style: const TextStyle(bold: true)),
+              Text(instance.widget.runtimeType.toString()),
+            ],
+          ),
         ),
-      );
+        Flexible(child: const Padding(insets: Insets())),
+        Text(instance.runtimeType.toString()),
+      ];
     } else {
-      child = Flexible(child: Center(child: Text('no instance selected')));
+      children = [Flexible(child: Center(child: Text('no instance selected')))];
     }
 
     return Row(
@@ -478,7 +482,7 @@ class InstanceDetails extends StatelessWidget {
           child: Column(
             children: [
               const Padding(insets: Insets(bottom: 5), child: Text('Selected Instance Details')),
-              child,
+              ...children,
             ],
           ),
         ),
@@ -493,10 +497,10 @@ class InstanceDetails extends StatelessWidget {
   }) {
     final result = <Widget>[];
 
-    var rowIdx = 0;
+    var mainAxisIdx = 0;
     var crossAxisIdx = 0;
     for (final widget in cells) {
-      if (rowIdx % 2 == 0) {
+      if (mainAxisIdx % 2 == 0) {
         result.add(widget);
       } else {
         result.add(Panel(color: alternateColor, child: widget));
@@ -504,7 +508,7 @@ class InstanceDetails extends StatelessWidget {
 
       if (++crossAxisIdx == crossAxisCells) {
         crossAxisIdx = 0;
-        rowIdx++;
+        mainAxisIdx++;
       }
     }
 
@@ -535,7 +539,7 @@ class _InstanceTreeViewState extends WidgetState<InstanceTreeView> with StreamLi
   var builtOnce = false;
   var highlight = false;
 
-  void _reveal() => schedulePostLayoutCallback(() => Scrollable.reveal(context));
+  void _reveal() => schedulePostLayoutCallback(() => Scrollable.reveal(context, padding: const Insets.all(40)));
 
   @override
   void init() {
@@ -600,12 +604,15 @@ class _InstanceTreeViewState extends WidgetState<InstanceTreeView> with StreamLi
                     .toList(),
               ),
             )
-          : Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Icon(icon: Icons.fiber_manual_record, size: 18),
-                title,
-              ],
+          : Sized(
+              height: 24,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Icon(icon: Icons.stat_0, size: 20),
+                  title,
+                ],
+              ),
             ),
     );
   }
@@ -716,6 +723,7 @@ class _CollapsibleEntryState extends WidgetState<CollapsibleEntry> with StreamLi
         _collapseTrigger: () => setState(() => collapsed = true),
       },
       child: LazyCollapsible(
+        showVerticalRule: true,
         collapsed: collapsed,
         onToggled: (nowCollapsed) => setState(() => collapsed = nowCollapsed),
         title: widget.title,
@@ -748,12 +756,17 @@ class _InstanceTitleState extends WidgetState<InstanceTitle> {
     final selected =
         SharedState.select<InspectorState, Object?>(context, (state) => state.evalContext) == widget.instance;
 
+    var instanceName = widget.instance.runtimeType.toString();
+    if (_instanceNamePattern.matchAsPrefix(instanceName) case var match?) {
+      instanceName = match.group(1)!;
+    }
+
     final title = Panel(
       color: selected ? dgl.Color.values(1, 1, 1, .25) : const dgl.Color(0),
       cornerRadius: const CornerRadius.all(5),
       child: Row(
         children: [
-          Text(widget.instance.runtimeType.toString(), softWrap: false, style: TextStyle(bold: hovered)),
+          Text(instanceName, softWrap: false, style: TextStyle(bold: hovered)),
           if (widget.instance.isRelayoutBoundary)
             Padding(
               insets: const Insets(left: 5),
@@ -780,6 +793,10 @@ class _InstanceTitleState extends WidgetState<InstanceTitle> {
       ),
     );
   }
+
+  // ---
+
+  static final _instanceNamePattern = RegExp('_?(.*)Instance');
 }
 
 // ---
