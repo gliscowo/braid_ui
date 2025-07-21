@@ -198,10 +198,13 @@ class InspectorWidget extends StatefulWidget {
 }
 
 class _InspectorWidgetState extends WidgetState<InspectorWidget> with StreamListenerState {
+  vms.VmService? vmService;
   InspectorState? inspectorState;
 
   @override
   void init() {
+    _setupVmService();
+
     streamListen((widget) => widget.inspector._refreshEvents.stream, (_) => setState(() {}));
     streamListen(
       (widget) => widget.inspector._revealEvents.stream,
@@ -210,6 +213,21 @@ class _InspectorWidgetState extends WidgetState<InspectorWidget> with StreamList
         inspectorState!.lastRevealEvent = event;
       }),
     );
+  }
+
+  Future<void> _setupVmService() async {
+    final serviceUri = (await Service.getInfo()).serverWebSocketUri;
+    if (serviceUri == null) return;
+
+    final service = await vms.vmServiceConnectUri(serviceUri.toString());
+    vmService = service;
+
+    inspectorState!.vmService = vmService;
+  }
+
+  @override
+  void dispose() {
+    vmService?.dispose();
   }
 
   @override
@@ -246,19 +264,7 @@ class _InspectorWidgetState extends WidgetState<InspectorWidget> with StreamList
                               ),
                               Align(
                                 alignment: Alignment.bottomRight,
-                                child: Padding(
-                                  insets: const Insets.all(10),
-                                  child: Button(
-                                    style: const ButtonStyle(
-                                      padding: Insets.all(5),
-                                      cornerRadius: CornerRadius.all(10),
-                                    ),
-                                    onClick: () {
-                                      widget.inspector._pickEvents.add(const ());
-                                    },
-                                    child: Icon(icon: Icons.colorize),
-                                  ),
-                                ),
+                                child: InspectorActionButtons(inspector: widget.inspector),
                               ),
                             ],
                           ),
@@ -278,6 +284,40 @@ class _InspectorWidgetState extends WidgetState<InspectorWidget> with StreamList
   }
 }
 
+class InspectorActionButtons extends StatelessWidget {
+  final BraidInspector inspector;
+  const InspectorActionButtons({super.key, required this.inspector});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      insets: const Insets.all(10),
+      child: Row(
+        separator: const Padding(insets: Insets.axis(horizontal: 5)),
+        children: [
+          Button(
+            style: _buttonStyle,
+            onClick: () {
+              final isolate = Service.getIsolateId(Isolate.current);
+              SharedState.get<InspectorState>(context, withDependency: false).vmService!.reloadSources(isolate!);
+            },
+            child: Icon(icon: Icons.mode_heat),
+          ),
+          Button(
+            style: _buttonStyle,
+            onClick: () {
+              inspector._pickEvents.add(const ());
+            },
+            child: Icon(icon: Icons.colorize),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static const _buttonStyle = ButtonStyle(padding: Insets.all(5), cornerRadius: CornerRadius.all(10));
+}
+
 class EvalBox extends StatefulWidget {
   final Object evalContext;
   const EvalBox({super.key, required this.evalContext});
@@ -287,31 +327,11 @@ class EvalBox extends StatefulWidget {
 }
 
 class _EvalBoxState extends WidgetState<EvalBox> {
-  vms.VmService? vmService;
-
   bool open = true;
 
   TextEditingController evalController = TextEditingController();
   String? evalResult;
   bool error = false;
-
-  @override
-  void init() {
-    _setupVmService();
-  }
-
-  Future<void> _setupVmService() async {
-    final serviceUri = (await Service.getInfo()).serverWebSocketUri;
-    if (serviceUri == null) return;
-
-    final service = await vms.vmServiceConnectUri(serviceUri.toString());
-    vmService = service;
-  }
-
-  @override
-  void dispose() {
-    vmService?.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -363,7 +383,10 @@ class _EvalBoxState extends WidgetState<EvalBox> {
                             ? (keyCode, modifiers) {
                                 if (keyCode != glfwKeyEnter) return false;
 
-                                eval(evalContext);
+                                eval(
+                                  SharedState.get<InspectorState>(context, withDependency: false).vmService!,
+                                  evalContext,
+                                );
                                 return true;
                               }
                             : null,
@@ -381,15 +404,15 @@ class _EvalBoxState extends WidgetState<EvalBox> {
     );
   }
 
-  void eval(Object context) async {
+  void eval(vms.VmService vmService, Object context) async {
     final isolate = Service.getIsolateId(Isolate.current);
     final targetId = Service.getObjectId(context);
 
     try {
-      final result = vms.InstanceRef.parse((await vmService!.evaluate(isolate!, targetId!, evalController.text)).json);
+      final result = vms.InstanceRef.parse((await vmService.evaluate(isolate!, targetId!, evalController.text)).json);
 
       final resultAsString = vms.InstanceRef.parse(
-        (await vmService!.invoke(isolate, result!.id!, 'toString', const [])).json,
+        (await vmService.invoke(isolate, result!.id!, 'toString', const [])).json,
       )!.valueAsString;
 
       setState(() {
@@ -492,6 +515,8 @@ class InstanceDetails extends StatelessWidget {
 // ---
 
 class InspectorState extends ShareableState {
+  vms.VmService? vmService;
+
   Object? evalContext;
   RevealInstanceEvent? lastRevealEvent;
 }
