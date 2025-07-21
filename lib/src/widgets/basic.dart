@@ -1111,3 +1111,32 @@ class _IntrinsicHeightInstance extends SingleChildWidgetInstance {
   @override
   double? measureBaselineOffset() => child.getBaselineOffset();
 }
+
+// ---
+
+class HoverableBuilder extends StatefulWidget {
+  final Widget? child;
+  final Widget Function(BuildContext context, bool hovered, Widget? child) builder;
+
+  const HoverableBuilder({super.key, this.child, required this.builder});
+
+  @override
+  WidgetState<HoverableBuilder> createState() => _HoverableBuilderState();
+}
+
+class _HoverableBuilderState extends WidgetState<HoverableBuilder> {
+  bool hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseArea(
+      enterCallback: () => setState(() {
+        hovered = true;
+      }),
+      exitCallback: () => setState(() {
+        hovered = false;
+      }),
+      child: widget.builder(context, hovered, widget.child),
+    );
+  }
+}
