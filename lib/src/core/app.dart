@@ -343,50 +343,6 @@ class AppState implements InstanceHost, ProxyHost {
   void updateWidgetsAndInteractions(Duration delta) {
     _pollAndDispatchEvents();
 
-    if (_animationCallbacks.isNotEmpty) {
-      final callbacksForThisFrame = _animationCallbacks;
-      _animationCallbacks = DoubleLinkedQueue();
-
-      while (callbacksForThisFrame.isNotEmpty) {
-        final callback = callbacksForThisFrame.removeFirst();
-        callback(delta);
-      }
-    }
-
-    var anyTreeMutations = false;
-
-    if (_rebuildTimingTracker.trackNextIteration) {
-      final watch = Stopwatch()..start();
-      anyTreeMutations |= _rootBuildScope.rebuildDirtyProxies();
-      _rebuildTimingTracker.buildTime = watch.elapsed;
-
-      watch.reset();
-      anyTreeMutations |= flushLayoutQueue();
-      _rebuildTimingTracker.layoutTime = watch.elapsed;
-
-      _rebuildTimingTracker.trackNextIteration = false;
-      logger?.info('completed full app rebuild in ${_rebuildTimingTracker.formatted}');
-    } else {
-      anyTreeMutations |= _rootBuildScope.rebuildDirtyProxies();
-      anyTreeMutations |= flushLayoutQueue();
-    }
-
-    if (anyTreeMutations) {
-      _inspector?.refresh();
-    }
-
-    if (_postLayoutCallbacks.isNotEmpty) {
-      final callbacksForThisFrame = _postLayoutCallbacks;
-      _postLayoutCallbacks = DoubleLinkedQueue();
-
-      while (callbacksForThisFrame.isNotEmpty) {
-        final callback = callbacksForThisFrame.removeFirst();
-        callback();
-      }
-    }
-
-    // ---
-
     final state = _hitTest();
 
     final nowHovered = <MouseListener>{};
@@ -434,6 +390,50 @@ class AppState implements InstanceHost, ProxyHost {
     }
 
     surface.cursorStyle = activeStyle ?? CursorStyle.none;
+
+    // ---
+
+    if (_animationCallbacks.isNotEmpty) {
+      final callbacksForThisFrame = _animationCallbacks;
+      _animationCallbacks = DoubleLinkedQueue();
+
+      while (callbacksForThisFrame.isNotEmpty) {
+        final callback = callbacksForThisFrame.removeFirst();
+        callback(delta);
+      }
+    }
+
+    var anyTreeMutations = false;
+
+    if (_rebuildTimingTracker.trackNextIteration) {
+      final watch = Stopwatch()..start();
+      anyTreeMutations |= _rootBuildScope.rebuildDirtyProxies();
+      _rebuildTimingTracker.buildTime = watch.elapsed;
+
+      watch.reset();
+      anyTreeMutations |= flushLayoutQueue();
+      _rebuildTimingTracker.layoutTime = watch.elapsed;
+
+      _rebuildTimingTracker.trackNextIteration = false;
+      logger?.info('completed full app rebuild in ${_rebuildTimingTracker.formatted}');
+    } else {
+      anyTreeMutations |= _rootBuildScope.rebuildDirtyProxies();
+      anyTreeMutations |= flushLayoutQueue();
+    }
+
+    if (anyTreeMutations) {
+      _inspector?.refresh();
+    }
+
+    if (_postLayoutCallbacks.isNotEmpty) {
+      final callbacksForThisFrame = _postLayoutCallbacks;
+      _postLayoutCallbacks = DoubleLinkedQueue();
+
+      while (callbacksForThisFrame.isNotEmpty) {
+        final callback = callbacksForThisFrame.removeFirst();
+        callback();
+      }
+    }
   }
 
   void _pollAndDispatchEvents() {
@@ -483,6 +483,12 @@ class AppState implements InstanceHost, ProxyHost {
 
           _dragging!.onMouseDrag(x, y, delta.x, delta.y);
         case MouseButtonReleaseEvent(:final button):
+          _hitTest().firstWhere(
+            (hit) =>
+                hit.instance is MouseListener &&
+                (hit.instance as MouseListener).onMouseUp(_cursorPosition.x, _cursorPosition.y, button),
+          );
+
           if (button == _draggingButton) {
             if (_dragStarted) {
               _dragging?.onMouseDragEnd();

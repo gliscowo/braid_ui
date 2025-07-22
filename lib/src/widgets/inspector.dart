@@ -179,10 +179,6 @@ class BraidInspector {
 
   void close() {
     currentApp?.scheduleShutdown();
-
-    currentApp = null;
-    currentWindow = null;
-    _active = false;
   }
 }
 
@@ -536,8 +532,8 @@ class InstanceTreeView extends StatefulWidget {
 }
 
 class _InstanceTreeViewState extends WidgetState<InstanceTreeView> with StreamListenerState {
-  var builtOnce = false;
-  var highlight = false;
+  bool builtOnce = false;
+  bool highlight = false;
 
   void _reveal() => schedulePostLayoutCallback(() => Scrollable.reveal(context, padding: const Insets.all(40)));
 
@@ -569,15 +565,11 @@ class _InstanceTreeViewState extends WidgetState<InstanceTreeView> with StreamLi
       schedulePostLayoutCallback(() => setState(() => highlight = false));
     }
 
-    bool startCollapsed = true;
+    var startCollapsed = true;
     if (!builtOnce) {
       builtOnce = true;
 
-      final lastRevealEvent = SharedState.select<InspectorState, RevealInstanceEvent?>(
-        context,
-        (state) => state.lastRevealEvent,
-      );
-
+      final lastRevealEvent = SharedState.get<InspectorState>(context, withDependency: false).lastRevealEvent;
       if (lastRevealEvent?.instance == widget.viewInstance) {
         _reveal();
       }
@@ -618,27 +610,9 @@ class _InstanceTreeViewState extends WidgetState<InstanceTreeView> with StreamLi
   }
 }
 
-class CollapsibleEntry extends StatefulWidget {
-  final Stream<()>? onExpand;
-  final bool startCollapsed;
-  final Widget title;
-  final Widget content;
-
-  const CollapsibleEntry({
-    super.key,
-    this.onExpand,
-    this.startCollapsed = true,
-    required this.title,
-    required this.content,
-  });
-
-  @override
-  WidgetState<CollapsibleEntry> createState() => _CollapsibleEntryState();
-}
-
 class _SubscriptionData<W, T> {
   final Stream<T>? Function(W widget) getter;
-  final StreamSubscription<T> Function(Stream<T> event) listenerFactory;
+  final StreamSubscription<T> Function(Stream<T> stream) listenerFactory;
 
   Stream<T>? currentStream;
   StreamSubscription<T>? currentSubscription;
@@ -698,6 +672,24 @@ mixin StreamListenerState<T extends StatefulWidget> on WidgetState<T> {
       subscription.currentSubscription?.cancel();
     }
   }
+}
+
+class CollapsibleEntry extends StatefulWidget {
+  final Stream<()>? onExpand;
+  final bool startCollapsed;
+  final Widget title;
+  final Widget content;
+
+  const CollapsibleEntry({
+    super.key,
+    this.onExpand,
+    this.startCollapsed = true,
+    required this.title,
+    required this.content,
+  });
+
+  @override
+  WidgetState<CollapsibleEntry> createState() => _CollapsibleEntryState();
 }
 
 class _CollapsibleEntryState extends WidgetState<CollapsibleEntry> with StreamListenerState {

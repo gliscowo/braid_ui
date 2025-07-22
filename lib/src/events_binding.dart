@@ -82,7 +82,9 @@ class WindowEventsBinding extends EventsBinding {
   WindowEventsBinding({required this.window}) {
     _subscriptions.addAll([
       window.onMouseMove.listen(
-        (event) => _bufferedEvents.add(MouseMoveEvent(window.cursorX, window.cursorY, event.deltaX, event.deltaY)),
+        (event) => _bufferedEvents.add(
+          MouseMoveEvent(window.cursorX + event.deltaX, window.cursorY + event.deltaY, event.deltaX, event.deltaY),
+        ),
       ),
       window.onMouseButton.listen(
         (event) => _bufferedEvents.add(switch (event.action) {

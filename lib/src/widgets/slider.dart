@@ -225,9 +225,7 @@ class _RawSliderState extends WidgetState<RawSlider> {
                   }
                 : null,
             dragCallback: enabled
-                ? (x, y, dx, dy) {
-                    move(constraints, dx, axis == LayoutAxis.vertical ? -dy : dy);
-                  }
+                ? (x, y, dx, dy) => move(constraints, dx, axis == LayoutAxis.vertical ? -dy : dy)
                 : null,
             dragStartCallback: (_) => dragValue = widget.normalizedValue,
             child: Stack(
