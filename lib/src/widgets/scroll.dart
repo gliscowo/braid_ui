@@ -300,8 +300,8 @@ class RawScrollViewInstance extends SingleChildWidgetInstance<RawScrollView> {
 
     final selfSize = childSize.constrained(constraints);
 
-    _updateMaxOffset(widget.horizontalController, max(0, childSize.width - constraints.maxWidth));
-    _updateMaxOffset(widget.verticalController, max(0, childSize.height - constraints.maxHeight));
+    _updateMaxOffset(widget.horizontalController, max(0, childSize.width - selfSize.width));
+    _updateMaxOffset(widget.verticalController, max(0, childSize.height - selfSize.height));
 
     child.transform.x = -horizontalOffset.roundToDouble();
     child.transform.y = -verticalOffset.roundToDouble();

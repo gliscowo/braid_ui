@@ -854,8 +854,6 @@ class _RawTextFieldState extends WidgetState<RawTextField> {
 
   final ScrollController horizontalController = ScrollController();
   final ScrollController verticalController = ScrollController();
-  // TextInputInstance? _inputInstance;
-  // WidgetInstance? _scrollInstance;
 
   BuildContext? inputContext;
 
