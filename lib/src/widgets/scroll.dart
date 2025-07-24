@@ -289,33 +289,22 @@ class RawScrollViewInstance extends SingleChildWidgetInstance<RawScrollView> {
 
   @override
   void doLayout(Constraints constraints) {
-    var childSize = child.layout(
+    final childSize = child.layout(
       Constraints(
-        widget.horizontalController != null ? 0 : constraints.minWidth,
-        widget.verticalController != null ? 0 : constraints.minHeight,
+        constraints.minWidth,
+        constraints.minHeight,
         widget.horizontalController != null ? double.infinity : constraints.maxWidth,
         widget.verticalController != null ? double.infinity : constraints.maxHeight,
       ),
     );
+
+    final selfSize = childSize.constrained(constraints);
 
     _updateMaxOffset(widget.horizontalController, max(0, childSize.width - constraints.maxWidth));
     _updateMaxOffset(widget.verticalController, max(0, childSize.height - constraints.maxHeight));
 
     child.transform.x = -horizontalOffset.roundToDouble();
     child.transform.y = -verticalOffset.roundToDouble();
-
-    var selfSize = Size(
-      widget.horizontalController != null
-          ? constraints.hasBoundedWidth
-                ? constraints.maxWidth
-                : constraints.minWidth
-          : childSize.width,
-      widget.verticalController != null
-          ? constraints.hasBoundedHeight
-                ? constraints.maxHeight
-                : constraints.minHeight
-          : childSize.height,
-    ).constrained(constraints);
 
     transform.setSize(selfSize);
   }

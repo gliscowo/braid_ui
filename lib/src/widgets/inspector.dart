@@ -13,7 +13,6 @@ import 'package:vm_service/vm_service_io.dart' as vms;
 import '../animation/easings.dart';
 import '../baked_assets.g.dart';
 import '../core/app.dart';
-import '../core/constraints.dart';
 import '../core/cursors.dart';
 import '../core/math.dart';
 import '../framework/instance.dart';
@@ -919,32 +918,25 @@ class _RawTextFieldState extends WidgetState<RawTextField> {
     return KeyboardInput(
       focusGainedCallback: () => _restartBlinking(),
       focusLostCallback: () => _stopBlinking(),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return Scrollable.both(
-            horizontalController: horizontalController,
-            verticalController: verticalController,
-            child: Constrain(
-              constraints: Constraints.only(minWidth: constraints.minWidth, minHeight: constraints.minHeight),
-              child: Builder(
-                builder: (context) {
-                  inputContext = context;
-                  // we skip the ListneableBuilder that would usually be required here
-                  // since the entire text field rebuilds through a listener on the controller
-                  // either way
-                  return TextInput(
-                    controller: widget.controller,
-                    showCursor: showCursor,
-                    softWrap: widget.softWrap,
-                    autoFocus: widget.autoFocus,
-                    allowMultipleLines: widget.allowMultipleLines,
-                    style: widget.textStyle,
-                  );
-                },
-              ),
-            ),
-          );
-        },
+      child: Scrollable.both(
+        horizontalController: horizontalController,
+        verticalController: verticalController,
+        child: Builder(
+          builder: (context) {
+            inputContext = context;
+            // we skip the ListneableBuilder that would usually be required here
+            // since the entire text field rebuilds through a listener on the controller
+            // either way
+            return TextInput(
+              controller: widget.controller,
+              showCursor: showCursor,
+              softWrap: widget.softWrap,
+              autoFocus: widget.autoFocus,
+              allowMultipleLines: widget.allowMultipleLines,
+              style: widget.textStyle,
+            );
+          },
+        ),
       ),
     );
   }
