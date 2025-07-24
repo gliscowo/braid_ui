@@ -1,9 +1,8 @@
-import 'dart:math';
-
 import 'package:meta/meta.dart';
 
 import '../framework/proxy.dart';
 import '../framework/widget.dart';
+import 'animation.dart';
 import 'easings.dart';
 import 'lerp.dart';
 
@@ -20,16 +19,21 @@ abstract class AutomaticallyAnimatedWidget extends StatefulWidget {
 typedef _LerpVisitor<L extends Lerp<V>, V> = L Function(Lerp<V>? previous, V targetValue, LerpFactory<L, V> factory);
 
 abstract class AutomaticallyAnimatedWidgetState<T extends AutomaticallyAnimatedWidget> extends WidgetState<T> {
-  Duration _elapsedTime = Duration.zero;
-  double _progress = 0;
-
-  @protected
-  double get animationValue => _progress;
-
+  late Animation _animation;
   _LerpVisitor? _activeVisitor;
+
+  void _callback(double progress) => setState(() {});
 
   @override
   void init() {
+    _animation = Animation(
+      easing: widget.easing,
+      duration: widget.duration,
+      scheduler: scheduleAnimationCallback,
+      listener: _callback,
+      startFrom: AnimationTarget.end,
+    );
+
     _visitLerps((previous, targetValue, factory) {
       return factory(targetValue, targetValue);
     });
@@ -38,6 +42,8 @@ abstract class AutomaticallyAnimatedWidgetState<T extends AutomaticallyAnimatedW
   @override
   void didUpdateWidget(T oldWidget) {
     var restartAnimation = widget.easing != oldWidget.easing;
+    _animation.duration = widget.duration;
+
     if (!restartAnimation) {
       _visitLerps((previous, targetValue, factory) {
         if (previous!.end != targetValue) {
@@ -49,11 +55,9 @@ abstract class AutomaticallyAnimatedWidgetState<T extends AutomaticallyAnimatedW
     }
 
     if (restartAnimation) {
-      _visitLerps((previous, targetValue, factory) => factory(previous!.compute(_progress), targetValue));
-
-      _elapsedTime = Duration.zero;
-      _progress = 0;
-      scheduleAnimationCallback(_callback);
+      _visitLerps((previous, targetValue, factory) => factory(previous!.compute(_animation.progress), targetValue));
+      _animation.easing = widget.easing;
+      _animation.towards(AnimationTarget.end);
     }
   }
 
@@ -62,18 +66,10 @@ abstract class AutomaticallyAnimatedWidgetState<T extends AutomaticallyAnimatedW
     updateLerps();
   }
 
-  void _callback(Duration delta) {
-    _elapsedTime += delta;
-    setState(() => _progress = min(1, widget.easing(_elapsedTime.inMicroseconds / widget.duration.inMicroseconds)));
-
-    if (_progress + 1e-3 < 1) {
-      scheduleAnimationCallback(_callback);
-    } else {
-      _progress = 1;
-    }
-  }
-
   // ---
+
+  @protected
+  double get animationValue => _animation.progress;
 
   @protected
   L visitLerp<L extends Lerp<V>, V>(Lerp<V>? previous, V targetValue, LerpFactory<L, V> factory) {
