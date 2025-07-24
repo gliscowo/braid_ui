@@ -328,7 +328,9 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
     return idx;
   }
 
-  int _safeCharCodeAt(int runeIdx) => _text.runes.toList()[runeIdx.clamp(0, _text.runes.length - 1)];
+  static const _space = 0x20; // ' '
+  int _safeCharCodeAt(int runeIdx) =>
+      _text.isEmpty ? _text.runes.toList()[runeIdx.clamp(0, _text.runes.length - 1)] : _space;
 
   @override
   bool onChar(int charCode, KeyModifiers modifiers) {

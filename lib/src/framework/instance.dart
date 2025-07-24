@@ -366,8 +366,8 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
 
     result.multiply(transform.toWidget);
 
-    for (final ancestor in this.ancestors.takeWhile((value) => value != ancestor)) {
-      result.multiply(ancestor.transform.toWidget);
+    for (final step in this.ancestors.takeWhile((value) => value != ancestor)) {
+      result.multiply(step.transform.toWidget);
     }
 
     return result;
