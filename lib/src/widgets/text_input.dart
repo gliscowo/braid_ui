@@ -155,31 +155,39 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
   @override
   void draw(DrawContext ctx) {
     if (!_selection.collapsed) {
-      final startLine = _lineIdxAtRuneIdx(_selection.lower);
-      final endLine = _lineIdxAtRuneIdx(_selection.upper);
-
-      void drawSelection(int startRune, int endRune) {
-        final (startX, _, _) = _coordinatesAtRuneIdx(startRune);
-        final (endX, y, height) = _coordinatesAtRuneIdx(endRune);
+      void drawSelection(double startX, double endX, double lineBaseY, double lineHeight) {
         ctx.transform.scope((mat4) {
-          mat4.translate(startX, y - height - 1);
+          mat4.translate(startX, lineBaseY - lineHeight - 1);
 
           var width = endX - startX;
-          if (startRune == endRune) width = 5;
-
-          ctx.primitives.rect(width, height + 2, const Color.rgb(0x3A59D1), mat4, ctx.projection);
+          ctx.primitives.rect(width, lineHeight + 2, const Color.rgb(0x3A59D1), mat4, ctx.projection);
         });
       }
 
+      final metrics = _paragraph.metrics;
+      final lines = metrics.lineMetrics;
+
+      final startLine = _lineIdxAtRuneIdx(_selection.lower);
+      final endLine = _lineIdxAtRuneIdx(_selection.upper);
+
       if (startLine == endLine) {
-        drawSelection(_selection.lower, _selection.upper);
+        final (startX, _, _) = _coordinatesAtRuneIdx(_selection.lower);
+        final (endX, y, height) = _coordinatesAtRuneIdx(_selection.upper);
+
+        drawSelection(startX, endX, y, height);
       } else {
-        drawSelection(_selection.lower, _paragraph.metrics.lineMetrics[startLine].endRune);
+        final (startX, startY, startHeight) = _coordinatesAtRuneIdx(_selection.lower);
+        drawSelection(startX, lines[startLine].width, startY, startHeight);
+
         for (var lineIdx = startLine + 1; lineIdx < endLine; lineIdx++) {
-          final line = _paragraph.metrics.lineMetrics[lineIdx];
-          drawSelection(line.startRune, line.endRune);
+          final line = lines[lineIdx];
+          final width = line.startRune != line.endRune ? line.width : 5.0;
+
+          drawSelection(0, width, line.yOffset + line.descender + metrics.initialBaselineY, line.height);
         }
-        drawSelection(_paragraph.metrics.lineMetrics[startLine].startRune, _selection.upper);
+
+        final (endX, endY, endHeight) = _coordinatesAtRuneIdx(_selection.upper);
+        drawSelection(0, endX, endY, endHeight);
       }
     }
 
