@@ -106,7 +106,10 @@ class _GridInstance extends MultiChildWidgetInstance<Grid> {
     for (int mainAxisIdx = 0; mainAxisIdx < mainAxisCells; mainAxisIdx++) {
       final maxMainAxisChildSize = mustMeasureMainAxis ? dynamicMainAxisCellSizes![mainAxisIdx] : fixedMainAxisCellSize;
 
-      for (var childIdx = mainAxisIdx * widget.crossAxisCells; childIdx < children.length; childIdx++) {
+      final firstChildIdx = mainAxisIdx * widget.crossAxisCells;
+      final lastChildIdx = min(children.length, firstChildIdx + widget.crossAxisCells) - 1;
+
+      for (var childIdx = firstChildIdx; childIdx <= lastChildIdx; childIdx++) {
         final child = children[childIdx];
 
         final maxCrossAxisChildSize = mustMeasureCrossAxis
