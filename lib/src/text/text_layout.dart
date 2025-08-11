@@ -483,13 +483,13 @@ class Paragraph {
         ),
       );
 
+      state.currentLineWidth = 0;
       state.cursorY += state.currentLineHeight.ceil();
       session.state.currentLineStartIdx = lineBreak.startIdx;
     }
 
     state.cursorX = 0;
 
-    state.currentLineWidth = 0;
     state.currentLineHeight = 0;
     state.currentLineBaseline = 0;
   }
