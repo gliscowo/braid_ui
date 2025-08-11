@@ -50,7 +50,7 @@ class _StackInstance extends MultiChildWidgetInstance<Stack> {
     if (sizingBase != null) {
       selfSize = sizingBase.layout(constraints);
 
-      final childConstraints = Constraints.tight(selfSize).respecting(constraints);
+      final childConstraints = Constraints.tight(selfSize);
       for (final child in children.where((child) => child != sizingBase)) {
         child.layout(childConstraints);
       }

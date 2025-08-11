@@ -591,7 +591,7 @@ node [shape="box"];
   }
 
   // TODO: there should be a separate function that doesn't go
-  // through the [BraidResources] abstraction
+  //  through the [BraidResources] abstraction
   Future<void> loadFontFamily(String familyName, [String? identifier]) async {
     final family = await FontFamily.load(resources, familyName);
     textRenderer.addFamily(identifier ?? familyName, family);

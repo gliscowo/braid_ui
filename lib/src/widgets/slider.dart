@@ -216,7 +216,7 @@ class _RawSliderState extends WidgetState<RawSlider> {
             cursorStyle: enabled ? CursorStyle.hand : null,
             clickCallback: enabled
                 ? (x, y, _) {
-                    y = axis == LayoutAxis.vertical ? constraints.maxOnAxis(axis) - y : y;
+                    y = axis == LayoutAxis.vertical ? constraints.maxFiniteOrMinOnAxis(axis) - y : y;
                     if (!isInHandle(constraints, x, y)) {
                       setAbsolute(constraints, x, y);
                     }
@@ -257,7 +257,7 @@ class _RawSliderState extends WidgetState<RawSlider> {
   bool isInHandle(Constraints constraints, double x, double y) {
     final axis = widget.axis;
 
-    final trackLength = constraints.maxOnAxis(axis) - widget.style.handleSize!;
+    final trackLength = constraints.maxFiniteOrMinOnAxis(axis) - widget.style.handleSize!;
     final handleMin = widget.normalizedValue * trackLength;
     final handleMax = handleMin + widget.style.handleSize!;
 
@@ -266,7 +266,8 @@ class _RawSliderState extends WidgetState<RawSlider> {
   }
 
   void move(Constraints constraints, double dx, double dy) {
-    dragValue += widget.axis.choose(dx, dy) / (constraints.maxOnAxis(widget.axis) - widget.style.handleSize!);
+    dragValue +=
+        widget.axis.choose(dx, dy) / (constraints.maxFiniteOrMinOnAxis(widget.axis) - widget.style.handleSize!);
 
     applyValue(dragValue.clamp(0, 1));
   }
@@ -277,9 +278,10 @@ class _RawSliderState extends WidgetState<RawSlider> {
     final axis = widget.axis;
     final handleSize = widget.style.handleSize!;
 
-    var newNormalizedValue = ((axis.choose(x, y) - handleSize / 2) / (constraints.maxOnAxis(axis) - handleSize))
-        .clamp(0, 1)
-        .toDouble();
+    var newNormalizedValue =
+        ((axis.choose(x, y) - handleSize / 2) / (constraints.maxFiniteOrMinOnAxis(axis) - handleSize))
+            .clamp(0, 1)
+            .toDouble();
 
     applyValue(newNormalizedValue);
   }

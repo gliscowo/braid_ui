@@ -49,8 +49,14 @@ class Constraints {
   bool get hasBoundedWidth => maxWidth < double.infinity;
   bool get hasBoundedHeight => maxHeight < double.infinity;
 
+  // TODO: these should probably be removed and replaced with a more explicit
+  //  system in cases where unbounded max width is not valid for layout
+  double get maxFiniteOrMinWidth => hasBoundedWidth ? maxWidth : minWidth;
+  double get maxFiniteOrMinHeight => hasBoundedHeight ? maxHeight : minHeight;
+
   Size get minSize => Size(minWidth, minHeight);
   Size get maxSize => Size(maxWidth, maxHeight);
+  Size get maxFiniteOrMinSize => Size(maxFiniteOrMinWidth, maxFiniteOrMinHeight);
 
   @override
   bool operator ==(Object other) =>

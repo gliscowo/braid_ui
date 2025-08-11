@@ -69,6 +69,11 @@ extension ConstraintsAxisOperations on Constraints {
     LayoutAxis.horizontal => maxWidth,
     LayoutAxis.vertical => maxHeight,
   };
+
+  double maxFiniteOrMinOnAxis(LayoutAxis axis) => switch (axis) {
+    LayoutAxis.horizontal => maxFiniteOrMinWidth,
+    LayoutAxis.vertical => maxFiniteOrMinHeight,
+  };
 }
 
 extension SizeAxisOperations on Size {
