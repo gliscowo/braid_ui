@@ -20,6 +20,7 @@ import '../resources.dart';
 import '../surface.dart';
 import '../text/text_renderer.dart';
 import '../widgets/basic.dart';
+import '../widgets/image.dart';
 import '../widgets/inspector.dart';
 import 'constraints.dart';
 import 'cursors.dart';
@@ -76,7 +77,7 @@ Future<(AppState, dgl.Window)> createBraidAppWithWindow({
   required String defaultFontFamily,
   required Widget widget,
 }) async {
-  final surface = WindowSurface.createWindow(title: name, width: width, height: height);
+  final surface = WindowSurface.createWindow(title: name, width: width, height: height, logger: baseLogger);
   final events = WindowEventsBinding(window: surface.window);
 
   final app = await createBraidApp(
@@ -264,6 +265,7 @@ class AppState implements InstanceHost, ProxyHost {
   final RenderContext context;
   @override
   final TextRenderer textRenderer;
+  late final ImageCache _imageCache;
   final PrimitiveRenderer primitives;
   final Queue<GlCall> _queuedGlCalls = Queue();
 
@@ -305,6 +307,8 @@ class AppState implements InstanceHost, ProxyHost {
     Widget root, {
     this.logger,
   }) : _inspector = enableInspector ? BraidInspector() : null {
+    _imageCache = ImageCache(_queuedGlCalls.add);
+
     _root = _RootWidget(
       child: _AppWidget(
         app: this,
@@ -627,6 +631,9 @@ node [shape="box"];
   // ---
 
   SingleChildWidgetInstance get rootInstance => _root.instance;
+
+  @override
+  ImageCache get imageCache => _imageCache;
 
   // ---
 

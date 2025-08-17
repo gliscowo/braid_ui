@@ -1140,3 +1140,90 @@ class _HoverableBuilderState extends WidgetState<HoverableBuilder> {
     );
   }
 }
+
+// ---
+
+class AspectRatio extends SingleChildInstanceWidget {
+  final double ratio;
+  AspectRatio({super.key, required super.child, required this.ratio});
+
+  @override
+  SingleChildWidgetInstance<AspectRatio> instantiate() => _AspectRatioInstance(widget: this);
+
+  static Size applyAspectRatioToMaxSize(Constraints constraints, double ratio) {
+    double width = constraints.maxWidth;
+    double height;
+
+    if (width.isFinite) {
+      height = width / ratio;
+    } else {
+      height = constraints.maxHeight;
+      width = height * ratio;
+    }
+
+    return applyAspectRatio(constraints, Size(width, height));
+  }
+
+  static Size applyAspectRatio(Constraints constraints, Size size) {
+    if (constraints.isTight) {
+      return constraints.minSize;
+    }
+
+    var width = size.width;
+    var height = size.height;
+    final ratio = width / height;
+
+    if (width > constraints.maxWidth) {
+      width = constraints.maxWidth;
+      height = width / ratio;
+    }
+
+    if (height > constraints.maxHeight) {
+      height = constraints.maxHeight;
+      width = height * ratio;
+    }
+
+    if (width < constraints.minWidth) {
+      width = constraints.minWidth;
+      height = width / ratio;
+    }
+
+    if (height < constraints.minHeight) {
+      height = constraints.minHeight;
+      width = height * ratio;
+    }
+
+    return Size(width, height).constrained(constraints);
+  }
+}
+
+class _AspectRatioInstance extends SingleChildWidgetInstance<AspectRatio> {
+  _AspectRatioInstance({required super.widget});
+
+  @override
+  set widget(AspectRatio value) {
+    if (widget.ratio == value.ratio) return;
+
+    super.widget = value;
+    markNeedsLayout();
+  }
+
+  @override
+  void doLayout(Constraints constraints) {
+    final size = AspectRatio.applyAspectRatioToMaxSize(constraints, widget.ratio);
+    transform.setSize(size);
+
+    child.layout(Constraints.tight(size));
+  }
+
+  @override
+  double measureIntrinsicWidth(double height) =>
+      height.isFinite ? height * widget.ratio : child.getIntrinsicWidth(height);
+
+  @override
+  double measureIntrinsicHeight(double width) =>
+      width.isFinite ? width / widget.ratio : child.getIntrinsicHeight(width);
+
+  @override
+  double? measureBaselineOffset() => child.measureBaselineOffset();
+}

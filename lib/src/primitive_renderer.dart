@@ -24,7 +24,7 @@ class PrimitiveRenderer {
     _buffers.clear();
   }
 
-  MeshBuffer<VF> _getBuffer<VF extends Function>(Symbol symbol, VertexDescriptor<VF> descriptor, String program) {
+  MeshBuffer<VF> getBuffer<VF extends Function>(Symbol symbol, VertexDescriptor<VF> descriptor, String program) {
     return (_buffers[symbol] ??= MeshBuffer<VF>(descriptor, _context.findProgram(program))) as MeshBuffer<VF>;
   }
 
@@ -38,8 +38,8 @@ class PrimitiveRenderer {
     double? outlineThickness,
   }) {
     final buffer = outlineThickness == null
-        ? _getBuffer(#roundedSolid, posVertexDescriptor, 'rounded_rect_solid')
-        : _getBuffer(#roundedOutline, posVertexDescriptor, 'rounded_rect_outline');
+        ? getBuffer(#roundedSolid, posVertexDescriptor, 'rounded_rect_solid')
+        : getBuffer(#roundedOutline, posVertexDescriptor, 'rounded_rect_outline');
 
     buffer.program
       ..uniformMat4('uTransform', transform)
@@ -54,14 +54,14 @@ class PrimitiveRenderer {
     gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
 
     buffer.clear();
-    buildRect(buffer.vertex, 0, 0, width, height);
+    buildRect(buffer.vertex, width, height);
     buffer
       ..upload(dynamic: true)
       ..draw();
   }
 
   void rect(double width, double height, Color color, Matrix4 transform, Matrix4 projection) {
-    final buffer = _getBuffer(#solid, posVertexDescriptor, 'solid_fill');
+    final buffer = getBuffer(#solid, posVertexDescriptor, 'solid_fill');
 
     buffer.program
       ..uniformMat4('uTransform', transform)
@@ -72,7 +72,7 @@ class PrimitiveRenderer {
     gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
 
     buffer.clear();
-    buildRect(buffer.vertex, 0, 0, width, height);
+    buildRect(buffer.vertex, width, height);
     buffer
       ..upload(dynamic: true)
       ..draw();
@@ -89,7 +89,7 @@ class PrimitiveRenderer {
     Matrix4 transform,
     Matrix4 projection,
   ) {
-    final buffer = _getBuffer(#gradient, posUvVertexDescriptor, 'gradient_fill');
+    final buffer = getBuffer(#gradient, posUvVertexDescriptor, 'gradient_fill');
 
     buffer.program
       ..uniformMat4('uTransform', transform)
@@ -104,7 +104,7 @@ class PrimitiveRenderer {
     gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
 
     buffer.clear();
-    buildGradientRect(buffer.vertex, 0, 0, width, height);
+    buildUvRect(buffer.vertex, width, height);
     buffer
       ..upload(dynamic: true)
       ..draw();
@@ -132,7 +132,7 @@ class PrimitiveRenderer {
     }
 
     final framebuffer = _blurFramebuffer ??= GlFramebuffer.trackingWindow(_context.window);
-    final buffer = _getBuffer(#blur, posVertexDescriptor, 'blur');
+    final buffer = getBuffer(#blur, posVertexDescriptor, 'blur');
 
     gl.blitNamedFramebuffer(
       0,
@@ -162,7 +162,7 @@ class PrimitiveRenderer {
     gl.disable(glBlend);
 
     buffer.clear();
-    buildRect(buffer.vertex, 0, 0, width, height);
+    buildRect(buffer.vertex, width, height);
     buffer
       ..upload(dynamic: true)
       ..draw();
@@ -200,8 +200,8 @@ class PrimitiveRenderer {
     final solid = innerRadius == null && toAngle == null && angleOffset != null;
 
     final buffer = solid
-        ? _getBuffer(#circleSolid, posVertexDescriptor, 'circle_solid')
-        : _getBuffer(#circleSector, posVertexDescriptor, 'circle_sector');
+        ? getBuffer(#circleSolid, posVertexDescriptor, 'circle_solid')
+        : getBuffer(#circleSector, posVertexDescriptor, 'circle_sector');
 
     buffer.program
       ..uniformMat4('uTransform', transform)
@@ -220,7 +220,7 @@ class PrimitiveRenderer {
     gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
 
     buffer.clear();
-    buildRect(buffer.vertex, 0, 0, radius * 2, radius * 2);
+    buildRect(buffer.vertex, radius * 2, radius * 2);
     buffer
       ..upload(dynamic: true)
       ..draw();
@@ -250,21 +250,24 @@ class PrimitiveRenderer {
     mesh.draw();
   }
 
-  void buildRect(PosVertexFunction vertex, double x, double y, double width, double height) {
-    vertex(Vector3(x, y, 0));
-    vertex(Vector3(x, y + height, 0));
-    vertex(Vector3(x + width, y + height, 0));
-    vertex(Vector3(x + width, y + height, 0));
-    vertex(Vector3(x + width, y, 0));
-    vertex(Vector3(x, y, 0));
+  void buildRect(PosVertexFunction vertex, double width, double height) {
+    vertex(Vector3(0, 0, 0));
+    vertex(Vector3(0, height, 0));
+    vertex(Vector3(width, height, 0));
+    vertex(Vector3(width, height, 0));
+    vertex(Vector3(width, 0, 0));
+    vertex(Vector3(0, 0, 0));
   }
 
-  void buildGradientRect(PosUvVertexFunction vertex, double x, double y, double width, double height) {
-    vertex(Vector3(x, y, 0), Vector2.zero());
-    vertex(Vector3(x, y + height, 0), Vector2(0, 1));
-    vertex(Vector3(x + width, y + height, 0), Vector2.all(1));
-    vertex(Vector3(x + width, y + height, 0), Vector2.all(1));
-    vertex(Vector3(x + width, y, 0), Vector2(1, 0));
-    vertex(Vector3(x, y, 0), Vector2.zero());
+  void buildUvRect(PosUvVertexFunction vertex, double width, double height, {double? uMax, double? vMax}) {
+    uMax ??= 1;
+    vMax ??= 1;
+
+    vertex(Vector3(0, 0, 0), Vector2.zero());
+    vertex(Vector3(0, height, 0), Vector2(0, vMax));
+    vertex(Vector3(width, height, 0), Vector2(uMax, vMax));
+    vertex(Vector3(width, height, 0), Vector2(uMax, vMax));
+    vertex(Vector3(width, 0, 0), Vector2(uMax, 0));
+    vertex(Vector3(0, 0, 0), Vector2.zero());
   }
 }

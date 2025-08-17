@@ -14,6 +14,7 @@ import '../events_binding.dart';
 import '../surface.dart';
 import '../text/text_renderer.dart';
 import '../widgets/basic.dart';
+import '../widgets/image.dart';
 import 'proxy.dart';
 import 'widget.dart';
 
@@ -180,6 +181,7 @@ abstract interface class InstanceHost {
   EventsBinding get eventsBinding;
 
   TextRenderer get textRenderer;
+  ImageCache get imageCache;
 
   /// Schedule a [WidgetInstance.layout] invocation for [instance],
   /// to be executed during the next layout pass.
@@ -366,7 +368,7 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
 
     result.multiply(transform.toWidget);
 
-    for (final step in this.ancestors.takeWhile((value) => value != ancestor)) {
+    for (final step in ancestors.takeWhile((value) => value != ancestor)) {
       result.multiply(step.transform.toWidget);
     }
 
