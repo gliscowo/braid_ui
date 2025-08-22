@@ -12,6 +12,13 @@ braid is an modern, declarative desktop UI framework (currently supporting Windo
 
 This repository contains the reference implementation, the even more explosive and unfinished Minecraft-specific implementation (written in Java) can, for now, be found in the `braid-ui` branch of the [owo-lib repository](https://github.com/wisp-forest/owo-lib).
 
+<p align="center">
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/app_preview_dark.png">
+    <img alt="an example braid app" src="assets/app_preview_light.png">
+</picture>
+</p>
+
 ## Setup
 
 Add a `git` dependency on braid to your pubspec:

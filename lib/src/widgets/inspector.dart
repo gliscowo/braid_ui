@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:developer';
+import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
 
 import 'package:diamond_gl/diamond_gl.dart' as dgl;
 import 'package:diamond_gl/glfw.dart';
+import 'package:image/image.dart' as image;
 import 'package:meta/meta.dart';
+import 'package:path/path.dart' as p;
 import 'package:vector_math/vector_math.dart';
 import 'package:vm_service/vm_service.dart' as vms;
 import 'package:vm_service/vm_service_io.dart' as vms;
@@ -148,7 +151,7 @@ class BraidInspector {
 
     final (newApp, newWindow) = await createBraidAppWithWindow(
       name: 'braid inspector',
-      enableInspector: false,
+      enableInspector: true,
       width: 800,
       height: 500,
       // TODO: consider baking these fonts
@@ -287,30 +290,41 @@ class InspectorActionButtons extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       insets: const Insets.all(10),
-      child: Row(
-        separator: const Padding(insets: Insets.axis(horizontal: 5)),
-        children: [
-          Button(
-            style: _buttonStyle,
-            onClick: () {
-              final isolate = Service.getIsolateId(Isolate.current);
-              SharedState.get<InspectorState>(context, withDependency: false).vmService!.reloadSources(isolate!);
-            },
-            child: Icon(icon: Icons.mode_heat),
-          ),
-          Button(
-            style: _buttonStyle,
-            onClick: () {
-              inspector._pickEvents.add(const ());
-            },
-            child: Icon(icon: Icons.colorize),
-          ),
-        ],
+      child: DefaultButtonStyle.merge(
+        style: const ButtonStyle(padding: Insets.all(5), cornerRadius: CornerRadius.all(10)),
+        child: Row(
+          separator: const Padding(insets: Insets.axis(horizontal: 5)),
+          children: [
+            Button(
+              onClick: _saveDebugCapture,
+              child: Icon(icon: Icons.screenshot),
+            ),
+            Button(
+              onClick: () {
+                final isolate = Service.getIsolateId(Isolate.current);
+                SharedState.get<InspectorState>(context, withDependency: false).vmService!.reloadSources(isolate!);
+              },
+              child: Icon(icon: Icons.mode_heat),
+            ),
+            Button(
+              onClick: () => inspector._pickEvents.add(const ()),
+              child: Icon(icon: Icons.colorize),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  static const _buttonStyle = ButtonStyle(padding: Insets.all(5), cornerRadius: CornerRadius.all(10));
+  void _saveDebugCapture() async {
+    final app = AppState.of(inspector.rootProxy!);
+
+    final debugCaptureDir = Directory('debug_captures');
+    await debugCaptureDir.create();
+
+    final capture = await app.debugCapture();
+    await image.encodePngFile(p.join(debugCaptureDir.path, 'capture_${DateTime.now().toIso8601String()}.png'), capture);
+  }
 }
 
 class EvalBox extends StatefulWidget {
