@@ -21,7 +21,6 @@ class Animation {
   Easing easing;
   Duration duration;
 
-  Duration _elapsedTime = Duration.zero;
   double _progress = 0;
   AnimationTarget? _target;
 
@@ -34,12 +33,11 @@ class Animation {
   }) : _scheduler = scheduler,
        _progress = startFrom.progress;
 
-  double get progress => _progress;
+  double get value => easing(_progress);
 
   void towards(AnimationTarget target, {bool restart = true}) {
     if (restart) {
       _progress = 1 - target.progress;
-      _elapsedTime = Duration.zero;
     }
 
     if (_target == null) {
@@ -63,8 +61,7 @@ class Animation {
   void _callback(Duration delta) {
     if (_target == null) return;
 
-    _elapsedTime += delta * _target!.direction;
-    _progress = easing(_elapsedTime.inMicroseconds / duration.inMicroseconds).clamp(0, 1);
+    _progress = (_progress + _target!.direction * delta.inMicroseconds / duration.inMicroseconds).clamp(0, 1);
     if ((_progress - _target!.progress).abs() > 1e-3) {
       _scheduler(_callback);
     } else {
@@ -72,6 +69,6 @@ class Animation {
       _target = null;
     }
 
-    listener(_progress);
+    listener(value);
   }
 }

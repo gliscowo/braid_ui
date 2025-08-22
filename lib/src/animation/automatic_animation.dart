@@ -55,7 +55,7 @@ abstract class AutomaticallyAnimatedWidgetState<T extends AutomaticallyAnimatedW
     }
 
     if (restartAnimation) {
-      _visitLerps((previous, targetValue, factory) => factory(previous!.compute(_animation.progress), targetValue));
+      _visitLerps((previous, targetValue, factory) => factory(previous!.compute(_animation.value), targetValue));
       _animation.easing = widget.easing;
       _animation.towards(AnimationTarget.end);
     }
@@ -69,7 +69,7 @@ abstract class AutomaticallyAnimatedWidgetState<T extends AutomaticallyAnimatedW
   // ---
 
   @protected
-  double get animationValue => _animation.progress;
+  double get animationValue => _animation.value;
 
   @protected
   L visitLerp<L extends Lerp<V>, V>(Lerp<V>? previous, V targetValue, LerpFactory<L, V> factory) {
