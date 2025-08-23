@@ -21,7 +21,7 @@ class Animation {
   Easing easing;
   Duration duration;
 
-  double _progress = 0;
+  double _progress;
   AnimationTarget? _target;
 
   Animation({

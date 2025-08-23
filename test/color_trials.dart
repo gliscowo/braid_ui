@@ -9,7 +9,7 @@ import 'package:braid_ui/braid_ui.dart';
 import 'package:diamond_gl/glfw.dart';
 import 'package:endec/endec.dart';
 import 'package:endec_json/endec_json.dart';
-import 'package:image/image.dart' hide Color;
+import 'package:image/image.dart' as image;
 import 'package:logging/logging.dart';
 
 CursorStyle? cursor;
@@ -20,7 +20,7 @@ Future<void> main() async {
   });
 
   loadNatives('resources/lib');
-  final icon = decodePngFile('test/color_trials_icon.png');
+  final icon = image.decodePngFile('test/color_trials_icon.png');
 
   final (app, window) = await createBraidAppWithWindow(
     name: 'colors !!',
@@ -242,7 +242,7 @@ class _AppBodyState extends WidgetState<AppBody> {
                 child: Button(
                   onClick: () async {
                     final screenshot = await AppState.of(context).debugCapture();
-                    encodePngFile('screenshot.png', screenshot);
+                    image.encodePngFile('screenshot.png', screenshot);
                   },
                   child: Icon(icon: Icons.screenshot),
                 ),

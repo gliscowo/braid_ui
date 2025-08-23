@@ -29,6 +29,7 @@ export 'src/widgets/drag_arena.dart';
 export 'src/widgets/flex.dart';
 export 'src/widgets/grid.dart';
 export 'src/widgets/icon.dart';
+export 'src/widgets/image.dart';
 export 'src/widgets/inspector.dart';
 export 'src/widgets/layout_builder.dart';
 export 'src/widgets/progress_indicator.dart';

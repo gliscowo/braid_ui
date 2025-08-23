@@ -1225,5 +1225,5 @@ class _AspectRatioInstance extends SingleChildWidgetInstance<AspectRatio> {
       width.isFinite ? width / widget.ratio : child.getIntrinsicHeight(width);
 
   @override
-  double? measureBaselineOffset() => child.measureBaselineOffset();
+  double? measureBaselineOffset() => child.getBaselineOffset();
 }
