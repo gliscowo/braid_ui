@@ -93,10 +93,15 @@ class Flexible extends VisitorWidget {
 }
 
 class HitTestTrap extends VisitorWidget {
-  const HitTestTrap({super.key, required super.child});
+  final bool occludeHitTest;
+  const HitTestTrap({super.key, this.occludeHitTest = true, required super.child});
 
-  static void _visitor(HitTestTrap _, WidgetInstance instance) {
-    instance.flags += InstanceFlags.hitTestBoundary;
+  static void _visitor(HitTestTrap widget, WidgetInstance instance) {
+    if (widget.occludeHitTest) {
+      instance.flags += InstanceFlags.hitTestBoundary;
+    } else {
+      instance.flags -= InstanceFlags.hitTestBoundary;
+    }
   }
 
   @override

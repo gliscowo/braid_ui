@@ -9,7 +9,7 @@ import 'basic.dart';
 import 'shared_state.dart';
 import 'stack.dart';
 
-typedef _Route = ({Widget widget, bool overlay});
+typedef Route = ({Widget widget, bool overlay});
 
 class _NavigationState extends ShareableState {
   _NavigationState(Widget? initialRoute)
@@ -17,10 +17,10 @@ class _NavigationState extends ShareableState {
     _updateDisplayedRoutes();
   }
 
-  final List<_Route> routes;
-  List<Widget> _displayedRoutes = const [];
+  final List<Route> routes;
+  List<Route> _displayedRoutes = const [];
 
-  List<Widget> get displayedRoutes => _displayedRoutes;
+  List<Route> get displayedRoutes => _displayedRoutes;
 
   void push(Widget route, bool overlay) {
     routes.add((widget: route, overlay: overlay));
@@ -40,13 +40,15 @@ class _NavigationState extends ShareableState {
       }
     }
 
-    _displayedRoutes = routes.sublist(idx, routes.length).map((e) => e.widget).toList();
+    _displayedRoutes = routes.sublist(idx, routes.length).toList();
   }
 }
 
 class Navigator extends StatelessWidget {
   final Widget? initialRoute;
-  const Navigator({super.key, this.initialRoute});
+  final Widget Function(Route route) routeBuilder;
+
+  const Navigator({super.key, this.initialRoute, this.routeBuilder = buildRouteDefault});
 
   @override
   Widget build(BuildContext context) {
@@ -55,11 +57,15 @@ class Navigator extends StatelessWidget {
       child: Builder(
         builder: (context) {
           final state = SharedState.get<_NavigationState>(context);
-          return Stack(children: state.displayedRoutes);
+          return Stack(children: state.displayedRoutes.map(routeBuilder).toList());
         },
       ),
     );
   }
+
+  // ---
+
+  static Widget buildRouteDefault(Route route) => Overlay(child: route.widget);
 
   // ---
 
@@ -80,6 +86,7 @@ class OverlayEntry {
     required Widget widget,
     required void Function() onRemove,
     required this.dismissOnOverlayClick,
+    required this.occludeHitTest,
     required this.x,
     required this.y,
   }) : _onRemove = onRemove,
@@ -90,9 +97,8 @@ class OverlayEntry {
   final Widget _widget;
   final void Function() _onRemove;
 
-  // TODO: consider whether entries where this is true
-  //  should also consume clicks on the overlay
   bool dismissOnOverlayClick;
+  bool occludeHitTest;
 
   double x;
   double y;
@@ -144,6 +150,7 @@ class OverlayState extends WidgetState<Overlay> {
     RelativePosition? position,
     void Function() onRemove = _doNothing,
     bool dismissOnOverlayClick = false,
+    bool occludeHitTest = false,
   }) {
     final (entryX, entryY) = position != null ? position.convertTo(context) : const (0.0, 0.0);
 
@@ -152,6 +159,7 @@ class OverlayState extends WidgetState<Overlay> {
       widget: widget,
       onRemove: onRemove,
       dismissOnOverlayClick: dismissOnOverlayClick,
+      occludeHitTest: occludeHitTest,
       x: entryX,
       y: entryY,
     );
@@ -174,21 +182,24 @@ class OverlayState extends WidgetState<Overlay> {
       child: Stack(
         children: [
           widget.child,
-          MouseArea(
-            clickCallback: (x, y, button) {
-              if (_entries.none((entry) => entry.dismissOnOverlayClick)) return false;
+          HitTestTrap(
+            occludeHitTest: _entries.any((element) => element.occludeHitTest),
+            child: MouseArea(
+              clickCallback: (x, y, button) {
+                if (_entries.none((entry) => entry.dismissOnOverlayClick)) return false;
 
-              for (final entry in _entries.where((entry) => entry.dismissOnOverlayClick)) {
-                entry._onRemove();
-              }
+                for (final entry in _entries.where((entry) => entry.dismissOnOverlayClick)) {
+                  entry._onRemove();
+                }
 
-              setState(() {
-                _entries.removeWhere((entry) => entry.dismissOnOverlayClick);
-              });
+                setState(() {
+                  _entries.removeWhere((entry) => entry.dismissOnOverlayClick);
+                });
 
-              return true;
-            },
-            child: const EmptyWidget(),
+                return false;
+              },
+              child: const EmptyWidget(),
+            ),
           ),
           RawOverlay(
             children: [for (final entry in _entries) RawOverlayElement(x: entry.x, y: entry.y, child: entry._widget)],
@@ -198,7 +209,7 @@ class OverlayState extends WidgetState<Overlay> {
     );
   }
 
-  static _doNothing() {}
+  static void _doNothing() {}
 }
 
 class _OverlayProvider extends InheritedWidget {

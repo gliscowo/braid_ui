@@ -26,7 +26,7 @@ dependencies:
 dev_dependencies:
   benchmark_harness: ^2.3.1
   intl: ^0.20.2
-  lints: ^5.0.0
+  lints: ^6.0.0
   test: ^1.24.0
   endec:
     hosted: https://pub.wispforest.io
@@ -34,4 +34,4 @@ dev_dependencies:
   endec_json:
     hosted: https://pub.wispforest.io
     version: ^0.1.0
-  analyzer: ^7.4.1
+  analyzer: ^8.1.1
