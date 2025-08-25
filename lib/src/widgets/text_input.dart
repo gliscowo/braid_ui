@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:diamond_gl/glfw.dart';
 import 'package:unicode/unicode.dart';
+import 'package:vector_math/vector_math.dart';
 
 import '../context.dart';
 import '../core/constraints.dart';
@@ -11,9 +13,125 @@ import '../core/key_modifiers.dart';
 import '../core/listenable.dart';
 import '../core/math.dart';
 import '../framework/instance.dart';
+import '../framework/proxy.dart';
 import '../framework/widget.dart';
 import '../text/text_layout.dart';
 import 'basic.dart';
+import 'scroll.dart';
+
+class EditableText extends StatefulWidget {
+  final TextEditingController controller;
+  final bool softWrap;
+  final bool autoFocus;
+  final bool allowMultipleLines;
+  final SpanStyle style;
+
+  EditableText({
+    super.key,
+    this.autoFocus = false,
+    required this.controller,
+    required this.softWrap,
+    required this.allowMultipleLines,
+    required this.style,
+  });
+
+  @override
+  WidgetState<EditableText> createState() => _EditableTextState();
+}
+
+class _EditableTextState extends WidgetState<EditableText> {
+  Timer? blinkTimer;
+  bool showCursor = false;
+  bool focused = false;
+
+  late BuildContext inputContext;
+
+  @override
+  void init() {
+    widget.controller.addListener(_listener);
+  }
+
+  @override
+  void didUpdateWidget(EditableText oldWidget) {
+    if (widget.controller != oldWidget.controller) {
+      oldWidget.controller.removeListener(_listener);
+      widget.controller.addListener(_listener);
+    }
+  }
+
+  @override
+  void dispose() => blinkTimer?.cancel();
+
+  void _listener() {
+    schedulePostLayoutCallback(() {
+      final inputInstance = inputContext.instance! as TextInputInstance;
+      final cursorPos = inputInstance.cursorPosition;
+      final lineHeight = inputInstance.currentLine.height;
+
+      Scrollable.revealAabb(
+        inputContext,
+        Aabb3.minMax(Vector3(cursorPos.x, cursorPos.y - lineHeight, 0), Vector3(cursorPos.x + 2, cursorPos.y, 0)),
+      );
+    });
+
+    if (focused) {
+      _restartBlinking();
+    }
+  }
+
+  void _restartBlinking() {
+    blinkTimer?.cancel();
+    setState(() {
+      showCursor = true;
+    });
+
+    blinkTimer = Timer.periodic(const Duration(milliseconds: 650), (_) {
+      setState(() {
+        showCursor = !showCursor;
+      });
+    });
+  }
+
+  void _stopBlinking() {
+    blinkTimer?.cancel();
+    setState(() {
+      showCursor = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return KeyboardInput(
+      focusGainedCallback: () {
+        focused = true;
+        _restartBlinking();
+      },
+      focusLostCallback: () {
+        focused = false;
+        _stopBlinking();
+      },
+      child: Scrollable(
+        horizontal: true,
+        vertical: true,
+        child: Builder(
+          builder: (inputContext) {
+            this.inputContext = inputContext;
+            return TextInput(
+              controller: widget.controller,
+              showCursor: showCursor,
+              softWrap: widget.softWrap,
+              autoFocus: widget.autoFocus,
+              allowMultipleLines: widget.allowMultipleLines,
+              style: widget.style,
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+// ---
 
 class TextSelection {
   final int start, end;
