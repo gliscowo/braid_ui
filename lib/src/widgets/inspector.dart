@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:diamond_gl/diamond_gl.dart' as dgl;
 import 'package:diamond_gl/glfw.dart';
 import 'package:image/image.dart' as image;
@@ -28,7 +29,6 @@ import 'basic.dart';
 import 'button.dart';
 import 'collapsible.dart';
 import 'container.dart';
-import 'drag_arena.dart';
 import 'flex.dart';
 import 'grid.dart';
 import 'icon.dart';
@@ -60,11 +60,12 @@ class _InstancePickerState extends WidgetState<InstancePicker> with StreamListen
 
   @override
   void init() {
-    streamListen((widget) => widget.activateEvents, (event) {
-      setState(() {
+    streamListen(
+      (widget) => widget.activateEvents,
+      (_) => setState(() {
         picking = true;
-      });
-    });
+      }),
+    );
   }
 
   @override
@@ -87,8 +88,9 @@ class _InstancePickerState extends WidgetState<InstancePicker> with StreamListen
 
               pickedInstance?.debugHighlighted = false;
 
-              pickedInstance = hitTest
-                  .firstWhere((hit) => hit.instance.widget is! Align && hit.instance.widget is! DragArena)
+              pickedInstance = hitTest.trace
+                  .sortedBy((element) => element.instance.transform.width * element.instance.transform.height)
+                  .firstOrNull
                   ?.instance;
               pickedInstance?.debugHighlighted = true;
             },
@@ -106,7 +108,7 @@ class _InstancePickerState extends WidgetState<InstancePicker> with StreamListen
 
               return true;
             },
-            child: const Padding(insets: Insets()),
+            child: const EmptyWidget(),
           ),
       ],
     );
@@ -169,6 +171,8 @@ class BraidInspector {
     currentWindow = null;
     _active = false;
   }
+
+  void pick() => _pickEvents.add(const ());
 
   void revealInstance(WidgetInstance instance) {
     if (!_active) return;
@@ -307,7 +311,7 @@ class InspectorActionButtons extends StatelessWidget {
               child: Icon(icon: Icons.mode_heat),
             ),
             Button(
-              onClick: () => inspector._pickEvents.add(const ()),
+              onClick: inspector.pick,
               child: Icon(icon: Icons.colorize),
             ),
           ],
@@ -451,7 +455,9 @@ class InstanceDetails extends StatelessWidget {
 
     List<Widget> children;
     if (instance is WidgetInstance) {
-      final instanceTransform = instance.computeTransformFrom(ancestor: null)..invert();
+      final instanceTransform = instance.hasParent
+          ? (instance.parent!.computeTransformFrom(ancestor: null)..invert())
+          : Matrix4.identity();
       final (absX, absY) = instanceTransform.transform2(instance.transform.x, instance.transform.y);
 
       children = [
