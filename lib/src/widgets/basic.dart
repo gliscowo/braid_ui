@@ -12,6 +12,7 @@ import '../context.dart';
 import '../core/constraints.dart';
 import '../core/cursors.dart';
 import '../core/key_modifiers.dart';
+import '../core/listenable.dart';
 import '../core/math.dart';
 import '../framework/instance.dart';
 import '../framework/proxy.dart';
@@ -992,6 +993,46 @@ class Builder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => builder(context);
+}
+
+// ---
+
+class ListenableBuilder extends StatefulWidget {
+  final Listenable listenable;
+  final Widget Function(BuildContext context, Widget? child) builder;
+  final Widget? child;
+
+  ListenableBuilder({super.key, required this.listenable, required this.builder, this.child});
+
+  @override
+  WidgetState<ListenableBuilder> createState() => _ListenableBuilderState();
+}
+
+class _ListenableBuilderState extends WidgetState<ListenableBuilder> {
+  @override
+  void init() {
+    widget.listenable.addListener(_listener);
+  }
+
+  @override
+  void didUpdateWidget(ListenableBuilder oldWidget) {
+    if (widget.listenable != oldWidget.listenable) {
+      oldWidget.listenable.removeListener(_listener);
+      widget.listenable.addListener(_listener);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.listenable.removeListener(_listener);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.builder(context, widget.child);
+  }
+
+  void _listener() => setState(() => {});
 }
 
 // ---

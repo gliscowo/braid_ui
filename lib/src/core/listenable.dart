@@ -1,5 +1,9 @@
 import 'package:meta/meta.dart';
 
+import '../framework/proxy.dart';
+import '../framework/widget.dart';
+import '../widgets/inspector.dart';
+
 mixin Listenable {
   final List<void Function()> _listeners = [];
 
@@ -41,4 +45,44 @@ class CompoundListenable with Listenable {
   }
 
   void _listener() => notifyListeners();
+}
+
+class ListenableValue<V> with Listenable {
+  V _value;
+  ListenableValue(this._value);
+
+  V get value => _value;
+
+  set value(V value) {
+    _value = value;
+    notifyListeners();
+  }
+}
+
+// ---
+
+class StreamBuilder<T> extends StatefulWidget {
+  final Widget? child;
+  final Stream<T> stream;
+  final Widget Function(BuildContext context, T? lastestEvent, Widget? child) builder;
+
+  const StreamBuilder({super.key, this.child, required this.stream, required this.builder});
+
+  @override
+  WidgetState<StreamBuilder<T>> createState() => _StreamBuilderState<T>();
+}
+
+class _StreamBuilderState<T> extends WidgetState<StreamBuilder<T>> with StreamListenerState {
+  T? latestEvent;
+
+  @override
+  void init() => streamListen(
+    (widget) => widget.stream,
+    (event) => setState(() {
+      latestEvent = event;
+    }),
+  );
+
+  @override
+  Widget build(BuildContext context) => widget.builder(context, latestEvent, widget.child);
 }
