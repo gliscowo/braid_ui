@@ -1334,10 +1334,9 @@ class _RotatedLayoutInstance extends SingleChildWidgetInstance<RotatedLayout> {
 
     transform.setSize(selfSize);
 
-    final childTransform = Matrix4.identity()
-      ..translate(selfSize.width / 2, selfSize.height / 2, 0)
+    final childTransform = Matrix4.translationValues(selfSize.width / 2, selfSize.height / 2, 0)
       ..rotateZ(_visualIncrements * pi / 2)
-      ..translate(-childSize.width / 2, -childSize.height / 2, 0);
+      ..translateByDouble(-childSize.width / 2, -childSize.height / 2, 0, 1);
 
     (transform as CustomWidgetTransform).matrix = childTransform;
   }

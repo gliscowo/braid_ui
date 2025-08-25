@@ -156,12 +156,12 @@ class _PanArenaState extends WidgetState<PanArena> {
             CustomDraw(
               drawFunction: (ctx, transform) {
                 ctx.transform.scope((mat4) {
-                  mat4.translate(xOffset, yOffset);
+                  mat4.translateByDouble(xOffset, yOffset, 0, 1);
 
-                  mat4.translate(transform.width / 2 - 5000, transform.height / 2);
+                  mat4.translateByDouble(transform.width / 2 - 5000, transform.height / 2, 0, 1);
                   ctx.primitives.rect(10000, 1, const Color.rgb(0xb1aebb), ctx.transform, ctx.projection);
 
-                  mat4.translate(5000.0, -5000.0);
+                  mat4.translateByDouble(5000.0, -5000.0, 0, 1);
                   ctx.primitives.rect(1, 10000, const Color.rgb(0xb1aebb), ctx.transform, ctx.projection);
                 });
               },

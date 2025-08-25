@@ -107,7 +107,7 @@ class ScrollableState extends WidgetState<Scrollable> {
 
     final transform = revealInstance.computeTransformFrom(ancestor: scrollInstance)
       ..invert()
-      ..translate(horizontalController?.offset ?? 0, verticalController?.offset ?? 0);
+      ..translateByDouble(horizontalController?.offset ?? 0, verticalController?.offset ?? 0, 0, 1);
     box.transform(transform);
 
     if (horizontalController case var controller?) {

@@ -275,7 +275,7 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with KeyboardListe
     if (!_selection.collapsed) {
       void drawSelection(double startX, double endX, double lineBaseY, double lineHeight) {
         ctx.transform.scope((mat4) {
-          mat4.translate(startX, lineBaseY - lineHeight - 1);
+          mat4.translateByDouble(startX, lineBaseY - lineHeight - 1, 0, 1);
 
           var width = endX - startX;
           ctx.primitives.rect(width, lineHeight + 2, const Color.rgb(0x3A59D1), mat4, ctx.projection);

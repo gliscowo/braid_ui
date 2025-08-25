@@ -278,7 +278,7 @@ class TextRenderer {
       debugCtx.primitives.rect(textSize.width, textSize.height, Color.black.copyWith(a: .25), transform, projection);
 
       debugCtx.transform.scope((mat4) {
-        mat4.translate(0.0, initialY.toDouble());
+        mat4.translateByDouble(0.0, initialY.toDouble(), 0, 1);
         debugCtx.primitives.rect(textSize.width, 1, Color.red, mat4, projection);
       });
     }

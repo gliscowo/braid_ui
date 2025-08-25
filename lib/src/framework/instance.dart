@@ -77,10 +77,9 @@ class CustomWidgetTransform extends WidgetTransform {
 
   @override
   Matrix4 get toParent => _toParent ??= _applyAtCenter
-      ? (Matrix4.identity()
-          ..setTranslationRaw(_x + _width / 2, _y + _height / 2, 0)
+      ? (Matrix4.translationValues(_x + _width / 2, _y + _height / 2, 0)
           ..multiply(_matrix)
-          ..translate(-_width / 2, -_height / 2))
+          ..translateByDouble(-_width / 2, -_height / 2, 0, 1))
       : Matrix4.copy(matrix);
 
   @override
@@ -436,7 +435,7 @@ mixin ChildRenderer<T extends InstanceWidget> on WidgetInstance<T> {
     if (ctx.drawBoundingBoxes) {
       final aabb = child.transform.aabb;
       ctx.transform.scope((mat4) {
-        mat4.translate(aabb.min.x, aabb.min.y, 0);
+        mat4.translateByDouble(aabb.min.x, aabb.min.y, 0, 1);
         ctx.primitives.roundedRect(
           aabb.max.x - aabb.min.x,
           aabb.max.y - aabb.min.y,
