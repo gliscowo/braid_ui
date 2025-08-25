@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:collection/collection.dart';
 import 'package:diamond_gl/diamond_gl.dart';
 import 'package:diamond_gl/opengl.dart';
+import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math.dart';
 
 import '../../glfw.dart';
@@ -152,6 +153,16 @@ class PaddingInstance extends OptionalChildWidgetInstance<Padding> {
     if (childBaseline == null) return null;
 
     return childBaseline + widget.insets.top;
+  }
+}
+
+class EmptyWidget extends StatelessWidget {
+  @literal
+  const EmptyWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(insets: Insets());
   }
 }
 
