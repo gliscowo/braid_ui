@@ -1,4 +1,6 @@
-import '../../braid_ui.dart';
+import '../context.dart';
+import '../framework/instance.dart';
+import '../framework/widget.dart';
 
 class Blur extends SingleChildInstanceWidget {
   final double radius;

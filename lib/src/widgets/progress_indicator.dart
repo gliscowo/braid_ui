@@ -1,6 +1,9 @@
 import 'dart:math';
 
-import '../../braid_ui.dart';
+import '../framework/proxy.dart';
+import '../framework/widget.dart';
+import 'basic.dart';
+import 'theme.dart';
 
 class ProgressIndicator extends StatefulWidget {
   final double? progress;

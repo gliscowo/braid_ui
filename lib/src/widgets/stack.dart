@@ -2,7 +2,11 @@ import 'dart:math';
 
 import 'package:collection/collection.dart';
 
-import '../../braid_ui.dart';
+import '../core/constraints.dart';
+import '../core/math.dart';
+import '../framework/instance.dart';
+import '../framework/widget.dart';
+import 'basic.dart';
 
 class StackBase extends VisitorWidget {
   const StackBase({super.key, required super.child});

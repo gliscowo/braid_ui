@@ -1,4 +1,9 @@
-import '../../braid_ui.dart';
+import 'package:diamond_gl/diamond_gl.dart';
+
+import '../framework/widget.dart';
+import '../text/text_layout.dart';
+import 'basic.dart';
+import 'text.dart';
 
 export '../baked_assets.g.dart' show Icons;
 

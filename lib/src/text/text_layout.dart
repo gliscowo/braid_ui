@@ -3,10 +3,12 @@ import 'dart:ffi' hide Size;
 import 'dart:math';
 
 import 'package:collection/collection.dart';
+import 'package:diamond_gl/diamond_gl.dart';
 import 'package:ffi/ffi.dart';
 import 'package:meta/meta.dart';
 
-import '../../braid_ui.dart';
+import '../core/math.dart';
+import '../native/arena.dart';
 import '../native/harfbuzz.dart';
 import 'text_renderer.dart';
 
