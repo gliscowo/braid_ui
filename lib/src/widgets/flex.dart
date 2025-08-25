@@ -248,7 +248,7 @@ class FlexInstance extends MultiChildWidgetInstance<Flex> {
     );
 
     if (isBaselineAligned) {
-      size = size.copy(height: maxAscent + maxDescent);
+      size = size.copy(height: (maxAscent + maxDescent).floorToDouble());
     }
 
     size = size.constrained(constraints);
@@ -273,7 +273,7 @@ class FlexInstance extends MultiChildWidgetInstance<Flex> {
           ),
         );
       } else {
-        child.transform.y = maxAscent - (child.getBaselineOffset() ?? child.transform.height);
+        child.transform.y = (maxAscent - (child.getBaselineOffset() ?? child.transform.height)).floorToDouble();
       }
 
       mainAxisOffset += child.transform.getAxisExtent(mainAxis) + betweenSpace;
