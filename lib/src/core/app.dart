@@ -543,6 +543,20 @@ node [shape="box"];
             continue;
           }
 
+          if (_inspector != null && glfwKeycode == glfwKeyC && modifiers.ctrl && modifiers.shift) {
+            if (_inspector.currentApp == null) {
+              // TODO: start the inspector as a hidden window in this case
+              //  so as to not obscure the widget we're trying to pick. this
+              //  requires being able to set window properties in
+              //  createBraidAppWithWindow and consequently WindowSurface.createWindow
+              _inspector.activate();
+            }
+
+            _inspector.pick();
+
+            continue;
+          }
+
           if (glfwKeycode == glfwKeyR && modifiers.ctrl && modifiers.shift) {
             context.reloadShaders().then((call) {
               _queuedGlCalls.add(call);
