@@ -6,6 +6,8 @@ import 'dart:math';
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:braid_ui/braid_ui.dart';
+import 'package:braid_ui/src/widgets/app_stack.dart';
+import 'package:braid_ui/src/widgets/combo_box.dart';
 import 'package:diamond_gl/glfw.dart';
 import 'package:endec/endec.dart';
 import 'package:endec_json/endec_json.dart';
@@ -43,6 +45,15 @@ class ColorApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BraidTheme(
+      // accentColor: Color.rgb(0xFF9C73),
+      // highlightColor: Color.rgb(0xFBD288),
+      // backgroundColor: Color.rgb(0xEEE6CA),
+      // elevatedColor: Color.rgb(0xF5FAE1),
+      // elementColor: Color.rgb(0x7A7A73),
+      // disabledColor: Color.rgb(0x3B060A),
+      // textStyle: const TextStyle(color: Color.rgb(0x57564F)),
+      // switchStyle: const SwitchStyle(switchOffColor: Color.rgb(0xFF9C73)),
+      // comboBoxStyle: const ComboBoxStyle(borderHighlightColor: Color.rgb(0xFF9C73)),
       child: Builder(
         builder: (context) {
           return Column(
@@ -76,7 +87,7 @@ class AppBody extends StatefulWidget {
   WidgetState<AppBody> createState() => _AppBodyState();
 }
 
-enum Test { checkboxes, cursors, textWrapping, textInput, collapsible, grids, swapnite }
+enum Test { checkboxes, cursors, textWrapping, textInput, collapsible, grids, swapnite, dropdowns }
 
 class _AppBodyState extends WidgetState<AppBody> {
   static final _windowEndec = structEndec<(String, WindowController)>().with2Fields(
@@ -128,6 +139,7 @@ class _AppBodyState extends WidgetState<AppBody> {
                         Test.collapsible => const CollapsibleTest(),
                         Test.grids => const GridsTest(),
                         Test.swapnite => const SwapTest(),
+                        Test.dropdowns => const DropdownTest(),
                       },
                       Align(
                         alignment: Alignment.left,
@@ -858,4 +870,46 @@ class _SwapTestState extends WidgetState<SwapTest> {
       ),
     );
   }
+}
+
+class DropdownTest extends StatefulWidget {
+  const DropdownTest({super.key});
+
+  @override
+  WidgetState<DropdownTest> createState() => _DropdownTestState();
+}
+
+class _DropdownTestState extends WidgetState<DropdownTest> {
+  Test? selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Overlay(
+      child: Center(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          separator: const Padding(insets: Insets.axis(vertical: 10)),
+          children: [
+            Text(selected != null ? 'selection: $selected' : 'no selection'),
+            Sized(
+              width: 150,
+              child: ComboBox<Test>(
+                options: Test.values,
+                selectedOption: selected,
+                optionToString: (option) =>
+                    option.name.replaceAllMapped(capitals, (match) => '${match[1]} ${match[2]!.toLowerCase()}'),
+                onSelect: (option) => setState(() {
+                  selected = option;
+                }),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---
+
+  static final capitals = RegExp('([a-z])([A-Z])');
 }

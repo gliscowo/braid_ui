@@ -7,6 +7,7 @@ import '../core/math.dart';
 import '../framework/widget.dart';
 import 'button.dart';
 import 'checkbox.dart';
+import 'combo_box.dart';
 import 'slider.dart';
 import 'switch.dart';
 import 'text.dart';
@@ -58,6 +59,7 @@ class BraidTheme extends StatelessWidget {
   final SwitchStyle? switchStyle;
   final CheckboxStyle? checkboxStyle;
   final SliderStyle? sliderStyle;
+  final ComboBoxStyle? comboBoxStyle;
 
   final Widget child;
 
@@ -74,6 +76,7 @@ class BraidTheme extends StatelessWidget {
     this.switchStyle,
     this.checkboxStyle,
     this.sliderStyle,
+    this.comboBoxStyle,
     required this.child,
   });
 
@@ -111,7 +114,7 @@ class BraidTheme extends StatelessWidget {
     );
     final checkboxStyle = this.checkboxStyle?.overriding(baseCheckboxStyle) ?? baseCheckboxStyle;
 
-    final switchStyle = SwitchStyle(
+    final baseSwitchStyle = SwitchStyle(
       backgroundOffColor: elevatedColor,
       backgroundOnColor: accentColor,
       backgroundDisabledColor: disabledColor,
@@ -119,6 +122,7 @@ class BraidTheme extends StatelessWidget {
       switchOnColor: Color.white,
       switchDisabledColor: elementColor,
     );
+    final switchStyle = this.switchStyle?.overriding(baseSwitchStyle) ?? baseSwitchStyle;
 
     final baseSliderStyle = defaultSliderStyle.overriding(
       SliderStyle(
@@ -130,6 +134,11 @@ class BraidTheme extends StatelessWidget {
       ),
     );
     final sliderStyle = this.sliderStyle?.overriding(baseSliderStyle) ?? baseSliderStyle;
+
+    final baseComboBoxStyle = defaultComboBoxStyle.overriding(
+      ComboBoxStyle(borderColor: elementColor, borderHighlightColor: highlightColor, backgroundColor: elevatedColor),
+    );
+    final comboBoxStyle = this.comboBoxStyle?.overriding(baseComboBoxStyle) ?? baseComboBoxStyle;
 
     return BraidThemeData(
       accentColor: accentColor,
@@ -146,7 +155,10 @@ class BraidTheme extends StatelessWidget {
             style: switchStyle,
             child: DefaultCheckboxStyle(
               style: checkboxStyle,
-              child: DefaultSliderStyle(style: sliderStyle, child: child),
+              child: DefaultSliderStyle(
+                style: sliderStyle,
+                child: DefaultComboBoxStyle(style: comboBoxStyle, child: child),
+              ),
             ),
           ),
         ),
@@ -190,4 +202,15 @@ class BraidTheme extends StatelessWidget {
   );
   static const defaultCheckboxStyle = CheckboxStyle(cornerRadius: CornerRadius.all(5));
   static const defaultSliderStyle = SliderStyle(trackThickness: 3, handleSize: 20);
+  static const defaultComboBoxStyle = ComboBoxStyle(
+    borderThickness: 1,
+    cornerRadius: CornerRadius.all(5),
+    textStyle: TextStyle(fontSize: 14.0, bold: true),
+    optionButtonStyle: ButtonStyle(
+      color: Color(0),
+      cornerRadius: CornerRadius.all(0),
+      padding: Insets.axis(horizontal: 6, vertical: 3),
+      textStyle: TextStyle(bold: false),
+    ),
+  );
 }

@@ -21,6 +21,7 @@ dependencies:
   collection: ^1.19.1
   unicode: ^1.1.8
   source_helper: ^1.3.7
+  fuzzywuzzy: ^1.2.0
 
 dev_dependencies:
   benchmark_harness: ^2.3.1

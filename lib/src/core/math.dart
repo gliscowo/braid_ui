@@ -103,6 +103,13 @@ class CornerRadius {
   @literal
   const CornerRadius.right(double radius) : this(topRight: radius, bottomRight: radius);
 
+  CornerRadius copy({double? topLeft, double? topRight, double? bottomLeft, double? bottomRight}) => CornerRadius(
+    topLeft: topLeft ?? this.topLeft,
+    topRight: topRight ?? this.topRight,
+    bottomLeft: bottomLeft ?? this.bottomLeft,
+    bottomRight: bottomRight ?? this.bottomRight,
+  );
+
   bool get isVanishing => topLeft < 1 && topRight < 1 && bottomLeft < 1 && bottomRight < 1;
 
   get _props => (topLeft, topRight, bottomLeft, bottomRight);
