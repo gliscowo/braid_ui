@@ -556,10 +556,11 @@ node [shape="box"];
           _focused.firstWhereOrNull((listener) => listener.onKeyUp(glfwKeycode, modifiers));
         case CharInputEvent(:final codepoint, :final modifiers):
           _focused.firstWhereOrNull((listener) => listener.onChar(codepoint, modifiers));
-        // ignore: unused_local_variable
         case FilesDroppedEvent(:final paths):
-          // TODO: consider adding a mechanism for forwarding this event
-          throw UnimplementedError();
+          final dropArea = _hitTest().firstWhere((hit) => hit.instance is FileDropAreaInstance)?.instance.widget;
+          if (dropArea != null) {
+            (dropArea as FileDropArea).onDrop(paths);
+          }
         case CloseEvent():
           _running = false;
       }

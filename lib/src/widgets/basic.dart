@@ -1238,3 +1238,86 @@ class _AspectRatioInstance extends SingleChildWidgetInstance<AspectRatio> {
   @override
   double? measureBaselineOffset() => child.getBaselineOffset();
 }
+
+// ---
+
+class RotatedLayout extends SingleChildInstanceWidget {
+  final int increments;
+
+  RotatedLayout({super.key, required this.increments, required super.child});
+
+  @override
+  SingleChildWidgetInstance<RotatedLayout> instantiate() => _RotatedLayoutInstance(widget: this);
+}
+
+class _RotatedLayoutInstance extends SingleChildWidgetInstance<RotatedLayout> {
+  _RotatedLayoutInstance({required super.widget}) : _visualIncrements = widget.increments % 4;
+
+  @override
+  WidgetTransform createTransform() {
+    final transform = CustomWidgetTransform();
+    transform.applyAtCenter = false;
+
+    return transform;
+  }
+
+  int _visualIncrements;
+  bool get _isVertical => _visualIncrements % 2 == 1;
+
+  @override
+  set widget(RotatedLayout value) {
+    if (_visualIncrements == value.increments % 4) {
+      return;
+    }
+
+    super.widget = value;
+
+    _visualIncrements = value.increments % 4;
+    markNeedsLayout();
+  }
+
+  @override
+  void doLayout(Constraints constraints) {
+    final isVertical = _isVertical;
+    final childConstraints = isVertical
+        ? Constraints(constraints.minHeight, constraints.minWidth, constraints.maxHeight, constraints.maxWidth)
+        : constraints;
+
+    final childSize = child.layout(childConstraints);
+    final selfSize = isVertical ? Size(childSize.height, childSize.width) : childSize;
+
+    transform.setSize(selfSize);
+
+    final childTransform = Matrix4.identity()
+      ..translate(selfSize.width / 2, selfSize.height / 2, 0)
+      ..rotateZ(_visualIncrements * pi / 2)
+      ..translate(-childSize.width / 2, -childSize.height / 2, 0);
+
+    (transform as CustomWidgetTransform).matrix = childTransform;
+  }
+
+  @override
+  double measureIntrinsicWidth(double height) =>
+      _isVertical ? child.getIntrinsicHeight(height) : child.getIntrinsicWidth(height);
+
+  @override
+  double measureIntrinsicHeight(double width) =>
+      _isVertical ? child.getIntrinsicWidth(width) : child.getIntrinsicHeight(width);
+
+  @override
+  double? measureBaselineOffset() => null;
+}
+
+// ---
+
+class FileDropArea extends SingleChildInstanceWidget {
+  final void Function(List<String> paths) onDrop;
+  FileDropArea({required this.onDrop, required super.child});
+
+  @override
+  SingleChildWidgetInstance<FileDropArea> instantiate() => FileDropAreaInstance(widget: this);
+}
+
+class FileDropAreaInstance extends SingleChildWidgetInstance<FileDropArea> with ShrinkWrapLayout {
+  FileDropAreaInstance({required super.widget});
+}

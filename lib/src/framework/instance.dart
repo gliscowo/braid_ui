@@ -66,16 +66,22 @@ class WidgetTransform {
 }
 
 class CustomWidgetTransform extends WidgetTransform {
+  bool _applyAtCenter = true;
   Matrix4 _matrix = Matrix4.identity();
 
   set matrix(Matrix4 value) => _setState(() => _matrix = value);
   Matrix4 get matrix => _matrix;
 
+  set applyAtCenter(bool value) => _setState(() => _applyAtCenter = value);
+  bool get applyAtCenter => _applyAtCenter;
+
   @override
-  Matrix4 get toParent => _toParent ??= Matrix4.identity()
-    ..setTranslationRaw(_x + _width / 2, _y + _height / 2, 0)
-    ..multiply(_matrix)
-    ..translate(-_width / 2, -_height / 2);
+  Matrix4 get toParent => _toParent ??= _applyAtCenter
+      ? (Matrix4.identity()
+          ..setTranslationRaw(_x + _width / 2, _y + _height / 2, 0)
+          ..multiply(_matrix)
+          ..translate(-_width / 2, -_height / 2))
+      : Matrix4.copy(matrix);
 
   @override
   void transformToParent(Matrix4 mat) => mat.multiply(toParent);
@@ -224,6 +230,7 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
   InstanceHost? get host => _host;
 
   WidgetInstance? _parent;
+  WidgetInstance? get parent => _parent;
 
   T widget;
 
