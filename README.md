@@ -5,7 +5,7 @@
 </picture>
 </h1>
 
-braid is an modern, declarative desktop UI framework (currently supporting Windows 10/11 and Linux) written in [Dart](https://dart.dev). Its core concepts are strongly inspired by frameworks like [React](https://react.dev) and especially [Flutter](https://flutter.dev).
+braid is a modern, declarative desktop UI framework (currently supporting Windows 10/11 and Linux) written in [Dart](https://dart.dev). Its core concepts are strongly inspired by frameworks like [React](https://react.dev) and especially [Flutter](https://flutter.dev).
 
 > [!NOTE]
 > braid is currently in early development, highly experimental and has no stable API.
