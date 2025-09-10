@@ -47,8 +47,8 @@ class WidgetTransform {
   Matrix4 get toWidget => _toWidget ??= Matrix4.inverted(toParent);
   Aabb3 get aabb => _aabb ??= Aabb3.minMax(Vector3.zero(), Vector3(_width, _height, 0))..transform(toParent);
 
-  void transformToParent(Matrix4 mat) => mat.translate(_x, _y, 0);
-  void transformToWidget(Matrix4 mat) => mat.translate(-_x, -_y, 0);
+  void transformToParent(Matrix4 mat) => mat.translateByDouble(_x, _y, 0, 1);
+  void transformToWidget(Matrix4 mat) => mat.translateByDouble(-_x, -_y, 0, 1);
 
   void toParentCoordinates(Vector3 vec) => vec.add(Vector3(_x, _y, 0));
   void toWidgetCoordinates(Vector3 vec) => vec.sub(Vector3(_x, _y, 0));
@@ -382,7 +382,7 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
   }
 
   @protected
-  bool hitTestSelf(double x, double y) => x >= 0 && x <= transform.width && y >= 0 && y <= transform.height;
+  bool hitTestSelf(double x, double y) => x >= 0 && x < transform.width && y >= 0 && y < transform.height;
 
   bool get hasParent => _parent != null;
 

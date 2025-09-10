@@ -980,7 +980,7 @@ class Scrollbar extends StatelessWidget {
 
             final selfSize = constraints.maxOnAxis(axis);
             final childSize = selfSize + maxOffset;
-            final scrollbarLength = min((selfSize / childSize) * selfSize, selfSize);
+            final scrollbarLength = min((selfSize / childSize) * selfSize, selfSize).floorToDouble();
 
             return Sized(
               height: axis.choose(6, null),

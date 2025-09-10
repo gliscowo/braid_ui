@@ -77,7 +77,7 @@ class ComboBoxStyle {
     );
   }
 
-  get _props =>
+  dynamic get _props =>
       (borderColor, borderHighlightColor, backgroundColor, borderThickness, cornerRadius, optionButtonStyle, textStyle);
 
   @override
@@ -176,13 +176,16 @@ class _ComboBoxState<T> extends WidgetState<ComboBox<T>> {
   @override
   void dispose() {
     controller.removeListener(textListener);
+    currentOverlay?.remove();
   }
 
   void textListener() {
     if (controller.text == lastText) return;
     lastText = controller.text;
 
-    if (widget.optionStrings.contains(controller.text)) return;
+    if (widget.optionStrings.contains(controller.text)) {
+      return;
+    }
 
     if (!isOpen) {
       open();
@@ -218,8 +221,10 @@ class _ComboBoxState<T> extends WidgetState<ComboBox<T>> {
   }
 
   void trySelectHighlightedValue() {
-    final state = buttonsState!.value;
-    if (state.highlightedOptionIdx == null && state.options.isEmpty) return;
+    final state = buttonsState?.value;
+    if (state == null || state.highlightedOptionIdx == null && state.options.isEmpty) {
+      return;
+    }
 
     select(state.highlightedOptionIdx != null ? state.options[state.highlightedOptionIdx!] : state.options.first);
   }
@@ -245,15 +250,15 @@ class _ComboBoxState<T> extends WidgetState<ComboBox<T>> {
   void open() => setState(() {
     buttonsState = ListenableValue((options: widget.options, highlightedOptionIdx: null));
     currentOverlay = Overlay.of(context).add(
-      _ComboBoxButtons<T>(
+      widget: _ComboBoxButtons<T>(
         state: buttonsState!,
         width: context.instance!.transform.width,
         style: computedStyle,
         optionToString: widget.stringify,
         onSelect: select,
       ),
-      dismissOnOverlayClick: true,
       position: RelativePosition(context: context, x: 0, y: context.instance!.transform.height),
+      dismissOnOverlayClick: true,
       onRemove: () => setState(() {
         currentOverlay = null;
         buttonsState = null;
@@ -273,61 +278,61 @@ class _ComboBoxState<T> extends WidgetState<ComboBox<T>> {
       textStyle = textStyle.copy(bold: false);
     }
 
-    return HoverableBuilder(
-      child: Padding(
-        insets: Insets.all(style.borderThickness!),
-        child: Panel(
-          color: style.backgroundColor!,
-          cornerRadius: expanded ? style.cornerRadius!.copy(bottomLeft: 0, bottomRight: 0) : style.cornerRadius!,
-          child: Padding(
-            insets: const Insets(top: 3, bottom: 3, left: 5),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Flexible(
-                  child: EditableText(
-                    controller: controller,
-                    softWrap: false,
-                    allowMultipleLines: false,
-                    style: textStyle.toSpanStyle(),
-                  ),
-                ),
-                const Padding(
-                  insets: Insets.axis(horizontal: 3),
-                  child: Icon(icon: Icons.arrow_drop_down, size: 20),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-      builder: (context, hovered, child) {
-        return Actions(
-          focusLostCallback: resetTextInput,
-          actions: {
-            _previousOptionTriggger: () => cycle(-1),
-            _nextOptionTriggger: () => cycle(1),
-            _selectHighlightedOptionTrigger: trySelectHighlightedValue,
-            const [ActionTrigger.click]: () => expanded ? close() : open(),
-          },
-          cursorStyle: CursorStyle.hand,
-          child: AnimatedPanel(
+    return Actions(
+      focusLostCallback: resetTextInput,
+      actions: {
+        _previousOptionTrigger: () => cycle(-1),
+        _nextOptionTrigger: () => cycle(1),
+        _selectHighlightedOptionTrigger: trySelectHighlightedValue,
+        const [ActionTrigger.click]: () => expanded ? close() : open(),
+      },
+      cursorStyle: CursorStyle.hand,
+      child: HoverableBuilder(
+        builder: (context, hovered, child) {
+          return AnimatedPanel(
             duration: const Duration(milliseconds: 100),
             color: (hovered || expanded) ? style.borderHighlightColor! : style.borderColor!,
             cornerRadius: expanded ? const CornerRadius.top(5) : const CornerRadius.all(5),
             child: child,
+          );
+        },
+        child: Padding(
+          insets: Insets.all(style.borderThickness!),
+          child: Panel(
+            color: style.backgroundColor!,
+            cornerRadius: expanded ? style.cornerRadius!.copy(bottomLeft: 0, bottomRight: 0) : style.cornerRadius!,
+            child: Padding(
+              insets: const Insets(top: 3, bottom: 3, left: 5),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: EditableText(
+                      controller: controller,
+                      softWrap: false,
+                      allowMultipleLines: false,
+                      style: textStyle.toSpanStyle(),
+                    ),
+                  ),
+                  const Padding(
+                    insets: Insets.axis(horizontal: 3),
+                    child: Icon(icon: Icons.arrow_drop_down, size: 20),
+                  ),
+                ],
+              ),
+            ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
   // ---
 
-  static const _previousOptionTriggger = [
+  static const _previousOptionTrigger = [
     ActionTrigger(keyCodes: {glfwKeyUp}),
   ];
-  static const _nextOptionTriggger = [
+  static const _nextOptionTrigger = [
     ActionTrigger(keyCodes: {glfwKeyDown}),
   ];
   static const _selectHighlightedOptionTrigger = [
@@ -371,7 +376,7 @@ class _ComboBoxButtons<T> extends StatelessWidget {
             cornerRadius: cornerRadius,
             child: ListenableBuilder(
               listenable: state,
-              builder: (context, child) {
+              builder: (context, _) {
                 return Column(
                   children: [
                     for (final (idx, option) in state.value.options.indexed)

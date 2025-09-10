@@ -84,7 +84,7 @@ class OverlayEntry {
   OverlayEntry._({
     required OverlayState owner,
     required Widget widget,
-    required void Function() onRemove,
+    required void Function()? onRemove,
     required this.dismissOnOverlayClick,
     required this.occludeHitTest,
     required this.x,
@@ -95,7 +95,7 @@ class OverlayEntry {
 
   final OverlayState _owner;
   final Widget _widget;
-  final void Function() _onRemove;
+  final void Function()? _onRemove;
 
   bool dismissOnOverlayClick;
   bool occludeHitTest;
@@ -105,8 +105,10 @@ class OverlayEntry {
 
   // ---
 
+  void setState(void Function() fn) => _owner.setState(fn);
+
   void remove() => _owner.setState(() {
-    _onRemove();
+    _onRemove?.call();
     _owner._entries.remove(this);
   });
 }
@@ -121,7 +123,12 @@ class Overlay extends StatefulWidget {
   // ---
 
   static OverlayState? maybeOf(BuildContext context) => context.getAncestor<_OverlayProvider>()?.state;
-  static OverlayState of(BuildContext context) => maybeOf(context)!;
+  static OverlayState of(BuildContext context) {
+    final state = maybeOf(context);
+    assert(state != null, 'attempted to look up the enclosing overlay state without one present');
+
+    return state!;
+  }
 }
 
 extension type RelativePosition._(({BuildContext context, double x, double y}) _value) {
@@ -145,14 +152,14 @@ extension type RelativePosition._(({BuildContext context, double x, double y}) _
 }
 
 class OverlayState extends WidgetState<Overlay> {
-  OverlayEntry add(
-    Widget widget, {
-    RelativePosition? position,
-    void Function() onRemove = _doNothing,
+  OverlayEntry add({
+    required Widget widget,
+    required RelativePosition position,
+    void Function()? onRemove,
     bool dismissOnOverlayClick = false,
     bool occludeHitTest = false,
   }) {
-    final (entryX, entryY) = position != null ? position.convertTo(context) : const (0.0, 0.0);
+    final (entryX, entryY) = position.convertTo(context);
 
     final entry = OverlayEntry._(
       owner: this,
@@ -189,7 +196,7 @@ class OverlayState extends WidgetState<Overlay> {
                 if (_entries.none((entry) => entry.dismissOnOverlayClick)) return false;
 
                 for (final entry in _entries.where((entry) => entry.dismissOnOverlayClick)) {
-                  entry._onRemove();
+                  entry._onRemove?.call();
                 }
 
                 setState(() {
@@ -201,15 +208,15 @@ class OverlayState extends WidgetState<Overlay> {
               child: const EmptyWidget(),
             ),
           ),
-          RawOverlay(
-            children: [for (final entry in _entries) RawOverlayElement(x: entry.x, y: entry.y, child: entry._widget)],
+          StackBase(
+            child: RawOverlay(
+              children: [for (final entry in _entries) RawOverlayElement(x: entry.x, y: entry.y, child: entry._widget)],
+            ),
           ),
         ],
       ),
     );
   }
-
-  static void _doNothing() {}
 }
 
 class _OverlayProvider extends InheritedWidget {
@@ -253,15 +260,6 @@ class OverlayParentData {
 
 class _RawOverlayInstance extends MultiChildWidgetInstance<RawOverlay> {
   _RawOverlayInstance({required super.widget});
-
-  @override
-  W adopt<W extends WidgetInstance?>(W child) {
-    if (child?.parentData is! OverlayParentData) {
-      child?.parentData = OverlayParentData(x: 0, y: 0);
-    }
-
-    return super.adopt<W>(child);
-  }
 
   @override
   void doLayout(Constraints constraints) {

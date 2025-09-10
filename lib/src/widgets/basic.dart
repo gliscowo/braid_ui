@@ -1175,7 +1175,7 @@ class HoverableBuilder extends StatefulWidget {
   final Widget? child;
   final Widget Function(BuildContext context, bool hovered, Widget? child) builder;
 
-  const HoverableBuilder({super.key, this.child, required this.builder});
+  const HoverableBuilder({super.key, required this.builder, this.child});
 
   @override
   WidgetState<HoverableBuilder> createState() => _HoverableBuilderState();
