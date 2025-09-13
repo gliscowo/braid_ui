@@ -99,7 +99,7 @@ class _FocusableState<F extends Focusable> extends WidgetState<F> with FocusNode
   @override
   void init() {
     parent = FocusNode.maybeOf(context)!;
-    scope = _FocusScopeState.maybeOf(context)?..onFocusableCreated(this);
+    scope = _FocusScopeState.maybeOf(context);
 
     depth = parent.depth + 1;
 
@@ -142,13 +142,45 @@ class FocusScope extends Focusable {
   });
 
   @override
+  StatefulProxy proxy() => _FocusScopeProxy(this);
+
+  @override
   WidgetState<FocusScope> createState() => _FocusScopeState();
+}
+
+class _FocusScopeProxy extends StatefulProxy {
+  _FocusScopeProxy(FocusScope super.widget);
+
+  @override
+  void mount(WidgetProxy parent, Object? slot) {
+    super.mount(parent, slot);
+    (state as _FocusScopeState).collectDescendants = () {
+      final descendants = <FocusNode>[];
+      visitChildren((child) => _collectFocusDescendants(child, descendants));
+
+      return descendants;
+    };
+  }
+
+  static void _collectFocusDescendants(WidgetProxy proxy, List<FocusNode> into) {
+    if (proxy is StatefulProxy && proxy.state is FocusNode) {
+      into.add(proxy.state as FocusNode);
+    }
+
+    if (proxy is StatefulProxy && proxy.state is _FocusScopeState) {
+      return;
+    }
+
+    proxy.visitChildren((child) {
+      _collectFocusDescendants(child, into);
+    });
+  }
 }
 
 class _FocusScopeState extends _FocusableState<FocusScope> {
   List<FocusNode> focused = [];
 
-  final List<FocusNode> descendants = [];
+  late List<FocusNode> Function() collectDescendants;
   final Queue<_FocusScopeState> previouslyFocusedScopes = Queue();
 
   @override
@@ -160,6 +192,8 @@ class _FocusScopeState extends _FocusableState<FocusScope> {
     }
 
     if (keyCode == glfwKeyTab) {
+      final descendants = collectDescendants();
+
       final currentFocusIdx = focused.isNotEmpty ? descendants.indexOf(focused.first) : null;
       final nextFocusIdx =
           (modifiers.shift
@@ -232,16 +266,11 @@ class _FocusScopeState extends _FocusableState<FocusScope> {
     focused = nowFocused;
   }
 
-  void onFocusableCreated(FocusNode descendant) {
-    descendants.add(descendant);
-  }
-
   void onFocusableDisposed(FocusNode descendant) {
     if (descendant == focused.firstOrNull && previouslyFocusedScopes.isNotEmpty) {
       moveFocus(previouslyFocusedScopes.removeLast());
     }
 
-    descendants.remove(descendant);
     focused.remove(descendant);
     previouslyFocusedScopes.removeWhere((element) => element == descendant);
   }

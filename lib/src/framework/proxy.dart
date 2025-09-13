@@ -445,6 +445,7 @@ class StatelessProxy extends ComposedProxy {
 
 class StatefulProxy extends ComposedProxy {
   final WidgetState _state;
+  WidgetState get state => _state;
 
   StatefulProxy(StatefulWidget super.widget) : _state = widget.createState() {
     _state
