@@ -8,6 +8,7 @@ import 'package:analyzer/dart/ast/token.dart';
 import 'package:braid_ui/braid_ui.dart';
 import 'package:braid_ui/src/widgets/app_stack.dart';
 import 'package:braid_ui/src/widgets/combo_box.dart';
+import 'package:braid_ui/src/widgets/input_handling.dart';
 import 'package:diamond_gl/glfw.dart';
 import 'package:endec/endec.dart';
 import 'package:endec_json/endec_json.dart';
@@ -87,7 +88,7 @@ class AppBody extends StatefulWidget {
   WidgetState<AppBody> createState() => _AppBodyState();
 }
 
-enum Test { checkboxes, cursors, textWrapping, textInput, collapsible, grids, swapnite, dropdowns }
+enum Test { checkboxes, cursors, textWrapping, textInput, collapsible, grids, swapnite, dropdowns, intents }
 
 class _AppBodyState extends WidgetState<AppBody> {
   static final _windowEndec = structEndec<(String, WindowController)>().with2Fields(
@@ -140,6 +141,7 @@ class _AppBodyState extends WidgetState<AppBody> {
                         Test.grids => const GridsTest(),
                         Test.swapnite => const SwapTest(),
                         Test.dropdowns => const DropdownTest(),
+                        Test.intents => const IntentTest(),
                       },
                       Align(
                         alignment: Alignment.left,
@@ -912,4 +914,102 @@ class _DropdownTestState extends WidgetState<DropdownTest> {
   // ---
 
   static final capitals = RegExp('([a-z])([A-Z])');
+}
+
+// ---
+
+class ClickIntent extends Intent {
+  final String message;
+  const ClickIntent(this.message);
+}
+
+class AnotherIntent extends Intent {
+  const AnotherIntent();
+}
+
+class IntentTest extends StatefulWidget {
+  const IntentTest({super.key});
+
+  @override
+  WidgetState<IntentTest> createState() => _IntentTestState();
+}
+
+class _IntentTestState extends WidgetState<IntentTest> {
+  @override
+  Widget build(BuildContext context) {
+    return IntentScope(
+      child: Builder(
+        builder: (context) {
+          return Center(
+            child: Shortcuts(
+              shortcuts: const {
+                [ActionTrigger.click]: ClickIntent('click'),
+                [
+                  ActionTrigger(keyCodes: {glfwKeyA}),
+                ]: ClickIntent(
+                  'a',
+                ),
+              },
+              child: Intents(
+                actions: ActionsMap([CallbackAction<ClickIntent>((intent) => print(intent.message))]),
+                child: Sized(
+                  width: 200,
+                  height: 100,
+                  child: Panel(
+                    color: Color.white,
+                    child: Center(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        separator: const Padding(insets: Insets.axis(horizontal: 10)),
+                        children: [
+                          Button(
+                            onClick: () => IntentScope.invoke(context, const ClickIntent('button')),
+                            child: Text('clicc'),
+                          ),
+                          const InnerIntentsTest(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class InnerIntentsTest extends StatefulWidget {
+  const InnerIntentsTest({super.key});
+
+  @override
+  WidgetState<InnerIntentsTest> createState() => _InnerIntentsTestState();
+}
+
+class _InnerIntentsTestState extends WidgetState<InnerIntentsTest> {
+  bool show = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Sized(
+      height: double.infinity,
+      child: Column(
+        children: [
+          Switch(
+            on: show,
+            onClick: () => setState(() {
+              show = !show;
+            }),
+          ),
+          if (show)
+            Intents(
+              actions: ActionsMap([CallbackAction<ClickIntent>((intent) => print('inner: ${intent.message}'))]),
+              child: Panel(color: Color.red, child: Text('b')),
+            ),
+        ],
+      ),
+    );
+  }
 }

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:io';
 
-import 'package:collection/collection.dart';
 import 'package:diamond_gl/diamond_gl.dart' as dgl;
 import 'package:diamond_gl/glfw.dart';
 import 'package:diamond_gl/opengl.dart';
@@ -20,6 +19,7 @@ import '../resources.dart';
 import '../surface.dart';
 import '../text/text_renderer.dart';
 import '../widgets/basic.dart';
+import '../widgets/focus.dart';
 import '../widgets/image.dart';
 import '../widgets/inspector.dart';
 import 'constraints.dart';
@@ -282,7 +282,9 @@ class AppState implements InstanceHost, ProxyHost {
   CursorStyle? _draggingCursorStyle;
   bool _dragStarted = false;
 
-  List<KeyboardListener> _focused = [];
+  final StreamController<KeyDownEvent> keyDownController = StreamController.broadcast(sync: true);
+  final StreamController<KeyUpEvent> keyUpController = StreamController.broadcast(sync: true);
+  final StreamController<CharEvent> charController = StreamController.broadcast(sync: true);
 
   final List<StreamSubscription> _subscriptions = [];
   bool _running = true;
@@ -315,10 +317,15 @@ class AppState implements InstanceHost, ProxyHost {
         child: InstancePicker(
           activateEvents: _inspector?.onPick ?? const Stream.empty(),
           pickCallback: _inspector?.revealInstance ?? (_) {},
-          child: _UserRoot(
-            proxyCallback: (userRootProxy) => _inspector?.rootProxy = userRootProxy,
-            instanceCallback: (userRootInstance) => _inspector?.rootInstance = userRootInstance,
-            child: root,
+          child: RootFocusScope(
+            onKeyDown: keyDownController.stream,
+            onKeyUp: keyUpController.stream,
+            onChar: charController.stream,
+            child: _UserRoot(
+              proxyCallback: (userRootProxy) => _inspector?.rootProxy = userRootProxy,
+              instanceCallback: (userRootInstance) => _inspector?.rootInstance = userRootInstance,
+              child: root,
+            ),
           ),
         ),
       ),
@@ -447,10 +454,10 @@ class AppState implements InstanceHost, ProxyHost {
         case MouseButtonPressEvent(:final button):
           final state = _hitTest();
 
-          _updateFocus(
-            state.occludedTrace.map((e) => e.instance).firstWhereOrNull((element) => element is KeyboardListener)
-                as KeyboardListener?,
-          );
+          (state.firstWhere((hit) => hit.instance is FocusClickAreaInstance)?.instance as FocusClickAreaInstance?)
+              ?.widget
+              .clickCallback
+              .call();
 
           final clicked = state.firstWhere(
             (hit) =>
@@ -565,11 +572,11 @@ node [shape="box"];
             continue;
           }
 
-          _focused.firstWhereOrNull((listener) => listener.onKeyDown(glfwKeycode, modifiers));
+          keyDownController.add((keyCode: glfwKeycode, modifiers: modifiers));
         case KeyReleaseEvent(:final glfwKeycode, :final modifiers):
-          _focused.firstWhereOrNull((listener) => listener.onKeyUp(glfwKeycode, modifiers));
+          keyUpController.add((keyCode: glfwKeycode, modifiers: modifiers));
         case CharInputEvent(:final codepoint, :final modifiers):
-          _focused.firstWhereOrNull((listener) => listener.onChar(codepoint, modifiers));
+          charController.add((charCode: codepoint, modifiers: modifiers));
         case FilesDroppedEvent(:final paths):
           final dropArea = _hitTest().firstWhere((hit) => hit.instance is FileDropAreaInstance)?.instance.widget;
           if (dropArea != null) {
@@ -579,26 +586,6 @@ node [shape="box"];
           _running = false;
       }
     }
-  }
-
-  void _updateFocus(KeyboardListener? listener) {
-    final nowFocused = listener != null
-        ? [listener].followedBy(listener.ancestors.whereType<KeyboardListener>()).toList()
-        : const <KeyboardListener>[];
-
-    for (final listener in nowFocused) {
-      if (_focused.contains(listener)) {
-        _focused.remove(listener);
-      } else {
-        listener.onFocusGained();
-      }
-    }
-
-    for (final noLongerFocused in _focused) {
-      noLongerFocused.onFocusLost();
-    }
-
-    _focused = nowFocused;
   }
 
   void rebuildRoot() {
@@ -704,11 +691,6 @@ node [shape="box"];
 
   @override
   void notifySubtreeRebuild() => _mergeToLayoutQueue = true;
-
-  @override
-  void moveFocusTo(KeyboardListener<InstanceWidget> focusTarget) {
-    _updateFocus(focusTarget);
-  }
 
   @override
   void scheduleAnimationCallback(AnimationCallback callback) => _animationCallbacks.add(callback);

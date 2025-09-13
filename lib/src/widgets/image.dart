@@ -94,19 +94,19 @@ class NetworkImageProvider implements ImageProvider {
 
 class ImageCache {
   final Map<Object, RenderImage> _cache = {};
-  final Set<Object> _loadingKeys = {};
+  final Map<Object, Completer<void>> _loading = {};
 
   final void Function(GlCall) _callScheduler;
 
   ImageCache(this._callScheduler);
 
   RenderImage? get(Object key) => _cache[key];
-  bool isLoading(Object key) => _loadingKeys.contains(key);
 
   Future<void> load(ImageProvider provider) async {
     final key = provider.cacheKey;
-    final added = _loadingKeys.add(key);
-    assert(added, 'attempted to load the same image provider twice');
+    if (_loading.containsKey(key)) {
+      return _loading[key]!.future;
+    }
 
     var data = (await provider.load());
     if (data != null && (data.numChannels != 4 || data.format != Format.uint8)) {
@@ -121,7 +121,7 @@ class ImageCache {
     _callScheduler(
       GlCall(() {
         _cache[key] = RenderImage.allocate(data!);
-        _loadingKeys.remove(key);
+        _loading.remove(key);
 
         completer.complete();
       }),
@@ -246,10 +246,7 @@ class RawImageInstance extends LeafWidgetInstance<RawImage> {
       final size = AspectRatio.applyAspectRatio(constraints, Size(image!.width.toDouble(), image!.height.toDouble()));
       transform.setSize(size);
     } else {
-      if (!cache.isLoading(widget.provider.cacheKey)) {
-        cache.load(widget.provider).then((value) => markNeedsLayout());
-      }
-
+      cache.load(widget.provider).then((value) => markNeedsLayout());
       transform.setSize(constraints.minSize);
     }
   }

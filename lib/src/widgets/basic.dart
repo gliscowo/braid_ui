@@ -18,6 +18,7 @@ import '../framework/instance.dart';
 import '../framework/proxy.dart';
 import '../framework/widget.dart';
 import 'flex.dart';
+import 'focus.dart';
 
 typedef Callback = void Function();
 
@@ -484,58 +485,6 @@ class MouseAreaInstance extends SingleChildWidgetInstance<MouseArea> with Shrink
 
 // ---
 
-class KeyboardInput extends SingleChildInstanceWidget {
-  final bool Function(int keyCode, KeyModifiers modifiers)? keyDownCallback;
-  final bool Function(int keyCode, KeyModifiers modifiers)? keyUpCallback;
-  final bool Function(int charCode, KeyModifiers modifiers)? charCallback;
-  final Callback? focusGainedCallback;
-  final Callback? focusLostCallback;
-
-  const KeyboardInput({
-    super.key,
-    this.keyDownCallback,
-    this.keyUpCallback,
-    this.charCallback,
-    this.focusGainedCallback,
-    this.focusLostCallback,
-    required super.child,
-  });
-
-  @override
-  KeyboardInputInstance instantiate() => KeyboardInputInstance(widget: this);
-}
-
-class KeyboardInputInstance extends SingleChildWidgetInstance<KeyboardInput> with ShrinkWrapLayout, KeyboardListener {
-  bool _focused = false;
-
-  KeyboardInputInstance({required super.widget});
-
-  @override
-  bool onKeyDown(int keyCode, KeyModifiers modifiers) => widget.keyDownCallback?.call(keyCode, modifiers) ?? false;
-
-  @override
-  bool onKeyUp(int keyCode, KeyModifiers modifiers) => widget.keyUpCallback?.call(keyCode, modifiers) ?? false;
-
-  @override
-  bool onChar(int charCode, KeyModifiers modifiers) => widget.charCallback?.call(charCode, modifiers) ?? false;
-
-  @override
-  void onFocusGained() {
-    _focused = true;
-    widget.focusGainedCallback?.call();
-  }
-
-  @override
-  void onFocusLost() {
-    _focused = false;
-    widget.focusLostCallback?.call();
-  }
-
-  bool get focused => _focused;
-}
-
-// ---
-
 extension type const ActionTrigger._(({Set<int> mouseButtons, Set<int> keyCodes, KeyModifiers keyModifiers}) _value) {
   const ActionTrigger({
     Set<int> mouseButtons = const {},
@@ -629,7 +578,7 @@ class ActionsState extends WidgetState<Actions> {
               : _ActionTriggerResult.notActivated;
         });
       },
-      child: KeyboardInput(
+      child: Focusable(
         focusGainedCallback: widget.focusGainedCallback,
         focusLostCallback: widget.focusLostCallback,
         keyDownCallback: (keyCode, modifiers) => _stepActions((trigger) {

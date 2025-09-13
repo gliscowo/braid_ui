@@ -8,7 +8,6 @@ import 'package:vector_math/vector_math.dart';
 import '../context.dart';
 import '../core/constraints.dart';
 import '../core/cursors.dart';
-import '../core/key_modifiers.dart';
 import '../core/math.dart';
 import '../events_binding.dart';
 import '../surface.dart';
@@ -142,35 +141,6 @@ mixin MouseListener<T extends InstanceWidget> on WidgetInstance<T> {
   ({double x, double y})? lastMousePosition;
 }
 
-mixin KeyboardListener<T extends InstanceWidget> on WidgetInstance<T> {
-  bool onKeyDown(int keyCode, KeyModifiers modifiers) => false;
-  bool onKeyUp(int keyCode, KeyModifiers modifiers) => false;
-  bool onChar(int charCode, KeyModifiers modifiers) => false;
-
-  void onFocusGained() {}
-  void onFocusLost() {}
-
-  bool _requestFocusWhenHostAttached = false;
-  void requestFocus() {
-    if (_host case var host?) {
-      host.moveFocusTo(this);
-    } else {
-      _requestFocusWhenHostAttached = true;
-    }
-  }
-
-  @override
-  void attachHost(InstanceHost host) {
-    super.attachHost(host);
-
-    if (_requestFocusWhenHostAttached) {
-      _requestFocusWhenHostAttached = false;
-
-      host.moveFocusTo(this);
-    }
-  }
-}
-
 extension type const InstanceFlags._(int _value) {
   static const none = InstanceFlags._(0);
   static const hitTestBoundary = InstanceFlags._(1);
@@ -203,12 +173,6 @@ abstract interface class InstanceHost {
   ///
   /// This is used to implement the [LayoutBuilder] mechanism
   void notifySubtreeRebuild();
-
-  /// Request that focus be moved to [focusTarget]. Given that
-  /// the host allows the operation, it will generally be
-  /// executed immediately and the listener is ready to receive
-  /// input events from the next frame onwards
-  void moveFocusTo(KeyboardListener focusTarget) {}
 
   void schedulePostLayoutCallback(Callback callback);
 }

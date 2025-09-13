@@ -30,6 +30,7 @@ import 'button.dart';
 import 'collapsible.dart';
 import 'container.dart';
 import 'flex.dart';
+import 'focus.dart';
 import 'grid.dart';
 import 'icon.dart';
 import 'layout_builder.dart';
@@ -391,7 +392,7 @@ class _EvalBoxState extends WidgetState<EvalBox> {
                       child: Icon(icon: Icons.terminal, size: 20),
                     ),
                     Flexible(
-                      child: KeyboardInput(
+                      child: Focusable(
                         keyDownCallback: evalContext != null
                             ? (keyCode, modifiers) {
                                 if (keyCode != glfwKeyEnter) return false;
@@ -787,7 +788,7 @@ class _InstanceTitleState extends WidgetState<InstanceTitle> {
       ),
     );
 
-    return KeyboardInput(
+    return Focusable(
       focusGainedCallback: () =>
           SharedState.set<InspectorState>(context, (state) => state.evalContext = widget.instance),
       child: MouseArea(
@@ -933,7 +934,7 @@ class _RawTextFieldState extends WidgetState<RawTextField> {
 
   @override
   Widget build(BuildContext context) {
-    return KeyboardInput(
+    return Focusable(
       focusGainedCallback: () => _restartBlinking(),
       focusLostCallback: () => _stopBlinking(),
       child: Scrollable.both(
