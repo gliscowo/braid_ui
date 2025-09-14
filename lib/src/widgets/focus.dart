@@ -16,9 +16,9 @@ import 'stack.dart';
 
 mixin FocusNode<F extends Focusable> on WidgetState<F> {
   FocusNode? get parent;
-  Iterable<FocusNode> get ancestors sync* {
+  Iterable<FocusNode> get scopedAncestors sync* {
     var ancestor = parent;
-    while (ancestor != null) {
+    while (ancestor != null && ancestor is! _FocusScopeState) {
       yield ancestor;
       ancestor = ancestor.parent;
     }
@@ -58,6 +58,18 @@ class _FocusNodeProvider<F extends FocusNode> extends InheritedWidget {
 
 // ---
 
+class FocusPolicy extends InheritedWidget {
+  final bool clickFocus;
+  const FocusPolicy({super.key, required this.clickFocus, required super.child});
+
+  @override
+  bool mustRebuildDependents(covariant FocusPolicy newWidget) => newWidget.clickFocus != clickFocus;
+
+  // ---
+
+  static FocusPolicy of(BuildContext context) => context.dependOnAncestor<FocusPolicy>()!;
+}
+
 class Focusable extends StatefulWidget {
   final bool Function(int keyCode, KeyModifiers modifiers)? keyDownCallback;
   final bool Function(int keyCode, KeyModifiers modifiers)? keyUpCallback;
@@ -65,6 +77,7 @@ class Focusable extends StatefulWidget {
   final Callback? focusGainedCallback;
   final Callback? focusLostCallback;
   final bool autoFocus;
+  final bool? clickFocus;
 
   final Widget child;
 
@@ -76,6 +89,7 @@ class Focusable extends StatefulWidget {
     this.focusGainedCallback,
     this.focusLostCallback,
     this.autoFocus = false,
+    this.clickFocus,
     required this.child,
   });
 
@@ -115,7 +129,9 @@ class _FocusableState<F extends Focusable> extends WidgetState<F> with FocusNode
 
   @protected
   void onClick() {
-    requestPrimaryFocus();
+    if (widget.clickFocus ?? context.getAncestor<FocusPolicy>()!.clickFocus) {
+      requestPrimaryFocus();
+    }
   }
 
   @override
@@ -163,12 +179,12 @@ class _FocusScopeProxy extends StatefulProxy {
   }
 
   static void _collectFocusDescendants(WidgetProxy proxy, List<FocusNode> into) {
-    if (proxy is StatefulProxy && proxy.state is FocusNode) {
-      into.add(proxy.state as FocusNode);
-    }
+    if (proxy case StatefulProxy(state: FocusNode node)) {
+      into.add(node);
 
-    if (proxy is StatefulProxy && proxy.state is _FocusScopeState) {
-      return;
+      if (node is _FocusScopeState) {
+        return;
+      }
     }
 
     proxy.visitChildren((child) {
@@ -242,10 +258,7 @@ class _FocusScopeState extends _FocusableState<FocusScope> {
 
   void moveFocus(FocusNode? to) {
     scope?.moveFocus(this);
-    final nowFocused = to != null
-        // TODO: this takeWhile is cringe
-        ? [to].followedBy(to.ancestors).takeWhile((value) => value != this).toList()
-        : <FocusNode>[];
+    final nowFocused = to != null ? [to].followedBy(to.scopedAncestors).toList() : <FocusNode>[];
 
     for (final node in nowFocused) {
       if (focused.contains(node)) {
@@ -261,6 +274,8 @@ class _FocusScopeState extends _FocusableState<FocusScope> {
 
     if (focused.firstOrNull case _FocusScopeState scope when !nowFocused.contains(scope)) {
       previouslyFocusedScopes.add(scope);
+    } else if (nowFocused.firstOrNull is! _FocusScopeState) {
+      previouslyFocusedScopes.clear();
     }
 
     focused = nowFocused;
@@ -358,14 +373,17 @@ class _RootFocusScopeState extends WidgetState<RootFocusScope> with FocusNode, S
 
   @override
   Widget build(BuildContext context) {
-    return _FocusNodeProvider<FocusNode>(
-      node: this,
-      child: FocusScope(
-        child: Builder(
-          builder: (context) {
-            scope = _FocusScopeState.maybeOf(context)!;
-            return widget.child;
-          },
+    return FocusPolicy(
+      clickFocus: true,
+      child: _FocusNodeProvider<FocusNode>(
+        node: this,
+        child: FocusScope(
+          child: Builder(
+            builder: (context) {
+              scope = _FocusScopeState.maybeOf(context)!;
+              return widget.child;
+            },
+          ),
         ),
       ),
     );

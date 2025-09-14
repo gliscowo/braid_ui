@@ -101,11 +101,14 @@ class BaseRoute extends StatelessWidget {
         ),
         Align(
           alignment: Alignment.bottomRight,
-          child: Button(
-            onClick: () {
-              Navigator.pushOverlay(context, const OverlayRoute());
-            },
-            child: Text('open overlay'),
+          child: FocusPolicy(
+            clickFocus: false,
+            child: Button(
+              onClick: () {
+                Navigator.pushOverlay(context, OverlayRoute());
+              },
+              child: Text('open overlay'),
+            ),
           ),
         ),
       ],
@@ -118,21 +121,16 @@ class OverlayRoute extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        const Blur(
-          child: Align(alignment: Alignment.top, child: TheMess()),
-        ),
-        Align(
-          alignment: Alignment.topRight,
-          child: Button(
-            onClick: () {
-              Navigator.pop(context);
-            },
-            child: Text('close overlay'),
-          ),
-        ),
-      ],
+    return MouseArea(
+      clickCallback: (x, y, button) {
+        Future.delayed(const Duration(seconds: 1)).then((value) {
+          Navigator.pop(context);
+        });
+        return true;
+      },
+      child: const Blur(
+        child: Align(alignment: Alignment.top, child: TheMess()),
+      ),
     );
   }
 }

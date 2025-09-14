@@ -111,6 +111,16 @@ class OverlayEntry {
     _onRemove?.call();
     _owner._entries.remove(this);
   });
+
+  // ---
+
+  static OverlayEntry? maybeOf(BuildContext context) => context.getAncestor<_OverlayEntryProvider>()?.entry;
+  static OverlayEntry of(BuildContext context) {
+    final state = maybeOf(context);
+    assert(state != null, 'attempted to look up the enclosing overlay entry without one present');
+
+    return state!;
+  }
 }
 
 class Overlay extends StatefulWidget {
@@ -210,7 +220,13 @@ class OverlayState extends WidgetState<Overlay> {
           ),
           StackBase(
             child: RawOverlay(
-              children: [for (final entry in _entries) RawOverlayElement(x: entry.x, y: entry.y, child: entry._widget)],
+              children: [
+                for (final entry in _entries)
+                  _OverlayEntryProvider(
+                    entry: entry,
+                    child: RawOverlayElement(x: entry.x, y: entry.y, child: entry._widget),
+                  ),
+              ],
             ),
           ),
         ],
@@ -222,6 +238,14 @@ class OverlayState extends WidgetState<Overlay> {
 class _OverlayProvider extends InheritedWidget {
   final OverlayState state;
   _OverlayProvider({required this.state, required super.child});
+
+  @override
+  bool mustRebuildDependents(covariant InheritedWidget newWidget) => false;
+}
+
+class _OverlayEntryProvider extends InheritedWidget {
+  final OverlayEntry entry;
+  _OverlayEntryProvider({required this.entry, required super.child});
 
   @override
   bool mustRebuildDependents(covariant InheritedWidget newWidget) => false;

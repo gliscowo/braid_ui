@@ -454,10 +454,12 @@ class AppState implements InstanceHost, ProxyHost {
         case MouseButtonPressEvent(:final button):
           final state = _hitTest();
 
-          (state.firstWhere((hit) => hit.instance is FocusClickAreaInstance)?.instance as FocusClickAreaInstance?)
-              ?.widget
-              .clickCallback
-              .call();
+          state.firstWhere((hit) {
+            if (hit.instance is! FocusClickAreaInstance) return false;
+
+            (hit.instance.widget as FocusClickArea).clickCallback();
+            return true;
+          });
 
           final clicked = state.firstWhere(
             (hit) =>
