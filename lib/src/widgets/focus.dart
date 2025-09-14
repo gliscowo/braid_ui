@@ -14,43 +14,13 @@ import 'basic.dart';
 import 'inspector.dart';
 import 'stack.dart';
 
-mixin FocusNode<F extends Focusable> on WidgetState<F> {
-  FocusNode? get parent;
-  Iterable<FocusNode> get scopedAncestors sync* {
-    var ancestor = parent;
-    while (ancestor != null && ancestor is! _FocusScopeState) {
-      yield ancestor;
-      ancestor = ancestor.parent;
-    }
-  }
+// TODO:
+//  - track primary focus, ideally store on root scope
+//  - correctly fire unfocus and refocus events for the descendants of a scope
 
-  int get depth;
-
-  // void addChild(FocusNode child) => focusChildren.add(child);
-  // void removeChild(FocusNode child) => focusChildren.remove(child);
-
-  bool onKeyDown(int keyCode, KeyModifiers modifiers) {
-    return widget.keyDownCallback?.call(keyCode, modifiers) ?? false;
-  }
-
-  bool onKeyUp(int keyCode, KeyModifiers modifiers) {
-    return widget.keyUpCallback?.call(keyCode, modifiers) ?? false;
-  }
-
-  bool onChar(int charCode, KeyModifiers modifiers) {
-    return widget.charCallback?.call(charCode, modifiers) ?? false;
-  }
-
-  void requestPrimaryFocus();
-
-  // ---
-
-  static FocusNode? maybeOf(BuildContext context) => context.getAncestor<_FocusNodeProvider<FocusNode>>()?.node;
-}
-
-class _FocusNodeProvider<F extends FocusNode> extends InheritedWidget {
-  final F node;
-  _FocusNodeProvider({required this.node, required super.child});
+class _FocusStateProvider<F extends FocusableState> extends InheritedWidget {
+  final F state;
+  _FocusStateProvider({required this.state, required super.child});
 
   @override
   bool mustRebuildDependents(covariant InheritedWidget newWidget) => false;
@@ -94,51 +64,74 @@ class Focusable extends StatefulWidget {
   });
 
   @override
-  WidgetState<Focusable> createState() => _FocusableState();
+  WidgetState<Focusable> createState() => FocusableState();
+
+  // ---
+
+  static FocusableState? maybeOf(BuildContext context) =>
+      context.getAncestor<_FocusStateProvider<FocusableState>>()?.state;
+  static FocusableState of(BuildContext context) => maybeOf(context)!;
 }
 
-class _FocusableState<F extends Focusable> extends WidgetState<F> with FocusNode {
-  @override
-  late final FocusNode parent;
-  late final _FocusScopeState? scope;
+class FocusableState<F extends Focusable> extends WidgetState<F> {
+  late final FocusableState? _parent;
+  late final _FocusScopeState? _scope;
 
-  @override
   late final int depth;
 
-  @override
-  void requestPrimaryFocus() {
-    scope?.moveFocus(this);
+  void requestFocus() {
+    _scope?.moveFocus(this);
+  }
+
+  @protected
+  void _onClick() {
+    if (widget.clickFocus ?? context.getAncestor<FocusPolicy>()!.clickFocus) {
+      requestFocus();
+    }
+  }
+
+  bool _onKeyDown(int keyCode, KeyModifiers modifiers) {
+    return widget.keyDownCallback?.call(keyCode, modifiers) ?? false;
+  }
+
+  bool _onKeyUp(int keyCode, KeyModifiers modifiers) {
+    return widget.keyUpCallback?.call(keyCode, modifiers) ?? false;
+  }
+
+  bool _onChar(int charCode, KeyModifiers modifiers) {
+    return widget.charCallback?.call(charCode, modifiers) ?? false;
+  }
+
+  Iterable<FocusableState> get _scopedAncestors sync* {
+    var ancestor = _parent;
+    while (ancestor != null && ancestor is! _FocusScopeState) {
+      yield ancestor;
+      ancestor = ancestor._parent;
+    }
   }
 
   @override
   void init() {
-    parent = FocusNode.maybeOf(context)!;
-    scope = _FocusScopeState.maybeOf(context);
+    _parent = Focusable.maybeOf(context);
+    _scope = _FocusScopeState.maybeOf(context);
 
-    depth = parent.depth + 1;
+    depth = (_parent?.depth ?? -1) + 1;
 
     if (widget.autoFocus) {
-      requestPrimaryFocus();
+      requestFocus();
     }
   }
 
   @override
   void dispose() {
-    scope?.onFocusableDisposed(this);
-  }
-
-  @protected
-  void onClick() {
-    if (widget.clickFocus ?? context.getAncestor<FocusPolicy>()!.clickFocus) {
-      requestPrimaryFocus();
-    }
+    _scope?.onFocusableDisposed(this);
   }
 
   @override
   Widget build(BuildContext context) {
     return FocusClickArea(
-      clickCallback: onClick,
-      child: _FocusNodeProvider<FocusNode>(node: this, child: widget.child),
+      clickCallback: _onClick,
+      child: _FocusStateProvider<FocusableState>(state: this, child: widget.child),
     );
   }
 }
@@ -171,18 +164,18 @@ class _FocusScopeProxy extends StatefulProxy {
   void mount(WidgetProxy parent, Object? slot) {
     super.mount(parent, slot);
     (state as _FocusScopeState).collectDescendants = () {
-      final descendants = <FocusNode>[];
+      final descendants = <FocusableState>[];
       visitChildren((child) => _collectFocusDescendants(child, descendants));
 
       return descendants;
     };
   }
 
-  static void _collectFocusDescendants(WidgetProxy proxy, List<FocusNode> into) {
-    if (proxy case StatefulProxy(state: FocusNode node)) {
-      into.add(node);
+  static void _collectFocusDescendants(WidgetProxy proxy, List<FocusableState> into) {
+    if (proxy case StatefulProxy(state: FocusableState state)) {
+      into.add(state);
 
-      if (node is _FocusScopeState) {
+      if (state is _FocusScopeState) {
         return;
       }
     }
@@ -193,16 +186,16 @@ class _FocusScopeProxy extends StatefulProxy {
   }
 }
 
-class _FocusScopeState extends _FocusableState<FocusScope> {
-  List<FocusNode> focused = [];
+class _FocusScopeState extends FocusableState<FocusScope> {
+  List<FocusableState> focused = [];
 
-  late List<FocusNode> Function() collectDescendants;
+  late List<FocusableState> Function() collectDescendants;
   final Queue<_FocusScopeState> previouslyFocusedScopes = Queue();
 
   @override
-  bool onKeyDown(int keyCode, KeyModifiers modifiers) {
+  bool _onKeyDown(int keyCode, KeyModifiers modifiers) {
     for (final descendant in focused) {
-      if (descendant.onKeyDown(keyCode, modifiers)) {
+      if (descendant._onKeyDown(keyCode, modifiers)) {
         return true;
       }
     }
@@ -225,46 +218,46 @@ class _FocusScopeState extends _FocusableState<FocusScope> {
       return true;
     }
 
-    return super.onKeyDown(keyCode, modifiers);
+    return super._onKeyDown(keyCode, modifiers);
   }
 
   @override
-  bool onKeyUp(int keyCode, KeyModifiers modifiers) {
+  bool _onKeyUp(int keyCode, KeyModifiers modifiers) {
     for (final descendant in focused) {
-      if (descendant.onKeyUp(keyCode, modifiers)) {
+      if (descendant._onKeyUp(keyCode, modifiers)) {
         return true;
       }
     }
 
-    return super.onKeyUp(keyCode, modifiers);
+    return super._onKeyUp(keyCode, modifiers);
   }
 
   @override
-  bool onChar(int charCode, KeyModifiers modifiers) {
+  bool _onChar(int charCode, KeyModifiers modifiers) {
     for (final descendant in focused) {
-      if (descendant.onChar(charCode, modifiers)) {
+      if (descendant._onChar(charCode, modifiers)) {
         return true;
       }
     }
 
-    return super.onChar(charCode, modifiers);
+    return super._onChar(charCode, modifiers);
   }
 
   @override
-  void onClick() {
-    super.onClick();
+  void _onClick() {
+    super._onClick();
     moveFocus(null);
   }
 
-  void moveFocus(FocusNode? to) {
-    scope?.moveFocus(this);
-    final nowFocused = to != null ? [to].followedBy(to.scopedAncestors).toList() : <FocusNode>[];
+  void moveFocus(FocusableState? to) {
+    _scope?.moveFocus(this);
+    final nowFocused = to != null ? [to].followedBy(to._scopedAncestors).toList() : <FocusableState>[];
 
-    for (final node in nowFocused) {
-      if (focused.contains(node)) {
-        focused.remove(node);
+    for (final state in nowFocused) {
+      if (focused.contains(state)) {
+        focused.remove(state);
       } else {
-        node.widget.focusGainedCallback?.call();
+        state.widget.focusGainedCallback?.call();
       }
     }
 
@@ -281,7 +274,7 @@ class _FocusScopeState extends _FocusableState<FocusScope> {
     focused = nowFocused;
   }
 
-  void onFocusableDisposed(FocusNode descendant) {
+  void onFocusableDisposed(FocusableState descendant) {
     if (descendant == focused.firstOrNull && previouslyFocusedScopes.isNotEmpty) {
       moveFocus(previouslyFocusedScopes.removeLast());
     }
@@ -295,7 +288,7 @@ class _FocusScopeState extends _FocusableState<FocusScope> {
     return Stack(
       children: [
         StackBase(
-          child: _FocusNodeProvider<_FocusScopeState>(node: this, child: super.build(context)),
+          child: _FocusStateProvider<_FocusScopeState>(state: this, child: super.build(context)),
         ),
         CustomDraw(
           drawFunction: (ctx, transform) {
@@ -326,7 +319,7 @@ class _FocusScopeState extends _FocusableState<FocusScope> {
   // ---
 
   static _FocusScopeState? maybeOf(BuildContext context) =>
-      context.getAncestor<_FocusNodeProvider<_FocusScopeState>>()?.node;
+      context.getAncestor<_FocusStateProvider<_FocusScopeState>>()?.state;
 }
 
 // ---
@@ -335,55 +328,44 @@ typedef KeyDownEvent = ({int keyCode, KeyModifiers modifiers});
 typedef KeyUpEvent = ({int keyCode, KeyModifiers modifiers});
 typedef CharEvent = ({int charCode, KeyModifiers modifiers});
 
-class RootFocusScope extends Focusable {
+class RootFocusScope extends StatefulWidget {
   final Stream<KeyDownEvent> onKeyDown;
   final Stream<KeyUpEvent> onKeyUp;
   final Stream<CharEvent> onChar;
+  final Widget child;
 
   RootFocusScope({
     super.key,
     required this.onKeyDown,
     required this.onKeyUp,
     required this.onChar,
-    required super.child,
+    required this.child,
   });
 
   @override
   WidgetState<RootFocusScope> createState() => _RootFocusScopeState();
 }
 
-class _RootFocusScopeState extends WidgetState<RootFocusScope> with FocusNode, StreamListenerState {
-  @override
-  FocusNode? get parent => null;
-
-  @override
-  final int depth = 0;
-
-  @override
-  void requestPrimaryFocus() {}
-
+class _RootFocusScopeState extends WidgetState<RootFocusScope> with StreamListenerState {
   late _FocusScopeState scope;
 
   @override
   void init() {
-    streamListen((widget) => widget.onKeyDown, (event) => scope.onKeyDown(event.keyCode, event.modifiers));
-    streamListen((widget) => widget.onKeyUp, (event) => scope.onKeyUp(event.keyCode, event.modifiers));
-    streamListen((widget) => widget.onChar, (event) => scope.onChar(event.charCode, event.modifiers));
+    streamListen((widget) => widget.onKeyDown, (event) => scope._onKeyDown(event.keyCode, event.modifiers));
+    streamListen((widget) => widget.onKeyUp, (event) => scope._onKeyUp(event.keyCode, event.modifiers));
+    streamListen((widget) => widget.onChar, (event) => scope._onChar(event.charCode, event.modifiers));
   }
 
   @override
   Widget build(BuildContext context) {
     return FocusPolicy(
       clickFocus: true,
-      child: _FocusNodeProvider<FocusNode>(
-        node: this,
-        child: FocusScope(
-          child: Builder(
-            builder: (context) {
-              scope = _FocusScopeState.maybeOf(context)!;
-              return widget.child;
-            },
-          ),
+      child: FocusScope(
+        child: Builder(
+          builder: (context) {
+            scope = _FocusScopeState.maybeOf(context)!;
+            return widget.child;
+          },
         ),
       ),
     );

@@ -215,7 +215,7 @@ class VisuallyFocusableState extends WidgetState<VisuallyFocusable> {
 
   @override
   Widget build(BuildContext context) {
-    final depth = FocusNode.maybeOf(context)!.depth + 1;
+    final depth = Focusable.of(context).depth + 1;
     return Focusable(
       autoFocus: widget.autoFocus,
       focusGainedCallback: () => setState(() {
