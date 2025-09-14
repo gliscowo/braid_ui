@@ -479,6 +479,12 @@ class StatefulProxy extends ComposedProxy {
   }
 
   @override
+  void notifyDependenciesChanged() {
+    super.notifyDependenciesChanged();
+    _state.didChangeDependencies();
+  }
+
+  @override
   void doRebuild() {
     final newWidget = _state.build(this);
     super.doRebuild();
@@ -496,6 +502,7 @@ abstract class WidgetState<T extends StatefulWidget> {
 
   void init() {}
   void didUpdateWidget(T oldWidget) {}
+  void didChangeDependencies() {}
   void dispose() {}
 
   StatefulProxy? _owner;
