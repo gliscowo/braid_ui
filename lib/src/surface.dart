@@ -136,6 +136,8 @@ class WindowSurface implements Surface {
   @override
   void endDrawing() {
     window.nextFrame();
+    // wtf??
+    dgl.glfw.pollEvents();
     dgl.Window.dropContext();
   }
 
