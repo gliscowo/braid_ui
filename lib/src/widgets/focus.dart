@@ -1,10 +1,10 @@
 import 'dart:collection';
 
+import 'package:collection/collection.dart';
 import 'package:diamond_gl/diamond_gl.dart';
-import 'package:meta/meta.dart';
+import 'package:diamond_gl/glfw.dart';
 import 'package:vector_math/vector_math.dart';
 
-import '../../glfw.dart';
 import '../core/key_modifiers.dart';
 import '../core/math.dart';
 import '../framework/instance.dart';
@@ -14,16 +14,19 @@ import 'basic.dart';
 import 'inspector.dart';
 import 'stack.dart';
 
-// TODO:
-//  - track primary focus, ideally store on root scope
-//  - correctly fire unfocus and refocus events for the descendants of a scope
+enum FocusLevel { base, highlight }
+
+extension IsFocused on FocusLevel? {
+  bool get isFocused => this != null;
+}
 
 class _FocusStateProvider<F extends FocusableState> extends InheritedWidget {
   final F state;
-  _FocusStateProvider({required this.state, required super.child});
+  final FocusLevel? level;
+  _FocusStateProvider({required this.state, required this.level, required super.child});
 
   @override
-  bool mustRebuildDependents(covariant InheritedWidget newWidget) => false;
+  bool mustRebuildDependents(covariant _FocusStateProvider<F> newWidget) => newWidget.level != level;
 }
 
 // ---
@@ -46,6 +49,8 @@ class Focusable extends StatefulWidget {
   final bool Function(int charCode, KeyModifiers modifiers)? charCallback;
   final Callback? focusGainedCallback;
   final Callback? focusLostCallback;
+  final void Function(FocusLevel? level)? focusLevelChangeCallback;
+  final bool skipTraversal;
   final bool autoFocus;
   final bool? clickFocus;
 
@@ -58,6 +63,8 @@ class Focusable extends StatefulWidget {
     this.charCallback,
     this.focusGainedCallback,
     this.focusLostCallback,
+    this.focusLevelChangeCallback,
+    this.skipTraversal = false,
     this.autoFocus = false,
     this.clickFocus,
     required this.child,
@@ -71,43 +78,69 @@ class Focusable extends StatefulWidget {
   static FocusableState? maybeOf(BuildContext context) =>
       context.getAncestor<_FocusStateProvider<FocusableState>>()?.state;
   static FocusableState of(BuildContext context) => maybeOf(context)!;
+
+  static FocusLevel? levelOf(BuildContext context) =>
+      context.dependOnAncestor<_FocusStateProvider<FocusableState>>()?.level;
+  static bool isFocused(BuildContext context) => levelOf(context).isFocused;
 }
 
 class FocusableState<F extends Focusable> extends WidgetState<F> {
   late final FocusableState? _parent;
   late final _FocusScopeState? _scope;
+  FocusLevel? _level;
 
   late final int depth;
 
-  void requestFocus() {
-    _scope?.moveFocus(this);
+  FocusableState get primaryFocus => _scope?.primaryFocus ?? this;
+
+  Iterable<FocusableState> get ancestors sync* {
+    var ancestor = _parent;
+    while (ancestor != null) {
+      yield ancestor;
+      ancestor = ancestor._parent;
+    }
   }
 
-  @protected
+  void requestFocus({FocusLevel level = FocusLevel.highlight}) {
+    _scope?.updateFocus(this, level);
+  }
+
+  void unfocus() {
+    _scope?.updateFocus(null, null);
+  }
+
+  void _onFocusChange(FocusLevel? newLevel) {
+    assert(_level != newLevel, '_onFocusChange($newLevel) invoked on a state which is already at $newLevel');
+
+    widget.focusLevelChangeCallback?.call(newLevel);
+    if (!_level.isFocused && newLevel.isFocused) {
+      widget.focusGainedCallback?.call();
+    } else if (_level.isFocused && !newLevel.isFocused) {
+      widget.focusLostCallback?.call();
+    }
+
+    _level = newLevel;
+  }
+
   void _onClick() {
     if (widget.clickFocus ?? context.getAncestor<FocusPolicy>()!.clickFocus) {
-      requestFocus();
+      requestFocus(level: FocusLevel.base);
     }
   }
 
   bool _onKeyDown(int keyCode, KeyModifiers modifiers) {
+    assert(_level.isFocused, '_onKeyDown invoked on a state which is not focused');
     return widget.keyDownCallback?.call(keyCode, modifiers) ?? false;
   }
 
   bool _onKeyUp(int keyCode, KeyModifiers modifiers) {
+    assert(_level.isFocused, '_onKeyUp invoked on a state which is not focused');
     return widget.keyUpCallback?.call(keyCode, modifiers) ?? false;
   }
 
   bool _onChar(int charCode, KeyModifiers modifiers) {
+    assert(_level.isFocused, '_onChar invoked on a state which is not focused');
     return widget.charCallback?.call(charCode, modifiers) ?? false;
-  }
-
-  Iterable<FocusableState> get _scopedAncestors sync* {
-    var ancestor = _parent;
-    while (ancestor != null && ancestor is! _FocusScopeState) {
-      yield ancestor;
-      ancestor = ancestor._parent;
-    }
   }
 
   @override
@@ -131,7 +164,7 @@ class FocusableState<F extends Focusable> extends WidgetState<F> {
   Widget build(BuildContext context) {
     return FocusClickArea(
       clickCallback: _onClick,
-      child: _FocusStateProvider<FocusableState>(state: this, child: widget.child),
+      child: _FocusStateProvider<FocusableState>(state: this, level: _level, child: widget.child),
     );
   }
 }
@@ -146,6 +179,7 @@ class FocusScope extends Focusable {
     super.charCallback,
     super.focusGainedCallback,
     super.focusLostCallback,
+    super.focusLevelChangeCallback,
     super.autoFocus = false,
     required super.child,
   });
@@ -186,15 +220,94 @@ class _FocusScopeProxy extends StatefulProxy {
   }
 }
 
-class _FocusScopeState extends FocusableState<FocusScope> {
-  List<FocusableState> focused = [];
+typedef _FocusEntry = ({FocusableState state, FocusLevel level});
 
+class _FocusScopeState extends FocusableState<FocusScope> {
   late List<FocusableState> Function() collectDescendants;
-  final Queue<_FocusScopeState> previouslyFocusedScopes = Queue();
+
+  List<FocusableState> focusedDescendants = [];
+  _FocusEntry? previousPrimaryFocus;
+
+  final Queue<_FocusEntry> previouslyFocusedScopes = Queue();
+
+  @override
+  FocusableState get primaryFocus {
+    if (_level.isFocused) {
+      var candidate = focusedDescendants.firstOrNull;
+      if (candidate is _FocusScopeState) candidate = candidate.primaryFocus;
+
+      return candidate ?? this;
+    } else {
+      return super.primaryFocus;
+    }
+  }
+
+  void updateFocus(FocusableState? primary, FocusLevel? level) {
+    if (primary == focusedDescendants.firstOrNull && primary?._level == level) {
+      return;
+    }
+
+    if (!_level.isFocused && primary != null) {
+      requestFocus();
+    }
+
+    final nowFocused = primary != null
+        ? [primary].followedBy(primary.ancestors.takeWhile((value) => value != this)).toList()
+        : <FocusableState>[];
+
+    for (final state in nowFocused) {
+      if (focusedDescendants.contains(state)) {
+        focusedDescendants.remove(state);
+
+        if (state._level != level) {
+          state._onFocusChange(level);
+        }
+      } else {
+        state._onFocusChange(level);
+      }
+    }
+
+    if (focusedDescendants.firstOrNull case _FocusScopeState scope when !nowFocused.contains(scope)) {
+      previouslyFocusedScopes.add((state: scope, level: scope._level!));
+    } else if (nowFocused.firstOrNull is! _FocusScopeState) {
+      previouslyFocusedScopes.clear();
+    }
+
+    for (final noLongerFocused in focusedDescendants) {
+      noLongerFocused._onFocusChange(null);
+    }
+
+    focusedDescendants = nowFocused;
+  }
+
+  void onFocusableDisposed(FocusableState descendant) {
+    if (descendant == focusedDescendants.firstOrNull && previouslyFocusedScopes.isNotEmpty) {
+      final (state: scope, :level) = previouslyFocusedScopes.removeLast();
+      updateFocus(scope, level);
+    }
+
+    focusedDescendants.remove(descendant);
+    previouslyFocusedScopes.removeWhere((element) => element.state == descendant);
+  }
+
+  @override
+  void _onFocusChange(FocusLevel? newLevel) {
+    final previousLevel = _level;
+    super._onFocusChange(newLevel);
+
+    if (previousLevel.isFocused && !newLevel.isFocused) {
+      final primaryFocus = focusedDescendants.firstOrNull;
+      previousPrimaryFocus = primaryFocus != null ? (state: primaryFocus, level: primaryFocus._level!) : null;
+
+      updateFocus(null, null);
+    } else if (!previousLevel.isFocused && newLevel.isFocused && previousPrimaryFocus != null) {
+      updateFocus(previousPrimaryFocus!.state, previousPrimaryFocus!.level);
+    }
+  }
 
   @override
   bool _onKeyDown(int keyCode, KeyModifiers modifiers) {
-    for (final descendant in focused) {
+    for (final descendant in focusedDescendants) {
       if (descendant._onKeyDown(keyCode, modifiers)) {
         return true;
       }
@@ -203,18 +316,17 @@ class _FocusScopeState extends FocusableState<FocusScope> {
     if (keyCode == glfwKeyTab) {
       final descendants = collectDescendants();
 
-      final currentFocusIdx = focused.isNotEmpty ? descendants.indexOf(focused.first) : null;
-      final nextFocusIdx =
-          (modifiers.shift
-              ? currentFocusIdx != null
-                    ? currentFocusIdx - 1
-                    : descendants.length - 1
-              : currentFocusIdx != null
-              ? currentFocusIdx + 1
-              : 0) %
-          descendants.length;
+      final searchStartIdx = focusedDescendants.isNotEmpty
+          ? descendants.indexOf(focusedDescendants.first)
+          : (modifiers.shift ? 0 : -1);
+      final offset = modifiers.shift ? -1 : 1;
 
-      moveFocus(descendants[nextFocusIdx]);
+      var nextFocusIdx = searchStartIdx;
+      do {
+        nextFocusIdx = (nextFocusIdx + offset) % descendants.length;
+      } while (descendants[nextFocusIdx].widget.skipTraversal);
+
+      updateFocus(descendants[nextFocusIdx], FocusLevel.highlight);
       return true;
     }
 
@@ -223,7 +335,7 @@ class _FocusScopeState extends FocusableState<FocusScope> {
 
   @override
   bool _onKeyUp(int keyCode, KeyModifiers modifiers) {
-    for (final descendant in focused) {
+    for (final descendant in focusedDescendants) {
       if (descendant._onKeyUp(keyCode, modifiers)) {
         return true;
       }
@@ -234,7 +346,7 @@ class _FocusScopeState extends FocusableState<FocusScope> {
 
   @override
   bool _onChar(int charCode, KeyModifiers modifiers) {
-    for (final descendant in focused) {
+    for (final descendant in focusedDescendants) {
       if (descendant._onChar(charCode, modifiers)) {
         return true;
       }
@@ -246,41 +358,7 @@ class _FocusScopeState extends FocusableState<FocusScope> {
   @override
   void _onClick() {
     super._onClick();
-    moveFocus(null);
-  }
-
-  void moveFocus(FocusableState? to) {
-    _scope?.moveFocus(this);
-    final nowFocused = to != null ? [to].followedBy(to._scopedAncestors).toList() : <FocusableState>[];
-
-    for (final state in nowFocused) {
-      if (focused.contains(state)) {
-        focused.remove(state);
-      } else {
-        state.widget.focusGainedCallback?.call();
-      }
-    }
-
-    for (final noLongerFocused in focused) {
-      noLongerFocused.widget.focusLostCallback?.call();
-    }
-
-    if (focused.firstOrNull case _FocusScopeState scope when !nowFocused.contains(scope)) {
-      previouslyFocusedScopes.add(scope);
-    } else if (nowFocused.firstOrNull is! _FocusScopeState) {
-      previouslyFocusedScopes.clear();
-    }
-
-    focused = nowFocused;
-  }
-
-  void onFocusableDisposed(FocusableState descendant) {
-    if (descendant == focused.firstOrNull && previouslyFocusedScopes.isNotEmpty) {
-      moveFocus(previouslyFocusedScopes.removeLast());
-    }
-
-    focused.remove(descendant);
-    previouslyFocusedScopes.removeWhere((element) => element == descendant);
+    updateFocus(null, null);
   }
 
   @override
@@ -288,13 +366,13 @@ class _FocusScopeState extends FocusableState<FocusScope> {
     return Stack(
       children: [
         StackBase(
-          child: _FocusStateProvider<_FocusScopeState>(state: this, child: super.build(context)),
+          child: _FocusStateProvider<_FocusScopeState>(state: this, level: _level, child: super.build(context)),
         ),
         CustomDraw(
           drawFunction: (ctx, transform) {
-            if (focused.isEmpty) return;
+            if (focusedDescendants.isEmpty) return;
 
-            final instance = focused.first.context.instance!;
+            final instance = focusedDescendants.first.context.instance!;
             final transform = instance.parent!.computeTransformFrom(ancestor: context.instance)..invert();
 
             final box = Aabb3.copy(instance.transform.aabb)..transform(transform);
@@ -304,7 +382,7 @@ class _FocusScopeState extends FocusableState<FocusScope> {
                 box.width,
                 box.height,
                 const CornerRadius.all(2.5),
-                Color.ofHsv(focused.first.depth / 8 % 1, .75, 1),
+                Color.ofHsv(focusedDescendants.first.depth / 8 % 1, .75, 1),
                 ctx.transform,
                 ctx.projection,
                 outlineThickness: 1,
@@ -347,13 +425,14 @@ class RootFocusScope extends StatefulWidget {
 }
 
 class _RootFocusScopeState extends WidgetState<RootFocusScope> with StreamListenerState {
-  late _FocusScopeState scope;
+  _FocusScopeState? scope;
+  late FocusableState primaryFocus;
 
   @override
   void init() {
-    streamListen((widget) => widget.onKeyDown, (event) => scope._onKeyDown(event.keyCode, event.modifiers));
-    streamListen((widget) => widget.onKeyUp, (event) => scope._onKeyUp(event.keyCode, event.modifiers));
-    streamListen((widget) => widget.onChar, (event) => scope._onChar(event.charCode, event.modifiers));
+    streamListen((widget) => widget.onKeyDown, (event) => scope!._onKeyDown(event.keyCode, event.modifiers));
+    streamListen((widget) => widget.onKeyUp, (event) => scope!._onKeyUp(event.keyCode, event.modifiers));
+    streamListen((widget) => widget.onChar, (event) => scope!._onChar(event.charCode, event.modifiers));
   }
 
   @override
@@ -363,7 +442,9 @@ class _RootFocusScopeState extends WidgetState<RootFocusScope> with StreamListen
       child: FocusScope(
         child: Builder(
           builder: (context) {
-            scope = _FocusScopeState.maybeOf(context)!;
+            // the root scope is always focused
+            scope ??= (primaryFocus = _FocusScopeState.maybeOf(context)!.._onFocusChange(FocusLevel.base));
+
             return widget.child;
           },
         ),

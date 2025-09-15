@@ -40,7 +40,7 @@ class Blod extends StatelessWidget {
           RawImage(
             key: Key('blod'),
             wrap: ImageWrap.mirroredRepeat,
-            provider: FileImageProvider(File('test/blud.jpg')),
+            provider: FileImageProvider(File('test/blud.png')),
           ),
         StackBase(key: Key('child'), child: child),
       ],
@@ -56,11 +56,38 @@ class FocusApp extends StatelessWidget {
     return BraidTheme(
       child: Blod(
         show: true,
-        child: Navigator(
-          initialRoute: BaseRoute(),
-          routeBuilder: (route) {
-            return FocusScope(autoFocus: true, child: Navigator.buildRouteDefault(route));
-          },
+        child: Stack(
+          children: [
+            StackBase(
+              child: Navigator(
+                initialRoute: BaseRoute(),
+                routeBuilder: (route) {
+                  return FocusScope(autoFocus: true, child: Navigator.buildRouteDefault(route));
+                },
+              ),
+            ),
+            CustomDraw(
+              drawFunction: (ctx, transform) {
+                final primaryFocus = Focusable.of(context).primaryFocus;
+                final instance = primaryFocus.context.instance!;
+                final transform = instance.parent!.computeTransformFrom(ancestor: context.instance)..invert();
+
+                final box = Aabb3.copy(instance.transform.aabb)..transform(transform);
+                ctx.transform.scope((mat4) {
+                  mat4.translateByVector3(box.min);
+                  ctx.primitives.roundedRect(
+                    box.width,
+                    box.height,
+                    const CornerRadius.all(2.5),
+                    Color.ofHsv(primaryFocus.depth / 8 % 1, .75, 1),
+                    ctx.transform,
+                    ctx.projection,
+                    outlineThickness: 1,
+                  );
+                });
+              },
+            ),
+          ],
         ),
       ),
     );
@@ -75,7 +102,9 @@ class BaseRoute extends StatelessWidget {
     return Stack(
       children: [
         const Resettable(
-          child: Center(child: Blur(radius: 12.5, child: TheMess())),
+          child: Center(
+            child: Blur(radius: 12.5, child: Row(children: [TheMess(), TheMess()])),
+          ),
         ),
         Align(
           alignment: Alignment.bottom,
@@ -87,11 +116,11 @@ class BaseRoute extends StatelessWidget {
                 insets: const Insets.all(10),
                 child: SizeToAABB(
                   child: Transform(
-                    matrix: Matrix4.identity()..scaleByDouble(4, 1, 1, 1),
+                    matrix: Matrix4.identity()..scaleByDouble(5, 1, 1, 1),
                     child: const Text(
+                      'gay balling',
                       softWrap: false,
-                      'me when left behind on\nplatform without chys',
-                      style: TextStyle(color: Color.black, bold: true, fontSize: 20),
+                      style: TextStyle(color: Color.red, bold: true, fontSize: 24),
                     ),
                   ),
                 ),
@@ -123,13 +152,14 @@ class OverlayRoute extends StatelessWidget {
   Widget build(BuildContext context) {
     return MouseArea(
       clickCallback: (x, y, button) {
-        Future.delayed(const Duration(seconds: 1)).then((value) {
-          Navigator.pop(context);
-        });
+        Navigator.pop(context);
         return true;
       },
       child: const Blur(
-        child: Align(alignment: Alignment.top, child: TheMess()),
+        child: Align(
+          alignment: Alignment.top,
+          child: HitTestTrap(child: TheMess()),
+        ),
       ),
     );
   }
@@ -140,25 +170,44 @@ class TheMess extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const VisuallyFocusable(
-      child: VisuallyFocusable(
-        child: VisuallyFocusable(
-          child: Row(
+    return FocusScope(
+      child: Builder(
+        builder: (context) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              VisuallyFocusable(
+              const VisuallyFocusable(
                 child: VisuallyFocusable(
-                  child: VisuallyFocusable(child: Sized(width: 100, height: 100, child: EmptyWidget())),
+                  child: VisuallyFocusable(
+                    child: Row(
+                      children: [
+                        VisuallyFocusable(
+                          child: VisuallyFocusable(
+                            child: VisuallyFocusable(child: Sized(width: 100, height: 100, child: EmptyWidget())),
+                          ),
+                        ),
+                        VisuallyFocusable(
+                          child: VisuallyFocusable(
+                            child: VisuallyFocusable(child: Sized(width: 100, height: 100, child: EmptyWidget())),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-              VisuallyFocusable(
-                // autoFocus: true,
-                child: VisuallyFocusable(
-                  child: VisuallyFocusable(child: Sized(width: 100, height: 100, child: EmptyWidget())),
+              FocusPolicy(
+                clickFocus: false,
+                child: Button(
+                  onClick: () {
+                    Focusable.of(context).requestFocus();
+                  },
+                  child: Text('focus scope'),
                 ),
               ),
             ],
-          ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -211,18 +260,15 @@ class VisuallyFocusable extends StatefulWidget {
 }
 
 class VisuallyFocusableState extends WidgetState<VisuallyFocusable> {
-  bool focused = false;
+  FocusLevel? focusLevel;
 
   @override
   Widget build(BuildContext context) {
     final depth = Focusable.of(context).depth + 1;
     return Focusable(
       autoFocus: widget.autoFocus,
-      focusGainedCallback: () => setState(() {
-        focused = true;
-      }),
-      focusLostCallback: () => setState(() {
-        focused = false;
+      focusLevelChangeCallback: (level) => setState(() {
+        focusLevel = level;
       }),
       keyDownCallback: depth % 2 == 0
           ? (keyCode, modifiers) {
@@ -234,7 +280,7 @@ class VisuallyFocusableState extends WidgetState<VisuallyFocusable> {
           : null,
       child: Panel(
         color: Color.white,
-        outlineThickness: 1,
+        outlineThickness: focusLevel == FocusLevel.highlight ? 5 : 1,
         cornerRadius: const CornerRadius.all(2.5),
         child: Stack(
           alignment: Alignment.topLeft,
@@ -242,7 +288,7 @@ class VisuallyFocusableState extends WidgetState<VisuallyFocusable> {
             Padding(insets: const Insets(top: 30, left: 30), child: widget.child),
             Padding(
               insets: const Insets.all(5),
-              child: Text('$depth', style: TextStyle(color: focused ? Color.red : Color.black)),
+              child: Text('$depth', style: TextStyle(color: focusLevel.isFocused ? Color.red : Color.black)),
             ),
           ],
         ),

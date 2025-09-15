@@ -47,12 +47,10 @@ class Shortcuts extends StatefulWidget {
 }
 
 class _ShortcutsState extends WidgetState<Shortcuts> {
-  late final _IntentScopeState scope;
   late Map<List<ActionTrigger>, Callback> actions;
 
   @override
   void init() {
-    scope = _IntentScopeState.of(context);
     _buildActions();
   }
 
@@ -64,7 +62,7 @@ class _ShortcutsState extends WidgetState<Shortcuts> {
   void _buildActions() {
     actions = {
       for (final MapEntry(key: triggers, value: intent) in widget.shortcuts.entries)
-        triggers: () => scope.actionForIntent(intent.runtimeType)?.invoke(intent),
+        triggers: () => Intents.invoke(context, intent),
     };
   }
 
@@ -99,22 +97,29 @@ class Intents extends StatefulWidget {
 
   @override
   WidgetState<Intents> createState() => _IntentsState();
+
+  // ---
+
+  static void invoke(BuildContext context, Intent intent) {
+    actionForIntent(context, intent.runtimeType)?.invoke(intent);
+  }
+
+  static Action? actionForIntent(BuildContext context, Type intentType) {
+    var intents = Focusable.of(context).primaryFocus.context.getAncestor<_IntentsProvider>()?.state;
+    while (intents != null && !intents.widget.actions.containsKey(intentType)) {
+      intents = intents.context.getAncestor<_IntentsProvider>()?.state;
+    }
+
+    return intents?.widget.actions[intentType];
+  }
 }
 
 class _IntentsState extends WidgetState<Intents> {
-  late final _IntentScopeState scope;
-
-  @override
-  void init() {
-    scope = _IntentScopeState.of(context);
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Focusable(
-      focusGainedCallback: () => scope.onDescendantFocusGained(this),
-      focusLostCallback: () => scope.onDescendantFocusLost(this),
-      child: _IntentsProvider(state: this, child: widget.child),
+    return _IntentsProvider(
+      state: this,
+      child: Focusable(child: widget.child),
     );
   }
 }
@@ -122,53 +127,6 @@ class _IntentsState extends WidgetState<Intents> {
 class _IntentsProvider extends InheritedWidget {
   final _IntentsState state;
   _IntentsProvider({required this.state, required super.child});
-
-  @override
-  bool mustRebuildDependents(covariant InheritedWidget newWidget) => false;
-}
-
-// ---
-
-class IntentScope extends StatefulWidget {
-  final Widget child;
-  const IntentScope({super.key, required this.child});
-
-  @override
-  WidgetState<IntentScope> createState() => _IntentScopeState();
-
-  // ---
-
-  static void invoke(BuildContext context, Intent intent) =>
-      _IntentScopeState.of(context).actionForIntent(intent.runtimeType)?.invoke(intent);
-}
-
-class _IntentScopeState extends WidgetState<IntentScope> {
-  final List<_IntentsState> _focusedDescendants = [];
-
-  void onDescendantFocusGained(_IntentsState descendant) => _focusedDescendants.add(descendant);
-  void onDescendantFocusLost(_IntentsState descendant) => _focusedDescendants.remove(descendant);
-
-  Action? actionForIntent(Type intentType) {
-    return _focusedDescendants
-        .cast<_IntentsState?>()
-        .lastWhere((element) => element!.widget.actions.containsKey(intentType), orElse: () => null)
-        ?.widget
-        .actions[intentType];
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return _IntentScopeProvider(scope: this, child: widget.child);
-  }
-
-  // ---
-
-  static _IntentScopeState of(BuildContext context) => context.getAncestor<_IntentScopeProvider>()!.scope;
-}
-
-class _IntentScopeProvider extends InheritedWidget {
-  final _IntentScopeState scope;
-  _IntentScopeProvider({required this.scope, required super.child});
 
   @override
   bool mustRebuildDependents(covariant InheritedWidget newWidget) => false;

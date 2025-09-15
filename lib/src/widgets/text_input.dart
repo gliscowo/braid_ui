@@ -9,6 +9,7 @@ import 'package:vector_math/vector_math.dart';
 import '../context.dart';
 import '../core/constraints.dart';
 import '../core/cursors.dart';
+import '../core/key_modifiers.dart';
 import '../core/listenable.dart';
 import '../core/math.dart';
 import '../framework/instance.dart';
@@ -109,6 +110,12 @@ class _EditableTextState extends WidgetState<EditableText> {
       focusLostCallback: () {
         focused = false;
         _stopBlinking();
+      },
+      keyDownCallback: (keyCode, modifiers) {
+        return (inputContext.instance as TextInputInstance).onKeyDown(keyCode, modifiers);
+      },
+      charCallback: (charCode, modifiers) {
+        return (inputContext.instance as TextInputInstance).onChar(charCode, modifiers);
       },
       child: Scrollable(
         horizontal: true,
@@ -315,7 +322,7 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with /*KeyboardLis
       final (xPos, yPos, lineHeight) = _coordinatesAtRuneIdx(_selection.end);
 
       ctx.transform.scope((mat4) {
-        mat4.translate(xPos, yPos);
+        mat4.translateByDouble(xPos, yPos, 0, 1);
         ctx.primitives.rect(2, -lineHeight, Color.white, mat4, ctx.projection);
       });
     }
@@ -458,118 +465,115 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with /*KeyboardLis
   int _safeCharCodeAt(int runeIdx) =>
       _text.isEmpty ? _text.runes.toList()[runeIdx.clamp(0, _text.runes.length - 1)] : _space;
 
-  // TODO: port
-  // @override
-  // bool onChar(int charCode, KeyModifiers modifiers) {
-  //   _insert(String.fromCharCode(charCode));
-  //   return true;
-  // }
+  bool onChar(int charCode, KeyModifiers modifiers) {
+    _insert(String.fromCharCode(charCode));
+    return true;
+  }
 
-  // @override
-  // bool onKeyDown(int keyCode, KeyModifiers modifiers) {
-  //   final cursorPosition = _selection.end;
+  bool onKeyDown(int keyCode, KeyModifiers modifiers) {
+    final cursorPosition = _selection.end;
 
-  //   if (keyCode == glfwKeyBackspace) {
-  //     if (!_selection.collapsed) {
-  //       _deleteSelection();
-  //     } else if (cursorPosition > 0) {
-  //       final runes = _text.runes.toList();
-  //       runes.removeAt(cursorPosition - 1);
+    if (keyCode == glfwKeyBackspace) {
+      if (!_selection.collapsed) {
+        _deleteSelection();
+      } else if (cursorPosition > 0) {
+        final runes = _text.runes.toList();
+        runes.removeAt(cursorPosition - 1);
 
-  //       _selection = widget.controller.selection = TextSelection.collapsed(cursorPosition - 1);
-  //       _text = widget.controller.text = String.fromCharCodes(runes);
-  //     }
+        _selection = widget.controller.selection = TextSelection.collapsed(cursorPosition - 1);
+        _text = widget.controller.text = String.fromCharCodes(runes);
+      }
 
-  //     return true;
-  //   } else if (keyCode == glfwKeyDelete) {
-  //     if (!_selection.collapsed) {
-  //       _deleteSelection();
-  //     } else if (cursorPosition < _text.runes.length) {
-  //       final runes = _text.runes.toList();
-  //       runes.removeAt(cursorPosition);
+      return true;
+    } else if (keyCode == glfwKeyDelete) {
+      if (!_selection.collapsed) {
+        _deleteSelection();
+      } else if (cursorPosition < _text.runes.length) {
+        final runes = _text.runes.toList();
+        runes.removeAt(cursorPosition);
 
-  //       _text = widget.controller.text = String.fromCharCodes(runes);
-  //     }
+        _text = widget.controller.text = String.fromCharCodes(runes);
+      }
 
-  //     return true;
-  //   } else if (keyCode == glfwKeyV && modifiers.ctrl) {
-  //     // TODO: abstract clipboard handling
+      return true;
+    } else if (keyCode == glfwKeyV && modifiers.ctrl) {
+      // TODO: abstract clipboard handling
 
-  //     // final clipboardString = glfw.getClipboardString(host!.surface.handle);
-  //     // if (clipboardString.address != 0) {
-  //     //   _insert(clipboardString.cast<Utf8>().toDartString());
-  //     // }
+      // final clipboardString = glfw.getClipboardString(host!.surface.handle);
+      // if (clipboardString.address != 0) {
+      //   _insert(clipboardString.cast<Utf8>().toDartString());
+      // }
 
-  //     return true;
-  //   } else if ((keyCode == glfwKeyC || keyCode == glfwKeyX) && modifiers.ctrl) {
-  //     // if (!_selection.collapsed) {
-  //     //   malloc.arena((arena) {
-  //     //     glfw.setClipboardString(
-  //     //       host!.surface.handle,
-  //     //       _text.substring(_selection.lower, _selection.upper).toNativeUtf8(allocator: arena).cast(),
-  //     //     );
-  //     //   });
+      return true;
+    } else if ((keyCode == glfwKeyC || keyCode == glfwKeyX) && modifiers.ctrl) {
+      // if (!_selection.collapsed) {
+      //   malloc.arena((arena) {
+      //     glfw.setClipboardString(
+      //       host!.surface.handle,
+      //       _text.substring(_selection.lower, _selection.upper).toNativeUtf8(allocator: arena).cast(),
+      //     );
+      //   });
 
-  //     //   if (keyCode == glfwKeyX) {
-  //     //     _deleteSelection();
-  //     //   }
-  //     // }
+      //   if (keyCode == glfwKeyX) {
+      //     _deleteSelection();
+      //   }
+      // }
 
-  //     return true;
-  //   } else if (keyCode == glfwKeyA && modifiers.ctrl) {
-  //     _selection = widget.controller.selection = TextSelection(0, _text.length);
-  //     return true;
-  //   } else if (keyCode == glfwKeyLeft) {
-  //     final endingSelection = !_selection.collapsed && !modifiers.shift;
-  //     _moveCursor(
-  //       max(
-  //         0,
-  //         endingSelection
-  //             ? _selection.lower
-  //             : modifiers.ctrl
-  //             ? _nextWordBoundary(false)
-  //             : cursorPosition - 1,
-  //       ),
-  //       modifiers.shift,
-  //     );
-  //     return true;
-  //   } else if (keyCode == glfwKeyRight) {
-  //     final endingSelection = !_selection.collapsed && !modifiers.shift;
-  //     _moveCursor(
-  //       min(
-  //         _text.runes.length,
-  //         endingSelection
-  //             ? _selection.upper
-  //             : modifiers.ctrl
-  //             ? _nextWordBoundary(true)
-  //             : cursorPosition + 1,
-  //       ),
-  //       modifiers.shift,
-  //     );
-  //     return true;
-  //   } else if (keyCode == glfwKeyHome) {
-  //     _moveCursor(currentLine.startRune, modifiers.shift);
-  //     return true;
-  //   } else if (keyCode == glfwKeyEnd) {
-  //     _moveCursor(currentLine.endRune, modifiers.shift);
-  //     return true;
-  //   }
+      return true;
+    } else if (keyCode == glfwKeyA && modifiers.ctrl) {
+      _selection = widget.controller.selection = TextSelection(0, _text.length);
+      return true;
+    } else if (keyCode == glfwKeyLeft) {
+      final endingSelection = !_selection.collapsed && !modifiers.shift;
+      _moveCursor(
+        max(
+          0,
+          endingSelection
+              ? _selection.lower
+              : modifiers.ctrl
+              ? _nextWordBoundary(false)
+              : cursorPosition - 1,
+        ),
+        modifiers.shift,
+      );
+      return true;
+    } else if (keyCode == glfwKeyRight) {
+      final endingSelection = !_selection.collapsed && !modifiers.shift;
+      _moveCursor(
+        min(
+          _text.runes.length,
+          endingSelection
+              ? _selection.upper
+              : modifiers.ctrl
+              ? _nextWordBoundary(true)
+              : cursorPosition + 1,
+        ),
+        modifiers.shift,
+      );
+      return true;
+    } else if (keyCode == glfwKeyHome) {
+      _moveCursor(currentLine.startRune, modifiers.shift);
+      return true;
+    } else if (keyCode == glfwKeyEnd) {
+      _moveCursor(currentLine.endRune, modifiers.shift);
+      return true;
+    }
 
-  //   if (widget.allowMultipleLines) {
-  //     if (keyCode == glfwKeyEnter || keyCode == glfwKeyKpEnter) {
-  //       _insert('\n');
-  //       return true;
-  //     } else if (keyCode == glfwKeyUp) {
-  //       _moveCursorVertically(-1, modifiers.shift);
-  //       return true;
-  //     } else if (keyCode == glfwKeyDown) {
-  //       _moveCursorVertically(1, modifiers.shift);
-  //       return true;
-  //     }
-  //   }
+    if (widget.allowMultipleLines) {
+      if (keyCode == glfwKeyEnter || keyCode == glfwKeyKpEnter) {
+        _insert('\n');
+        return true;
+      } else if (keyCode == glfwKeyUp) {
+        _moveCursorVertically(-1, modifiers.shift);
+        return true;
+      } else if (keyCode == glfwKeyDown) {
+        _moveCursorVertically(1, modifiers.shift);
+        return true;
+      }
+    }
 
-  //   return false;
-  // }
+    return false;
+  }
 
   @override
   CursorStyle? cursorStyleAt(double x, double y) => CursorStyle.text;

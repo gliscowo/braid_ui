@@ -515,6 +515,8 @@ class Actions extends StatefulWidget {
 
   final Callback? focusGainedCallback;
   final Callback? focusLostCallback;
+  final void Function(FocusLevel? level)? focusLevelChangeCallback;
+  final bool skipTraversal;
 
   final Map<List<ActionTrigger>, Callback> actions;
 
@@ -527,6 +529,8 @@ class Actions extends StatefulWidget {
     this.cursorStyle,
     this.focusGainedCallback,
     this.focusLostCallback,
+    this.focusLevelChangeCallback,
+    this.skipTraversal = false,
     required this.actions,
     required this.child,
   });
@@ -538,6 +542,8 @@ class Actions extends StatefulWidget {
     this.cursorStyle,
     this.focusGainedCallback,
     this.focusLostCallback,
+    this.focusLevelChangeCallback,
+    this.skipTraversal = false,
     required Callback? onClick,
     required this.child,
   }) : actions = {
@@ -581,11 +587,13 @@ class ActionsState extends WidgetState<Actions> {
       child: Focusable(
         focusGainedCallback: widget.focusGainedCallback,
         focusLostCallback: widget.focusLostCallback,
+        focusLevelChangeCallback: widget.focusLevelChangeCallback,
         keyDownCallback: (keyCode, modifiers) => _stepActions((trigger) {
           if (trigger.isTriggeredByKeyCode(keyCode, modifiers)) return _ActionTriggerResult.activated;
 
           return KeyModifiers.isModifier(keyCode) ? _ActionTriggerResult.ignored : _ActionTriggerResult.notActivated;
         }),
+        skipTraversal: widget.skipTraversal,
         child: widget.child,
       ),
     );

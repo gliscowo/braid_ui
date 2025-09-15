@@ -144,6 +144,7 @@ class _AppBodyState extends WidgetState<AppBody> {
                         Test.intents => const IntentTest(),
                       },
                       Align(
+                        key: Key('buttons'),
                         alignment: Alignment.left,
                         child: Panel(
                           color: BraidTheme.of(context).elevatedColor,
@@ -572,29 +573,17 @@ class _TextInputTestState extends WidgetState<TextInputTest> {
           cornerRadius: const CornerRadius.all(5),
           child: Padding(
             insets: const Insets.all(5),
-            child: Scrollable.vertical(
-              child: Constrain(
-                constraints: Constraints.only(minHeight: 440),
-                child: ListenableBuilder(
-                  listenable: controller,
-                  builder: (context, child) {
-                    return TextInput(
-                      controller: controller,
-                      showCursor: showCursor,
-                      softWrap: true,
-                      autoFocus: false,
-                      allowMultipleLines: true,
-                      style: const SpanStyle(
-                        color: Color.white,
-                        fontSize: 14,
-                        fontFamily: 'cascadia',
-                        bold: true,
-                        italic: false,
-                        underline: false,
-                      ),
-                    );
-                  },
-                ),
+            child: EditableText(
+              controller: controller,
+              softWrap: false,
+              allowMultipleLines: true,
+              style: const SpanStyle(
+                color: Color.white,
+                fontSize: 14,
+                fontFamily: 'cascadia',
+                bold: true,
+                italic: false,
+                underline: false,
               ),
             ),
           ),
@@ -905,6 +894,18 @@ class _DropdownTestState extends WidgetState<DropdownTest> {
                 }),
               ),
             ),
+            Sized(
+              width: 150,
+              child: ComboBox<Test>(
+                options: Test.values,
+                selectedOption: selected,
+                optionToString: (option) =>
+                    option.name.replaceAllMapped(capitals, (match) => '${match[1]} ${match[2]!.toLowerCase()}'),
+                onSelect: (option) => setState(() {
+                  selected = option;
+                }),
+              ),
+            ),
           ],
         ),
       ),
@@ -937,46 +938,44 @@ class IntentTest extends StatefulWidget {
 class _IntentTestState extends WidgetState<IntentTest> {
   @override
   Widget build(BuildContext context) {
-    return IntentScope(
-      child: Builder(
-        builder: (context) {
-          return Center(
-            child: Shortcuts(
-              shortcuts: const {
-                [ActionTrigger.click]: ClickIntent('click'),
-                [
-                  ActionTrigger(keyCodes: {glfwKeyA}),
-                ]: ClickIntent(
-                  'a',
-                ),
-              },
-              child: Intents(
-                actions: ActionsMap([CallbackAction<ClickIntent>((intent) => print(intent.message))]),
-                child: Sized(
-                  width: 200,
-                  height: 100,
-                  child: Panel(
-                    color: Color.white,
-                    child: Center(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        separator: const Padding(insets: Insets.axis(horizontal: 10)),
-                        children: [
-                          Button(
-                            onClick: () => IntentScope.invoke(context, const ClickIntent('button')),
-                            child: Text('clicc'),
-                          ),
-                          const InnerIntentsTest(),
-                        ],
-                      ),
+    return Builder(
+      builder: (context) {
+        return Center(
+          child: Shortcuts(
+            shortcuts: const {
+              [ActionTrigger.click]: ClickIntent('click'),
+              [
+                ActionTrigger(keyCodes: {glfwKeyA}),
+              ]: ClickIntent(
+                'a',
+              ),
+            },
+            child: Intents(
+              actions: ActionsMap([CallbackAction<ClickIntent>((intent) => print(intent.message))]),
+              child: Sized(
+                width: 200,
+                height: 100,
+                child: Panel(
+                  color: Color.white,
+                  child: Center(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      separator: const Padding(insets: Insets.axis(horizontal: 10)),
+                      children: [
+                        Button(
+                          onClick: () => Intents.invoke(context, const ClickIntent('button')),
+                          child: Text('clicc'),
+                        ),
+                        const InnerIntentsTest(),
+                      ],
                     ),
                   ),
                 ),
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

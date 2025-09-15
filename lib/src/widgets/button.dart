@@ -6,6 +6,7 @@ import '../framework/proxy.dart';
 import '../framework/widget.dart';
 import 'animated_widgets.dart';
 import 'basic.dart';
+import 'focus.dart';
 import 'text.dart';
 
 class DefaultButtonStyle extends InheritedWidget {
@@ -161,7 +162,8 @@ class RawButton extends StatefulWidget {
 }
 
 class _RawButtonState extends WidgetState<RawButton> {
-  bool _hovered = false;
+  bool hovered = false;
+  bool highlight = false;
 
   @override
   Widget build(BuildContext context) {
@@ -169,7 +171,7 @@ class _RawButtonState extends WidgetState<RawButton> {
 
     final style = widget.style;
     final textStyle = widget.onClick != null
-        ? _hovered
+        ? (hovered || highlight)
               ? style.highlightTextStyle ?? style.textStyle
               : style.textStyle
         : style.disabledTextStyle;
@@ -186,7 +188,7 @@ class _RawButtonState extends WidgetState<RawButton> {
       duration: const Duration(milliseconds: 100),
       cornerRadius: style.cornerRadius!,
       color: widget.onClick != null
-          ? _hovered
+          ? (hovered || highlight)
                 ? style.highlightColor!
                 : style.color!
           : style.disabledColor!,
@@ -195,8 +197,9 @@ class _RawButtonState extends WidgetState<RawButton> {
 
     if (widget.onClick != null) {
       result = Actions.click(
-        enterCallback: () => setState(() => _hovered = true),
-        exitCallback: () => setState(() => _hovered = false),
+        enterCallback: () => setState(() => hovered = true),
+        exitCallback: () => setState(() => hovered = false),
+        focusLevelChangeCallback: (level) => setState(() => highlight = level == FocusLevel.highlight),
         cursorStyle: CursorStyle.hand,
         onClick: () => widget.onClick!(),
         child: result,

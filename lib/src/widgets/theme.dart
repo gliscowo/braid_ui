@@ -88,7 +88,7 @@ class BraidTheme extends StatelessWidget {
     var highlightColor = this.highlightColor;
     if (highlightColor == null) {
       final accentHsv = accentColor.hsv;
-      highlightColor = Color.ofHsv(accentHsv[0], accentHsv[1], min(1, accentHsv[2] + .1));
+      highlightColor = Color.ofHsv(accentHsv[0], min(1, accentHsv[1] - .1), min(1, accentHsv[2] + .1));
     }
 
     final disabledColor = this.disabledColor ?? defaultDisabledColor;

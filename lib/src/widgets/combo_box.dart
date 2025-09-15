@@ -280,6 +280,7 @@ class _ComboBoxState<T> extends WidgetState<ComboBox<T>> {
 
     return Actions(
       focusLostCallback: resetTextInput,
+      skipTraversal: true,
       actions: {
         _previousOptionTrigger: () => cycle(-1),
         _nextOptionTrigger: () => cycle(1),
