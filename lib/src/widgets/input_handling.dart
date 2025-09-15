@@ -10,20 +10,22 @@ abstract class Intent {
 }
 
 abstract class Action<I extends Intent> {
+  const Action();
+
   @nonVirtual
   Type get intentType => I;
 
-  void invoke(I intent);
+  void invoke(BuildContext context, I intent);
 
   Action<J> downcast<J extends I>() => ForwardingAction(this);
 }
 
 class CallbackAction<I extends Intent> extends Action<I> {
-  final void Function(I intent) callback;
+  final void Function(BuildContext context, I intent) callback;
   CallbackAction(this.callback);
 
   @override
-  void invoke(I intent) => callback(intent);
+  void invoke(BuildContext context, I intent) => callback(context, intent);
 }
 
 class ForwardingAction<I extends Intent, J extends I> extends Action<J> {
@@ -31,7 +33,7 @@ class ForwardingAction<I extends Intent, J extends I> extends Action<J> {
   ForwardingAction(this.delegate);
 
   @override
-  void invoke(J intent) => delegate.invoke(intent);
+  void invoke(BuildContext context, J intent) => delegate.invoke(context, intent);
 }
 
 // ---
@@ -74,7 +76,7 @@ class _ShortcutsState extends WidgetState<Shortcuts> {
 
 // ---
 
-extension type ActionsMap.fromMap(Map<Type, Action> _value) implements Map<Type, Action> {
+extension type const ActionsMap.fromMap(Map<Type, Action> _value) implements Map<Type, Action> {
   factory ActionsMap(List<Action> actions) {
     final map = <Type, Action>{};
 
@@ -90,10 +92,13 @@ extension type ActionsMap.fromMap(Map<Type, Action> _value) implements Map<Type,
 }
 
 class Intents extends StatefulWidget {
+  final bool focusable;
+  final bool autoFocus;
+
   final ActionsMap actions;
   final Widget child;
 
-  const Intents({super.key, required this.actions, required this.child});
+  const Intents({super.key, this.focusable = true, this.autoFocus = false, required this.actions, required this.child});
 
   @override
   WidgetState<Intents> createState() => _IntentsState();
@@ -101,7 +106,7 @@ class Intents extends StatefulWidget {
   // ---
 
   static void invoke(BuildContext context, Intent intent) {
-    actionForIntent(context, intent.runtimeType)?.invoke(intent);
+    actionForIntent(context, intent.runtimeType)?.invoke(context, intent);
   }
 
   static Action? actionForIntent(BuildContext context, Type intentType) {
@@ -119,7 +124,7 @@ class _IntentsState extends WidgetState<Intents> {
   Widget build(BuildContext context) {
     return _IntentsProvider(
       state: this,
-      child: Focusable(child: widget.child),
+      child: widget.focusable ? Focusable(autoFocus: widget.autoFocus, child: widget.child) : widget.child,
     );
   }
 }

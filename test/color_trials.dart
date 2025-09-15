@@ -951,7 +951,7 @@ class _IntentTestState extends WidgetState<IntentTest> {
               ),
             },
             child: Intents(
-              actions: ActionsMap([CallbackAction<ClickIntent>((intent) => print(intent.message))]),
+              actions: ActionsMap([CallbackAction<ClickIntent>((_, intent) => print(intent.message))]),
               child: Sized(
                 width: 200,
                 height: 100,
@@ -1004,7 +1004,7 @@ class _InnerIntentsTestState extends WidgetState<InnerIntentsTest> {
           ),
           if (show)
             Intents(
-              actions: ActionsMap([CallbackAction<ClickIntent>((intent) => print('inner: ${intent.message}'))]),
+              actions: ActionsMap([CallbackAction<ClickIntent>((_, intent) => print('inner: ${intent.message}'))]),
               child: Panel(color: Color.red, child: Text('b')),
             ),
         ],

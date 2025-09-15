@@ -1,8 +1,10 @@
 import 'dart:io';
 
 import 'package:braid_ui/braid_ui.dart';
+import 'package:braid_ui/src/core/key_modifiers.dart';
 import 'package:braid_ui/src/widgets/app_stack.dart';
 import 'package:braid_ui/src/widgets/focus.dart';
+import 'package:braid_ui/src/widgets/input_handling.dart';
 import 'package:diamond_gl/glfw.dart';
 import 'package:logging/logging.dart';
 import 'package:vector_math/vector_math.dart';
@@ -53,45 +55,68 @@ class FocusApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BraidTheme(
-      child: Blod(
-        show: true,
-        child: Stack(
-          children: [
-            StackBase(
-              child: Navigator(
-                initialRoute: BaseRoute(),
-                routeBuilder: (route) {
-                  return FocusScope(autoFocus: true, child: Navigator.buildRouteDefault(route));
-                },
-              ),
-            ),
-            CustomDraw(
-              drawFunction: (ctx, transform) {
-                final primaryFocus = Focusable.of(context).primaryFocus;
-                final instance = primaryFocus.context.instance!;
-                final transform = instance.parent!.computeTransformFrom(ancestor: context.instance)..invert();
+    return Shortcuts(
+      shortcuts: _shortcuts,
+      child: Intents(
+        actions: _actions,
+        child: BraidTheme(
+          child: Blod(
+            show: true,
+            child: Stack(
+              children: [
+                StackBase(
+                  child: Navigator(
+                    initialRoute: BaseRoute(),
+                    routeBuilder: (route) {
+                      return FocusScope(autoFocus: true, child: Navigator.buildRouteDefault(route));
+                    },
+                  ),
+                ),
+                CustomDraw(
+                  drawFunction: (ctx, transform) {
+                    final primaryFocus = Focusable.of(context).primaryFocus;
+                    final instance = primaryFocus.context.instance!;
+                    final transform = instance.parent!.computeTransformFrom(ancestor: context.instance)..invert();
 
-                final box = Aabb3.copy(instance.transform.aabb)..transform(transform);
-                ctx.transform.scope((mat4) {
-                  mat4.translateByVector3(box.min);
-                  ctx.primitives.roundedRect(
-                    box.width,
-                    box.height,
-                    const CornerRadius.all(2.5),
-                    Color.ofHsv(primaryFocus.depth / 8 % 1, .75, 1),
-                    ctx.transform,
-                    ctx.projection,
-                    outlineThickness: 1,
-                  );
-                });
-              },
+                    final box = Aabb3.copy(instance.transform.aabb)..transform(transform);
+                    ctx.transform.scope((mat4) {
+                      mat4.translateByVector3(box.min);
+                      ctx.primitives.roundedRect(
+                        box.width,
+                        box.height,
+                        const CornerRadius.all(2.5),
+                        Color.ofHsv(primaryFocus.depth / 8 % 1, .75, 1),
+                        ctx.transform,
+                        ctx.projection,
+                        outlineThickness: 1,
+                      );
+                    });
+                  },
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
+
+  // ---
+
+  static const _shortcuts = {
+    [
+      ActionTrigger(keyCodes: {glfwKeyTab}),
+    ]: TraverseFocusIntent(
+      FocusTraversalDirection.forwards,
+    ),
+    [
+      ActionTrigger(keyCodes: {glfwKeyTab}, keyModifiers: KeyModifiers(glfwModShift)),
+    ]: TraverseFocusIntent(
+      FocusTraversalDirection.backwards,
+    ),
+  };
+
+  static const _actions = ActionsMap.fromMap({TraverseFocusIntent: TraverseFocusAction()});
 }
 
 class BaseRoute extends StatelessWidget {

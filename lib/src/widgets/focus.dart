@@ -1,16 +1,13 @@
 import 'dart:collection';
 
 import 'package:collection/collection.dart';
-import 'package:diamond_gl/diamond_gl.dart';
-import 'package:diamond_gl/glfw.dart';
-import 'package:vector_math/vector_math.dart';
 
 import '../core/key_modifiers.dart';
-import '../core/math.dart';
 import '../framework/instance.dart';
 import '../framework/proxy.dart';
 import '../framework/widget.dart';
 import 'basic.dart';
+import 'input_handling.dart';
 import 'inspector.dart';
 import 'stack.dart';
 
@@ -27,6 +24,21 @@ class _FocusStateProvider<F extends FocusableState> extends InheritedWidget {
 
   @override
   bool mustRebuildDependents(covariant _FocusStateProvider<F> newWidget) => newWidget.level != level;
+}
+
+enum FocusTraversalDirection { forwards, backwards }
+
+class TraverseFocusIntent extends Intent {
+  final FocusTraversalDirection direction;
+  const TraverseFocusIntent(this.direction);
+}
+
+class TraverseFocusAction extends Action<TraverseFocusIntent> {
+  const TraverseFocusAction();
+
+  @override
+  void invoke(BuildContext context, TraverseFocusIntent intent) =>
+      Focusable.of(context).primaryFocus.traverseFocus(intent.direction);
 }
 
 // ---
@@ -107,6 +119,10 @@ class FocusableState<F extends Focusable> extends WidgetState<F> {
 
   void unfocus() {
     _scope?.updateFocus(null, null);
+  }
+
+  void traverseFocus(FocusTraversalDirection direction) {
+    _scope?.traverseFocus(direction);
   }
 
   void _onFocusChange(FocusLevel? newLevel) {
@@ -230,18 +246,6 @@ class _FocusScopeState extends FocusableState<FocusScope> {
 
   final Queue<_FocusEntry> previouslyFocusedScopes = Queue();
 
-  @override
-  FocusableState get primaryFocus {
-    if (_level.isFocused) {
-      var candidate = focusedDescendants.firstOrNull;
-      if (candidate is _FocusScopeState) candidate = candidate.primaryFocus;
-
-      return candidate ?? this;
-    } else {
-      return super.primaryFocus;
-    }
-  }
-
   void updateFocus(FocusableState? primary, FocusLevel? level) {
     if (primary == focusedDescendants.firstOrNull && primary?._level == level) {
       return;
@@ -291,6 +295,35 @@ class _FocusScopeState extends FocusableState<FocusScope> {
   }
 
   @override
+  FocusableState get primaryFocus {
+    if (_level.isFocused) {
+      var candidate = focusedDescendants.firstOrNull;
+      if (candidate is _FocusScopeState) candidate = candidate.primaryFocus;
+
+      return candidate ?? this;
+    } else {
+      return super.primaryFocus;
+    }
+  }
+
+  @override
+  void traverseFocus(FocusTraversalDirection direction) {
+    final descendants = collectDescendants();
+
+    final searchStartIdx = focusedDescendants.isNotEmpty
+        ? descendants.indexOf(focusedDescendants.first)
+        : (direction == FocusTraversalDirection.backwards ? 0 : -1);
+    final offset = direction == FocusTraversalDirection.backwards ? -1 : 1;
+
+    var nextFocusIdx = searchStartIdx;
+    do {
+      nextFocusIdx = (nextFocusIdx + offset) % descendants.length;
+    } while (descendants[nextFocusIdx].widget.skipTraversal);
+
+    updateFocus(descendants[nextFocusIdx], FocusLevel.highlight);
+  }
+
+  @override
   void _onFocusChange(FocusLevel? newLevel) {
     final previousLevel = _level;
     super._onFocusChange(newLevel);
@@ -311,23 +344,6 @@ class _FocusScopeState extends FocusableState<FocusScope> {
       if (descendant._onKeyDown(keyCode, modifiers)) {
         return true;
       }
-    }
-
-    if (keyCode == glfwKeyTab) {
-      final descendants = collectDescendants();
-
-      final searchStartIdx = focusedDescendants.isNotEmpty
-          ? descendants.indexOf(focusedDescendants.first)
-          : (modifiers.shift ? 0 : -1);
-      final offset = modifiers.shift ? -1 : 1;
-
-      var nextFocusIdx = searchStartIdx;
-      do {
-        nextFocusIdx = (nextFocusIdx + offset) % descendants.length;
-      } while (descendants[nextFocusIdx].widget.skipTraversal);
-
-      updateFocus(descendants[nextFocusIdx], FocusLevel.highlight);
-      return true;
     }
 
     return super._onKeyDown(keyCode, modifiers);
@@ -370,24 +386,24 @@ class _FocusScopeState extends FocusableState<FocusScope> {
         ),
         CustomDraw(
           drawFunction: (ctx, transform) {
-            if (focusedDescendants.isEmpty) return;
+            // if (focusedDescendants.isEmpty) return;
 
-            final instance = focusedDescendants.first.context.instance!;
-            final transform = instance.parent!.computeTransformFrom(ancestor: context.instance)..invert();
+            // final instance = focusedDescendants.first.context.instance!;
+            // final transform = instance.parent!.computeTransformFrom(ancestor: context.instance)..invert();
 
-            final box = Aabb3.copy(instance.transform.aabb)..transform(transform);
-            ctx.transform.scope((mat4) {
-              mat4.translateByVector3(box.min);
-              ctx.primitives.roundedRect(
-                box.width,
-                box.height,
-                const CornerRadius.all(2.5),
-                Color.ofHsv(focusedDescendants.first.depth / 8 % 1, .75, 1),
-                ctx.transform,
-                ctx.projection,
-                outlineThickness: 1,
-              );
-            });
+            // final box = Aabb3.copy(instance.transform.aabb)..transform(transform);
+            // ctx.transform.scope((mat4) {
+            //   mat4.translateByVector3(box.min);
+            //   ctx.primitives.roundedRect(
+            //     box.width,
+            //     box.height,
+            //     const CornerRadius.all(2.5),
+            //     Color.ofHsv(focusedDescendants.first.depth / 8 % 1, .75, 1),
+            //     ctx.transform,
+            //     ctx.projection,
+            //     outlineThickness: 1,
+            //   );
+            // });
           },
         ),
       ],
