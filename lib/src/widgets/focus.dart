@@ -61,7 +61,7 @@ class Focusable extends StatefulWidget {
   final bool Function(int charCode, KeyModifiers modifiers)? charCallback;
   final Callback? focusGainedCallback;
   final Callback? focusLostCallback;
-  final void Function(FocusLevel? level)? focusLevelChangeCallback;
+  final void Function(FocusLevel? level)? focusLevelChangedCallback;
   final bool skipTraversal;
   final bool autoFocus;
   final bool? clickFocus;
@@ -75,7 +75,7 @@ class Focusable extends StatefulWidget {
     this.charCallback,
     this.focusGainedCallback,
     this.focusLostCallback,
-    this.focusLevelChangeCallback,
+    this.focusLevelChangedCallback,
     this.skipTraversal = false,
     this.autoFocus = false,
     this.clickFocus,
@@ -101,7 +101,7 @@ class FocusableState<F extends Focusable> extends WidgetState<F> {
   late final _FocusScopeState? _scope;
   FocusLevel? _level;
 
-  late final int depth;
+  late final int debugDepth;
 
   FocusableState get primaryFocus => _scope?.primaryFocus ?? this;
 
@@ -128,14 +128,16 @@ class FocusableState<F extends Focusable> extends WidgetState<F> {
   void _onFocusChange(FocusLevel? newLevel) {
     assert(_level != newLevel, '_onFocusChange($newLevel) invoked on a state which is already at $newLevel');
 
-    widget.focusLevelChangeCallback?.call(newLevel);
+    widget.focusLevelChangedCallback?.call(newLevel);
     if (!_level.isFocused && newLevel.isFocused) {
       widget.focusGainedCallback?.call();
     } else if (_level.isFocused && !newLevel.isFocused) {
       widget.focusLostCallback?.call();
     }
 
-    _level = newLevel;
+    setState(() {
+      _level = newLevel;
+    });
   }
 
   void _onClick() {
@@ -164,7 +166,7 @@ class FocusableState<F extends Focusable> extends WidgetState<F> {
     _parent = Focusable.maybeOf(context);
     _scope = _FocusScopeState.maybeOf(context);
 
-    depth = (_parent?.depth ?? -1) + 1;
+    debugDepth = (_parent?.debugDepth ?? -1) + 1;
 
     if (widget.autoFocus) {
       requestFocus();
@@ -195,8 +197,10 @@ class FocusScope extends Focusable {
     super.charCallback,
     super.focusGainedCallback,
     super.focusLostCallback,
-    super.focusLevelChangeCallback,
+    super.focusLevelChangedCallback,
+    super.skipTraversal = false,
     super.autoFocus = false,
+    super.clickFocus,
     required super.child,
   });
 
@@ -252,7 +256,7 @@ class _FocusScopeState extends FocusableState<FocusScope> {
     }
 
     if (!_level.isFocused && primary != null) {
-      requestFocus();
+      requestFocus(level: level!);
     }
 
     final nowFocused = primary != null
@@ -442,7 +446,6 @@ class RootFocusScope extends StatefulWidget {
 
 class _RootFocusScopeState extends WidgetState<RootFocusScope> with StreamListenerState {
   _FocusScopeState? scope;
-  late FocusableState primaryFocus;
 
   @override
   void init() {
@@ -459,7 +462,7 @@ class _RootFocusScopeState extends WidgetState<RootFocusScope> with StreamListen
         child: Builder(
           builder: (context) {
             // the root scope is always focused
-            scope ??= (primaryFocus = _FocusScopeState.maybeOf(context)!.._onFocusChange(FocusLevel.base));
+            scope ??= _FocusScopeState.maybeOf(context)!.._onFocusChange(FocusLevel.base);
 
             return widget.child;
           },

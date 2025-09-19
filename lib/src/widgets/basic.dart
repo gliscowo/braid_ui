@@ -587,7 +587,7 @@ class ActionsState extends WidgetState<Actions> {
       child: Focusable(
         focusGainedCallback: widget.focusGainedCallback,
         focusLostCallback: widget.focusLostCallback,
-        focusLevelChangeCallback: widget.focusLevelChangeCallback,
+        focusLevelChangedCallback: widget.focusLevelChangeCallback,
         keyDownCallback: (keyCode, modifiers) => _stepActions((trigger) {
           if (trigger.isTriggeredByKeyCode(keyCode, modifiers)) return _ActionTriggerResult.activated;
 

@@ -85,7 +85,7 @@ class FocusApp extends StatelessWidget {
                         box.width,
                         box.height,
                         const CornerRadius.all(2.5),
-                        Color.ofHsv(primaryFocus.depth / 8 % 1, .75, 1),
+                        Color.ofHsv(primaryFocus.debugDepth / 8 % 1, .75, 1),
                         ctx.transform,
                         ctx.projection,
                         outlineThickness: 1,
@@ -289,10 +289,10 @@ class VisuallyFocusableState extends WidgetState<VisuallyFocusable> {
 
   @override
   Widget build(BuildContext context) {
-    final depth = Focusable.of(context).depth + 1;
+    final depth = Focusable.of(context).debugDepth + 1;
     return Focusable(
       autoFocus: widget.autoFocus,
-      focusLevelChangeCallback: (level) => setState(() {
+      focusLevelChangedCallback: (level) => setState(() {
         focusLevel = level;
       }),
       keyDownCallback: depth % 2 == 0
