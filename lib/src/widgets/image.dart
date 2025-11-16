@@ -144,15 +144,15 @@ class RenderImage {
     int textureId = 0;
     malloc.arena((arena) {
       final textureIdBuffer = arena<ffi.UnsignedInt>();
-      glCreateTextures(gl_texture2d, 1, textureIdBuffer);
+      gl.createTextures(glTexture2d, 1, textureIdBuffer);
 
       textureId = textureIdBuffer.value;
 
       final pixelBuffer = arena<ffi.Uint8>(data.lengthInBytes);
       pixelBuffer.asTypedList(data.lengthInBytes).setRange(0, data.lengthInBytes, data.buffer.asUint8List());
 
-      glTextureStorage2D(textureId, 1, gl_rgba8, data.width, data.height);
-      glTextureSubImage2D(textureId, 0, 0, 0, data.width, data.height, gl_rgba, gl_unsignedByte, pixelBuffer.cast());
+      gl.textureStorage2D(textureId, 1, glRgba8, data.width, data.height);
+      gl.textureSubImage2D(textureId, 0, 0, 0, data.width, data.height, glRgba, glUnsignedByte, pixelBuffer.cast());
     });
 
     return RenderImage._(textureId: textureId, width: data.width, height: data.height);
@@ -162,12 +162,12 @@ class RenderImage {
     final buffer = ctx.primitives.getBuffer(#renderImage, posUvVertexDescriptor, 'texture_fill');
 
     final filterMode = switch (filter) {
-      .nearest => gl_nearest,
-      .linear => gl_linear,
+      .nearest => glNearest,
+      .linear => glLinear,
     };
 
-    glTextureParameteri(textureId, gl_textureMagFilter, filterMode);
-    glTextureParameteri(textureId, gl_textureMinFilter, filterMode);
+    gl.textureParameteri(textureId, glTextureMagFilter, filterMode);
+    gl.textureParameteri(textureId, glTextureMinFilter, filterMode);
 
     buffer.program
       ..uniformMat4('uTransform', ctx.transform)
@@ -186,13 +186,13 @@ class RenderImage {
     };
 
     final wrapMode = switch (wrap) {
-      .none || .stretch || .clamp => gl_clampToEdge,
-      .repeat => gl_repeat,
-      .mirroredRepeat => gl_mirroredRepeat,
+      .none || .stretch || .clamp => glClampToEdge,
+      .repeat => glRepeat,
+      .mirroredRepeat => glMirroredRepeat,
     };
 
-    glTextureParameteri(textureId, gl_textureWrapS, wrapMode);
-    glTextureParameteri(textureId, gl_textureWrapT, wrapMode);
+    gl.textureParameteri(textureId, glTextureWrapS, wrapMode);
+    gl.textureParameteri(textureId, glTextureWrapT, wrapMode);
 
     buffer.clear();
     ctx.primitives.buildUvRect(buffer.vertex, quadWidth, quadHeight, uMax: max(uMax, 1), vMax: max(vMax, 1));

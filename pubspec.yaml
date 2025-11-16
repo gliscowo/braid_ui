@@ -11,7 +11,7 @@ environment:
 dependencies:
   diamond_gl:
     hosted: https://pub.wispforest.io
-    version: ^3.0.0
+    version: ^4.0.0
   ffi: ^2.1.4
   logging: ^1.2.0
   vector_math: ^2.1.4

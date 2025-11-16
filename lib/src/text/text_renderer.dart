@@ -345,7 +345,7 @@ class TextRenderer {
       }
     }
 
-    glBlendFunc(gl_src1Color, gl_oneMinusSrc1Color);
+    gl.blendFunc(glSrc1Color, glOneMinusSrc1Color);
 
     buffers.forEach((texture, mesh) {
       mesh.program.uniformSampler('sText', texture, 0);
@@ -354,7 +354,7 @@ class TextRenderer {
         ..draw();
     });
 
-    glBlendFunc(gl_srcAlpha, gl_oneMinusSrcAlpha);
+    gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
 
     if (!lineBuffer.isEmpty) {
       lineBuffer.program
@@ -391,8 +391,8 @@ class GlyphAtlas {
     final buffer = font.rasterizeGlyph(index, size);
     final (texture, u, v) = _allocateSpace(buffer.width, buffer.height);
 
-    glPixelStorei(gl_unpackAlignment, 1);
-    glTextureSubImage2D(texture, 0, u, v, buffer.width, buffer.height, gl_rgb, gl_unsignedByte, buffer.pixels.cast());
+    gl.pixelStorei(glUnpackAlignment, 1);
+    gl.textureSubImage2D(texture, 0, u, v, buffer.width, buffer.height, glRgb, glUnsignedByte, buffer.pixels.cast());
 
     buffer.delete();
 
@@ -430,12 +430,12 @@ class GlyphAtlas {
 
   static int _allocateTexture() {
     final texture = malloc<UnsignedInt>();
-    glCreateTextures(gl_texture2d, 1, texture);
+    gl.createTextures(glTexture2d, 1, texture);
     final textureId = texture.value;
     malloc.free(texture);
 
-    glPixelStorei(gl_unpackAlignment, 1);
-    glTextureStorage2D(textureId, 1, gl_rgb8, textureSize, textureSize);
+    gl.pixelStorei(glUnpackAlignment, 1);
+    gl.textureStorage2D(textureId, 1, glRgb8, textureSize, textureSize);
 
     // turns out that zero-initializing the texture
     // memory is actually very important to prevent
@@ -445,13 +445,13 @@ class GlyphAtlas {
     // glisco, 28.09.2024
 
     final emptyBuffer = calloc<Char>(textureSize * textureSize * 3);
-    glTextureSubImage2D(textureId, 0, 0, 0, textureSize, textureSize, gl_rgb, gl_unsignedByte, emptyBuffer.cast());
+    gl.textureSubImage2D(textureId, 0, 0, 0, textureSize, textureSize, glRgb, glUnsignedByte, emptyBuffer.cast());
     calloc.free(emptyBuffer);
 
-    glTextureParameteri(textureId, gl_textureWrapS, gl_clampToEdge);
-    glTextureParameteri(textureId, gl_textureWrapT, gl_clampToEdge);
-    glTextureParameteri(textureId, gl_textureMinFilter, gl_linear);
-    glTextureParameteri(textureId, gl_textureMagFilter, gl_linear);
+    gl.textureParameteri(textureId, glTextureWrapS, glClampToEdge);
+    gl.textureParameteri(textureId, glTextureWrapT, glClampToEdge);
+    gl.textureParameteri(textureId, glTextureMinFilter, glLinear);
+    gl.textureParameteri(textureId, glTextureMagFilter, glLinear);
 
     return textureId;
   }

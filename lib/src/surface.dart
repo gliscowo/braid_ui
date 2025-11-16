@@ -127,10 +127,10 @@ class WindowSurface implements Surface {
   void beginDrawing() {
     window.activateContext();
 
-    glViewport(0, 0, window.width, window.height);
+    gl.viewport(0, 0, window.width, window.height);
 
-    glClearColor(0, 0, 0, 1);
-    glClear(gl_colorBufferBit | gl_depthBufferBit);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(glColorBufferBit | glDepthBufferBit);
   }
 
   @override
@@ -154,7 +154,7 @@ class WindowSurface implements Surface {
       final bufferSize = width * height * 4;
 
       final pixelBuffer = arena<ffi.Uint8>(bufferSize);
-      glReadPixels(0, 0, width, height, gl_rgba, gl_unsignedByte, pixelBuffer.cast());
+      gl.readPixels(0, 0, width, height, glRgba, glUnsignedByte, pixelBuffer.cast());
 
       final pixels = pixelBuffer.asTypedList(bufferSize);
       final image = Image.fromBytes(width: width, height: height, bytes: pixels.buffer, numChannels: 4);

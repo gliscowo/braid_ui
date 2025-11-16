@@ -347,7 +347,7 @@ class AppState implements InstanceHost, ProxyHost {
   void draw() {
     final ctx = DrawContext(context, primitives, projection, textRenderer, drawBoundingBoxes: debugDrawInstanceBoxes);
 
-    glEnable(gl_blend);
+    gl.enable(glBlend);
 
     ctx.transform.scopedTransform(rootInstance.transform.transformToParent, (_) => rootInstance.draw(ctx));
 

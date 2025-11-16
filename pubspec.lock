@@ -149,10 +149,10 @@ packages:
     dependency: transitive
     description:
       name: dart_opengl
-      sha256: b02da3a0eab9f6168e34de6196bfe9bfca8332a2ba802dca20b4f3f1c3e9e5f4
+      sha256: efc3900d7737342da7bc7cef33eaa55ddf158d0654478db39f478fb3843cea39
       url: "https://pub.wispforest.io"
     source: hosted
-    version: "1.0.0"
+    version: "2.0.0"
   dart_style:
     dependency: transitive
     description:
@@ -165,10 +165,10 @@ packages:
     dependency: "direct main"
     description:
       name: diamond_gl
-      sha256: "09dfd340f0c7981616124ad5ef74539b9c51c966a5dc89cedb651c9fae057f1f"
+      sha256: fb31e3cffb657aa9b90e00f88e51ba89ba13233571c701aba89820629640d63c
       url: "https://pub.wispforest.io"
     source: hosted
-    version: "3.0.0"
+    version: "4.0.0"
   endec:
     dependency: "direct dev"
     description:
