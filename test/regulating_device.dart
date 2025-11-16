@@ -7,8 +7,6 @@ Future<void> main(List<String> args) async {
     print('[${event.loggerName}] (${event.level.toString().toLowerCase()}) ${event.message}');
   });
 
-  loadNatives('resources/lib');
-
   final (app, _) = await createBraidAppWithWindow(
     name: "Regulating Device",
     width: 600,
@@ -82,7 +80,7 @@ Widget buttonPanel(Icon icon, String name, List<Widget> buttons) {
                 children: [
                   Flex(
                     mainAxis: LayoutAxis.horizontal,
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                    crossAxisAlignment: .center,
                     children: [
                       icon,
                       Padding(insets: const Insets.all(10.0)),
@@ -91,11 +89,7 @@ Widget buttonPanel(Icon icon, String name, List<Widget> buttons) {
                   ),
                   Padding(
                     insets: const Insets(top: 20.0),
-                    child: Flex(
-                      mainAxis: LayoutAxis.horizontal,
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: buttons,
-                    ),
+                    child: Flex(mainAxis: LayoutAxis.horizontal, mainAxisAlignment: .spaceEvenly, children: buttons),
                   ),
                 ],
               ),

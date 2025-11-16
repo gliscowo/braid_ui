@@ -3,10 +3,8 @@ import 'dart:async';
 import 'package:braid_ui/braid_ui.dart';
 
 Future<void> main() async {
-  loadNatives('resources/lib');
-
   final apps = await Future.wait(
-    List.generate(50, (index) => index + 1).map((idx) {
+    List.generate(20, (index) => index + 1).map((idx) {
       return createBraidAppWithWindow(
         name: 'window $idx',
         width: 200,
@@ -53,14 +51,14 @@ class _CounterState extends WidgetState<Counter> {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: .center,
       children: [
-        Text('count: $count'),
+        // Text('count: $count'),
         Button(
           onClick: () => setState(() {
             count++;
           }),
-          child: Text('add'),
+          child: const Padding(insets: Insets.all(10)),
         ),
       ],
     );

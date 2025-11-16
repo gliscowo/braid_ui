@@ -139,13 +139,13 @@ class BraidInspector {
 
   Stream<()> get onPick => _pickEvents.stream;
 
-  void activate() async {
+  void activate({bool startInvisible = false}) async {
     if (rootProxy == null || rootInstance == null) {
       throw StateError('cannot activate the braid inspector before the root proxy and instance have been set');
     }
 
     if (currentApp != null) {
-      dgl.glfw.showWindow(currentWindow!.handle);
+      glfwShowWindow(currentWindow!.handle);
       return;
     }
 
@@ -157,6 +157,7 @@ class BraidInspector {
       enableInspector: true,
       width: 800,
       height: 500,
+      windowFlags: startInvisible ? const [.startInvisible] : const [],
       // TODO: consider baking these fonts
       resources: BakedAssetResources(fontDelegate: BraidResources.fonts('resources/font')),
       defaultFontFamily: 'NotoSans',
@@ -177,6 +178,11 @@ class BraidInspector {
 
   void revealInstance(WidgetInstance instance) {
     if (!_active) return;
+
+    if (glfwGetWindowAttrib(currentWindow!.handle, glfwVisible) != glfwTrue) {
+      glfwShowWindow(currentWindow!.handle);
+    }
+
     _revealEvents.add(RevealInstanceEvent(instance));
   }
 
@@ -385,7 +391,7 @@ class _EvalBoxState extends WidgetState<EvalBox> {
               children: [
                 Text('eval on: $evalContext'),
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  crossAxisAlignment: .center,
                   children: [
                     Padding(
                       insets: const Insets(right: 5),
@@ -463,7 +469,7 @@ class InstanceDetails extends StatelessWidget {
 
       children = [
         Grid(
-          mainAxis: LayoutAxis.vertical,
+          mainAxis: .vertical,
           crossAxisCells: 2,
           cellFit: const CellFit.tight(),
           children: _colorRows(
@@ -619,7 +625,7 @@ class _InstanceTreeViewState extends WidgetState<InstanceTreeView> with StreamLi
           : Sized(
               height: 24,
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: .center,
                 children: [
                   Icon(icon: Icons.stat_0, size: 20),
                   title,
@@ -1054,11 +1060,11 @@ class _InspectorScrollViewState extends WidgetState<InspectorScrollView> {
                   child: widget.child,
                 ),
               ),
-              Scrollbar(axis: LayoutAxis.vertical, controller: verticalController!),
+              Scrollbar(axis: .vertical, controller: verticalController!),
             ],
           ),
         ),
-        Scrollbar(axis: LayoutAxis.horizontal, controller: horizontalController!),
+        Scrollbar(axis: .horizontal, controller: horizontalController!),
       ],
     );
   }

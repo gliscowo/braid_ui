@@ -29,7 +29,7 @@ final class _SystemCursorStyle implements CursorStyle {
 
   @override
   Pointer<GLFWcursor> allocate() {
-    return glfw.createStandardCursor(glfwId);
+    return glfwCreateStandardCursor(glfwId);
   }
 }
 
@@ -54,7 +54,7 @@ final class _CustomCursorStyle implements CursorStyle {
     glfwBuffer.asTypedList(bufferSize).setRange(0, bufferSize, convertedIcon.data!.buffer.asUint8List());
     glfwImage.ref.pixels = glfwBuffer.cast();
 
-    final cursor = glfw.createCursor(glfwImage, hotspotX, hotspotY);
+    final cursor = glfwCreateCursor(glfwImage, hotspotX, hotspotY);
     malloc.free(glfwBuffer);
     malloc.free(glfwImage);
 
@@ -76,13 +76,13 @@ class CursorController {
     if (_disposed || _lastCursorStyle == style) return;
 
     if (style == CursorStyle.none) {
-      glfw.setCursor(_window.handle, nullptr);
+      glfwSetCursor(_window.handle, nullptr);
     } else {
       if (!_cursors.containsKey(style)) {
         _cursors[style] = style.allocate();
       }
 
-      glfw.setCursor(_window.handle, _cursors[style]!);
+      glfwSetCursor(_window.handle, _cursors[style]!);
     }
 
     _lastCursorStyle = style;
@@ -93,7 +93,7 @@ class CursorController {
 
     for (final ptr in _cursors.values) {
       if (ptr == nullptr) continue;
-      glfw.destroyCursor(ptr);
+      glfwDestroyCursor(ptr);
     }
     _disposed = true;
   }

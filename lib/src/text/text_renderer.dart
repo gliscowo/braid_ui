@@ -18,9 +18,6 @@ import '../vertex_descriptors.dart';
 import '../widgets/basic.dart';
 import 'text_layout.dart';
 
-final freetype = FreetypeLibrary(BraidNatives.activeLibraries.freetype);
-final harfbuzz = HarfbuzzLibrary(BraidNatives.activeLibraries.harfbuzz);
-
 const _hbScale = 64;
 
 @internal
@@ -54,19 +51,19 @@ class FontFamily {
   }
 }
 
-typedef _NativeFontResources = ({Map<int, Pointer<hb_font>> hbFonts, FT_Face ftFace, Pointer<Uint8> fontMemory});
+typedef _NativeFontResources = ({Map<int, Pointer<HBFont>> hbFonts, FTFace ftFace, Pointer<Uint8> fontMemory});
 
 class Font {
   static final _finalizer = Finalizer<_NativeFontResources>((resources) {
-    freetype.Done_Face(resources.ftFace);
+    ftDoneFace(resources.ftFace);
     malloc.free(resources.fontMemory);
 
     for (final hbFont in resources.hbFonts.values) {
-      harfbuzz.font_destroy(hbFont);
+      hbFontDestroy(hbFont);
     }
   });
 
-  static FT_Library? _ftInstance;
+  static FTLibrary? _ftInstance;
 
   // --- instance fields ---
 
@@ -78,33 +75,33 @@ class Font {
     final fontMemory = malloc<Uint8>(fontBytes.lengthInBytes);
     fontMemory.asTypedList(fontBytes.lengthInBytes).setRange(0, fontBytes.lengthInBytes, fontBytes);
 
-    final face = malloc<FT_Face>();
-    if (freetype.New_Memory_Face(_ftLibrary, fontMemory.cast(), fontBytes.lengthInBytes, 0, face) != 0) {
+    final face = malloc<FTFace>();
+    if (ftNewMemoryFace(_ftLibrary, fontMemory.cast(), fontBytes.lengthInBytes, 0, face) != 0) {
       throw ArgumentError('could not load font', 'fontBytes');
     }
 
     final faceStruct = face.value.ref;
-    bold = faceStruct.style_flags & FT_STYLE_FLAG_BOLD != 0;
-    italic = faceStruct.style_flags & FT_STYLE_FLAG_ITALIC != 0;
+    bold = faceStruct.styleFlags & ftStyleFlagBold != 0;
+    italic = faceStruct.styleFlags & ftStyleFlagItalic != 0;
 
     _nativeResources = (hbFonts: {}, ftFace: face.value, fontMemory: fontMemory);
 
     _finalizer.attach(this, _nativeResources);
   }
 
-  double get lineHeight => _nativeResources.ftFace.ref.height / _nativeResources.ftFace.ref.units_per_EM;
+  double get lineHeight => _nativeResources.ftFace.ref.height / _nativeResources.ftFace.ref.unitsPerEm;
 
-  double get ascender => _nativeResources.ftFace.ref.ascender / _nativeResources.ftFace.ref.units_per_EM;
-  double get descender => _nativeResources.ftFace.ref.descender / _nativeResources.ftFace.ref.units_per_EM;
+  double get ascender => _nativeResources.ftFace.ref.ascender / _nativeResources.ftFace.ref.unitsPerEm;
+  double get descender => _nativeResources.ftFace.ref.descender / _nativeResources.ftFace.ref.unitsPerEm;
 
   double get underlinePosition =>
-      _nativeResources.ftFace.ref.underline_position / _nativeResources.ftFace.ref.units_per_EM;
+      _nativeResources.ftFace.ref.underlinePosition / _nativeResources.ftFace.ref.unitsPerEm;
   double get underlineThickness =>
-      _nativeResources.ftFace.ref.underline_thickness / _nativeResources.ftFace.ref.units_per_EM;
+      _nativeResources.ftFace.ref.underlineThickness / _nativeResources.ftFace.ref.unitsPerEm;
 
   /// Retrieve a harfbuzz font instance configured
   /// for use at [size]
-  Pointer<hb_font> getHbFont(double size) {
+  Pointer<HBFont> getHbFont(double size) {
     final pixelSize = toPixelSize(size);
     return _nativeResources.hbFonts[pixelSize] ??= _createHbFont(pixelSize);
   }
@@ -112,8 +109,8 @@ class Font {
   GlpyhBuffer rasterizeGlyph(int index, int size) {
     final ftFace = _nativeResources.ftFace;
 
-    freetype.Set_Pixel_Sizes(ftFace, size, size);
-    if (freetype.Load_Glyph(ftFace, index, FT_LOAD_RENDER | FT_LOAD_TARGET_LCD | FT_LOAD_COLOR) != 0) {
+    ftSetPixelSizes(ftFace, size, size);
+    if (ftLoadGlyph(ftFace, index, ftLoadRender | ftLoadTargetLcd | ftLoadColor) != 0) {
       throw Exception('Failed to load glyph ${String.fromCharCode(index)}');
     }
 
@@ -142,8 +139,8 @@ class Font {
     return GlpyhBuffer(
       width: width,
       height: rows,
-      bearingX: ftFace.ref.glyph.ref.bitmap_left,
-      bearingY: ftFace.ref.glyph.ref.bitmap_top,
+      bearingX: ftFace.ref.glyph.ref.bitmapLeft,
+      bearingY: ftFace.ref.glyph.ref.bitmapTop,
       pixels: pixelBuffer,
     );
   }
@@ -156,20 +153,20 @@ class Font {
 
   static double compensateForGlyphSize(double renderSize) => renderSize / toPixelSize(renderSize);
 
-  Pointer<hb_font> _createHbFont(int pixelSize) {
-    freetype.Set_Pixel_Sizes(_nativeResources.ftFace, pixelSize, pixelSize);
-    final hbFont = harfbuzz.ft_font_create_referenced(_nativeResources.ftFace);
-    harfbuzz.ft_font_set_funcs(hbFont);
-    harfbuzz.font_set_scale(hbFont, _hbScale, _hbScale);
+  Pointer<HBFont> _createHbFont(int pixelSize) {
+    ftSetPixelSizes(_nativeResources.ftFace, pixelSize, pixelSize);
+    final hbFont = hbFtFontCreateReferenced(_nativeResources.ftFace);
+    hbFtFontSetFuncs(hbFont);
+    hbFontSetScale(hbFont, pixelSize * _hbScale, pixelSize * _hbScale);
 
     return hbFont;
   }
 
-  static FT_Library get _ftLibrary {
+  static FTLibrary get _ftLibrary {
     if (_ftInstance != null) return _ftInstance!;
 
-    final ft = malloc<FT_Library>();
-    if (freetype.Init_FreeType(ft) != 0) {
+    final ft = malloc<FTLibrary>();
+    if (ftInitFreetype(ft) != 0) {
       throw 'Failed to initialize FreeType library';
     }
 
@@ -348,7 +345,7 @@ class TextRenderer {
       }
     }
 
-    gl.blendFunc(glSrc1Color, glOneMinusSrc1Color);
+    glBlendFunc(gl_src1Color, gl_oneMinusSrc1Color);
 
     buffers.forEach((texture, mesh) {
       mesh.program.uniformSampler('sText', texture, 0);
@@ -357,7 +354,7 @@ class TextRenderer {
         ..draw();
     });
 
-    gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
+    glBlendFunc(gl_srcAlpha, gl_oneMinusSrcAlpha);
 
     if (!lineBuffer.isEmpty) {
       lineBuffer.program
@@ -394,8 +391,8 @@ class GlyphAtlas {
     final buffer = font.rasterizeGlyph(index, size);
     final (texture, u, v) = _allocateSpace(buffer.width, buffer.height);
 
-    gl.pixelStorei(glUnpackAlignment, 1);
-    gl.textureSubImage2D(texture, 0, u, v, buffer.width, buffer.height, glRgb, glUnsignedByte, buffer.pixels.cast());
+    glPixelStorei(gl_unpackAlignment, 1);
+    glTextureSubImage2D(texture, 0, u, v, buffer.width, buffer.height, gl_rgb, gl_unsignedByte, buffer.pixels.cast());
 
     buffer.delete();
 
@@ -433,12 +430,12 @@ class GlyphAtlas {
 
   static int _allocateTexture() {
     final texture = malloc<UnsignedInt>();
-    gl.createTextures(glTexture2d, 1, texture);
+    glCreateTextures(gl_texture2d, 1, texture);
     final textureId = texture.value;
     malloc.free(texture);
 
-    gl.pixelStorei(glUnpackAlignment, 1);
-    gl.textureStorage2D(textureId, 1, glRgb8, textureSize, textureSize);
+    glPixelStorei(gl_unpackAlignment, 1);
+    glTextureStorage2D(textureId, 1, gl_rgb8, textureSize, textureSize);
 
     // turns out that zero-initializing the texture
     // memory is actually very important to prevent
@@ -448,13 +445,13 @@ class GlyphAtlas {
     // glisco, 28.09.2024
 
     final emptyBuffer = calloc<Char>(textureSize * textureSize * 3);
-    gl.textureSubImage2D(textureId, 0, 0, 0, textureSize, textureSize, glRgb, glUnsignedByte, emptyBuffer.cast());
+    glTextureSubImage2D(textureId, 0, 0, 0, textureSize, textureSize, gl_rgb, gl_unsignedByte, emptyBuffer.cast());
     calloc.free(emptyBuffer);
 
-    gl.textureParameteri(textureId, glTextureWrapS, glClampToEdge);
-    gl.textureParameteri(textureId, glTextureWrapT, glClampToEdge);
-    gl.textureParameteri(textureId, glTextureMinFilter, glLinear);
-    gl.textureParameteri(textureId, glTextureMagFilter, glLinear);
+    glTextureParameteri(textureId, gl_textureWrapS, gl_clampToEdge);
+    glTextureParameteri(textureId, gl_textureWrapT, gl_clampToEdge);
+    glTextureParameteri(textureId, gl_textureMinFilter, gl_linear);
+    glTextureParameteri(textureId, gl_textureMagFilter, gl_linear);
 
     return textureId;
   }

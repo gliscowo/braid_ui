@@ -1,7 +1,7 @@
 <h1 align="center">
 <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/logo_text_dark.png">
-    <img alt="braid-ui" src="assets/logo_text_light.png">
+    <source media="(prefers-color-scheme: dark)" srcset="web_assets/logo_text_dark.png">
+    <img alt="braid-ui" src="web_assets/logo_text_light.png">
 </picture>
 </h1>
 
@@ -14,8 +14,8 @@ This repository contains the reference implementation, the even more explosive a
 
 <p align="center">
 <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/app_preview_dark.png">
-    <img alt="an example braid app" src="assets/app_preview_light.png">
+    <source media="(prefers-color-scheme: dark)" srcset="web_assets/app_preview_dark.png">
+    <img alt="an example braid app" src="web_assets/app_preview_light.png">
 </picture>
 </p>
 

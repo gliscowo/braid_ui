@@ -51,7 +51,7 @@ class PrimitiveRenderer {
 
     if (outlineThickness != null) buffer.program.uniform1f('uThickness', outlineThickness);
 
-    gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
+    glBlendFunc(gl_srcAlpha, gl_oneMinusSrcAlpha);
 
     buffer.clear();
     buildRect(buffer.vertex, width, height);
@@ -69,7 +69,7 @@ class PrimitiveRenderer {
       ..uniform4vf('uColor', color.asVector())
       ..use();
 
-    gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
+    glBlendFunc(gl_srcAlpha, gl_oneMinusSrcAlpha);
 
     buffer.clear();
     buildRect(buffer.vertex, width, height);
@@ -101,7 +101,7 @@ class PrimitiveRenderer {
       ..uniform1f('uAngle', angle)
       ..use();
 
-    gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
+    glBlendFunc(gl_srcAlpha, gl_oneMinusSrcAlpha);
 
     buffer.clear();
     buildUvRect(buffer.vertex, width, height);
@@ -134,7 +134,7 @@ class PrimitiveRenderer {
     final framebuffer = _blurFramebuffer ??= GlFramebuffer.trackingWindow(_context.window);
     final buffer = getBuffer(#blur, posVertexDescriptor, 'blur');
 
-    gl.blitNamedFramebuffer(
+    glBlitNamedFramebuffer(
       0,
       framebuffer.fbo,
       0,
@@ -145,8 +145,8 @@ class PrimitiveRenderer {
       0,
       framebuffer.width,
       framebuffer.height,
-      glColorBufferBit,
-      glLinear,
+      gl_colorBufferBit,
+      gl_linear,
     );
 
     buffer.program
@@ -159,7 +159,7 @@ class PrimitiveRenderer {
       ..ssbo(0, _kernelSsbo!.id)
       ..use();
 
-    gl.disable(glBlend);
+    glDisable(gl_blend);
 
     buffer.clear();
     buildRect(buffer.vertex, width, height);
@@ -167,7 +167,7 @@ class PrimitiveRenderer {
       ..upload(dynamic: true)
       ..draw();
 
-    gl.blitNamedFramebuffer(
+    glBlitNamedFramebuffer(
       0,
       framebuffer.fbo,
       0,
@@ -178,14 +178,14 @@ class PrimitiveRenderer {
       0,
       framebuffer.width,
       framebuffer.height,
-      glColorBufferBit,
-      glLinear,
+      gl_colorBufferBit,
+      gl_linear,
     );
 
     buffer.program.uniform2i('uBlurDirection', 1, 0);
     buffer.draw();
 
-    gl.enable(glBlend);
+    glEnable(gl_blend);
   }
 
   void circle(
@@ -217,7 +217,7 @@ class PrimitiveRenderer {
       buffer.program.uniform1f('uAngleTo', toAngle ?? pi * 2);
     }
 
-    gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
+    glBlendFunc(gl_srcAlpha, gl_oneMinusSrcAlpha);
 
     buffer.clear();
     buildRect(buffer.vertex, radius * 2, radius * 2);
@@ -239,13 +239,13 @@ class PrimitiveRenderer {
       return buffer..upload();
     })();
 
-    gl.disable(glBlend);
+    glDisable(gl_blend);
 
     mesh.program
       ..uniformSampler('sFramebuffer', framebuffer.colorAttachment, 0)
       ..use();
 
-    gl.enable(glBlend);
+    glEnable(gl_blend);
 
     mesh.draw();
   }

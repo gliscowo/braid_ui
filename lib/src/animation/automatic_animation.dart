@@ -31,7 +31,7 @@ abstract class AutomaticallyAnimatedWidgetState<T extends AutomaticallyAnimatedW
       duration: widget.duration,
       scheduler: scheduleAnimationCallback,
       listener: _callback,
-      startFrom: AnimationTarget.end,
+      startFrom: .end,
     );
 
     _visitLerps((previous, targetValue, factory) {

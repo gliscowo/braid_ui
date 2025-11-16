@@ -10,8 +10,6 @@ Future<void> main(List<String> args) async {
     print('[${event.loggerName}] (${event.level.toString().toLowerCase()}) ${event.message}');
   });
 
-  loadNatives('resources/lib');
-
   final (app, _) = await createBraidAppWithWindow(
     name: 'fancy clock moment',
     baseLogger: Logger('yep'),
@@ -50,7 +48,7 @@ class ClockApp extends StatelessWidget {
               color: Color.white,
               child: Center(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  crossAxisAlignment: .stretch,
                   children: [
                     TimeText(),
                     Button(onClick: () => print('yup'), child: Text('a')),

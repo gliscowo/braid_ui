@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ffi';
 
 import 'package:diamond_gl/diamond_gl.dart';
+import 'package:diamond_gl/glfw.dart';
 import 'package:vector_math/vector_math.dart';
 
 import 'core/math.dart';
@@ -21,7 +22,7 @@ import 'text/text_renderer.dart';
 /// should be in the returned closure
 extension type const GlCall<T>(T Function() _fn) {
   T call() {
-    assert(glfw.getCurrentContext() != nullptr, 'an OpenGL context must be active to invoke a GlCall');
+    assert(glfwGetCurrentContext() != nullptr, 'an OpenGL context must be active to invoke a GlCall');
     return _fn();
   }
 

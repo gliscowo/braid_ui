@@ -7,8 +7,6 @@ Future<void> main(List<String> args) async {
     print('[${event.loggerName}] (${event.level.toString().toLowerCase()}) ${event.message}');
   });
 
-  loadNatives('resources/lib');
-
   final (app, _) = await createBraidAppWithWindow(
     name: 'drag test moment',
     baseLogger: Logger('drag_test'),

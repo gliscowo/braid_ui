@@ -158,12 +158,12 @@ class RawTextInstance extends LeafWidgetInstance<RawText> {
   @override
   set widget(RawText value) {
     final spansComp = Span.comapreLists(widget.spans, value.spans);
-    if (spansComp == SpanComparison.equal && widget.alignment == value.alignment && widget.softWrap == value.softWrap) {
+    if (spansComp == .equal && widget.alignment == value.alignment && widget.softWrap == value.softWrap) {
       return;
     }
 
     super.widget = value;
-    if (spansComp == SpanComparison.visualsChanged) {
+    if (spansComp == .visualsChanged) {
       _paragraph.updateSpans(value.spans);
     } else {
       _paragraph = Paragraph(widget.spans);

@@ -235,7 +235,7 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with /*KeyboardLis
         _layoutSelection == value.controller.selection &&
         widget.softWrap == value.softWrap &&
         widget.allowMultipleLines == value.allowMultipleLines &&
-        SpanStyle.compare(widget.style, value.style) == SpanComparison.equal)) {
+        SpanStyle.compare(widget.style, value.style) == .equal)) {
       _layoutText = _text = widget.controller.text;
       _layoutSelection = _selection = widget.controller.selection;
 

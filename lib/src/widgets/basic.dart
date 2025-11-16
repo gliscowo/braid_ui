@@ -883,16 +883,16 @@ class ClipInstance extends SingleChildWidgetInstance<Clip> with ShrinkWrapLayout
 
     final scissorBox = Aabb3.minMax(Vector3.zero(), Vector3(transform.width, transform.height, 0))
       ..transform(ctx.transform);
-    gl.scissor(
+    glScissor(
       scissorBox.min.x.toInt(),
       ctx.renderContext.window.height - scissorBox.min.y.toInt() - scissorBox.height.toInt(),
       scissorBox.width.toInt(),
       scissorBox.height.toInt(),
     );
 
-    gl.enable(glScissorTest);
+    glEnable(gl_scissorTest);
     super.draw(ctx);
-    gl.disable(glScissorTest);
+    glDisable(gl_scissorTest);
   }
 }
 
@@ -923,18 +923,18 @@ class StencilClipInstance extends SingleChildWidgetInstance with ShrinkWrapLayou
     })();
 
     framebuffer.bind();
-    gl.enable(glStencilTest);
+    glEnable(gl_stencilTest);
 
-    gl.stencilFunc(glEqual, stencilValue - 1, 0xFF);
-    gl.stencilOp(glKeep, glIncr, glIncr);
+    glStencilFunc(gl_equal, stencilValue - 1, 0xFF);
+    glStencilOp(gl_keep, gl_incr, gl_incr);
     ctx.primitives.rect(transform.width, transform.height, const Color(0), ctx.transform, ctx.projection);
 
-    gl.stencilFunc(glEqual, stencilValue, 0xFF);
-    gl.stencilOp(glKeep, glKeep, glKeep);
+    glStencilFunc(gl_equal, stencilValue, 0xFF);
+    glStencilOp(gl_keep, gl_keep, gl_keep);
 
     super.draw(ctx);
 
-    gl.disable(glStencilTest);
+    glDisable(gl_stencilTest);
     framebuffer.unbind();
 
     stencilValue--;

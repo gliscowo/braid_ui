@@ -7,7 +7,6 @@ import 'package:ffi/ffi.dart' as ffi;
 import 'package:image/image.dart';
 import 'package:logging/logging.dart';
 
-import '../diamond_gl.dart';
 import 'baked_assets.g.dart' as assets;
 import 'context.dart';
 import 'core/cursors.dart';
@@ -42,19 +41,20 @@ class WindowSurface implements Surface {
 
   WindowSurface.ofWindow({required this.window}) : _cursorController = CursorController.ofWindow(window);
 
-  factory WindowSurface.createWindow({required String title, int width = 1000, int height = 750, Logger? logger}) {
-    loadOpenGLFromPath();
-    loadGLFW(BraidNatives.activeLibraries.glfw);
-
+  factory WindowSurface.createWindow({
+    required String title,
+    int width = 1000,
+    int height = 750,
+    List<dgl.WindowFlag> flags = const [],
+    Logger? logger,
+  }) {
     if (!dgl.diamondGLInitialized) {
       dgl.initDiamondGL(logger: logger);
     }
 
-    if (dgl.glfw.init() != glfwTrue) {
-      dgl.glfw.terminate();
-
+    if (glfwInit() != glfwTrue) {
       final errorPointer = ffi.malloc<ffi.Pointer<ffi.Char>>();
-      dgl.glfw.getError(errorPointer);
+      glfwGetError(errorPointer);
 
       final errorString = errorPointer.cast<ffi.Utf8>().toDartString();
       ffi.malloc.free(errorPointer);
@@ -66,17 +66,17 @@ class WindowSurface implements Surface {
       dgl.attachGlfwErrorCallback();
     }
 
-    final window = dgl.Window(width, height, title);
+    final window = dgl.Window(width, height, title, flags: flags);
     window.setIcon(assets.braidIcon);
 
     window.activateContext();
-    dgl.glfw.swapInterval(0);
+    glfwSwapInterval(0);
 
     if (logger != null) {
       dgl.attachGlErrorCallback();
     }
 
-    Window.dropContext();
+    dgl.Window.dropContext();
 
     return WindowSurface.ofWindow(window: window);
   }
@@ -127,17 +127,17 @@ class WindowSurface implements Surface {
   void beginDrawing() {
     window.activateContext();
 
-    dgl.gl.viewport(0, 0, window.width, window.height);
+    glViewport(0, 0, window.width, window.height);
 
-    dgl.gl.clearColor(0, 0, 0, 1);
-    dgl.gl.clear(glColorBufferBit | glDepthBufferBit);
+    glClearColor(0, 0, 0, 1);
+    glClear(gl_colorBufferBit | gl_depthBufferBit);
   }
 
   @override
   void endDrawing() {
     window.nextFrame();
     // wtf??
-    dgl.glfw.pollEvents();
+    glfwPollEvents();
     dgl.Window.dropContext();
   }
 
@@ -154,7 +154,7 @@ class WindowSurface implements Surface {
       final bufferSize = width * height * 4;
 
       final pixelBuffer = arena<ffi.Uint8>(bufferSize);
-      gl.readPixels(0, 0, width, height, glRgba, glUnsignedByte, pixelBuffer.cast());
+      glReadPixels(0, 0, width, height, gl_rgba, gl_unsignedByte, pixelBuffer.cast());
 
       final pixels = pixelBuffer.asTypedList(bufferSize);
       final image = Image.fromBytes(width: width, height: height, bytes: pixels.buffer, numChannels: 4);

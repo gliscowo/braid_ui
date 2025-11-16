@@ -3,4 +3,6 @@
 .dart_tool/
 
 .vscode/
-window_state.json
+
+benchmark/
+test/run/

@@ -4,7 +4,6 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:diamond_gl/diamond_gl.dart';
 import 'package:diamond_gl/opengl.dart';
 import 'package:ffi/ffi.dart';
 import 'package:image/image.dart';
@@ -145,19 +144,15 @@ class RenderImage {
     int textureId = 0;
     malloc.arena((arena) {
       final textureIdBuffer = arena<ffi.UnsignedInt>();
-      gl.createTextures(glTexture2d, 1, textureIdBuffer);
+      glCreateTextures(gl_texture2d, 1, textureIdBuffer);
 
       textureId = textureIdBuffer.value;
 
       final pixelBuffer = arena<ffi.Uint8>(data.lengthInBytes);
       pixelBuffer.asTypedList(data.lengthInBytes).setRange(0, data.lengthInBytes, data.buffer.asUint8List());
 
-      // TODO: image wrapping behavior
-      // gl.textureParameteri(textureId, glTextureWrapS, glRepeat);
-      // gl.textureParameteri(textureId, glTextureWrapS, glRepeat);
-
-      gl.textureStorage2D(textureId, 1, glRgba8, data.width, data.height);
-      gl.textureSubImage2D(textureId, 0, 0, 0, data.width, data.height, glRgba, glUnsignedByte, pixelBuffer.cast());
+      glTextureStorage2D(textureId, 1, gl_rgba8, data.width, data.height);
+      glTextureSubImage2D(textureId, 0, 0, 0, data.width, data.height, gl_rgba, gl_unsignedByte, pixelBuffer.cast());
     });
 
     return RenderImage._(textureId: textureId, width: data.width, height: data.height);
@@ -167,12 +162,12 @@ class RenderImage {
     final buffer = ctx.primitives.getBuffer(#renderImage, posUvVertexDescriptor, 'texture_fill');
 
     final filterMode = switch (filter) {
-      ImageFilter.nearest => glNearest,
-      ImageFilter.linear => glLinear,
+      .nearest => gl_nearest,
+      .linear => gl_linear,
     };
 
-    gl.textureParameteri(textureId, glTextureMagFilter, filterMode);
-    gl.textureParameteri(textureId, glTextureMinFilter, filterMode);
+    glTextureParameteri(textureId, gl_textureMagFilter, filterMode);
+    glTextureParameteri(textureId, gl_textureMinFilter, filterMode);
 
     buffer.program
       ..uniformMat4('uTransform', ctx.transform)
@@ -181,23 +176,23 @@ class RenderImage {
       ..use();
 
     final (uMax, vMax) = switch (wrap) {
-      ImageWrap.stretch || ImageWrap.none => (1.0, 1.0),
+      .stretch || .none => (1.0, 1.0),
       _ => (drawWidth / width, drawHeight / height),
     };
 
     final (quadWidth, quadHeight) = switch (wrap) {
-      ImageWrap.none => (width.toDouble(), height.toDouble()),
+      .none => (width.toDouble(), height.toDouble()),
       _ => (drawWidth, drawHeight),
     };
 
     final wrapMode = switch (wrap) {
-      ImageWrap.none || ImageWrap.stretch || ImageWrap.clamp => glClampToEdge,
-      ImageWrap.repeat => glRepeat,
-      ImageWrap.mirroredRepeat => glMirroredRepeat,
+      .none || .stretch || .clamp => gl_clampToEdge,
+      .repeat => gl_repeat,
+      .mirroredRepeat => gl_mirroredRepeat,
     };
 
-    gl.textureParameteri(textureId, glTextureWrapS, wrapMode);
-    gl.textureParameteri(textureId, glTextureWrapT, wrapMode);
+    glTextureParameteri(textureId, gl_textureWrapS, wrapMode);
+    glTextureParameteri(textureId, gl_textureWrapT, wrapMode);
 
     buffer.clear();
     ctx.primitives.buildUvRect(buffer.vertex, quadWidth, quadHeight, uMax: max(uMax, 1), vMax: max(vMax, 1));
@@ -217,7 +212,7 @@ class RawImage extends LeafInstanceWidget {
   final ImageFilter filter;
   final ImageWrap wrap;
 
-  RawImage({super.key, required this.provider, this.filter = ImageFilter.nearest, this.wrap = ImageWrap.stretch});
+  RawImage({super.key, required this.provider, this.filter = .nearest, this.wrap = .stretch});
 
   @override
   LeafWidgetInstance<InstanceWidget> instantiate() => RawImageInstance(widget: this);

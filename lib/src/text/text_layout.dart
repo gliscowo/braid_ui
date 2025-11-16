@@ -81,14 +81,14 @@ class SpanStyle {
         a.bold != b.bold ||
         a.italic != b.italic ||
         a.lineHeight != b.lineHeight) {
-      return SpanComparison.layoutChanged;
+      return .layoutChanged;
     }
 
     if (a.color != b.color || a.underline != b.underline) {
-      return SpanComparison.visualsChanged;
+      return .visualsChanged;
     }
 
-    return SpanComparison.equal;
+    return .equal;
   }
 
   @Deprecated('use SpanStyle.compare instead')
@@ -111,19 +111,19 @@ final class Span {
       (Span(content.substring(0, at), style), Span(content.substring(keepSplit ? at : (to ?? at + 1)), style));
 
   static SpanComparison compare(Span a, Span b) {
-    if (a.content != b.content) return SpanComparison.layoutChanged;
+    if (a.content != b.content) return .layoutChanged;
     return SpanStyle.compare(a.style, b.style);
   }
 
   static SpanComparison comapreLists(List<Span> a, List<Span> b) {
-    if (a.length != b.length) return SpanComparison.layoutChanged;
+    if (a.length != b.length) return .layoutChanged;
 
     var result = SpanComparison.equal;
     for (var i = 0; i < a.length; i++) {
       result = SpanComparison.max(result, compare(a[i], b[i]));
 
-      if (result == SpanComparison.layoutChanged) {
-        return SpanComparison.layoutChanged;
+      if (result == .layoutChanged) {
+        return .layoutChanged;
       }
     }
 
@@ -170,7 +170,7 @@ class Paragraph {
 
   void updateSpans(List<Span> newSpans) {
     assert(
-      Span.comapreLists(_spans, newSpans) != SpanComparison.layoutChanged,
+      Span.comapreLists(_spans, newSpans) != .layoutChanged,
       'when updating the spans of a paragraph, it is the responsibility of the caller '
       'to ensure that there is no difference larger than SpanComparison.visualsChanged '
       'between the old and new lists',
@@ -206,9 +206,9 @@ class Paragraph {
   void layout(FontLookup fontLookup, double maxWidth, int generation) {
     _shapedGlyphs.clear();
 
-    final features = malloc<hb_feature>();
+    final features = malloc<HBFeature>();
     malloc.arena((arena) {
-      harfbuzz.feature_from_string('calt on'.toNativeUtf8(allocator: arena).cast(), -1, features);
+      hbFeatureFromString('calt on'.toNativeUtf8(allocator: arena).cast(), -1, features);
     });
 
     final session = _LayoutSession(features, fontLookup, maxWidth);
@@ -403,19 +403,19 @@ class Paragraph {
     final spanSize = span.style.fontSize;
     final spanFont = session.fontLookup(span.style.fontFamily).fontForStyle(span.style);
 
-    final buffer = harfbuzz.buffer_create();
+    final buffer = hbBufferCreate();
 
     final bufferContent = /*String.fromCharCodes(logicalToVisual(*/ span.content /*))*/ .toNativeUtf16();
-    harfbuzz.buffer_add_utf16(buffer, bufferContent.cast(), -1, 0, -1);
+    hbBufferAddUtf16(buffer, bufferContent.cast(), -1, 0, -1);
     malloc.free(bufferContent);
 
-    harfbuzz.buffer_guess_segment_properties(buffer);
-    harfbuzz.buffer_set_cluster_level(buffer, hb_buffer_cluster_level.HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS);
-    harfbuzz.shape(spanFont.getHbFont(spanSize), buffer, session.features, 1);
+    hbBufferGuessSegmentProperties(buffer);
+    hbBufferSetClusterLevel(buffer, .bufferClusterLevelMonotoneCharacters);
+    hbShape(spanFont.getHbFont(spanSize), buffer, session.features, 1);
 
     final glpyhCount = malloc<UnsignedInt>();
-    final glyphInfo = harfbuzz.buffer_get_glyph_infos(buffer, glpyhCount);
-    final glyphPos = harfbuzz.buffer_get_glyph_positions(buffer, glpyhCount);
+    final glyphInfo = hbBufferGetGlyphInfos(buffer, glpyhCount);
+    final glyphPos = hbBufferGetGlyphPositions(buffer, glpyhCount);
 
     final glyphs = glpyhCount.value;
     malloc.free(glpyhCount);
@@ -428,19 +428,19 @@ class Paragraph {
           spanFont,
           glyphInfo[i].codepoint,
           (x: state.cursorX, y: state.cursorY),
-          (x: hbToPixels(glyphPos[i].x_offset).toDouble(), y: hbToPixels(glyphPos[i].y_offset).toDouble()),
-          (x: hbToPixels(glyphPos[i].x_advance).toDouble(), y: hbToPixels(glyphPos[i].y_advance).toDouble()),
+          (x: hbToPixels(glyphPos[i].xOffset).toDouble(), y: hbToPixels(glyphPos[i].yOffset).toDouble()),
+          (x: hbToPixels(glyphPos[i].xAdvance).toDouble(), y: hbToPixels(glyphPos[i].yAdvance).toDouble()),
           spanIdx,
           layoutSpan.startRune + glyphInfo[i].cluster,
           layoutSpan.lineIdx,
         ),
       );
 
-      state.cursorX += hbToPixels(glyphPos[i].x_advance);
-      state.cursorY += hbToPixels(glyphPos[i].y_advance);
+      state.cursorX += hbToPixels(glyphPos[i].xAdvance);
+      state.cursorY += hbToPixels(glyphPos[i].yAdvance);
     }
 
-    harfbuzz.buffer_destroy(buffer);
+    hbBufferDestroy(buffer);
 
     layoutSpan.shapedGlyphs = shapedGlyphs;
 
@@ -521,7 +521,7 @@ class Paragraph {
 }
 
 class _LayoutSession {
-  final Pointer<hb_feature> features;
+  final Pointer<HBFeature> features;
   final FontLookup fontLookup;
   final double maxWidth;
 

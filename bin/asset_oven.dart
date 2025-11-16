@@ -69,6 +69,9 @@ final quotesPattern = RegExp(r'^"|"$');
 final whitespacePattern = RegExp('\\s{2,}');
 
 final segmentBuilders = <SegmentBuilder>[
+  // ---
+  // braid icon
+  // ---
   () async {
     final iconBytes = await openAsset('braid_icon.png').readAsBytes();
 
@@ -81,6 +84,9 @@ final braidIcon = decodePng(base64Decode(_braidIconBase64))!;
 ''',
     );
   },
+  // ---
+  // shaders
+  // ---
   () async {
     final shaders = openAssetClass('shader').asyncMap((event) => (Future.value(event.path), event.readAsString()).wait);
     final codeOut = StringBuffer();
@@ -131,6 +137,9 @@ class BakedAssetResources implements BraidResources {
 
     return (imports: const <String>['dart:typed_data', 'resources.dart'], code: codeOut.toString());
   },
+  // ---
+  // icon mappings
+  // ---
   () async {
     final lines = await openAsset('icon_mappings.codepoints').readAsLines();
     final result = StringBuffer()..writeln('final class Icons {');

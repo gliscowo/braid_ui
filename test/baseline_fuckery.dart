@@ -6,8 +6,6 @@ Future<void> main() async {
     print('[${event.loggerName}] (${event.level.toString().toLowerCase()}) ${event.message}');
   });
 
-  loadNatives('resources/lib');
-
   final (app, _) = await createBraidAppWithWindow(
     name: 'baselines',
     baseLogger: Logger('baseline_app'),
@@ -31,7 +29,7 @@ class BaselineApp extends StatelessWidget {
         child: Padding(
           insets: const Insets(top: 25),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: .center,
             children: [
               Sized(width: 100, height: 32, child: Panel(color: Color.blue)),
               // Label(text: 'Warning', style: LabelStyle(lineHeight: 1.0, fontSize: 32, textColor: Color.black)),

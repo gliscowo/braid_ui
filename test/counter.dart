@@ -6,8 +6,6 @@ Future<void> main() async {
     print('[${event.loggerName}] (${event.level.toString().toLowerCase()}) ${event.message}');
   });
 
-  loadNatives('resources/lib');
-
   final (app, _) = await createBraidAppWithWindow(
     name: 'counter',
     baseLogger: Logger('counter_app'),
@@ -49,7 +47,7 @@ class _CounterState extends WidgetState<Counter> {
   @override
   Widget build(Object context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: .center,
       children: [
         Text('clicks: $clicks'),
         Button(onClick: () => setState(() => clicks++), child: Text('count!')),

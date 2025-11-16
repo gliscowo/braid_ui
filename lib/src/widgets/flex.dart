@@ -10,13 +10,13 @@ import '../framework/widget.dart';
 /// A vertical array of widgets
 class Column extends Flex {
   const Column({super.key, super.mainAxisAlignment, super.crossAxisAlignment, super.separator, required super.children})
-    : super(mainAxis: LayoutAxis.vertical);
+    : super(mainAxis: .vertical);
 }
 
 /// A horizontal array of widgets
 class Row extends Flex {
   const Row({super.key, super.mainAxisAlignment, super.crossAxisAlignment, super.separator, required super.children})
-    : super(mainAxis: LayoutAxis.horizontal);
+    : super(mainAxis: .horizontal);
 }
 
 class Flex extends MultiChildInstanceWidget {
@@ -27,8 +27,8 @@ class Flex extends MultiChildInstanceWidget {
 
   const Flex({
     super.key,
-    this.mainAxisAlignment = MainAxisAlignment.start,
-    this.crossAxisAlignment = CrossAxisAlignment.start,
+    this.mainAxisAlignment = .start,
+    this.crossAxisAlignment = .start,
     this.separator,
     required this.mainAxis,
     required super.children,
@@ -61,45 +61,45 @@ class Flex extends MultiChildInstanceWidget {
 
 extension ConstraintsAxisOperations on Constraints {
   double minOnAxis(LayoutAxis axis) => switch (axis) {
-    LayoutAxis.horizontal => minWidth,
-    LayoutAxis.vertical => minHeight,
+    .horizontal => minWidth,
+    .vertical => minHeight,
   };
 
   double maxOnAxis(LayoutAxis axis) => switch (axis) {
-    LayoutAxis.horizontal => maxWidth,
-    LayoutAxis.vertical => maxHeight,
+    .horizontal => maxWidth,
+    .vertical => maxHeight,
   };
 
   double maxFiniteOrMinOnAxis(LayoutAxis axis) => switch (axis) {
-    LayoutAxis.horizontal => maxFiniteOrMinWidth,
-    LayoutAxis.vertical => maxFiniteOrMinHeight,
+    .horizontal => maxFiniteOrMinWidth,
+    .vertical => maxFiniteOrMinHeight,
   };
 }
 
 extension SizeAxisOperations on Size {
   double getAxisExtent(LayoutAxis axis) => switch (axis) {
-    LayoutAxis.horizontal => width,
-    LayoutAxis.vertical => height,
+    .horizontal => width,
+    .vertical => height,
   };
 }
 
 extension TransformAxisOperations on WidgetTransform {
   double getAxisExtent(LayoutAxis axis) => switch (axis) {
-    LayoutAxis.horizontal => width,
-    LayoutAxis.vertical => height,
+    .horizontal => width,
+    .vertical => height,
   };
   double getAxisCoordinate(LayoutAxis axis) => switch (axis) {
-    LayoutAxis.horizontal => x,
-    LayoutAxis.vertical => y,
+    .horizontal => x,
+    .vertical => y,
   };
 
   void setAxisExtent(LayoutAxis axis, double value) => switch (axis) {
-    LayoutAxis.horizontal => width = value,
-    LayoutAxis.vertical => height = value,
+    .horizontal => width = value,
+    .vertical => height = value,
   };
   void setAxisCoordinate(LayoutAxis axis, double value) => switch (axis) {
-    LayoutAxis.horizontal => x = value,
-    LayoutAxis.vertical => y = value,
+    .horizontal => x = value,
+    .vertical => y = value,
   };
 }
 
@@ -115,11 +115,11 @@ enum CrossAxisAlignment {
   baseline;
 
   double _computeChildOffset(double freeSpace) => (switch (this) {
-    CrossAxisAlignment.stretch => 0,
-    CrossAxisAlignment.start => 0,
-    CrossAxisAlignment.center => freeSpace / 2,
-    CrossAxisAlignment.end => freeSpace,
-    CrossAxisAlignment.baseline => 0,
+    .stretch => 0,
+    .start => 0,
+    .center => freeSpace / 2,
+    .end => freeSpace,
+    .baseline => 0,
   }).floorToDouble();
 }
 
@@ -132,12 +132,12 @@ enum MainAxisAlignment {
   spaceEvenly;
 
   (double leading, double between) _distributeSpace(double freeSpace, int childCount) => (switch (this) {
-    MainAxisAlignment.start => (0.0, 0.0),
-    MainAxisAlignment.end => (freeSpace, 0.0),
-    MainAxisAlignment.center => (freeSpace / 2, 0.0),
-    MainAxisAlignment.spaceBetween => (0.0, freeSpace / (childCount - 1)),
-    MainAxisAlignment.spaceAround => (freeSpace / childCount / 2, freeSpace / childCount),
-    MainAxisAlignment.spaceEvenly => (freeSpace / (childCount + 1), freeSpace / (childCount + 1)),
+    .start => (0.0, 0.0),
+    .end => (freeSpace, 0.0),
+    .center => (freeSpace / 2, 0.0),
+    .spaceBetween => (0.0, freeSpace / (childCount - 1)),
+    .spaceAround => (freeSpace / childCount / 2, freeSpace / childCount),
+    .spaceEvenly => (freeSpace / (childCount + 1), freeSpace / (childCount + 1)),
   }).floorToDouble();
 }
 
@@ -166,21 +166,20 @@ class FlexInstance extends MultiChildWidgetInstance<Flex> {
     final mainAxis = widget.mainAxis;
     final crossAxis = mainAxis.opposite;
 
-    final crossAxisMinimum = widget.crossAxisAlignment == CrossAxisAlignment.stretch
+    final crossAxisMinimum = widget.crossAxisAlignment == .stretch
         ? constraints.maxOnAxis(crossAxis)
         : constraints.minOnAxis(crossAxis);
 
     final childConstraints = Constraints(
-      mainAxis == LayoutAxis.vertical ? crossAxisMinimum : 0,
-      mainAxis == LayoutAxis.horizontal ? crossAxisMinimum : 0,
-      mainAxis == LayoutAxis.vertical ? constraints.maxOnAxis(crossAxis) : double.infinity,
-      mainAxis == LayoutAxis.horizontal ? constraints.maxOnAxis(crossAxis) : double.infinity,
+      mainAxis == .vertical ? crossAxisMinimum : 0,
+      mainAxis == .horizontal ? crossAxisMinimum : 0,
+      mainAxis == .vertical ? constraints.maxOnAxis(crossAxis) : double.infinity,
+      mainAxis == .horizontal ? constraints.maxOnAxis(crossAxis) : double.infinity,
     );
 
     var maxAscent = 0.0;
     var maxDescent = 0.0;
-    final isBaselineAligned =
-        mainAxis == LayoutAxis.horizontal && widget.crossAxisAlignment == CrossAxisAlignment.baseline;
+    final isBaselineAligned = mainAxis == .horizontal && widget.crossAxisAlignment == .baseline;
 
     Size layoutChild(WidgetInstance child, Constraints childConstraints) {
       final size = child.layout(childConstraints);
@@ -230,8 +229,8 @@ class FlexInstance extends MultiChildWidgetInstance<Flex> {
           child,
           childConstraints.respecting(
             Constraints.tightOnAxis(
-              horizontal: mainAxis == LayoutAxis.horizontal ? space : null,
-              vertical: mainAxis == LayoutAxis.vertical ? space : null,
+              horizontal: mainAxis == .horizontal ? space : null,
+              vertical: mainAxis == .vertical ? space : null,
             ),
           ),
         ),
@@ -282,24 +281,24 @@ class FlexInstance extends MultiChildWidgetInstance<Flex> {
 
   @override
   double measureIntrinsicWidth(double height) =>
-      widget.mainAxis == LayoutAxis.horizontal ? _measureMainAxis(height) : _measureCrossAxis(height);
+      widget.mainAxis == .horizontal ? _measureMainAxis(height) : _measureCrossAxis(height);
 
   @override
   double measureIntrinsicHeight(double width) =>
-      widget.mainAxis == LayoutAxis.vertical ? _measureMainAxis(width) : _measureCrossAxis(width);
+      widget.mainAxis == .vertical ? _measureMainAxis(width) : _measureCrossAxis(width);
 
   @override
   double? measureBaselineOffset() {
     switch (widget.mainAxis) {
-      case LayoutAxis.vertical:
+      case .vertical:
         return computeFirstBaselineOffset();
-      case LayoutAxis.horizontal:
+      case .horizontal:
         return computeHighestBaselineOffset();
     }
   }
 
   double _measureMainAxis(double crossExtent) {
-    final horizontal = widget.mainAxis == LayoutAxis.horizontal;
+    final horizontal = widget.mainAxis == .horizontal;
     final nonFlexSize = children
         .where((element) => element.parentData is! FlexParentData)
         .map((e) => horizontal ? e.getIntrinsicWidth(crossExtent) : e.getIntrinsicHeight(crossExtent))
@@ -329,7 +328,7 @@ class FlexInstance extends MultiChildWidgetInstance<Flex> {
   }
 
   double _measureCrossAxis(double mainExtent) {
-    final horizontal = widget.mainAxis == LayoutAxis.horizontal;
+    final horizontal = widget.mainAxis == .horizontal;
 
     var crossSize = 0.0;
 

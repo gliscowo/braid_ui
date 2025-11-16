@@ -11,12 +11,12 @@ import 'layout_builder.dart';
 
 class VerticalSplitPane extends SplitPane {
   const VerticalSplitPane({super.key, required Widget topChild, required Widget bottomChild})
-    : super(axis: LayoutAxis.vertical, firstChild: topChild, secondChild: bottomChild);
+    : super(axis: .vertical, firstChild: topChild, secondChild: bottomChild);
 }
 
 class HorizontalSplitPane extends SplitPane {
   const HorizontalSplitPane({super.key, required Widget leftChild, required Widget rightChild})
-    : super(axis: LayoutAxis.horizontal, firstChild: leftChild, secondChild: rightChild);
+    : super(axis: .horizontal, firstChild: leftChild, secondChild: rightChild);
 }
 
 // ---

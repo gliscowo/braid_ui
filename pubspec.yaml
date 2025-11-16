@@ -3,13 +3,15 @@ description: An experimental UI framework and successor to owo-ui
 version: 0.1.0
 repository: https://github.com/gliscowo/braid_ui
 
+publish_to: none
+
 environment:
-  sdk: ^3.9.0
+  sdk: ^3.10.0
 
 dependencies:
   diamond_gl:
     hosted: https://pub.wispforest.io
-    version: ^2.0.0
+    version: ^3.0.0
   ffi: ^2.1.4
   logging: ^1.2.0
   vector_math: ^2.1.4
@@ -22,6 +24,9 @@ dependencies:
   unicode: ^1.1.8
   source_helper: ^1.3.7
   fuzzywuzzy: ^1.2.0
+  hooks: ^1.0.0
+  code_assets: ^1.0.0
+  package_config: ^2.2.0
 
 dev_dependencies:
   benchmark_harness: ^2.3.1
@@ -35,3 +40,7 @@ dev_dependencies:
     hosted: https://pub.wispforest.io
     version: ^0.1.0
   analyzer: ^8.1.1
+  ffigen: ^20.0.0
+  yaml: ^3.1.3
+  kdl: ^2.0.2
+  big_decimal: ^0.5.0

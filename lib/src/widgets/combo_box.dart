@@ -305,7 +305,7 @@ class _ComboBoxState<T> extends WidgetState<ComboBox<T>> {
             child: Padding(
               insets: const Insets(top: 3, bottom: 3, left: 5),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: .center,
                 children: [
                   Flexible(
                     child: EditableText(

@@ -9,7 +9,6 @@ Future<void> main(List<String> args) async {
     print('[${event.loggerName}] (${event.level.toString().toLowerCase()}) ${event.message}');
   });
 
-  loadNatives('resources/lib');
   final (app, _) = await createBraidAppWithWindow(
     baseLogger: Logger('text-sizes'),
     resources: BraidResources.filesystem(fontDirectory: 'resources/font', shaderDirectory: 'resources/shader'),
@@ -33,7 +32,7 @@ class TextSizesApp extends StatelessWidget {
         child: Center(
           child: Flex(
             mainAxis: LayoutAxis.vertical,
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: .center,
             children: [
               Flexible(
                 child: Scrollable.vertical(

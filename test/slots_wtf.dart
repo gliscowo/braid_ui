@@ -1,8 +1,6 @@
 import 'package:braid_ui/braid_ui.dart';
 
 Future<void> main() async {
-  loadNatives('resources/lib');
-
   final (app, _) = await createBraidAppWithWindow(
     resources: BraidResources.filesystem(fontDirectory: 'resources/font', shaderDirectory: 'resources/shader'),
     defaultFontFamily: 'NotoSans',

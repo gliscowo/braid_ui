@@ -6,8 +6,6 @@ Future<void> main() async {
     print('[${event.loggerName}] (${event.level.toString().toLowerCase()}) ${event.message}');
   });
 
-  loadNatives('resources/lib');
-
   final (app, _) = await createBraidAppWithWindow(
     name: 'inherited state',
     baseLogger: Logger('counter_app'),

@@ -6,9 +6,6 @@ import 'dart:math';
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:braid_ui/braid_ui.dart';
-import 'package:braid_ui/src/widgets/app_stack.dart';
-import 'package:braid_ui/src/widgets/combo_box.dart';
-import 'package:braid_ui/src/widgets/input_handling.dart';
 import 'package:diamond_gl/glfw.dart';
 import 'package:endec/endec.dart';
 import 'package:endec_json/endec_json.dart';
@@ -22,8 +19,7 @@ Future<void> main() async {
     print('[${event.loggerName}] (${event.level.toString().toLowerCase()}) ${event.message}');
   });
 
-  loadNatives('resources/lib');
-  final icon = image.decodePngFile('test/color_trials_icon.png');
+  final icon = image.decodePngFile('test/assets/color_trials_icon.png');
 
   final (app, window) = await createBraidAppWithWindow(
     name: 'colors !!',
@@ -152,7 +148,7 @@ class _AppBodyState extends WidgetState<AppBody> {
                           child: Padding(
                             insets: const Insets.all(15),
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
+                              crossAxisAlignment: .center,
                               children: [
                                 for (final test in Test.values)
                                   Padding(
@@ -182,10 +178,10 @@ class _AppBodyState extends WidgetState<AppBody> {
                 Padding(
                   insets: const Insets.all(15),
                   child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                    crossAxisAlignment: .center,
                     children: [
                       Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                        crossAxisAlignment: .center,
                         children: [
                           const Padding(insets: Insets(right: 5), child: DebugToggle()),
                           Text('Draw instance outlines'),
@@ -193,8 +189,8 @@ class _AppBodyState extends WidgetState<AppBody> {
                       ),
                       Flexible(
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: .center,
+                          crossAxisAlignment: .center,
                           children: [
                             Button(
                               child: Text('Spawn window'),
@@ -269,20 +265,33 @@ class _AppBodyState extends WidgetState<AppBody> {
     );
   }
 
-  void _saveWindowState() {
+  void _saveWindowState() async {
+    final file = File(windowStatePath);
+    if (!await file.parent.exists()) {
+      await file.parent.create(recursive: true);
+    }
+
     final endec = _windowEndec.listOf();
-    File('window_state.json').writeAsString(const JsonEncoder.withIndent('  ').convert(toJson(endec, windows)));
+    file.writeAsString(const JsonEncoder.withIndent('  ').convert(toJson(endec, windows)));
   }
 
   void _loadWindowState() async {
+    final file = File('test/run/window_state.json');
+    if (!await file.exists()) {
+      _saveWindowState();
+      return;
+    }
+
     final endec = _windowEndec.listOf();
-    final state = fromJson(endec, jsonDecode(await File('window_state.json').readAsString()));
+    final state = fromJson(endec, jsonDecode(await file.readAsString()));
 
     setState(() {
       windows.clear();
       windows.addAll(state);
     });
   }
+
+  static const windowStatePath = 'test/run/window_state.json';
 }
 
 class CheckBoxesTest extends StatelessWidget {
@@ -292,10 +301,10 @@ class CheckBoxesTest extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: .center,
         children: [
           Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: .center,
             children: [
               Constrain(
                 constraints: Constraints.only(maxWidth: 150),
@@ -309,7 +318,7 @@ class CheckBoxesTest extends StatelessWidget {
                 Color.rgb(0x3a3135),
               ])
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  crossAxisAlignment: .center,
                   children: [
                     ToggleBox(),
                     Padding(
@@ -347,7 +356,7 @@ class CursorTest extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: .center,
         separator: const Padding(insets: Insets.all(10)),
         children: [
           const Padding(insets: Insets.all(10), child: ProgressIndicator.indeterminate()),
@@ -385,7 +394,7 @@ class _ProgressIndicatorTestState extends WidgetState<ProgressIndicatorTest> {
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: .center,
       separator: const Padding(insets: Insets.all(10)),
       children: [
         Sized(
@@ -409,7 +418,7 @@ class TextWrappingTest extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: .center,
         children: [
           Sized(
             width: 200,
@@ -438,7 +447,7 @@ class TextWrappingTest extends StatelessWidget {
           Panel(
             color: Color.black.copyWith(a: .25),
             child: const Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
+              crossAxisAlignment: .baseline,
               children: [
                 Panel(
                   color: Color.black,
@@ -739,7 +748,7 @@ class _ColorSliderState extends WidgetState<ColorSlider> {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: .center,
       children: [
         Constrain(
           constraints: Constraints.tight(const Size(65, 35)),
@@ -782,7 +791,7 @@ class _ToggleBoxState extends WidgetState<ToggleBox> {
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: .center,
       children: [
         Switch(on: _checked, onClick: () => setState(() => _checked = !_checked)),
         const Padding(insets: Insets.all(5)),
@@ -799,7 +808,7 @@ class GridsTest extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Center(
       child: Grid(
-        mainAxis: LayoutAxis.vertical,
+        mainAxis: .vertical,
         crossAxisCells: 2,
         children: [
           Sized(width: 100, height: 100, child: Panel(color: Color.white)),
@@ -836,7 +845,7 @@ class _SwapTestState extends WidgetState<SwapTest> {
     return Align(
       alignment: Alignment.top,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: .center,
         children: [
           Button(
             onClick: () => setState(() {
@@ -878,7 +887,7 @@ class _DropdownTestState extends WidgetState<DropdownTest> {
     return Overlay(
       child: Center(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: .center,
           separator: const Padding(insets: Insets.axis(vertical: 10)),
           children: [
             Text(selected != null ? 'selection: $selected' : 'no selection'),
@@ -959,7 +968,7 @@ class _IntentTestState extends WidgetState<IntentTest> {
                   color: Color.white,
                   child: Center(
                     child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                      crossAxisAlignment: .center,
                       separator: const Padding(insets: Insets.axis(horizontal: 10)),
                       children: [
                         Button(

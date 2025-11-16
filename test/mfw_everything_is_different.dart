@@ -69,8 +69,6 @@ Future<void> main(List<String> args) async {
     print('[${event.loggerName}] (${event.level.toString().toLowerCase()}) ${event.message}');
   });
 
-  loadNatives('resources/lib');
-
   final (app, _) = await createBraidAppWithWindow(
     baseLogger: Logger('yep'),
     width: 300,

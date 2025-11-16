@@ -51,7 +51,7 @@ class _CollapsibleState extends WidgetState<Collapsible> {
                 })
               : null,
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: .center,
             children: [
               Actions.click(
                 cursorStyle: CursorStyle.hand,

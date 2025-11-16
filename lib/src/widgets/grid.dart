@@ -116,8 +116,8 @@ class _GridInstance extends MultiChildWidgetInstance<Grid> {
             ? dynamicCrossAxisCellSizes![childIdx % widget.crossAxisCells]
             : fixedCrossAxisCellSize;
 
-        final maxWidth = mainAxis == LayoutAxis.vertical ? maxCrossAxisChildSize : maxMainAxisChildSize;
-        final maxHeight = mainAxis == LayoutAxis.vertical ? maxMainAxisChildSize : maxCrossAxisChildSize;
+        final maxWidth = mainAxis == .vertical ? maxCrossAxisChildSize : maxMainAxisChildSize;
+        final maxHeight = mainAxis == .vertical ? maxMainAxisChildSize : maxCrossAxisChildSize;
 
         final childConstraints = widget.cellFit.isTight
             ? Constraints.tightOnAxis(horizontal: maxWidth, vertical: maxHeight)
@@ -177,7 +177,7 @@ class _GridInstance extends MultiChildWidgetInstance<Grid> {
     }
 
     transform.setSize(
-      mainAxis == LayoutAxis.vertical
+      mainAxis == .vertical
           ? Size(actualCrossAxisSizes.sum, actualMainAxisSizes.sum)
           : Size(actualMainAxisSizes.sum, actualCrossAxisSizes.sum),
     );
@@ -185,14 +185,14 @@ class _GridInstance extends MultiChildWidgetInstance<Grid> {
 
   @override
   double measureIntrinsicWidth(double height) => switch (widget.mainAxis) {
-    LayoutAxis.vertical => _measureCrossAxis(height),
-    LayoutAxis.horizontal => _measureMainAxis(height),
+    .vertical => _measureCrossAxis(height),
+    .horizontal => _measureMainAxis(height),
   }.sum;
 
   @override
   double measureIntrinsicHeight(double width) => switch (widget.mainAxis) {
-    LayoutAxis.vertical => _measureMainAxis(width),
-    LayoutAxis.horizontal => _measureCrossAxis(width),
+    .vertical => _measureMainAxis(width),
+    .horizontal => _measureCrossAxis(width),
   }.sum;
 
   List<double> _measureCrossAxis(double mainAxisCellSize) {

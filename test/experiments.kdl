@@ -1,0 +1,22 @@
+stack {
+  image "file:///home/lily/sources/braid_ui/assets/braid_icon_64.png" wrap=mirrored_repeat
+
+  align center {
+    flex row cross_axis_alignment=center {
+      panel 0xff3f00ff corner_radius=10.0 {
+        padding 10.0 {
+          text "chyz would"
+        }
+      }
+
+      flex column cross_axis_alignment=center {
+        button handler="a_handler" 69 {
+          text "button moment: 69"
+        }
+        button handler="a_handler" 420 {
+          text "button moment: 420"
+        }
+      }
+    }
+  }
+}

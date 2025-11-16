@@ -73,11 +73,18 @@ Future<(AppState, dgl.Window)> createBraidAppWithWindow({
   int width = 1000,
   int height = 750,
   bool enableInspector = true,
+  List<dgl.WindowFlag> windowFlags = const [],
   required BraidResources resources,
   required String defaultFontFamily,
   required Widget widget,
 }) async {
-  final surface = WindowSurface.createWindow(title: name, width: width, height: height, logger: baseLogger);
+  final surface = WindowSurface.createWindow(
+    title: name,
+    width: width,
+    height: height,
+    flags: windowFlags,
+    logger: baseLogger,
+  );
   final events = WindowEventsBinding(window: surface.window);
 
   final app = await createBraidApp(
@@ -340,7 +347,7 @@ class AppState implements InstanceHost, ProxyHost {
   void draw() {
     final ctx = DrawContext(context, primitives, projection, textRenderer, drawBoundingBoxes: debugDrawInstanceBoxes);
 
-    dgl.gl.enable(glBlend);
+    glEnable(gl_blend);
 
     ctx.transform.scopedTransform(rootInstance.transform.transformToParent, (_) => rootInstance.draw(ctx));
 
@@ -554,11 +561,7 @@ node [shape="box"];
 
           if (_inspector != null && glfwKeycode == glfwKeyC && modifiers.ctrl && modifiers.shift) {
             if (_inspector.currentApp == null) {
-              // TODO: start the inspector as a hidden window in this case
-              //  so as to not obscure the widget we're trying to pick. this
-              //  requires being able to set window properties in
-              //  createBraidAppWithWindow and consequently WindowSurface.createWindow
-              _inspector.activate();
+              _inspector.activate(startInvisible: true);
             }
 
             _inspector.pick();

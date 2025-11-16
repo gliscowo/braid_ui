@@ -89,7 +89,7 @@ class Slider extends StatelessWidget {
     this.min = 0,
     this.max = 1,
     this.step,
-    this.axis = LayoutAxis.horizontal,
+    this.axis = .horizontal,
     this.style,
     required this.value,
     required this.onUpdate,
@@ -226,7 +226,7 @@ class _RawSliderState extends WidgetState<RawSlider> {
             cursorStyle: enabled ? CursorStyle.hand : null,
             clickCallback: enabled
                 ? (x, y, _) {
-                    y = axis == LayoutAxis.vertical ? constraints.maxFiniteOrMinOnAxis(axis) - y : y;
+                    y = axis == .vertical ? constraints.maxFiniteOrMinOnAxis(axis) - y : y;
                     if (!isInHandle(constraints, x, y)) {
                       setAbsolute(constraints, x, y);
                     }
@@ -234,9 +234,7 @@ class _RawSliderState extends WidgetState<RawSlider> {
                     return true;
                   }
                 : null,
-            dragCallback: enabled
-                ? (x, y, dx, dy) => move(constraints, dx, axis == LayoutAxis.vertical ? -dy : dy)
-                : null,
+            dragCallback: enabled ? (x, y, dx, dy) => move(constraints, dx, axis == .vertical ? -dy : dy) : null,
             dragStartCallback: (_) => dragValue = widget.normalizedValue,
             child: Stack(
               alignment: axis.choose(Alignment.left, Alignment.top),

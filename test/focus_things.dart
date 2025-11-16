@@ -1,10 +1,6 @@
 import 'dart:io';
 
 import 'package:braid_ui/braid_ui.dart';
-import 'package:braid_ui/src/core/key_modifiers.dart';
-import 'package:braid_ui/src/widgets/app_stack.dart';
-import 'package:braid_ui/src/widgets/focus.dart';
-import 'package:braid_ui/src/widgets/input_handling.dart';
 import 'package:diamond_gl/glfw.dart';
 import 'package:logging/logging.dart';
 import 'package:vector_math/vector_math.dart';
@@ -14,8 +10,6 @@ Future<void> main() async {
   Logger.root.onRecord.listen((event) {
     print('[${event.loggerName}] (${event.level.toString().toLowerCase()}) ${event.message}');
   });
-
-  loadNatives('resources/lib');
 
   final (app, _) = await createBraidAppWithWindow(
     name: 'focus',
@@ -39,11 +33,7 @@ class Blod extends StatelessWidget {
     return Stack(
       children: [
         if (show)
-          RawImage(
-            key: Key('blod'),
-            wrap: ImageWrap.mirroredRepeat,
-            provider: FileImageProvider(File('test/blud.png')),
-          ),
+          RawImage(key: Key('blod'), wrap: .mirroredRepeat, provider: FileImageProvider(File('test/assets/blud.png'))),
         StackBase(key: Key('child'), child: child),
       ],
     );
@@ -199,7 +189,7 @@ class TheMess extends StatelessWidget {
       child: Builder(
         builder: (context) {
           return Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: .center,
             children: [
               const VisuallyFocusable(
                 child: VisuallyFocusable(

@@ -81,11 +81,7 @@ class WindowEventsBinding extends EventsBinding {
 
   WindowEventsBinding({required this.window}) {
     _subscriptions.addAll([
-      window.onMouseMove.listen(
-        (event) => _bufferedEvents.add(
-          MouseMoveEvent(window.cursorX + event.deltaX, window.cursorY + event.deltaY, event.deltaX, event.deltaY),
-        ),
-      ),
+      window.onMouseMove.listen((event) => _bufferedEvents.add(MouseMoveEvent(event.x, event.y, event.dx, event.dy))),
       window.onMouseButton.listen(
         (event) => _bufferedEvents.add(switch (event.action) {
           glfwPress => MouseButtonPressEvent(event.button, KeyModifiers(event.mods)),
@@ -121,7 +117,7 @@ class WindowEventsBinding extends EventsBinding {
   }
 
   @override
-  bool isKeyPressed(int glfwKeyCode) => glfw.getKey(window.handle, glfwKeyCode) == glfwPress;
+  bool isKeyPressed(int glfwKeyCode) => glfwGetKey(window.handle, glfwKeyCode) == glfwPress;
 
   @override
   void dispose() {
