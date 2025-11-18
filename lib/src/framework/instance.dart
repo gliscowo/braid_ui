@@ -18,10 +18,6 @@ import 'proxy.dart';
 import 'widget.dart';
 
 class WidgetTransform {
-  Matrix4? _toParent;
-  Matrix4? _toWidget;
-  Aabb3? _aabb;
-
   double _x = 0, _y = 0;
   double _width = 0, _height = 0;
 
@@ -42,10 +38,6 @@ class WidgetTransform {
   double get width => _width;
   double get height => _height;
 
-  Matrix4 get toParent => _toParent ??= Matrix4.identity()..setTranslationRaw(_x, _y, 0);
-  Matrix4 get toWidget => _toWidget ??= Matrix4.inverted(toParent);
-  Aabb3 get aabb => _aabb ??= Aabb3.minMax(Vector3.zero(), Vector3(_width, _height, 0))..transform(toParent);
-
   void transformToParent(Matrix4 mat) => mat.translateByDouble(_x, _y, 0, 1);
   void transformToWidget(Matrix4 mat) => mat.translateByDouble(-_x, -_y, 0, 1);
 
@@ -57,14 +49,12 @@ class WidgetTransform {
     recompute();
   }
 
-  void recompute() {
-    _toParent = null;
-    _toWidget = null;
-    _aabb = null;
-  }
+  void recompute() {}
 }
 
 class CustomWidgetTransform extends WidgetTransform {
+  Matrix4? _toParent;
+  Matrix4? _toWidget;
   bool _applyAtCenter = true;
   Matrix4 _matrix = Matrix4.identity();
 
@@ -74,12 +64,13 @@ class CustomWidgetTransform extends WidgetTransform {
   set applyAtCenter(bool value) => _setState(() => _applyAtCenter = value);
   bool get applyAtCenter => _applyAtCenter;
 
-  @override
   Matrix4 get toParent => _toParent ??= _applyAtCenter
       ? (Matrix4.translationValues(_x + _width / 2, _y + _height / 2, 0)
           ..multiply(_matrix)
           ..translateByDouble(-_width / 2, -_height / 2, 0, 1))
       : Matrix4.copy(matrix);
+
+  Matrix4 get toWidget => _toWidget ??= Matrix4.inverted(toParent);
 
   @override
   void transformToParent(Matrix4 mat) => mat.multiply(toParent);
@@ -92,6 +83,13 @@ class CustomWidgetTransform extends WidgetTransform {
 
   @override
   void toWidgetCoordinates(Vector3 vec) => toWidget.transform3(vec);
+
+  @override
+  void recompute() {
+    super.recompute();
+    _toParent = null;
+    _toWidget = null;
+  }
 }
 
 typedef Hit = ({WidgetInstance instance, ({double x, double y}) coordinates});
@@ -336,10 +334,10 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
   Matrix4 computeTransformFrom({required WidgetInstance? ancestor}) {
     final result = Matrix4.identity();
 
-    result.multiply(transform.toWidget);
+    transform.transformToWidget(result);
 
     for (final step in ancestors.takeWhile((value) => value != ancestor)) {
-      result.multiply(step.transform.toWidget);
+      step.transform.transformToWidget(result);
     }
 
     return result;
@@ -397,12 +395,11 @@ mixin ChildRenderer<T extends InstanceWidget> on WidgetInstance<T> {
     });
 
     if (ctx.drawBoundingBoxes) {
-      final aabb = child.transform.aabb;
       ctx.transform.scope((mat4) {
-        mat4.translateByDouble(aabb.min.x, aabb.min.y, 0, 1);
+        mat4.translateByDouble(child.transform.x, child.transform.y, 0, 1);
         ctx.primitives.roundedRect(
-          aabb.max.x - aabb.min.x,
-          aabb.max.y - aabb.min.y,
+          child.transform.width,
+          child.transform.height,
           const CornerRadius.all(2),
           Color.black,
           mat4,

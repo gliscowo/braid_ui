@@ -9,10 +9,6 @@ extension LerpDouble on double {
   double lerp(double delta, double other) => this + delta * (other - this);
 }
 
-extension LerpInt on int {
-  int lerp(double delta, int other) => this + (delta * (other - this)).round();
-}
-
 class Size {
   static const Size zero = Size(0, 0);
 
@@ -187,13 +183,6 @@ class Matrix4Stack extends Matrix4 {
   void pop() {
     storage.setAll(0, _stack.removeLast());
   }
-}
-
-double computeDelta(double current, double target, double delta) {
-  double diff = target - current;
-  delta = diff * delta;
-
-  return delta.abs() > diff.abs() ? diff : delta;
 }
 
 extension Transform2 on Matrix4 {

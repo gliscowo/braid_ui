@@ -828,10 +828,18 @@ class SizeToAABBInstance extends SingleChildWidgetInstance<SizeToAABB> {
 
     child.layout(constraints);
 
-    final size = Size(child.transform.aabb.width, child.transform.aabb.height).constrained(constraints);
+    final childToParentTransform = Matrix4.identity();
+    child.transform.transformToParent(childToParentTransform);
 
-    child.transform.x = -child.transform.aabb.min.x;
-    child.transform.y = -child.transform.aabb.min.y;
+    final childAabb = Aabb3()
+      ..max.x = child.transform.width
+      ..max.y = child.transform.height
+      ..transform(childToParentTransform);
+
+    final size = Size(childAabb.width, childAabb.height).constrained(constraints);
+
+    child.transform.x = -childAabb.min.x;
+    child.transform.y = -childAabb.min.y;
 
     transform.width = size.width;
     transform.height = size.height;

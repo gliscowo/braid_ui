@@ -93,14 +93,16 @@ class ScrollableState extends WidgetState<Scrollable> {
 
   void _reveal(BuildContext context, Insets padding) {
     final transform = context.instance!.transform;
-    final box = Aabb3.copy(transform.aabb);
-    box.min.x -= padding.left;
-    box.min.y -= padding.top;
-    box.max.x += padding.right;
-    box.max.y += padding.bottom;
 
-    transform.toWidgetCoordinates(box.min);
-    transform.toWidgetCoordinates(box.max);
+    final transformToWidget = Matrix4.identity();
+    transform.transformToWidget(transformToWidget);
+
+    final box = Aabb3()
+      ..min.x = transform.x - padding.left
+      ..min.y = transform.y - padding.top
+      ..max.x = transform.width + padding.horizontal
+      ..max.y = transform.height + padding.vertical
+      ..transform(transformToWidget);
 
     _revealAabb(context, box);
   }
