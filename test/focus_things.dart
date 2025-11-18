@@ -68,7 +68,12 @@ class FocusApp extends StatelessWidget {
                     final instance = primaryFocus.context.instance!;
                     final transform = instance.parent!.computeTransformFrom(ancestor: context.instance)..invert();
 
-                    final box = Aabb3.copy(instance.transform.aabb)..transform(transform);
+                    final box = Aabb3()
+                      ..min.x = instance.transform.x
+                      ..min.y = instance.transform.y
+                      ..max.x = instance.transform.x + instance.transform.width
+                      ..max.y = instance.transform.y + instance.transform.height
+                      ..transform(transform);
                     ctx.transform.scope((mat4) {
                       mat4.translateByVector3(box.min);
                       ctx.primitives.roundedRect(
@@ -97,12 +102,32 @@ class FocusApp extends StatelessWidget {
     [
       ActionTrigger(keyCodes: {glfwKeyTab}),
     ]: TraverseFocusIntent(
-      FocusTraversalDirection.forwards,
+      FocusTraversalDirection.next,
     ),
     [
       ActionTrigger(keyCodes: {glfwKeyTab}, keyModifiers: KeyModifiers(glfwModShift)),
     ]: TraverseFocusIntent(
-      FocusTraversalDirection.backwards,
+      FocusTraversalDirection.previous,
+    ),
+    [
+      ActionTrigger(keyCodes: {glfwKeyLeft}),
+    ]: TraverseFocusIntent(
+      FocusTraversalDirection.left,
+    ),
+    [
+      ActionTrigger(keyCodes: {glfwKeyRight}),
+    ]: TraverseFocusIntent(
+      FocusTraversalDirection.right,
+    ),
+    [
+      ActionTrigger(keyCodes: {glfwKeyUp}),
+    ]: TraverseFocusIntent(
+      FocusTraversalDirection.up,
+    ),
+    [
+      ActionTrigger(keyCodes: {glfwKeyDown}),
+    ]: TraverseFocusIntent(
+      FocusTraversalDirection.down,
     ),
   };
 

@@ -11,6 +11,7 @@ import 'package:endec/endec.dart';
 import 'package:endec_json/endec_json.dart';
 import 'package:image/image.dart' as image;
 import 'package:logging/logging.dart';
+import 'package:vector_math/vector_math.dart';
 
 CursorStyle? cursor;
 
@@ -41,40 +42,126 @@ class ColorApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BraidTheme(
-      // accentColor: Color.rgb(0xFF9C73),
-      // highlightColor: Color.rgb(0xFBD288),
-      // backgroundColor: Color.rgb(0xEEE6CA),
-      // elevatedColor: Color.rgb(0xF5FAE1),
-      // elementColor: Color.rgb(0x7A7A73),
-      // disabledColor: Color.rgb(0x3B060A),
-      // textStyle: const TextStyle(color: Color.rgb(0x57564F)),
-      // switchStyle: const SwitchStyle(switchOffColor: Color.rgb(0xFF9C73)),
-      // comboBoxStyle: const ComboBoxStyle(borderHighlightColor: Color.rgb(0xFF9C73)),
-      child: Builder(
-        builder: (context) {
-          return Column(
-            children: [
-              Constrain(
-                constraints: Constraints.only(minHeight: 50),
-                child: Panel(
-                  color: BraidTheme.of(context).elevatedColor,
-                  child: Padding(
-                    insets: const Insets.all(10).copy(left: 15),
-                    child: Align(
-                      alignment: Alignment.left,
-                      child: Text('cool & based colors test :o', style: const TextStyle(bold: true)),
+    return Shortcuts(
+      skipTraversal: true,
+      shortcuts: _shortcuts,
+      child: Intents(
+        skipTraversal: true,
+        actions: _actions,
+        child: BraidTheme(
+          // accentColor: Color.rgb(0xFF9C73),
+          // highlightColor: Color.rgb(0xFBD288),
+          // backgroundColor: Color.rgb(0xEEE6CA),
+          // elevatedColor: Color.rgb(0xF5FAE1),
+          // elementColor: Color.rgb(0x7A7A73),
+          // disabledColor: Color.rgb(0x3B060A),
+          // textStyle: const TextStyle(color: Color.rgb(0x57564F)),
+          // switchStyle: const SwitchStyle(switchOffColor: Color.rgb(0xFF9C73)),
+          // comboBoxStyle: const ComboBoxStyle(borderHighlightColor: Color.rgb(0xFF9C73)),
+          child: Builder(
+            builder: (context) {
+              return Column(
+                children: [
+                  Constrain(
+                    constraints: Constraints.only(minHeight: 50),
+                    child: Panel(
+                      color: BraidTheme.of(context).elevatedColor,
+                      child: Padding(
+                        insets: const Insets.all(10).copy(left: 15),
+                        child: Align(
+                          alignment: Alignment.left,
+                          child: Text('cool & based colors test :o', style: const TextStyle(bold: true)),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-              const AppBody(),
-            ],
-          );
-        },
+                  Builder(
+                    builder: (context) {
+                      return Flexible(
+                        child: Stack(
+                          children: [
+                            const StackBase(child: AppBody()),
+                            CustomDraw(
+                              drawFunction: (ctx, _) {
+                                final primaryFocus = Focusable.of(context).primaryFocus;
+                                final instance = primaryFocus.context.instance!;
+                                if (!instance.parent!.ancestors.contains(context.instance)) {
+                                  return;
+                                }
+
+                                final transform = instance.parent!.computeTransformFrom(ancestor: context.instance)
+                                  ..invert();
+
+                                final box = Aabb3()
+                                  ..min.x = instance.transform.x
+                                  ..min.y = instance.transform.y
+                                  ..max.x = instance.transform.x + instance.transform.width
+                                  ..max.y = instance.transform.y + instance.transform.height
+                                  ..transform(transform);
+                                ctx.transform.scope((mat4) {
+                                  mat4.translateByVector3(box.min);
+                                  ctx.primitives.roundedRect(
+                                    box.width,
+                                    box.height,
+                                    const CornerRadius.all(2.5),
+                                    Color.ofHsv(primaryFocus.debugDepth / 8 % 1, .75, 1),
+                                    ctx.transform,
+                                    ctx.projection,
+                                    outlineThickness: 1,
+                                  );
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
       ),
     );
   }
+
+  // ---
+
+  static const _shortcuts = {
+    [
+      ActionTrigger(keyCodes: {glfwKeyTab}),
+    ]: TraverseFocusIntent(
+      FocusTraversalDirection.next,
+    ),
+    [
+      ActionTrigger(keyCodes: {glfwKeyTab}, keyModifiers: KeyModifiers(glfwModShift)),
+    ]: TraverseFocusIntent(
+      FocusTraversalDirection.previous,
+    ),
+    [
+      ActionTrigger(keyCodes: {glfwKeyLeft}, keyModifiers: null),
+    ]: TraverseFocusIntent(
+      FocusTraversalDirection.left,
+    ),
+    [
+      ActionTrigger(keyCodes: {glfwKeyRight}, keyModifiers: null),
+    ]: TraverseFocusIntent(
+      FocusTraversalDirection.right,
+    ),
+    [
+      ActionTrigger(keyCodes: {glfwKeyUp}, keyModifiers: null),
+    ]: TraverseFocusIntent(
+      FocusTraversalDirection.up,
+    ),
+    [
+      ActionTrigger(keyCodes: {glfwKeyDown}, keyModifiers: null),
+    ]: TraverseFocusIntent(
+      FocusTraversalDirection.down,
+    ),
+  };
+
+  static const _actions = ActionsMap.fromMap({TraverseFocusIntent: TraverseFocusAction()});
 }
 
 class AppBody extends StatefulWidget {
@@ -118,150 +205,148 @@ class _AppBodyState extends WidgetState<AppBody> {
 
   @override
   Widget build(BuildContext context) {
-    return Flexible(
-      child: Stack(
-        children: [
-          Panel(
-            color: BraidTheme.of(context).backgroundColor,
-            child: Column(
-              children: [
-                Flexible(
-                  child: Stack(
-                    children: [
-                      switch (test) {
-                        Test.checkboxes => const CheckBoxesTest(),
-                        Test.cursors => const CursorTest(),
-                        Test.textWrapping => const TextWrappingTest(),
-                        Test.textInput => const TextInputTest(),
-                        Test.collapsible => const CollapsibleTest(),
-                        Test.grids => const GridsTest(),
-                        Test.swapnite => const SwapTest(),
-                        Test.dropdowns => const DropdownTest(),
-                        Test.intents => const IntentTest(),
-                      },
-                      Align(
-                        key: Key('buttons'),
-                        alignment: Alignment.left,
-                        child: Panel(
-                          color: BraidTheme.of(context).elevatedColor,
-                          cornerRadius: const CornerRadius.right(10),
-                          child: Padding(
-                            insets: const Insets.all(15),
-                            child: Column(
-                              crossAxisAlignment: .center,
-                              children: [
-                                for (final test in Test.values)
-                                  Padding(
-                                    insets: const Insets.all(5),
-                                    child: Sized(
-                                      width: 115,
-                                      child: Button(
-                                        onClick: () => setState(() => this.test = test),
-                                        child: Text(test.name),
-                                        style: const ButtonStyle(
-                                          cornerRadius: CornerRadius.all(10),
-                                          padding: Insets.axis(vertical: 8),
-                                        ),
+    return Stack(
+      children: [
+        Panel(
+          color: BraidTheme.of(context).backgroundColor,
+          child: Column(
+            children: [
+              Flexible(
+                child: Stack(
+                  children: [
+                    switch (test) {
+                      Test.checkboxes => const CheckBoxesTest(),
+                      Test.cursors => const CursorTest(),
+                      Test.textWrapping => const TextWrappingTest(),
+                      Test.textInput => const TextInputTest(),
+                      Test.collapsible => const CollapsibleTest(),
+                      Test.grids => const GridsTest(),
+                      Test.swapnite => const SwapTest(),
+                      Test.dropdowns => const DropdownTest(),
+                      Test.intents => const IntentTest(),
+                    },
+                    Align(
+                      key: Key('buttons'),
+                      alignment: Alignment.left,
+                      child: Panel(
+                        color: BraidTheme.of(context).elevatedColor,
+                        cornerRadius: const CornerRadius.right(10),
+                        child: Padding(
+                          insets: const Insets.all(15),
+                          child: Column(
+                            crossAxisAlignment: .center,
+                            children: [
+                              for (final test in Test.values)
+                                Padding(
+                                  insets: const Insets.all(5),
+                                  child: Sized(
+                                    width: 115,
+                                    child: Button(
+                                      onClick: () => setState(() => this.test = test),
+                                      child: Text(test.name),
+                                      style: const ButtonStyle(
+                                        cornerRadius: CornerRadius.all(10),
+                                        padding: Insets.axis(vertical: 8),
                                       ),
                                     ),
                                   ),
-                                const Padding(insets: Insets(top: 10), child: Text('test selection')),
-                              ],
-                            ),
+                                ),
+                              const Padding(insets: Insets(top: 10), child: Text('test selection')),
+                            ],
                           ),
                         ),
                       ),
-                      // ),
-                    ],
-                  ),
+                    ),
+                    // ),
+                  ],
                 ),
-                Padding(
-                  insets: const Insets.all(15),
-                  child: Row(
-                    crossAxisAlignment: .center,
-                    children: [
-                      Row(
-                        crossAxisAlignment: .center,
-                        children: [
-                          const Padding(insets: Insets(right: 5), child: DebugToggle()),
-                          Text('Draw instance outlines'),
-                        ],
-                      ),
-                      Flexible(
-                        child: Row(
-                          mainAxisAlignment: .center,
-                          crossAxisAlignment: .center,
-                          children: [
-                            Button(
-                              child: Text('Spawn window'),
-                              onClick: () {
-                                setState(() {
-                                  windows.add((
-                                    Random().nextInt(10000000).toRadixString(16),
-                                    WindowController(size: const Size(400, 300)),
-                                  ));
-                                });
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                      Button(onClick: null, child: Text('Unavailable')),
-                      Padding(insets: const Insets.axis(horizontal: 5)),
-                      Button(onClick: _saveWindowState, child: Text('Save')),
-                      Padding(insets: const Insets.axis(horizontal: 5)),
-                      Button(onClick: _loadWindowState, child: Text('Load')),
-                      Padding(insets: const Insets.axis(horizontal: 5)),
-                      Button(onClick: () => AppState.of(context).scheduleShutdown(), child: Text('Quit')),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          DragArena(
-            children: [
-              for (final window in windows)
-                Window(
-                  key: Key(window.$1),
-                  controller: window.$2,
-                  title: 'window ${window.$1}',
-                  onClose: () {
-                    setState(() {
-                      windows.remove(window);
-                    });
-                  },
-                  content: Align(
-                    alignment: Alignment.topLeft,
-                    child: Column(
+              ),
+              Padding(
+                insets: const Insets.all(15),
+                child: Row(
+                  crossAxisAlignment: .center,
+                  children: [
+                    Row(
+                      crossAxisAlignment: .center,
                       children: [
-                        Button(onClick: () {}, child: Text('bruh')),
-                        ColorSlider(from: Color.white, to: Color.black),
+                        const Padding(insets: Insets(right: 5), child: DebugToggle()),
+                        Text('Draw instance outlines'),
                       ],
                     ),
-                  ),
+                    Flexible(
+                      child: Row(
+                        mainAxisAlignment: .center,
+                        crossAxisAlignment: .center,
+                        children: [
+                          Button(
+                            child: Text('Spawn window'),
+                            onClick: () {
+                              setState(() {
+                                windows.add((
+                                  Random().nextInt(10000000).toRadixString(16),
+                                  WindowController(size: const Size(400, 300)),
+                                ));
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    Button(onClick: null, child: Text('Unavailable')),
+                    Padding(insets: const Insets.axis(horizontal: 5)),
+                    Button(onClick: _saveWindowState, child: Text('Save')),
+                    Padding(insets: const Insets.axis(horizontal: 5)),
+                    Button(onClick: _loadWindowState, child: Text('Load')),
+                    Padding(insets: const Insets.axis(horizontal: 5)),
+                    Button(onClick: () => AppState.of(context).scheduleShutdown(), child: Text('Quit')),
+                  ],
                 ),
+              ),
             ],
           ),
-          Align(
-            alignment: Alignment.topRight,
-            child: Padding(
-              insets: const Insets.all(15),
-              child: Sized(
-                width: 35.0,
-                height: 35.0,
-                child: Button(
-                  onClick: () async {
-                    final screenshot = await AppState.of(context).debugCapture();
-                    image.encodePngFile('screenshot.png', screenshot);
-                  },
-                  child: Icon(icon: Icons.screenshot),
+        ),
+        DragArena(
+          children: [
+            for (final window in windows)
+              Window(
+                key: Key(window.$1),
+                controller: window.$2,
+                title: 'window ${window.$1}',
+                onClose: () {
+                  setState(() {
+                    windows.remove(window);
+                  });
+                },
+                content: Align(
+                  alignment: Alignment.topLeft,
+                  child: Column(
+                    children: [
+                      Button(onClick: () {}, child: Text('bruh')),
+                      ColorSlider(from: Color.white, to: Color.black),
+                    ],
+                  ),
                 ),
+              ),
+          ],
+        ),
+        Align(
+          alignment: Alignment.topRight,
+          child: Padding(
+            insets: const Insets.all(15),
+            child: Sized(
+              width: 35.0,
+              height: 35.0,
+              child: Button(
+                onClick: () async {
+                  final screenshot = await AppState.of(context).debugCapture();
+                  image.encodePngFile('screenshot.png', screenshot);
+                },
+                child: Icon(icon: Icons.screenshot),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

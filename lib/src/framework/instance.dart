@@ -332,8 +332,9 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
   /// instance. If [ancestor] is null, compute the transform
   /// from the root of the tree
   Matrix4 computeTransformFrom({required WidgetInstance? ancestor}) {
-    final result = Matrix4.identity();
+    assert(ancestor == null || ancestors.contains(ancestor));
 
+    final result = Matrix4.identity();
     transform.transformToWidget(result);
 
     for (final step in ancestors.takeWhile((value) => value != ancestor)) {
@@ -341,6 +342,19 @@ abstract class WidgetInstance<T extends InstanceWidget> with NodeWithDepth imple
     }
 
     return result;
+  }
+
+  Aabb3 computeGlobalBounds() {
+    final globalTransform = parent != null
+        ? (parent!.computeTransformFrom(ancestor: null)..invert())
+        : Matrix4.identity();
+
+    return Aabb3()
+      ..min.x = transform.x
+      ..min.y = transform.y
+      ..max.x = transform.x + transform.width
+      ..max.y = transform.y + transform.height
+      ..transform(globalTransform);
   }
 
   @protected

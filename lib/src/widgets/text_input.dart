@@ -523,7 +523,7 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with /*KeyboardLis
     } else if (keyCode == glfwKeyA && modifiers.ctrl) {
       _selection = widget.controller.selection = TextSelection(0, _text.length);
       return true;
-    } else if (keyCode == glfwKeyLeft) {
+    } else if (keyCode == glfwKeyLeft && modifiers.bitMask == 0) {
       final endingSelection = !_selection.collapsed && !modifiers.shift;
       _moveCursor(
         max(
@@ -537,7 +537,7 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with /*KeyboardLis
         modifiers.shift,
       );
       return true;
-    } else if (keyCode == glfwKeyRight) {
+    } else if (keyCode == glfwKeyRight && modifiers.bitMask == 0) {
       final endingSelection = !_selection.collapsed && !modifiers.shift;
       _moveCursor(
         min(
@@ -563,10 +563,10 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with /*KeyboardLis
       if (keyCode == glfwKeyEnter || keyCode == glfwKeyKpEnter) {
         _insert('\n');
         return true;
-      } else if (keyCode == glfwKeyUp) {
+      } else if (keyCode == glfwKeyUp && modifiers.bitMask == 0) {
         _moveCursorVertically(-1, modifiers.shift);
         return true;
-      } else if (keyCode == glfwKeyDown) {
+      } else if (keyCode == glfwKeyDown && modifiers.bitMask == 0) {
         _moveCursorVertically(1, modifiers.shift);
         return true;
       }

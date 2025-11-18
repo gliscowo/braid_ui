@@ -39,10 +39,11 @@ class ForwardingAction<I extends Intent, J extends I> extends Action<J> {
 // ---
 
 class Shortcuts extends StatefulWidget {
+  final bool skipTraversal;
   final Map<List<ActionTrigger>, Intent> shortcuts;
   final Widget child;
 
-  const Shortcuts({super.key, required this.shortcuts, required this.child});
+  const Shortcuts({super.key, this.skipTraversal = false, required this.shortcuts, required this.child});
 
   @override
   WidgetState<Shortcuts> createState() => _ShortcutsState();
@@ -70,7 +71,7 @@ class _ShortcutsState extends WidgetState<Shortcuts> {
 
   @override
   Widget build(BuildContext context) {
-    return Actions(actions: actions, child: widget.child);
+    return Actions(skipTraversal: widget.skipTraversal, actions: actions, child: widget.child);
   }
 }
 
@@ -94,11 +95,19 @@ extension type const ActionsMap.fromMap(Map<Type, Action> _value) implements Map
 class Intents extends StatefulWidget {
   final bool focusable;
   final bool autoFocus;
+  final bool skipTraversal;
 
   final ActionsMap actions;
   final Widget child;
 
-  const Intents({super.key, this.focusable = true, this.autoFocus = false, required this.actions, required this.child});
+  const Intents({
+    super.key,
+    this.focusable = true,
+    this.autoFocus = false,
+    this.skipTraversal = false,
+    required this.actions,
+    required this.child,
+  });
 
   @override
   WidgetState<Intents> createState() => _IntentsState();
@@ -124,7 +133,9 @@ class _IntentsState extends WidgetState<Intents> {
   Widget build(BuildContext context) {
     return _IntentsProvider(
       state: this,
-      child: widget.focusable ? Focusable(autoFocus: widget.autoFocus, child: widget.child) : widget.child,
+      child: widget.focusable
+          ? Focusable(autoFocus: widget.autoFocus, skipTraversal: widget.skipTraversal, child: widget.child)
+          : widget.child,
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:collection';
 
 import 'package:collection/collection.dart';
+import 'package:vector_math/vector_math.dart';
 
 import '../core/key_modifiers.dart';
 import '../framework/instance.dart';
@@ -9,6 +10,7 @@ import '../framework/widget.dart';
 import 'basic.dart';
 import 'input_handling.dart';
 import 'inspector.dart';
+import 'scroll.dart';
 import 'stack.dart';
 
 enum FocusLevel { base, highlight }
@@ -26,7 +28,23 @@ class _FocusStateProvider<F extends FocusableState> extends InheritedWidget {
   bool mustRebuildDependents(covariant _FocusStateProvider<F> newWidget) => newWidget.level != level;
 }
 
-enum FocusTraversalDirection { forwards, backwards }
+enum FocusTraversalDirection {
+  next,
+  previous,
+  up,
+  down,
+  left,
+  right;
+
+  FocusTraversalDirection get opposite => switch (this) {
+    .next => .previous,
+    .previous => .next,
+    .up => .down,
+    .down => .up,
+    .left => .right,
+    .right => .left,
+  };
+}
 
 class TraverseFocusIntent extends Intent {
   final FocusTraversalDirection direction;
@@ -241,18 +259,34 @@ class _FocusScopeProxy extends StatefulProxy {
 }
 
 typedef _FocusEntry = ({FocusableState state, FocusLevel level});
+extension type _FocusTraversalCandidate._(({FocusableState state, Aabb3 aabb, Vector2 center}) _value) {
+  factory _FocusTraversalCandidate(FocusableState state) {
+    final aabb = state.context.instance!.computeGlobalBounds();
+    return ._((state: state, aabb: aabb, center: Vector2(aabb.center.x, aabb.center.y)));
+  }
+
+  FocusableState get state => _value.state;
+  Aabb3 get aabb => _value.aabb;
+  Vector2 get center => _value.center;
+}
 
 class _FocusScopeState extends FocusableState<FocusScope> {
   late List<FocusableState> Function() collectDescendants;
 
   List<FocusableState> focusedDescendants = [];
   _FocusEntry? previousPrimaryFocus;
+  final Queue<_FocusEntry> previouslyFocusedScopes = DoubleLinkedQueue();
 
-  final Queue<_FocusEntry> previouslyFocusedScopes = Queue();
+  final Queue<FocusableState> traversalHistory = DoubleLinkedQueue();
+  FocusTraversalDirection? historyDirection;
 
-  void updateFocus(FocusableState? primary, FocusLevel? level) {
+  void updateFocus(FocusableState? primary, FocusLevel? level, {bool keepTraversalHistory = false}) {
     if (primary == focusedDescendants.firstOrNull && primary?._level == level) {
       return;
+    }
+
+    if (!keepTraversalHistory) {
+      traversalHistory.clear();
     }
 
     if (!_level.isFocused && primary != null) {
@@ -285,6 +319,10 @@ class _FocusScopeState extends FocusableState<FocusScope> {
       noLongerFocused._onFocusChange(null);
     }
 
+    if (primary != null && Scrollable.maybeOf(context) != null) {
+      Scrollable.reveal(primary.context);
+    }
+
     focusedDescendants = nowFocused;
   }
 
@@ -295,6 +333,7 @@ class _FocusScopeState extends FocusableState<FocusScope> {
     }
 
     focusedDescendants.remove(descendant);
+    traversalHistory.remove(descendant);
     previouslyFocusedScopes.removeWhere((element) => element.state == descendant);
   }
 
@@ -311,21 +350,141 @@ class _FocusScopeState extends FocusableState<FocusScope> {
   }
 
   @override
-  void traverseFocus(FocusTraversalDirection direction) {
+  void traverseFocus(FocusTraversalDirection direction) => switch (direction) {
+    .previous || .next => _traverseFocusLogical(direction == .next),
+    .left || .right || .up || .down => _traverseFocusDirectional(direction),
+  };
+
+  void _traverseFocusLogical(bool forwards) {
     final descendants = collectDescendants();
 
     final searchStartIdx = focusedDescendants.isNotEmpty
         ? descendants.indexOf(focusedDescendants.first)
-        : (direction == FocusTraversalDirection.backwards ? 0 : -1);
-    final offset = direction == FocusTraversalDirection.backwards ? -1 : 1;
+        : (forwards ? -1 : 0);
+    final offset = forwards ? 1 : -1;
 
     var nextFocusIdx = searchStartIdx;
     do {
       nextFocusIdx = (nextFocusIdx + offset) % descendants.length;
     } while (descendants[nextFocusIdx].widget.skipTraversal);
 
-    updateFocus(descendants[nextFocusIdx], FocusLevel.highlight);
+    updateFocus(descendants[nextFocusIdx], .highlight);
   }
+
+  bool _tryTraverseFocusHistory(FocusTraversalDirection direction) {
+    var poppedHistory = false;
+
+    if (traversalHistory.isNotEmpty) {
+      if (historyDirection == direction.opposite) {
+        poppedHistory = true;
+        updateFocus(traversalHistory.removeLast(), .highlight, keepTraversalHistory: true);
+      } else if (historyDirection != direction) {
+        traversalHistory.clear();
+      }
+    }
+
+    if (!poppedHistory && focusedDescendants.isNotEmpty) {
+      historyDirection = direction;
+    }
+
+    return poppedHistory;
+  }
+
+  void _traverseFocusDirectional(FocusTraversalDirection direction) {
+    if (focusedDescendants.isEmpty || _tryTraverseFocusHistory(direction)) {
+      return;
+    }
+
+    final descendants = collectDescendants();
+
+    final focusedBounds = focusedDescendants.first.context.instance!.computeGlobalBounds();
+    final focusedCenter = _FocusTraversalCandidate(focusedDescendants.first).center;
+
+    final candidates = descendants
+        .where((state) => !state.widget.skipTraversal)
+        .map(_FocusTraversalCandidate.new)
+        .where((candidate) => _filterCandiate(candidate, focusedBounds, direction))
+        .toList();
+
+    final candidatesInBand = candidates
+        .where((candidate) => _filterInBand(candidate, focusedBounds, direction))
+        .toList();
+
+    if (candidatesInBand.isNotEmpty) {
+      candidatesInBand.sort(_comparatorInBand(focusedCenter, direction));
+
+      traversalHistory.addLast(focusedDescendants.first);
+      updateFocus(candidatesInBand.first.state, .highlight, keepTraversalHistory: true);
+      return;
+    }
+
+    if (candidates.isNotEmpty) {
+      candidates.sort(_comparatorOutOfBand(focusedCenter, direction));
+
+      traversalHistory.addLast(focusedDescendants.first);
+      updateFocus(candidates.first.state, .highlight, keepTraversalHistory: true);
+    }
+  }
+
+  bool _filterCandiate(_FocusTraversalCandidate candidate, Aabb3 focusedBounds, FocusTraversalDirection direction) =>
+      switch (direction) {
+        .left => candidate.center.x <= focusedBounds.min.x,
+        .right => candidate.center.x >= focusedBounds.max.x,
+        .up => candidate.center.y <= focusedBounds.min.y,
+        .down => candidate.center.y >= focusedBounds.max.y,
+        _ => throw ArgumentError.value(direction, 'direction', 'not a directional focus traversal'),
+      };
+
+  bool _filterInBand(_FocusTraversalCandidate candidate, Aabb3 focusedBounds, FocusTraversalDirection direction) =>
+      switch (direction) {
+        .left || .right => candidate.aabb.min.y < focusedBounds.max.y && candidate.aabb.max.y > focusedBounds.min.y,
+        .up || .down => candidate.aabb.min.x < focusedBounds.max.x && candidate.aabb.max.x > focusedBounds.min.x,
+        _ => throw ArgumentError.value(direction, 'direction', 'not a directional focus traversal'),
+      };
+
+  Comparator<_FocusTraversalCandidate> _comparatorInBand(Vector2 focusedCenter, FocusTraversalDirection direction) =>
+      switch (direction) {
+        .left || .right => (a, b) {
+          final horizontal = direction == .left
+              ? (-a.center.x).compareTo(-b.center.x)
+              : a.center.x.compareTo(b.center.x);
+          if (horizontal != 0) {
+            return horizontal;
+          }
+
+          return (a.center.y - focusedCenter.y).abs().compareTo((b.center.y - focusedCenter.y).abs());
+        },
+        .up || .down => (a, b) {
+          final vertical = direction == .up ? (-a.center.y).compareTo(-b.center.y) : a.center.y.compareTo(b.center.y);
+          if (vertical != 0) {
+            return vertical;
+          }
+
+          return (a.center.x - focusedCenter.x).abs().compareTo((b.center.x - focusedCenter.x).abs());
+        },
+        _ => throw ArgumentError.value(direction, 'direction', 'not a directional focus traversal'),
+      };
+
+  Comparator<_FocusTraversalCandidate> _comparatorOutOfBand(Vector2 focusedCenter, FocusTraversalDirection direction) =>
+      switch (direction) {
+        .left || .right => (a, b) {
+          final vertical = (a.center.y - focusedCenter.y).abs().compareTo((b.center.y - focusedCenter.y).abs());
+          if (vertical != 0) {
+            return vertical;
+          }
+
+          return (a.center.x - focusedCenter.x).abs().compareTo((b.center.x - focusedCenter.x).abs());
+        },
+        .up || .up => (a, b) {
+          final horizontal = (a.center.x - focusedCenter.x).abs().compareTo((b.center.x - focusedCenter.x).abs());
+          if (horizontal != 0) {
+            return horizontal;
+          }
+
+          return (a.center.y - focusedCenter.y).abs().compareTo((b.center.y - focusedCenter.y).abs());
+        },
+        _ => throw ArgumentError.value(direction, 'direction', 'not a directional focus traversal'),
+      };
 
   @override
   void _onFocusChange(FocusLevel? newLevel) {

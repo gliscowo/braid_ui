@@ -485,16 +485,16 @@ class MouseAreaInstance extends SingleChildWidgetInstance<MouseArea> with Shrink
 
 // ---
 
-extension type const ActionTrigger._(({Set<int> mouseButtons, Set<int> keyCodes, KeyModifiers keyModifiers}) _value) {
+extension type const ActionTrigger._(({Set<int> mouseButtons, Set<int> keyCodes, KeyModifiers? keyModifiers}) _value) {
   const ActionTrigger({
     Set<int> mouseButtons = const {},
     Set<int> keyCodes = const {},
-    KeyModifiers keyModifiers = KeyModifiers.none,
+    KeyModifiers? keyModifiers = KeyModifiers.none,
   }) : this._((mouseButtons: mouseButtons, keyCodes: keyCodes, keyModifiers: keyModifiers));
 
   bool isTriggeredByMouseButton(int button) => _value.mouseButtons.contains(button);
   bool isTriggeredByKeyCode(int code, KeyModifiers modifiers) =>
-      _value.keyCodes.contains(code) && _value.keyModifiers == modifiers;
+      _value.keyCodes.contains(code) && (_value.keyModifiers == null || _value.keyModifiers == modifiers);
 
   static const click = ActionTrigger(
     mouseButtons: {glfwMouseButtonLeft},
