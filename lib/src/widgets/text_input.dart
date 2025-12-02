@@ -463,7 +463,7 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with /*KeyboardLis
 
   static const _space = 0x20; // ' '
   int _safeCharCodeAt(int runeIdx) =>
-      _text.isEmpty ? _text.runes.toList()[runeIdx.clamp(0, _text.runes.length - 1)] : _space;
+      _text.isNotEmpty ? _text.runes.toList()[runeIdx.clamp(0, _text.runes.length - 1)] : _space;
 
   bool onChar(int charCode, KeyModifiers modifiers) {
     _insert(String.fromCharCode(charCode));

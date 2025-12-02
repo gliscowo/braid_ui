@@ -410,7 +410,7 @@ class _EvalBoxState extends WidgetState<EvalBox> {
                                 return true;
                               }
                             : null,
-                        child: SynkTextField(controller: evalController),
+                        child: InspectorTextField(controller: evalController),
                       ),
                     ),
                   ],
@@ -819,15 +819,15 @@ class _InstanceTitleState extends WidgetState<InstanceTitle> {
 
 // ---
 
-class SynkTextField extends StatefulWidget {
+class InspectorTextField extends StatefulWidget {
   final TextEditingController controller;
-  const SynkTextField({super.key, required this.controller});
+  const InspectorTextField({super.key, required this.controller});
 
   @override
-  WidgetState<SynkTextField> createState() => _SynkTextFieldState();
+  WidgetState<InspectorTextField> createState() => _SynkTextFieldState();
 }
 
-class _SynkTextFieldState extends WidgetState<SynkTextField> {
+class _SynkTextFieldState extends WidgetState<InspectorTextField> {
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -836,9 +836,12 @@ class _SynkTextFieldState extends WidgetState<SynkTextField> {
       padding: const Insets.all(4),
       child: Sized(
         height: 18,
-        child: RawTextField(
+        child: EditableText(
           controller: widget.controller,
-          textStyle: const SpanStyle(
+          softWrap: false,
+          autoFocus: false,
+          allowMultipleLines: false,
+          style: const SpanStyle(
             color: dgl.Color.white,
             fontSize: 13.0,
             fontFamily: 'monospace',
@@ -846,121 +849,6 @@ class _SynkTextFieldState extends WidgetState<SynkTextField> {
             italic: false,
             underline: false,
           ),
-          autoFocus: false,
-          softWrap: false,
-          allowMultipleLines: false,
-        ),
-      ),
-    );
-  }
-}
-
-class RawTextField extends StatefulWidget {
-  final TextEditingController controller;
-  final SpanStyle textStyle;
-  final bool autoFocus;
-  final bool softWrap;
-  final bool allowMultipleLines;
-
-  const RawTextField({
-    super.key,
-    required this.controller,
-    required this.textStyle,
-    required this.autoFocus,
-    required this.softWrap,
-    required this.allowMultipleLines,
-  });
-
-  @override
-  WidgetState<RawTextField> createState() => _RawTextFieldState();
-}
-
-class _RawTextFieldState extends WidgetState<RawTextField> {
-  Timer? blinkTimer;
-  bool showCursor = false;
-
-  final ScrollController horizontalController = ScrollController();
-  final ScrollController verticalController = ScrollController();
-
-  BuildContext? inputContext;
-
-  @override
-  void init() {
-    widget.controller.addListener(_listener);
-  }
-
-  @override
-  void didUpdateWidget(RawTextField oldWidget) {
-    if (widget.controller != oldWidget.controller) {
-      oldWidget.controller.removeListener(_listener);
-      widget.controller.addListener(_listener);
-    }
-  }
-
-  @override
-  void dispose() {
-    blinkTimer?.cancel();
-    widget.controller.removeListener(_listener);
-  }
-
-  void _listener() {
-    schedulePostLayoutCallback(() {
-      final inputInstance = inputContext!.instance as TextInputInstance;
-      final (x: cursorX, y: cursorY) = inputInstance.cursorPosition;
-      final lineHeight = inputInstance.currentLine.height;
-
-      Scrollable.revealAabb(
-        inputContext!,
-        Aabb3.minMax(Vector3(cursorX, cursorY - lineHeight, 0), Vector3(cursorX + 2, cursorY, 0)),
-      );
-    });
-
-    _restartBlinking();
-  }
-
-  void _restartBlinking() {
-    blinkTimer?.cancel();
-    setState(() {
-      showCursor = true;
-    });
-
-    blinkTimer = Timer.periodic(const Duration(milliseconds: 650), (_) {
-      setState(() {
-        showCursor = !showCursor;
-      });
-    });
-  }
-
-  void _stopBlinking() {
-    blinkTimer?.cancel();
-    setState(() {
-      showCursor = false;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Focusable(
-      focusGainedCallback: () => _restartBlinking(),
-      focusLostCallback: () => _stopBlinking(),
-      child: Scrollable.both(
-        horizontalController: horizontalController,
-        verticalController: verticalController,
-        child: Builder(
-          builder: (context) {
-            inputContext = context;
-            // we skip the ListneableBuilder that would usually be required here
-            // since the entire text field rebuilds through a listener on the controller
-            // either way
-            return TextInput(
-              controller: widget.controller,
-              showCursor: showCursor,
-              softWrap: widget.softWrap,
-              autoFocus: widget.autoFocus,
-              allowMultipleLines: widget.allowMultipleLines,
-              style: widget.textStyle,
-            );
-          },
         ),
       ),
     );
