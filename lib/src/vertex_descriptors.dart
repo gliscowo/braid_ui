@@ -1,57 +1,27 @@
-import 'package:diamond_gl/diamond_gl.dart';
+import 'package:clawclip/clawclip.dart';
 import 'package:vector_math/vector_math.dart';
 
-typedef BlitVertexFunction = void Function(Vector2 pos);
-final VertexDescriptor<BlitVertexFunction> blitVertexDescriptor = VertexDescriptor(
-  (attribute) {
-    attribute('aPos', VertexElement.float, 2);
-  },
-  (buffer) => (pos) {
-    buffer.f32x2(pos.x, pos.y);
-  },
-);
+typedef BlitVertex = ({Vector2 pos});
+final blitVertexDescriptor = VertexDescriptor<BlitVertex>([.f32x2(name: 'aPos', getter: (vertex) => vertex.pos)]);
 
-typedef PosUvVertexFunction = void Function(Vector3 pos, Vector2 uv);
-final VertexDescriptor<PosUvVertexFunction> posUvVertexDescriptor = VertexDescriptor(
-  (attribute) {
-    attribute('aPos', VertexElement.float, 3);
-    attribute('aUv', VertexElement.float, 2);
-  },
-  (buffer) => (pos, uv) {
-    buffer.f32x3(pos.x, pos.y, pos.z);
-    buffer.f32x2(uv.x, uv.y);
-  },
-);
+typedef PosUvVertex = ({Vector3 pos, Vector2 uv});
+final posUvVertexDescriptor = VertexDescriptor<PosUvVertex>([
+  .f32x3(name: 'aPos', getter: (vertex) => vertex.pos),
+  .f32x2(name: 'aUv', getter: (vertex) => vertex.uv),
+]);
 
-typedef PosVertexFunction = void Function(Vector3 pos);
-final VertexDescriptor<PosVertexFunction> posVertexDescriptor = VertexDescriptor(
-  (attribute) => attribute('aPos', VertexElement.float, 3),
-  (buffer) =>
-      (pos) => buffer.f32x3(pos.x, pos.y, pos.z),
-);
+typedef PosVertex = ({Vector3 pos});
+final posVertexDescriptor = VertexDescriptor<PosVertex>([.f32x3(name: 'aPos', getter: (vertex) => vertex.pos)]);
 
-typedef PosColorVertexFunction = void Function(Vector3 pos, Color color);
-final VertexDescriptor<PosColorVertexFunction> posColorVertexDescriptor = VertexDescriptor(
-  (attribute) {
-    attribute('aPos', VertexElement.float, 3);
-    attribute('aColor', VertexElement.float, 4);
-  },
-  (buffer) => (pos, color) {
-    buffer.f32x3(pos.x, pos.y, pos.z);
-    buffer.f32x4(color.r, color.g, color.b, color.a);
-  },
-);
+typedef PosColorVertex = ({Vector3 pos, Color color});
+final posColorVertexDescriptor = VertexDescriptor<PosColorVertex>([
+  .f32x3(name: 'aPos', getter: (vertex) => vertex.pos),
+  .color(name: 'aColor', getter: (vertex) => vertex.color),
+]);
 
-typedef TextVertexFunction = void Function(double x, double y, double u, double v, Color color);
-final VertexDescriptor<TextVertexFunction> textVertexDescriptor = VertexDescriptor(
-  (attribute) {
-    attribute('aPos', VertexElement.float, 2);
-    attribute('aUv', VertexElement.float, 2);
-    attribute('aColor', VertexElement.float, 4);
-  },
-  (buffer) => (x, y, u, v, color) {
-    buffer.f32x2(x, y);
-    buffer.f32x2(u, v);
-    buffer.f32x4(color.r, color.g, color.b, color.a);
-  },
-);
+typedef TextVertex = ({double x, double y, double u, double v, Color color});
+final textVertexDescriptor = VertexDescriptor<TextVertex>([
+  .direct(name: 'aPos', primitive: .f32, length: 2, serializer: (buffer, vertex) => buffer.f32x2(vertex.x, vertex.y)),
+  .direct(name: 'aUv', primitive: .f32, length: 2, serializer: (buffer, vertex) => buffer.f32x2(vertex.u, vertex.v)),
+  .color(name: 'aColor', getter: (vertex) => vertex.color),
+]);

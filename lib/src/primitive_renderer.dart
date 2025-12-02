@@ -1,8 +1,8 @@
 import 'dart:collection';
 import 'dart:math';
 
-import 'package:diamond_gl/diamond_gl.dart';
-import 'package:diamond_gl/opengl.dart';
+import 'package:clawclip/clawclip.dart';
+import 'package:clawclip/opengl.dart';
 import 'package:vector_math/vector_math.dart';
 
 import 'context.dart';
@@ -24,8 +24,8 @@ class PrimitiveRenderer {
     _buffers.clear();
   }
 
-  MeshBuffer<VF> getBuffer<VF extends Function>(Symbol symbol, VertexDescriptor<VF> descriptor, String program) {
-    return (_buffers[symbol] ??= MeshBuffer<VF>(descriptor, _context.findProgram(program))) as MeshBuffer<VF>;
+  MeshBuffer<Vertex> getBuffer<Vertex>(Symbol symbol, VertexDescriptor<Vertex> descriptor, String program) {
+    return (_buffers[symbol] ??= MeshBuffer<Vertex>(descriptor, _context.findProgram(program))) as MeshBuffer<Vertex>;
   }
 
   void roundedRect(
@@ -53,10 +53,10 @@ class PrimitiveRenderer {
 
     gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
 
-    buffer.clear();
-    buildRect(buffer.vertex, width, height);
     buffer
-      ..upload(dynamic: true)
+      ..clear()
+      ..writeVertices(rectVertices(width, height))
+      ..upload(usage: .dynamicDraw)
       ..draw();
   }
 
@@ -71,10 +71,10 @@ class PrimitiveRenderer {
 
     gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
 
-    buffer.clear();
-    buildRect(buffer.vertex, width, height);
     buffer
-      ..upload(dynamic: true)
+      ..clear()
+      ..writeVertices(rectVertices(width, height))
+      ..upload(usage: .dynamicDraw)
       ..draw();
   }
 
@@ -103,10 +103,10 @@ class PrimitiveRenderer {
 
     gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
 
-    buffer.clear();
-    buildUvRect(buffer.vertex, width, height);
     buffer
-      ..upload(dynamic: true)
+      ..clear()
+      ..writeVertices(uvRectVertices(width, height))
+      ..upload(usage: .dynamicDraw)
       ..draw();
   }
 
@@ -120,7 +120,7 @@ class PrimitiveRenderer {
 
   void blur(double width, double height, double radius, Matrix4 transform, Matrix4 projection) {
     {
-      final ssboWriter = _kernelBuffer ??= BufferWriter.native();
+      final ssboWriter = _kernelBuffer ??= BufferWriter(NativeByteArray(size: 128));
       ssboWriter.rewind();
 
       for (var x = 0; x <= radius.ceil(); x++) {
@@ -161,10 +161,10 @@ class PrimitiveRenderer {
 
     gl.disable(glBlend);
 
-    buffer.clear();
-    buildRect(buffer.vertex, width, height);
     buffer
-      ..upload(dynamic: true)
+      ..clear()
+      ..writeVertices(rectVertices(width, height))
+      ..upload(usage: .dynamicDraw)
       ..draw();
 
     gl.blitNamedFramebuffer(
@@ -219,24 +219,25 @@ class PrimitiveRenderer {
 
     gl.blendFunc(glSrcAlpha, glOneMinusSrcAlpha);
 
-    buffer.clear();
-    buildRect(buffer.vertex, radius * 2, radius * 2);
     buffer
-      ..upload(dynamic: true)
+      ..clear()
+      ..writeVertices(rectVertices(radius * 2, radius * 2))
+      ..upload(usage: .dynamicDraw)
       ..draw();
   }
 
   void blitFramebuffer(GlFramebuffer framebuffer) {
     final mesh = _buffers[#blit] ??= (() {
-      final buffer = MeshBuffer(blitVertexDescriptor, _context.findProgram('blit'));
-      buffer
-        ..vertex(Vector2.zero())
-        ..vertex(Vector2(1, 0))
-        ..vertex(Vector2(1, 1))
-        ..vertex(Vector2.zero())
-        ..vertex(Vector2(1, 1))
-        ..vertex(Vector2(0, 1));
-      return buffer..upload();
+      return MeshBuffer(blitVertexDescriptor, _context.findProgram('blit'))
+        ..writeVertices([
+          (pos: Vector2.zero()),
+          (pos: Vector2(1, 0)),
+          (pos: Vector2(1, 1)),
+          (pos: Vector2.zero()),
+          (pos: Vector2(1, 1)),
+          (pos: Vector2(0, 1)),
+        ])
+        ..upload();
     })();
 
     gl.disable(glBlend);
@@ -250,24 +251,26 @@ class PrimitiveRenderer {
     mesh.draw();
   }
 
-  void buildRect(PosVertexFunction vertex, double width, double height) {
-    vertex(Vector3(0, 0, 0));
-    vertex(Vector3(0, height, 0));
-    vertex(Vector3(width, height, 0));
-    vertex(Vector3(width, height, 0));
-    vertex(Vector3(width, 0, 0));
-    vertex(Vector3(0, 0, 0));
-  }
+  List<PosVertex> rectVertices(double width, double height) => [
+    (pos: Vector3(0, 0, 0)),
+    (pos: Vector3(0, height, 0)),
+    (pos: Vector3(width, height, 0)),
+    (pos: Vector3(width, height, 0)),
+    (pos: Vector3(width, 0, 0)),
+    (pos: Vector3(0, 0, 0)),
+  ];
 
-  void buildUvRect(PosUvVertexFunction vertex, double width, double height, {double? uMax, double? vMax}) {
+  List<PosUvVertex> uvRectVertices(double width, double height, {double? uMax, double? vMax}) {
     uMax ??= 1;
     vMax ??= 1;
 
-    vertex(Vector3(0, 0, 0), Vector2.zero());
-    vertex(Vector3(0, height, 0), Vector2(0, vMax));
-    vertex(Vector3(width, height, 0), Vector2(uMax, vMax));
-    vertex(Vector3(width, height, 0), Vector2(uMax, vMax));
-    vertex(Vector3(width, 0, 0), Vector2(uMax, 0));
-    vertex(Vector3(0, 0, 0), Vector2.zero());
+    return [
+      (pos: Vector3(0, 0, 0), uv: Vector2.zero()),
+      (pos: Vector3(0, height, 0), uv: Vector2(0, vMax)),
+      (pos: Vector3(width, height, 0), uv: Vector2(uMax, vMax)),
+      (pos: Vector3(width, height, 0), uv: Vector2(uMax, vMax)),
+      (pos: Vector3(width, 0, 0), uv: Vector2(uMax, 0)),
+      (pos: Vector3(0, 0, 0), uv: Vector2.zero()),
+    ];
   }
 }

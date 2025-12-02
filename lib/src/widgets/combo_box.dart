@@ -1,5 +1,5 @@
-import 'package:diamond_gl/diamond_gl.dart';
-import 'package:diamond_gl/glfw.dart';
+import 'package:clawclip/clawclip.dart';
+import 'package:clawclip/glfw.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart' as fuzzy;
 
 import '../core/cursors.dart';
@@ -239,7 +239,7 @@ class _ComboBoxState<T> extends WidgetState<ComboBox<T>> {
       buttonsState!.value = (options: state.options, highlightedOptionIdx: nextOptionIdx);
     } else {
       final currentOptionIdx = widget.selectedOption != null
-          ? widget.options.indexOf(widget.selectedOption!)
+          ? widget.options.indexOf(widget.selectedOption as T)
           : -offset.sign;
       final nextOptionIdx = (currentOptionIdx + offset) % widget.options.length;
 

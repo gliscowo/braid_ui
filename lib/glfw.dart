@@ -1,1 +1,1 @@
-export 'package:diamond_gl/glfw.dart';
+export 'package:clawclip/glfw.dart';

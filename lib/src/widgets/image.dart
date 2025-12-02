@@ -4,7 +4,8 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:diamond_gl/opengl.dart';
+import 'package:clawclip/clawclip.dart';
+import 'package:clawclip/opengl.dart';
 import 'package:ffi/ffi.dart';
 import 'package:image/image.dart';
 import 'package:path/path.dart';
@@ -194,11 +195,10 @@ class RenderImage {
     gl.textureParameteri(textureId, glTextureWrapS, wrapMode);
     gl.textureParameteri(textureId, glTextureWrapT, wrapMode);
 
-    buffer.clear();
-    ctx.primitives.buildUvRect(buffer.vertex, quadWidth, quadHeight, uMax: max(uMax, 1), vMax: max(vMax, 1));
-
     buffer
-      ..upload(dynamic: true)
+      ..clear()
+      ..writeVertices(ctx.primitives.uvRectVertices(quadWidth, quadHeight, uMax: max(uMax, 1), vMax: max(vMax, 1)))
+      ..upload(usage: .dynamicDraw)
       ..draw();
   }
 }

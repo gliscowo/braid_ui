@@ -3,8 +3,8 @@ import 'dart:ffi' hide Size;
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:diamond_gl/diamond_gl.dart';
-import 'package:diamond_gl/opengl.dart';
+import 'package:clawclip/clawclip.dart';
+import 'package:clawclip/opengl.dart';
 import 'package:ffi/ffi.dart';
 import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math.dart';
@@ -192,8 +192,8 @@ class GlpyhBuffer {
 }
 
 class TextRenderer {
-  final HashMap<int, MeshBuffer<TextVertexFunction>> _cachedBuffers = HashMap();
-  MeshBuffer<PosColorVertexFunction>? _lineBuffer;
+  final HashMap<int, MeshBuffer<TextVertex>> _cachedBuffers = HashMap();
+  MeshBuffer<PosColorVertex>? _lineBuffer;
   final GlProgram _textProgram;
   final GlProgram _lineProgram;
 
@@ -285,8 +285,8 @@ class TextRenderer {
       ..uniformMat4('uProjection', projection)
       ..use();
 
-    final buffers = <int, MeshBuffer<TextVertexFunction>>{};
-    MeshBuffer<TextVertexFunction> buffer(int texture) {
+    final buffers = <int, MeshBuffer<TextVertex>>{};
+    MeshBuffer<TextVertex> buffer(int texture) {
       return buffers[texture] ??=
           ((_cachedBuffers[texture]?..clear()) ??
           (_cachedBuffers[texture] = MeshBuffer(textVertexDescriptor, _textProgram)));
@@ -312,13 +312,14 @@ class TextRenderer {
       final u0 = glyph.u, u1 = u0 + (glyph.width / GlyphAtlas.textureSize);
       final v0 = glyph.v, v1 = v0 + (glyph.height / GlyphAtlas.textureSize);
 
-      buffer(glyph.textureId)
-        ..vertex(xPos, yPos, u0, v0, glyphColor)
-        ..vertex(xPos, yPos + height, u0, v1, glyphColor)
-        ..vertex(xPos + width, yPos, u1, v0, glyphColor)
-        ..vertex(xPos + width, yPos, u1, v0, glyphColor)
-        ..vertex(xPos, yPos + height, u0, v1, glyphColor)
-        ..vertex(xPos + width, yPos + height, u1, v1, glyphColor);
+      buffer(glyph.textureId).writeVertices([
+        (x: xPos, y: yPos, u: u0, v: v0, color: glyphColor),
+        (x: xPos, y: yPos + height, u: u0, v: v1, color: glyphColor),
+        (x: xPos + width, y: yPos, u: u1, v: v0, color: glyphColor),
+        (x: xPos + width, y: yPos, u: u1, v: v0, color: glyphColor),
+        (x: xPos, y: yPos + height, u: u0, v: v1, color: glyphColor),
+        (x: xPos + width, y: yPos + height, u: u1, v: v1, color: glyphColor),
+      ]);
 
       if (glyphStyle.underline) {
         final underlineThickness = (shapedGlyph.font.underlineThickness * glyphStyle.fontSize).ceil();
@@ -335,13 +336,14 @@ class TextRenderer {
           if (nextGlyphStyle.underline) underlineWidth = nextGlyph.position.x - shapedGlyph.position.x;
         }
 
-        lineBuffer
-          ..vertex(Vector3(xPos, yPos + underlinePos, 0), glyphColor)
-          ..vertex(Vector3(xPos, yPos + underlinePos + underlineThickness, 0), glyphColor)
-          ..vertex(Vector3(xPos + underlineWidth, yPos + underlinePos, 0), glyphColor)
-          ..vertex(Vector3(xPos + underlineWidth, yPos + underlinePos, 0), glyphColor)
-          ..vertex(Vector3(xPos, yPos + underlinePos + underlineThickness, 0), glyphColor)
-          ..vertex(Vector3(xPos + underlineWidth, yPos + underlinePos + underlineThickness, 0), glyphColor);
+        lineBuffer.writeVertices([
+          (pos: Vector3(xPos, yPos + underlinePos, 0), color: glyphColor),
+          (pos: Vector3(xPos, yPos + underlinePos + underlineThickness, 0), color: glyphColor),
+          (pos: Vector3(xPos + underlineWidth, yPos + underlinePos, 0), color: glyphColor),
+          (pos: Vector3(xPos + underlineWidth, yPos + underlinePos, 0), color: glyphColor),
+          (pos: Vector3(xPos, yPos + underlinePos + underlineThickness, 0), color: glyphColor),
+          (pos: Vector3(xPos + underlineWidth, yPos + underlinePos + underlineThickness, 0), color: glyphColor),
+        ]);
       }
     }
 
@@ -350,7 +352,7 @@ class TextRenderer {
     buffers.forEach((texture, mesh) {
       mesh.program.uniformSampler('sText', texture, 0);
       mesh
-        ..upload(dynamic: true)
+        ..upload(usage: .dynamicDraw)
         ..draw();
     });
 
@@ -363,7 +365,7 @@ class TextRenderer {
         ..use();
 
       lineBuffer
-        ..upload(dynamic: true)
+        ..upload(usage: .dynamicDraw)
         ..draw();
     }
   }

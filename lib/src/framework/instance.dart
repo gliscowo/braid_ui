@@ -1,7 +1,7 @@
 import 'dart:collection';
 import 'dart:io';
 
-import 'package:diamond_gl/diamond_gl.dart';
+import 'package:clawclip/clawclip.dart';
 import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math.dart';
 

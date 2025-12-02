@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:braid_ui/braid_ui.dart';
-import 'package:diamond_gl/glfw.dart';
+import 'package:clawclip/glfw.dart';
 import 'package:logging/logging.dart';
 import 'package:vector_math/vector_math.dart';
 

@@ -1,4 +1,4 @@
-import 'package:diamond_gl/diamond_gl.dart';
+import 'package:clawclip/clawclip.dart';
 
 import '../core/constraints.dart';
 import '../core/cursors.dart';

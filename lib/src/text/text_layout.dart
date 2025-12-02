@@ -3,7 +3,7 @@ import 'dart:ffi' hide Size;
 import 'dart:math';
 
 import 'package:collection/collection.dart';
-import 'package:diamond_gl/diamond_gl.dart';
+import 'package:clawclip/clawclip.dart';
 import 'package:ffi/ffi.dart';
 import 'package:meta/meta.dart';
 

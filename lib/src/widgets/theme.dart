@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:diamond_gl/diamond_gl.dart';
+import 'package:clawclip/clawclip.dart';
 import 'package:meta/meta.dart';
 
 import '../core/math.dart';

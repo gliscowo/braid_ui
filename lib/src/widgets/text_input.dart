@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:diamond_gl/diamond_gl.dart';
-import 'package:diamond_gl/glfw.dart';
+import 'package:clawclip/clawclip.dart';
+import 'package:clawclip/glfw.dart';
 import 'package:unicode/unicode.dart';
 import 'package:vector_math/vector_math.dart';
 

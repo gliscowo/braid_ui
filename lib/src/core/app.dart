@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:io';
 
-import 'package:diamond_gl/diamond_gl.dart' as dgl;
-import 'package:diamond_gl/glfw.dart';
-import 'package:diamond_gl/opengl.dart';
+import 'package:clawclip/clawclip.dart' as cc;
+import 'package:clawclip/glfw.dart';
+import 'package:clawclip/opengl.dart';
 import 'package:image/image.dart';
 import 'package:logging/logging.dart';
 import 'package:vector_math/vector_math.dart';
@@ -67,13 +67,13 @@ Future<void> runBraidApp({required AppState app, int targetFps = 60, bool reload
   reloadSubscription?.cancel();
 }
 
-Future<(AppState, dgl.Window)> createBraidAppWithWindow({
+Future<(AppState, cc.Window)> createBraidAppWithWindow({
   String name = 'braid app',
   Logger? baseLogger,
   int width = 1000,
   int height = 750,
   bool enableInspector = true,
-  List<dgl.WindowFlag> windowFlags = const [],
+  List<cc.WindowFlag> windowFlags = const [],
   required BraidResources resources,
   required String defaultFontFamily,
   required Widget widget,
@@ -274,7 +274,7 @@ class AppState implements InstanceHost, ProxyHost {
   final TextRenderer textRenderer;
   late final ImageCache _imageCache;
   final PrimitiveRenderer primitives;
-  final Queue<GlCall> _queuedGlCalls = Queue();
+  final Queue<cc.GlCall> _queuedGlCalls = Queue();
 
   final BuildScope _rootBuildScope = BuildScope();
   Queue<AnimationCallback> _animationCallbacks = DoubleLinkedQueue();
@@ -572,7 +572,7 @@ node [shape="box"];
           if (glfwKeycode == glfwKeyR && modifiers.ctrl && modifiers.shift) {
             context.reloadShaders().then((call) {
               _queuedGlCalls.add(call);
-              _queuedGlCalls.add(GlCall(() => primitives.clearShaderCache()));
+              _queuedGlCalls.add(cc.GlCall(() => primitives.clearShaderCache()));
             });
             continue;
           }

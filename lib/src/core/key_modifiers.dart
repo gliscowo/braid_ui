@@ -1,4 +1,4 @@
-import 'package:diamond_gl/glfw.dart';
+import 'package:clawclip/glfw.dart';
 
 extension type const KeyModifiers(int bitMask) {
   bool get shift => (bitMask & glfwModShift) != 0;

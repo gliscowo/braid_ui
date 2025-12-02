@@ -4,9 +4,9 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
 
+import 'package:clawclip/clawclip.dart' as dgl;
+import 'package:clawclip/glfw.dart';
 import 'package:collection/collection.dart';
-import 'package:diamond_gl/diamond_gl.dart' as dgl;
-import 'package:diamond_gl/glfw.dart';
 import 'package:image/image.dart' as image;
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;

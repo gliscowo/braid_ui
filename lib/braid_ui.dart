@@ -1,4 +1,4 @@
-export 'package:diamond_gl/diamond_gl.dart' show Color;
+export 'package:clawclip/clawclip.dart' show Color;
 
 export 'src/animation/animation.dart';
 export 'src/animation/automatic_animation.dart';

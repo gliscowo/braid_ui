@@ -1,1 +1,1 @@
-export 'package:diamond_gl/opengl.dart';
+export 'package:clawclip/opengl.dart';

@@ -1,41 +1,12 @@
 import 'dart:async';
-import 'dart:ffi';
 
-import 'package:diamond_gl/diamond_gl.dart';
-import 'package:diamond_gl/glfw.dart';
+import 'package:clawclip/clawclip.dart';
 import 'package:vector_math/vector_math.dart';
 
 import 'core/math.dart';
 import 'primitive_renderer.dart';
 import 'resources.dart';
 import 'text/text_renderer.dart';
-
-/// A function which requires an active OpenGL context
-/// in order to run. In debug builds, this precondition
-/// is asserted through an explicit check - in production
-/// it falls through directly to the representation type
-///
-/// Note: This type should be used by asynchronous functions
-/// which must perform some type of OpenGL setup after they
-/// have crossed their async gap(s). Only the minimal amount
-/// of code (ie. only the actual calls to OpenGL functions)
-/// should be in the returned closure
-extension type const GlCall<T>(T Function() _fn) {
-  T call() {
-    assert(glfwGetCurrentContext() != nullptr, 'an OpenGL context must be active to invoke a GlCall');
-    return _fn();
-  }
-
-  /// Create a new GlCall which completes with the
-  /// result of calling [fn] on the result of [this]
-  GlCall<S> then<S>(S Function(T) fn) => GlCall(() => fn(_fn()));
-
-  /// Create a new GlCall wichh completes with a list
-  /// of all results from invoking every call in [calls]
-  static GlCall<List<T>> allOf<T>(Iterable<GlCall<T>> calls) => GlCall(() => calls.map((e) => e()).toList());
-}
-
-// ---
 
 class BraidShader {
   final BraidResources source;
@@ -49,10 +20,7 @@ class BraidShader {
     final (vertSource, fragSource) = await (source.loadShader('$vert.vert'), source.loadShader('$frag.frag')).wait;
 
     return GlCall(() {
-      final shaders = [
-        GlShader('$vert.vert', vertSource, GlShaderType.vertex),
-        GlShader('$frag.frag', fragSource, GlShaderType.fragment),
-      ];
+      final shaders = [GlShader('$vert.vert', vertSource, .vertex), GlShader('$frag.frag', fragSource, .fragment)];
 
       return GlProgram(name, shaders);
     });

@@ -19,7 +19,6 @@ linter:
   rules:
     - prefer_relative_imports
     - avoid_relative_lib_imports
-
 # analyzer:
 #   exclude:
 #     - path/to/excluded/files/**

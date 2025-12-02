@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:collection/collection.dart';
-import 'package:diamond_gl/diamond_gl.dart';
-import 'package:diamond_gl/opengl.dart';
+import 'package:clawclip/clawclip.dart';
+import 'package:clawclip/opengl.dart';
 import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math.dart';
 

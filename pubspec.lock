@@ -73,6 +73,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.2"
+  clawclip:
+    dependency: "direct main"
+    description:
+      name: clawclip
+      sha256: a337e51071a38e4e7ad6704bcb737a5c19f476935e13aacde350511248fd746c
+      url: "https://pub.wispforest.io"
+    source: hosted
+    version: "0.1.0"
   cli_config:
     dependency: transitive
     description:
@@ -161,14 +169,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.3"
-  diamond_gl:
-    dependency: "direct main"
-    description:
-      name: diamond_gl
-      sha256: fb31e3cffb657aa9b90e00f88e51ba89ba13233571c701aba89820629640d63c
-      url: "https://pub.wispforest.io"
-    source: hosted
-    version: "4.0.0"
   endec:
     dependency: "direct dev"
     description:

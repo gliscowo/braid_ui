@@ -1,7 +1,7 @@
 import 'dart:ffi';
 
-import 'package:diamond_gl/diamond_gl.dart';
-import 'package:diamond_gl/glfw.dart';
+import 'package:clawclip/clawclip.dart';
+import 'package:clawclip/glfw.dart';
 import 'package:ffi/ffi.dart';
 import 'package:image/image.dart';
 
