@@ -43,7 +43,7 @@ class ClockApp extends StatelessWidget {
       child: Column(
         children: [
           Flexible(
-            key: Key('a'),
+            key: const Key('a'),
             child: Panel(
               color: Color.white,
               child: Center(
@@ -58,7 +58,7 @@ class ClockApp extends StatelessWidget {
             ),
           ),
           Flexible(
-            key: Key('b'),
+            key: const Key('b'),
             child: LayoutBuilder(
               builder: (context, constraints) => Panel(
                 color: constraints.maxWidth > 600 ? Color.green : Color.blue,

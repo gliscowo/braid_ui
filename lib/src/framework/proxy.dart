@@ -97,7 +97,7 @@ class BuildScope {
 
 // ---
 
-enum ProxyLifecycle { initial, live, dead }
+enum ProxyLifecycle { initial, live, detached, dead }
 
 typedef WidgetProxyVisitor = void Function(WidgetProxy child);
 
@@ -121,7 +121,7 @@ sealed class WidgetProxy with NodeWithDepth implements BuildContext, Comparable<
   ProxyHost? _host;
   ProxyHost? get host => _host;
 
-  ProxyLifecycle lifecycle = ProxyLifecycle.initial;
+  ProxyLifecycle lifecycle = .initial;
 
   Map<Type, InheritedProxy>? _inheritedProxies;
   Set<InheritedProxy>? _dependencies;
@@ -129,8 +129,8 @@ sealed class WidgetProxy with NodeWithDepth implements BuildContext, Comparable<
   void mount(WidgetProxy parent, Object? slot) {
     assert(parent.mounted, 'parent proxy must be mounted before its children');
 
-    assert(lifecycle == ProxyLifecycle.initial, 'proxy must be in "initial" lifecycle state when mount() is called');
-    lifecycle = ProxyLifecycle.live;
+    assert(lifecycle == .initial, 'proxy must be in "initial" lifecycle state when mount() is called');
+    lifecycle = .live;
 
     _inheritedProxies = parent._inheritedProxies;
 
@@ -141,6 +141,37 @@ sealed class WidgetProxy with NodeWithDepth implements BuildContext, Comparable<
     _host = parent._host;
   }
 
+  void reattach(WidgetProxy newParent, Object? newSlot) {
+    assert(newParent.mounted, 'parent proxy must be mounted before its children');
+    assert(newParent.host == host, 'cannot reattach a proxy to a tree with a different host');
+
+    assert(lifecycle == .detached, 'proxy must be in "detached" lifecycle state when reattach() is called');
+    lifecycle = .live;
+
+    _inheritedProxies = newParent._inheritedProxies;
+
+    _parent = newParent;
+    _parentBuildScope = newParent.buildScope;
+    depth = newParent.depth + 1;
+    _slot = newSlot;
+  }
+
+  static void _detachChild(WidgetProxy child) => child.detach();
+  void detach() {
+    assert(lifecycle == .live, 'proxy must be in "live" lifecycle state when detach() is called');
+    lifecycle = .detached;
+
+    if (_dependencies != null) {
+      for (final dependency in _dependencies!) {
+        dependency.removeDependent(this);
+      }
+
+      _dependencies = null;
+    }
+
+    visitChildren(_detachChild);
+  }
+
   @mustCallSuper
   void updateSlot(Object? newSlot) {
     _slot = newSlot;
@@ -148,8 +179,11 @@ sealed class WidgetProxy with NodeWithDepth implements BuildContext, Comparable<
 
   static void _unmountChild(WidgetProxy child) => child.unmount();
   void unmount() {
-    assert(lifecycle == ProxyLifecycle.live, 'proxy must be in "live" lifecycle state when unmount() is called');
-    lifecycle = ProxyLifecycle.dead;
+    assert(
+      lifecycle == .live || lifecycle == .detached,
+      'proxy must be in "live" or "detached" lifecycle state when unmount() is called',
+    );
+    lifecycle = .dead;
 
     if (_dependencies != null) {
       for (final dependency in _dependencies!) {
@@ -667,7 +701,7 @@ class MultiChildInstanceWidgetProxy extends InstanceWidgetProxy {
         final key = oldChild.widget.key;
 
         if (key != null) {
-          keyedOldChildren[key!] = oldChild;
+          keyedOldChildren[key] = oldChild;
         } else {
           oldChild.unmount();
         }

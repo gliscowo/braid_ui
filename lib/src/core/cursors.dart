@@ -1,35 +1,34 @@
 import 'dart:ffi';
 
-import 'package:clawclip/clawclip.dart';
-import 'package:clawclip/glfw.dart';
+import 'package:clawclip/sdl.dart';
 import 'package:ffi/ffi.dart';
 import 'package:image/image.dart';
 
 sealed class CursorStyle {
-  static const none = _SystemCursorStyle(0);
-  static const pointer = _SystemCursorStyle(glfwArrowCursor);
-  static const text = _SystemCursorStyle(glfwIbeamCursor);
-  static const hand = _SystemCursorStyle(glfwHandCursor);
-  static const move = _SystemCursorStyle(glfwResizeAllCursor);
-  static const crosshair = _SystemCursorStyle(glfwCrosshairCursor);
-  static const horizontalResize = _SystemCursorStyle(glfwHresizeCursor);
-  static const verticalResize = _SystemCursorStyle(glfwVresizeCursor);
-  static const nwseResize = _SystemCursorStyle(glfwResizeNwseCursor);
-  static const neswResize = _SystemCursorStyle(glfwResizeNeswCursor);
-  static const notAllowed = _SystemCursorStyle(glfwNotAllowedCursor);
+  static const none = _SystemCursorStyle(.systemCursorDefault);
+  static const pointer = _SystemCursorStyle(.systemCursorDefault);
+  static const text = _SystemCursorStyle(.systemCursorText);
+  static const hand = _SystemCursorStyle(.systemCursorPointer);
+  static const move = _SystemCursorStyle(.systemCursorMove);
+  static const crosshair = _SystemCursorStyle(.systemCursorCrosshair);
+  static const horizontalResize = _SystemCursorStyle(.systemCursorEwResize);
+  static const verticalResize = _SystemCursorStyle(.systemCursorNsResize);
+  static const nwseResize = _SystemCursorStyle(.systemCursorNwseResize);
+  static const neswResize = _SystemCursorStyle(.systemCursorNeswResize);
+  static const notAllowed = _SystemCursorStyle(.systemCursorNotAllowed);
 
   factory CursorStyle.custom(Image image, int hotspotX, int hotspotY) = _CustomCursorStyle.new;
 
-  Pointer<GLFWcursor> allocate();
+  Pointer<SDLCursor> allocate();
 }
 
 final class _SystemCursorStyle implements CursorStyle {
-  final int glfwId;
-  const _SystemCursorStyle(this.glfwId);
+  final SDLSystemCursor sdlId;
+  const _SystemCursorStyle(this.sdlId);
 
   @override
-  Pointer<GLFWcursor> allocate() {
-    return glfwCreateStandardCursor(glfwId);
+  Pointer<SDLCursor> allocate() {
+    return sdlCreateSystemCursor(sdlId);
   }
 }
 
@@ -41,48 +40,47 @@ final class _CustomCursorStyle implements CursorStyle {
   _CustomCursorStyle(this.image, this.hotspotX, this.hotspotY);
 
   @override
-  Pointer<GLFWcursor> allocate() {
-    var glfwImage = malloc<GLFWimage>();
-    glfwImage.ref.width = image.width;
-    glfwImage.ref.height = image.height;
-
+  Pointer<SDLCursor> allocate() {
     final convertedIcon = image.convert(format: Format.uint8, numChannels: 4, alpha: 255);
 
     final bufferSize = convertedIcon.width * convertedIcon.height * convertedIcon.numChannels;
-    final glfwBuffer = malloc<Uint8>(bufferSize);
+    final pixelBuffer = malloc<Uint8>(bufferSize);
 
-    glfwBuffer.asTypedList(bufferSize).setRange(0, bufferSize, convertedIcon.data!.buffer.asUint8List());
-    glfwImage.ref.pixels = glfwBuffer.cast();
+    pixelBuffer.asTypedList(bufferSize).setRange(0, bufferSize, convertedIcon.data!.buffer.asUint8List());
+    final surface = sdlCreateSurfaceFrom(
+      image.width,
+      image.height,
+      .pixelformatRgba32,
+      pixelBuffer.cast(),
+      image.rowStride,
+    );
 
-    final cursor = glfwCreateCursor(glfwImage, hotspotX, hotspotY);
-    malloc.free(glfwBuffer);
-    malloc.free(glfwImage);
+    final cursor = sdlCreateColorCursor(surface, hotspotX, hotspotY);
+    malloc.free(pixelBuffer);
+    sdlDestroySurface(surface);
 
     return cursor;
   }
 }
 
 class CursorController {
-  final Map<CursorStyle, Pointer<GLFWcursor>> _cursors = {};
-  final Window _window;
+  final Map<CursorStyle, Pointer<SDLCursor>> _cursors = {};
 
   CursorStyle _lastCursorStyle = CursorStyle.none;
   bool _disposed = false;
-
-  CursorController.ofWindow(this._window);
 
   CursorStyle get style => _lastCursorStyle;
   set style(CursorStyle style) {
     if (_disposed || _lastCursorStyle == style) return;
 
     if (style == CursorStyle.none) {
-      glfwSetCursor(_window.handle, nullptr);
+      sdlSetCursor(sdlGetDefaultCursor());
     } else {
       if (!_cursors.containsKey(style)) {
         _cursors[style] = style.allocate();
       }
 
-      glfwSetCursor(_window.handle, _cursors[style]!);
+      sdlSetCursor(_cursors[style]!);
     }
 
     _lastCursorStyle = style;
@@ -93,7 +91,7 @@ class CursorController {
 
     for (final ptr in _cursors.values) {
       if (ptr == nullptr) continue;
-      glfwDestroyCursor(ptr);
+      sdlDestroyCursor(ptr);
     }
     _disposed = true;
   }

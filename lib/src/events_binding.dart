@@ -1,10 +1,9 @@
 import 'dart:async';
+import 'dart:ffi';
 
 import 'package:clawclip/clawclip.dart';
-import 'package:clawclip/glfw.dart';
+import 'package:clawclip/sdl.dart';
 import 'package:meta/meta.dart';
-
-import 'core/key_modifiers.dart';
 
 @immutable
 sealed class UserEvent {
@@ -37,24 +36,23 @@ final class MouseScrollEvent extends UserEvent {
 }
 
 final class KeyPressEvent extends UserEvent {
-  final int glfwKeycode;
-  final int scancode;
+  final int sdlKey;
+  final SDLScancode scancode;
   final KeyModifiers modifiers;
   final bool repeat;
-  KeyPressEvent(this.glfwKeycode, this.scancode, this.modifiers, this.repeat);
+  KeyPressEvent(this.sdlKey, this.scancode, this.modifiers, this.repeat);
 }
 
 final class KeyReleaseEvent extends UserEvent {
-  final int glfwKeycode;
-  final int scancode;
+  final int sdlKey;
+  final SDLScancode scancode;
   final KeyModifiers modifiers;
-  KeyReleaseEvent(this.glfwKeycode, this.scancode, this.modifiers);
+  KeyReleaseEvent(this.sdlKey, this.scancode, this.modifiers);
 }
 
-final class CharInputEvent extends UserEvent {
-  final int codepoint;
-  final KeyModifiers modifiers;
-  CharInputEvent(this.codepoint, this.modifiers);
+final class TextInputEvent extends UserEvent {
+  final String text;
+  TextInputEvent(this.text);
 }
 
 final class FilesDroppedEvent extends UserEvent {
@@ -68,7 +66,8 @@ final class CloseEvent extends UserEvent {
 
 abstract interface class EventsBinding {
   List<UserEvent> poll();
-  bool isKeyPressed(int glfwKeyCode);
+  bool isKeyPressed(int sdlKey);
+  KeyModifiers get currentModifiers;
 
   void dispose();
 }
@@ -83,33 +82,30 @@ class WindowEventsBinding extends EventsBinding {
     _subscriptions.addAll([
       window.onMouseMove.listen((event) => _bufferedEvents.add(MouseMoveEvent(event.x, event.y, event.dx, event.dy))),
       window.onMouseButton.listen(
-        (event) => _bufferedEvents.add(switch (event.action) {
-          glfwPress => MouseButtonPressEvent(event.button, KeyModifiers(event.mods)),
-          glfwRelease => MouseButtonReleaseEvent(event.button),
-          // TODO: proper error type
-          _ => throw 'incompatible glfw event type',
+        (event) => _bufferedEvents.add(switch (event.down) {
+          true => MouseButtonPressEvent(event.button, event.mods),
+          false => MouseButtonReleaseEvent(event.button),
         }),
       ),
       window.onMouseScroll.listen((event) => _bufferedEvents.add(MouseScrollEvent(event.xOffset, event.yOffset))),
       window.onKey.listen(
         (event) => _bufferedEvents.add(switch (event.action) {
-          glfwPress ||
-          glfwRepeat => KeyPressEvent(event.key, event.scancode, KeyModifiers(event.mods), event.action == glfwRepeat),
-          glfwRelease => KeyReleaseEvent(event.key, event.scancode, KeyModifiers(event.mods)),
-          // TODO: proper error type
-          _ => throw 'incompatible glfw event type',
+          .press || .repeat => KeyPressEvent(event.key, event.scancode, event.mods, event.action == .repeat),
+          .release => KeyReleaseEvent(event.key, event.scancode, event.mods),
         }),
       ),
-      window.onCharMods.listen(
-        (event) => _bufferedEvents.add(CharInputEvent(event.codepoint, KeyModifiers(event.mods))),
-      ),
+      window.onTextInput.listen((event) => _bufferedEvents.add(TextInputEvent(event.text))),
       window.onFilesDropped.listen((event) => _bufferedEvents.add(FilesDroppedEvent(event.paths))),
       window.onClose.listen((event) => _bufferedEvents.add(const CloseEvent())),
     ]);
   }
 
+  Pointer<Bool> _currentKeyboardState = nullptr;
+
   @override
   List<UserEvent> poll() {
+    _currentKeyboardState = sdlGetKeyboardState(nullptr);
+
     final events = List.of(_bufferedEvents);
     _bufferedEvents.clear();
 
@@ -117,7 +113,10 @@ class WindowEventsBinding extends EventsBinding {
   }
 
   @override
-  bool isKeyPressed(int glfwKeyCode) => glfwGetKey(window.handle, glfwKeyCode) == glfwPress;
+  bool isKeyPressed(int sdlKey) => _currentKeyboardState[sdlGetScancodeFromKey(sdlKey, nullptr).value];
+
+  @override
+  KeyModifiers get currentModifiers => KeyModifiers(sdlGetModState());
 
   @override
   void dispose() {

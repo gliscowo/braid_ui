@@ -115,6 +115,10 @@ class CornerRadius {
 
   @override
   bool operator ==(Object other) => other is CornerRadius && other._props == _props;
+
+  @override
+  String toString() =>
+      'CornerRadius(topLeft: $topLeft, topRight: $topRight, bottomLeft: $bottomLeft, bottomRight: $bottomRight)';
 }
 
 enum LayoutAxis {

@@ -23,17 +23,6 @@ Future<void> main(List<String> args) async {
   for (final (imports: _, :code) in segments) {
     out.writeln(code);
   }
-  out.writeln(r'''
-// ---
-
-class _BakedAssetError extends Error {
-  final String message;
-  _BakedAssetError(this.message);
-
-  @override
-  String toString() => 'baked asset error: $message';
-}
-''');
 }
 
 // ---
@@ -115,23 +104,29 @@ final braidIcon = decodePng(base64Decode(_braidIconBase64))!;
     codeOut.writeln('};');
     codeOut.write(r'''
 
-String getShaderSource(String shaderName) {
+String? getShaderSource(String shaderName) {
   if (!_shaderSources.containsKey(shaderName)) {
-    throw _BakedAssetError('missing shader source for \'$shaderName\'');
+    return null;
   }
 
   return _shaderSources[shaderName]!;
 }
 
-class BakedAssetResources implements BraidResources {
-  final BraidResources _fontDelegate;
-  BakedAssetResources({required BraidResources fontDelegate}) : _fontDelegate = fontDelegate;
+class BakedShaderResources implements BraidResources {
+  const BakedShaderResources();
 
   @override
-  Future<String> loadShader(String path) => Future.value(getShaderSource(path));
+  Future<String>? loadShader(String path) {
+    final source = getShaderSource(path);
+    if (source == null) {
+      return null;
+    }
+
+    return Future.value(source);
+  }
 
   @override
-  Stream<Uint8List> loadFontFamily(String familyName) => _fontDelegate.loadFontFamily(familyName);
+  Stream<Uint8List>? loadFontFamily(String familyName) => null;
 }
 ''');
 

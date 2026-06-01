@@ -25,6 +25,7 @@ abstract class AutomaticallyAnimatedWidgetState<T extends AutomaticallyAnimatedW
   void _callback(double progress) => setState(() {});
 
   @override
+  @mustCallSuper
   void init() {
     _animation = Animation(
       easing: widget.easing,
@@ -41,20 +42,24 @@ abstract class AutomaticallyAnimatedWidgetState<T extends AutomaticallyAnimatedW
 
   @override
   void didUpdateWidget(T oldWidget) {
-    var restartAnimation = widget.easing != oldWidget.easing;
+    var restart = widget.easing != oldWidget.easing;
     _animation.duration = widget.duration;
 
-    if (!restartAnimation) {
+    _updateAnimations(restart);
+  }
+
+  void _updateAnimations(bool restart) {
+    if (!restart) {
       _visitLerps((previous, targetValue, factory) {
         if (previous!.end != targetValue) {
-          restartAnimation = true;
+          restart = true;
         }
 
         return previous;
       });
     }
 
-    if (restartAnimation) {
+    if (restart) {
       _visitLerps((previous, targetValue, factory) => factory(previous!.compute(_animation.value), targetValue));
       _animation.easing = widget.easing;
       _animation.towards(AnimationTarget.end);
@@ -80,6 +85,12 @@ abstract class AutomaticallyAnimatedWidgetState<T extends AutomaticallyAnimatedW
   Lerp<V?> visitNullableLerp<V>(Lerp<V?>? previous, V? targetValue, LerpFactory<Lerp<V>, V> factory) {
     return _activeVisitor!.call(previous, targetValue, (start, end) => NullableLerp<V>(start, end, factory))
         as Lerp<V?>;
+  }
+
+  @protected
+  void setAnimationState(void Function() fn) {
+    fn();
+    _updateAnimations(false);
   }
 
   @protected

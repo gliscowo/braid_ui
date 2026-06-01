@@ -6,12 +6,12 @@ repository: https://github.com/gliscowo/braid_ui
 publish_to: none
 
 environment:
-  sdk: ^3.10.0
+  sdk: ^3.12.0
 
 dependencies:
   clawclip:
     hosted: https://pub.wispforest.io
-    version: ^0.1.0
+    version: ^2.0.0
   ffi: ^2.1.4
   logging: ^1.2.0
   vector_math: ^2.1.4
@@ -24,7 +24,7 @@ dependencies:
   unicode: ^1.1.8
   source_helper: ^1.3.7
   fuzzywuzzy: ^1.2.0
-  hooks: ^1.0.0
+  hooks: ^2.0.0
   code_assets: ^1.0.0
   package_config: ^2.2.0
 
@@ -39,7 +39,7 @@ dev_dependencies:
   endec_json:
     hosted: https://pub.wispforest.io
     version: ^0.1.0
-  analyzer: ^8.1.1
+  analyzer: ^13.0.0
   ffigen: ^20.0.0
   yaml: ^3.1.3
   kdl: ^2.0.2

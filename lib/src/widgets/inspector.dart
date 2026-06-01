@@ -5,7 +5,7 @@ import 'dart:isolate';
 import 'dart:math';
 
 import 'package:clawclip/clawclip.dart' as dgl;
-import 'package:clawclip/glfw.dart';
+import 'package:clawclip/sdl.dart';
 import 'package:collection/collection.dart';
 import 'package:image/image.dart' as image;
 import 'package:meta/meta.dart';
@@ -15,14 +15,12 @@ import 'package:vm_service/vm_service.dart' as vms;
 import 'package:vm_service/vm_service_io.dart' as vms;
 
 import '../animation/easings.dart';
-import '../baked_assets.g.dart';
 import '../core/app.dart';
 import '../core/cursors.dart';
 import '../core/math.dart';
 import '../framework/instance.dart';
 import '../framework/proxy.dart';
 import '../framework/widget.dart';
-import '../resources.dart';
 import '../text/text_layout.dart';
 import 'animated_widgets.dart';
 import 'basic.dart';
@@ -96,7 +94,7 @@ class _InstancePickerState extends WidgetState<InstancePicker> with StreamListen
               pickedInstance?.debugHighlighted = true;
             },
             clickCallback: (x, y, button) {
-              if (button == glfwMouseButtonLeft) {
+              if (button == sdlButtonLeft) {
                 if (pickedInstance != null) {
                   pickedInstance!.debugHighlighted = false;
                   widget.pickCallback(pickedInstance!);
@@ -145,7 +143,7 @@ class BraidInspector {
     }
 
     if (currentApp != null) {
-      glfwShowWindow(currentWindow!.handle);
+      sdlShowWindow(currentWindow!.handle);
       return;
     }
 
@@ -159,7 +157,7 @@ class BraidInspector {
       height: 500,
       windowFlags: startInvisible ? const [.startInvisible] : const [],
       // TODO: consider baking these fonts
-      resources: BakedAssetResources(fontDelegate: BraidResources.fonts('resources/font')),
+      resources: .layered([.bakedShaders(), .filesystem(fontDirectory: 'resources/font')]),
       defaultFontFamily: 'NotoSans',
       widget: InspectorWidget(rootProxy: rootProxy!, rootInstance: rootInstance!, inspector: this),
     );
@@ -179,8 +177,8 @@ class BraidInspector {
   void revealInstance(WidgetInstance instance) {
     if (!_active) return;
 
-    if (glfwGetWindowAttrib(currentWindow!.handle, glfwVisible) != glfwTrue) {
-      glfwShowWindow(currentWindow!.handle);
+    if ((sdlGetWindowFlags(currentWindow!.handle) & sdlWindowHidden) != 0) {
+      sdlShowWindow(currentWindow!.handle);
     }
 
     _revealEvents.add(RevealInstanceEvent(instance));
@@ -400,8 +398,8 @@ class _EvalBoxState extends WidgetState<EvalBox> {
                     Flexible(
                       child: Focusable(
                         keyDownCallback: evalContext != null
-                            ? (keyCode, modifiers) {
-                                if (keyCode != glfwKeyEnter) return false;
+                            ? (sdlKey, scancode, modifiers) {
+                                if (sdlKey != sdlkReturn) return false;
 
                                 eval(
                                   SharedState.get<InspectorState>(context, withDependency: false).vmService!,
@@ -751,10 +749,10 @@ class _CollapsibleEntryState extends WidgetState<CollapsibleEntry> with StreamLi
   }
 
   static final _expandTrigger = [
-    ActionTrigger(mouseButtons: {}, keyCodes: {glfwKeyRight}),
+    ActionTrigger(mouseButtons: {}, keyCodes: {sdlkRight}),
   ];
   static final _collapseTrigger = [
-    ActionTrigger(mouseButtons: {}, keyCodes: {glfwKeyLeft}),
+    ActionTrigger(mouseButtons: {}, keyCodes: {sdlkLeft}),
   ];
 }
 

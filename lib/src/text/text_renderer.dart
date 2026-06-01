@@ -31,7 +31,12 @@ class FontFamily {
 
   @factory
   static Future<FontFamily> load(BraidResources resources, String familyName) async {
-    final fonts = await resources.loadFontFamily(familyName).map((fontBytes) => Font(fontBytes)).toList();
+    final maybeTheResources = resources.loadFontFamily(familyName);
+    if (maybeTheResources == null) {
+      throw 'no such font family found: $familyName';
+    }
+
+    final fonts = await maybeTheResources.map((fontBytes) => Font(fontBytes)).toList();
 
     return FontFamily(
       fonts.firstWhere((font) => !font.bold && !font.italic, orElse: () => fonts.first),

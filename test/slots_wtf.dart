@@ -26,8 +26,8 @@ class _TestAppState extends WidgetState<TestApp> {
       child: Column(
         children: [
           Button(onClick: () => setState(() => toggled = !toggled), child: Text('flip')),
-          toggled ? NotText(key: Key('a')) : NotText(key: Key('b')),
-          !toggled ? NotText(key: Key('a')) : NotText(key: Key('b')),
+          toggled ? NotText(keyText: 'a') : NotText(keyText: 'b'),
+          !toggled ? NotText(keyText: 'a') : NotText(keyText: 'b'),
         ],
       ),
     );
@@ -35,10 +35,11 @@ class _TestAppState extends WidgetState<TestApp> {
 }
 
 class NotText extends StatelessWidget {
-  const NotText({required super.key});
+  final String keyText;
+  NotText({required this.keyText}) : super(key: Key(keyText));
 
   @override
   Widget build(BuildContext context) {
-    return Text('text ${key!.value}');
+    return Text('text $keyText');
   }
 }

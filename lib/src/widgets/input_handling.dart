@@ -40,10 +40,17 @@ class ForwardingAction<I extends Intent, J extends I> extends Action<J> {
 
 class Shortcuts extends StatefulWidget {
   final bool skipTraversal;
+  final bool autoFocus;
   final Map<List<ActionTrigger>, Intent> shortcuts;
   final Widget child;
 
-  const Shortcuts({super.key, this.skipTraversal = false, required this.shortcuts, required this.child});
+  const Shortcuts({
+    super.key,
+    this.skipTraversal = false,
+    this.autoFocus = false,
+    required this.shortcuts,
+    required this.child,
+  });
 
   @override
   WidgetState<Shortcuts> createState() => _ShortcutsState();
@@ -71,7 +78,12 @@ class _ShortcutsState extends WidgetState<Shortcuts> {
 
   @override
   Widget build(BuildContext context) {
-    return Actions(skipTraversal: widget.skipTraversal, actions: actions, child: widget.child);
+    return Actions(
+      skipTraversal: widget.skipTraversal,
+      autoFocus: widget.autoFocus,
+      actions: actions,
+      child: widget.child,
+    );
   }
 }
 

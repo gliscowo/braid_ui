@@ -2,14 +2,13 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:clawclip/clawclip.dart';
-import 'package:clawclip/glfw.dart';
+import 'package:clawclip/sdl.dart';
 import 'package:unicode/unicode.dart';
 import 'package:vector_math/vector_math.dart';
 
 import '../context.dart';
 import '../core/constraints.dart';
 import '../core/cursors.dart';
-import '../core/key_modifiers.dart';
 import '../core/listenable.dart';
 import '../core/math.dart';
 import '../framework/instance.dart';
@@ -111,11 +110,11 @@ class _EditableTextState extends WidgetState<EditableText> {
         focused = false;
         _stopBlinking();
       },
-      keyDownCallback: (keyCode, modifiers) {
-        return (inputContext.instance as TextInputInstance).onKeyDown(keyCode, modifiers);
+      keyDownCallback: (sdlKey, scancode, modifiers) {
+        return (inputContext.instance as TextInputInstance).onKeyDown(sdlKey, scancode, modifiers);
       },
-      charCallback: (charCode, modifiers) {
-        return (inputContext.instance as TextInputInstance).onChar(charCode, modifiers);
+      textCallback: (text) {
+        return (inputContext.instance as TextInputInstance).onText(text);
       },
       child: Scrollable(
         horizontal: true,
@@ -465,15 +464,15 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with /*KeyboardLis
   int _safeCharCodeAt(int runeIdx) =>
       _text.isNotEmpty ? _text.runes.toList()[runeIdx.clamp(0, _text.runes.length - 1)] : _space;
 
-  bool onChar(int charCode, KeyModifiers modifiers) {
-    _insert(String.fromCharCode(charCode));
+  bool onText(String text) {
+    _insert(text);
     return true;
   }
 
-  bool onKeyDown(int keyCode, KeyModifiers modifiers) {
+  bool onKeyDown(int sdlKey, SDLScancode scancode, KeyModifiers modifiers) {
     final cursorPosition = _selection.end;
 
-    if (keyCode == glfwKeyBackspace) {
+    if (sdlKey == sdlkBackspace) {
       if (!_selection.collapsed) {
         _deleteSelection();
       } else if (cursorPosition > 0) {
@@ -485,7 +484,7 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with /*KeyboardLis
       }
 
       return true;
-    } else if (keyCode == glfwKeyDelete) {
+    } else if (sdlKey == sdlkDelete) {
       if (!_selection.collapsed) {
         _deleteSelection();
       } else if (cursorPosition < _text.runes.length) {
@@ -496,7 +495,7 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with /*KeyboardLis
       }
 
       return true;
-    } else if (keyCode == glfwKeyV && modifiers.ctrl) {
+    } else if (sdlKey == sdlkV && modifiers.ctrl) {
       // TODO: abstract clipboard handling
 
       // final clipboardString = glfw.getClipboardString(host!.surface.handle);
@@ -505,7 +504,7 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with /*KeyboardLis
       // }
 
       return true;
-    } else if ((keyCode == glfwKeyC || keyCode == glfwKeyX) && modifiers.ctrl) {
+    } else if ((sdlKey == sdlkC || sdlKey == sdlkX) && modifiers.ctrl) {
       // if (!_selection.collapsed) {
       //   malloc.arena((arena) {
       //     glfw.setClipboardString(
@@ -520,10 +519,10 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with /*KeyboardLis
       // }
 
       return true;
-    } else if (keyCode == glfwKeyA && modifiers.ctrl) {
+    } else if (sdlKey == sdlkA && modifiers.ctrl) {
       _selection = widget.controller.selection = TextSelection(0, _text.length);
       return true;
-    } else if (keyCode == glfwKeyLeft && modifiers.bitMask == 0) {
+    } else if (sdlKey == sdlkLeft && modifiers.bitMask == 0) {
       final endingSelection = !_selection.collapsed && !modifiers.shift;
       _moveCursor(
         max(
@@ -537,7 +536,7 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with /*KeyboardLis
         modifiers.shift,
       );
       return true;
-    } else if (keyCode == glfwKeyRight && modifiers.bitMask == 0) {
+    } else if (sdlKey == sdlkRight && modifiers.bitMask == 0) {
       final endingSelection = !_selection.collapsed && !modifiers.shift;
       _moveCursor(
         min(
@@ -551,22 +550,22 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with /*KeyboardLis
         modifiers.shift,
       );
       return true;
-    } else if (keyCode == glfwKeyHome) {
+    } else if (sdlKey == sdlkHome) {
       _moveCursor(currentLine.startRune, modifiers.shift);
       return true;
-    } else if (keyCode == glfwKeyEnd) {
+    } else if (sdlKey == sdlkEnd) {
       _moveCursor(currentLine.endRune, modifiers.shift);
       return true;
     }
 
     if (widget.allowMultipleLines) {
-      if (keyCode == glfwKeyEnter || keyCode == glfwKeyKpEnter) {
+      if (sdlKey == sdlkReturn || sdlKey == sdlkKpEnter) {
         _insert('\n');
         return true;
-      } else if (keyCode == glfwKeyUp && modifiers.bitMask == 0) {
+      } else if (sdlKey == sdlkUp && modifiers.bitMask == 0) {
         _moveCursorVertically(-1, modifiers.shift);
         return true;
-      } else if (keyCode == glfwKeyDown && modifiers.bitMask == 0) {
+      } else if (sdlKey == sdlkDown && modifiers.bitMask == 0) {
         _moveCursorVertically(1, modifiers.shift);
         return true;
       }
@@ -592,7 +591,7 @@ class TextInputInstance extends LeafWidgetInstance<TextInput> with /*KeyboardLis
       _selection = widget.controller.selection = TextSelection(max(0, start), end);
     } else {
       _lastClickTime = DateTime.now();
-      _moveCursor(clickedIdx, host!.eventsBinding.isKeyPressed(glfwKeyLeftShift));
+      _moveCursor(clickedIdx, host!.eventsBinding.isKeyPressed(sdlkLshift));
     }
 
     return true;

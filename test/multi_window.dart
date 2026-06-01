@@ -9,7 +9,7 @@ Future<void> main() async {
         name: 'window $idx',
         width: 200,
         height: 200,
-        resources: BakedAssetResources(fontDelegate: BraidResources.fonts('resources/font')),
+        resources: .layered([.bakedShaders(), .filesystem(fontDirectory: 'resources/font')]),
         defaultFontFamily: 'NotoSans',
         widget: const TheApp(),
       ).then((value) => value.$1);

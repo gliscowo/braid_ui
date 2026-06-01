@@ -18,7 +18,7 @@ typedef KdlMapper = ({
   void Function(KdlNode node, KdlElement element) set,
 });
 
-final defaultKdlMappers = UnmodifiableListView([
+final defaultKdlMappers = UnmodifiableListView<KdlMapper>([
   (
     export: true,
     key: '@name',
@@ -104,6 +104,8 @@ class KdlDeserializer extends RecursiveDeserializer<KdlElement> implements SelfD
             visitor.f64(ctx, value.toDouble());
           case String value:
             visitor.string(ctx, value);
+          case null:
+            visitor.optional(ctx, _elementEndec, null);
           case _:
             throw UnimplementedError();
         }
@@ -416,8 +418,7 @@ Future<void> main() async {
             },
             (_) => throw UnimplementedError(),
           )
-          .optionalOf()
-          .fieldOf('main_axis_alignment', (struct) => struct.mainAxisAlignment, defaultValueFactory: () => null),
+          .fieldOf('main_axis_alignment', (struct) => struct.mainAxisAlignment, defaultValueFactory: () => .start),
       Endec.string
           .xmap(
             (self) => switch (self) {
@@ -430,13 +431,12 @@ Future<void> main() async {
             },
             (_) => throw UnimplementedError(),
           )
-          .optionalOf()
-          .fieldOf('cross_axis_alignment', (struct) => struct.crossAxisAlignment, defaultValueFactory: () => null),
+          .fieldOf('cross_axis_alignment', (struct) => struct.crossAxisAlignment, defaultValueFactory: () => .start),
       widgetEndec.listOf().fieldOf('@children', (struct) => struct.children),
       (mainAxis, mainAxisAlignment, crossAxisAlignment, children) => Flex(
         mainAxis: mainAxis,
-        mainAxisAlignment: mainAxisAlignment ?? .start,
-        crossAxisAlignment: crossAxisAlignment ?? .start,
+        mainAxisAlignment: mainAxisAlignment,
+        crossAxisAlignment: crossAxisAlignment,
         children: children,
       ),
     ),

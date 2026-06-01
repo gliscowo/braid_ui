@@ -4,47 +4,76 @@ import 'dart:typed_data';
 
 import 'package:path/path.dart';
 
+import 'baked_assets.g.dart';
 import 'errors.dart';
 
 abstract interface class BraidResources {
-  Future<String> loadShader(String path);
-  Stream<Uint8List> loadFontFamily(String familyName);
+  Future<String>? loadShader(String path);
+  Stream<Uint8List>? loadFontFamily(String familyName);
 
-  factory BraidResources.fonts(String fontDirectory) = _FontOnlyResources;
-  factory BraidResources.filesystem({required String fontDirectory, required String shaderDirectory}) =
-      FilesystemResources;
+  factory BraidResources.layered(List<BraidResources> layers) = _LayeredResources;
+
+  const factory BraidResources.bakedShaders() = BakedShaderResources;
+  factory BraidResources.filesystem({String? fontDirectory, String? shaderDirectory}) = FilesystemResources;
 }
 
-class _FontOnlyResources implements BraidResources {
-  final String fontDirectory;
+class _LayeredResources implements BraidResources {
+  final List<BraidResources> layers;
 
-  _FontOnlyResources(this.fontDirectory) {
-    if (!FileSystemEntity.isDirectorySync(fontDirectory)) {
-      throw BraidInitializationException('font directory $fontDirectory does not exist');
-    }
-  }
+  _LayeredResources(this.layers);
 
   @override
-  Stream<Uint8List> loadFontFamily(String familyName) => Directory(join(fontDirectory, familyName))
-      .list()
-      .where((event) => event is File && const ['.otf', '.ttf'].contains(extension(event.path)))
-      .cast<File>()
-      .asyncMap((event) => event.readAsBytes());
+  Future<String>? loadShader(String path) =>
+      layers.map((e) => e.loadShader(path)).whereType<Future<String>>().firstOrNull;
 
   @override
-  Future<String> loadShader(String path) =>
-      throw UnimplementedError('font-only resources do not provide a way to load shaders');
+  Stream<Uint8List>? loadFontFamily(String familyName) =>
+      layers.map((e) => e.loadFontFamily(familyName)).whereType<Stream<Uint8List>>().firstOrNull;
 }
 
-class FilesystemResources extends _FontOnlyResources {
-  final String shaderDirectory;
+class FilesystemResources implements BraidResources {
+  final String? shaderDirectory;
+  final String? fontDirectory;
 
-  FilesystemResources({required String fontDirectory, required this.shaderDirectory}) : super(fontDirectory) {
-    if (!FileSystemEntity.isDirectorySync(shaderDirectory)) {
+  FilesystemResources({this.shaderDirectory, this.fontDirectory}) {
+    if (shaderDirectory != null && !FileSystemEntity.isDirectorySync(shaderDirectory!)) {
       throw BraidInitializationException('shader directory $shaderDirectory does not exist');
     }
+
+    if (fontDirectory != null && !FileSystemEntity.isDirectorySync(fontDirectory!)) {
+      throw BraidInitializationException('font directory $shaderDirectory does not exist');
+    }
   }
 
   @override
-  Future<String> loadShader(String path) => File(join(shaderDirectory, path)).readAsString();
+  Future<String>? loadShader(String path) {
+    if (shaderDirectory == null) {
+      return null;
+    }
+
+    final file = File(join(shaderDirectory!, path));
+    if (!file.existsSync()) {
+      return null;
+    }
+
+    return file.readAsString();
+  }
+
+  @override
+  Stream<Uint8List>? loadFontFamily(String familyName) {
+    if (fontDirectory == null) {
+      return null;
+    }
+
+    final directory = Directory(join(fontDirectory!, familyName));
+    if (!directory.existsSync()) {
+      return null;
+    }
+
+    return directory
+        .list()
+        .where((event) => event is File && const ['.otf', '.ttf'].contains(extension(event.path)))
+        .cast<File>()
+        .asyncMap((event) => event.readAsBytes());
+  }
 }

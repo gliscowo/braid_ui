@@ -1,9 +1,10 @@
 import 'dart:collection';
 
+import 'package:clawclip/clawclip.dart';
+import 'package:clawclip/sdl.dart';
 import 'package:collection/collection.dart';
 import 'package:vector_math/vector_math.dart';
 
-import '../core/key_modifiers.dart';
 import '../framework/instance.dart';
 import '../framework/proxy.dart';
 import '../framework/widget.dart';
@@ -74,9 +75,9 @@ class FocusPolicy extends InheritedWidget {
 }
 
 class Focusable extends StatefulWidget {
-  final bool Function(int keyCode, KeyModifiers modifiers)? keyDownCallback;
-  final bool Function(int keyCode, KeyModifiers modifiers)? keyUpCallback;
-  final bool Function(int charCode, KeyModifiers modifiers)? charCallback;
+  final bool Function(int sdlKey, SDLScancode scancode, KeyModifiers modifiers)? keyDownCallback;
+  final bool Function(int sdlKey, SDLScancode scancode, KeyModifiers modifiers)? keyUpCallback;
+  final bool Function(String text)? textCallback;
   final Callback? focusGainedCallback;
   final Callback? focusLostCallback;
   final void Function(FocusLevel? level)? focusLevelChangedCallback;
@@ -90,7 +91,7 @@ class Focusable extends StatefulWidget {
     super.key,
     this.keyDownCallback,
     this.keyUpCallback,
-    this.charCallback,
+    this.textCallback,
     this.focusGainedCallback,
     this.focusLostCallback,
     this.focusLevelChangedCallback,
@@ -164,19 +165,19 @@ class FocusableState<F extends Focusable> extends WidgetState<F> {
     }
   }
 
-  bool _onKeyDown(int keyCode, KeyModifiers modifiers) {
+  bool _onKeyDown(int sdlKey, SDLScancode scancode, KeyModifiers modifiers) {
     assert(_level.isFocused, '_onKeyDown invoked on a state which is not focused');
-    return widget.keyDownCallback?.call(keyCode, modifiers) ?? false;
+    return widget.keyDownCallback?.call(sdlKey, scancode, modifiers) ?? false;
   }
 
-  bool _onKeyUp(int keyCode, KeyModifiers modifiers) {
+  bool _onKeyUp(int sdlKey, SDLScancode scancode, KeyModifiers modifiers) {
     assert(_level.isFocused, '_onKeyUp invoked on a state which is not focused');
-    return widget.keyUpCallback?.call(keyCode, modifiers) ?? false;
+    return widget.keyUpCallback?.call(sdlKey, scancode, modifiers) ?? false;
   }
 
-  bool _onChar(int charCode, KeyModifiers modifiers) {
-    assert(_level.isFocused, '_onChar invoked on a state which is not focused');
-    return widget.charCallback?.call(charCode, modifiers) ?? false;
+  bool _onText(String text) {
+    assert(_level.isFocused, '_onText invoked on a state which is not focused');
+    return widget.textCallback?.call(text) ?? false;
   }
 
   @override
@@ -212,7 +213,7 @@ class FocusScope extends Focusable {
     super.key,
     super.keyDownCallback,
     super.keyUpCallback,
-    super.charCallback,
+    super.textCallback,
     super.focusGainedCallback,
     super.focusLostCallback,
     super.focusLevelChangedCallback,
@@ -502,36 +503,36 @@ class _FocusScopeState extends FocusableState<FocusScope> {
   }
 
   @override
-  bool _onKeyDown(int keyCode, KeyModifiers modifiers) {
+  bool _onKeyDown(int sdlKey, SDLScancode scancode, KeyModifiers modifiers) {
     for (final descendant in focusedDescendants) {
-      if (descendant._onKeyDown(keyCode, modifiers)) {
+      if (descendant._onKeyDown(sdlKey, scancode, modifiers)) {
         return true;
       }
     }
 
-    return super._onKeyDown(keyCode, modifiers);
+    return super._onKeyDown(sdlKey, scancode, modifiers);
   }
 
   @override
-  bool _onKeyUp(int keyCode, KeyModifiers modifiers) {
+  bool _onKeyUp(int sdlKey, SDLScancode scancode, KeyModifiers modifiers) {
     for (final descendant in focusedDescendants) {
-      if (descendant._onKeyUp(keyCode, modifiers)) {
+      if (descendant._onKeyUp(sdlKey, scancode, modifiers)) {
         return true;
       }
     }
 
-    return super._onKeyUp(keyCode, modifiers);
+    return super._onKeyUp(sdlKey, scancode, modifiers);
   }
 
   @override
-  bool _onChar(int charCode, KeyModifiers modifiers) {
+  bool _onText(String text) {
     for (final descendant in focusedDescendants) {
-      if (descendant._onChar(charCode, modifiers)) {
+      if (descendant._onText(text)) {
         return true;
       }
     }
 
-    return super._onChar(charCode, modifiers);
+    return super._onText(text);
   }
 
   @override
@@ -581,14 +582,14 @@ class _FocusScopeState extends FocusableState<FocusScope> {
 
 // ---
 
-typedef KeyDownEvent = ({int keyCode, KeyModifiers modifiers});
-typedef KeyUpEvent = ({int keyCode, KeyModifiers modifiers});
-typedef CharEvent = ({int charCode, KeyModifiers modifiers});
+typedef KeyDownEvent = ({int sdlKey, SDLScancode scancode, KeyModifiers modifiers});
+typedef KeyUpEvent = ({int sdlKey, SDLScancode scancode, KeyModifiers modifiers});
+typedef TextEvent = ({String text});
 
 class RootFocusScope extends StatefulWidget {
   final Stream<KeyDownEvent> onKeyDown;
   final Stream<KeyUpEvent> onKeyUp;
-  final Stream<CharEvent> onChar;
+  final Stream<TextEvent> onChar;
   final Widget child;
 
   RootFocusScope({
@@ -608,9 +609,12 @@ class _RootFocusScopeState extends WidgetState<RootFocusScope> with StreamListen
 
   @override
   void init() {
-    streamListen((widget) => widget.onKeyDown, (event) => scope!._onKeyDown(event.keyCode, event.modifiers));
-    streamListen((widget) => widget.onKeyUp, (event) => scope!._onKeyUp(event.keyCode, event.modifiers));
-    streamListen((widget) => widget.onChar, (event) => scope!._onChar(event.charCode, event.modifiers));
+    streamListen(
+      (widget) => widget.onKeyDown,
+      (event) => scope!._onKeyDown(event.sdlKey, event.scancode, event.modifiers),
+    );
+    streamListen((widget) => widget.onKeyUp, (event) => scope!._onKeyUp(event.sdlKey, event.scancode, event.modifiers));
+    streamListen((widget) => widget.onChar, (event) => scope!._onText(event.text));
   }
 
   @override

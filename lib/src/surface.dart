@@ -1,8 +1,8 @@
 import 'dart:ffi' as ffi;
 
 import 'package:clawclip/clawclip.dart' as cc;
-import 'package:clawclip/glfw.dart';
 import 'package:clawclip/opengl.dart';
+import 'package:clawclip/sdl.dart';
 import 'package:ffi/ffi.dart' as ffi;
 import 'package:image/image.dart';
 import 'package:logging/logging.dart';
@@ -39,7 +39,7 @@ class WindowSurface implements Surface {
   final cc.Window window;
   final CursorController _cursorController;
 
-  WindowSurface.ofWindow({required this.window}) : _cursorController = CursorController.ofWindow(window);
+  WindowSurface.ofWindow({required this.window}) : _cursorController = CursorController();
 
   factory WindowSurface.createWindow({
     required String title,
@@ -52,26 +52,26 @@ class WindowSurface implements Surface {
       cc.clawclipSetupLoggingInIsolate(
         baseLogger: logger,
         glConfig: const .new(messageFilter: _glLoggingFilter),
-        glfwConfig: .noStacktraces,
       );
     }
 
-    if (glfwInit() != glfwTrue) {
-      final errorPointer = ffi.malloc<ffi.Pointer<ffi.Char>>();
-      glfwGetError(errorPointer);
-
-      final errorString = errorPointer.cast<ffi.Utf8>().toDartString();
-      ffi.malloc.free(errorPointer);
-
-      throw BraidInitializationException('GLFW initialization error: $errorString');
+    if (sdlWasInit(sdlInitVideo) == 0 && !sdlInit(sdlInitVideo)) {
+      throw BraidInitializationException('SDL initialization error: ${sdlGetError().cast<ffi.Utf8>().toDartString()}');
     }
+
+    ffi.malloc.arena((arena) {
+      sdlSetHint(
+        sdlHintMouseFocusClickthrough.toNativeUtf8(allocator: arena).cast(),
+        "1".toNativeUtf8(allocator: arena).cast(),
+      );
+    });
 
     final window = cc.Window(width, height, title, flags: flags);
     window.setIcon(assets.braidIcon);
 
     window.activateContext();
     cc.Window.disableVsyncInContext();
-    cc.Window.dropContext();
+    window.dropContext();
 
     return WindowSurface.ofWindow(window: window);
   }
@@ -111,9 +111,11 @@ class WindowSurface implements Surface {
       ].map(context.addShader).toList(),
     );
 
+    window.startTextInput();
+
     window.activateContext();
     cc.GlCall.allOf(shaderSetup)();
-    cc.Window.dropContext();
+    window.dropContext();
 
     return context;
   }
@@ -122,7 +124,7 @@ class WindowSurface implements Surface {
   void beginDrawing() {
     window.activateContext();
 
-    gl.viewport(0, 0, window.width, window.height);
+    gl.viewport(0, 0, window.framebufferWidth, window.framebufferHeight);
 
     gl.clearColor(0, 0, 0, 1);
     gl.clear(glColorBufferBit | glDepthBufferBit);
@@ -131,11 +133,9 @@ class WindowSurface implements Surface {
   @override
   void endDrawing() {
     window.swapBuffers();
+    window.dropContext();
+
     cc.Window.pollEvents();
-    // invoke it twice?? so that we don't miss some
-    // glfw cursor move events on wayland
-    cc.Window.pollEvents();
-    cc.Window.dropContext();
   }
 
   @override

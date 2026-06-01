@@ -29,23 +29,29 @@ const _shaderSources = {
   'text.frag': '#version 330 core\nuniform sampler2D sText;in vec2 vUv;in vec4 vColor;layout(location = 0, index = 0) out vec4 fragColor;layout(location = 0, index = 1) out vec4 fragColorMask;void main() {fragColor = vColor;fragColorMask = vec4(texture(sText, vUv));}',
 };
 
-String getShaderSource(String shaderName) {
+String? getShaderSource(String shaderName) {
   if (!_shaderSources.containsKey(shaderName)) {
-    throw _BakedAssetError('missing shader source for \'$shaderName\'');
+    return null;
   }
 
   return _shaderSources[shaderName]!;
 }
 
-class BakedAssetResources implements BraidResources {
-  final BraidResources _fontDelegate;
-  BakedAssetResources({required BraidResources fontDelegate}) : _fontDelegate = fontDelegate;
+class BakedShaderResources implements BraidResources {
+  const BakedShaderResources();
 
   @override
-  Future<String> loadShader(String path) => Future.value(getShaderSource(path));
+  Future<String>? loadShader(String path) {
+    final source = getShaderSource(path);
+    if (source == null) {
+      return null;
+    }
+
+    return Future.value(source);
+  }
 
   @override
-  Stream<Uint8List> loadFontFamily(String familyName) => _fontDelegate.loadFontFamily(familyName);
+  Stream<Uint8List>? loadFontFamily(String familyName) => null;
 }
 
 final class Icons {
@@ -3920,15 +3926,5 @@ final class Icons {
   static const zoom_in_map = IconSpec(0xeb2d);
   static const zoom_out = IconSpec(0xe900);
   static const zoom_out_map = IconSpec(0xe56b);
-}
-
-// ---
-
-class _BakedAssetError extends Error {
-  final String message;
-  _BakedAssetError(this.message);
-
-  @override
-  String toString() => 'baked asset error: $message';
 }
 

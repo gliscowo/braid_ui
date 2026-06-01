@@ -6,7 +6,8 @@ import 'dart:math';
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/token.dart';
 import 'package:braid_ui/braid_ui.dart';
-import 'package:clawclip/glfw.dart';
+import 'package:clawclip/clawclip.dart' as cc;
+import 'package:clawclip/sdl.dart';
 import 'package:endec/endec.dart';
 import 'package:endec_json/endec_json.dart';
 import 'package:image/image.dart' as image;
@@ -130,32 +131,32 @@ class ColorApp extends StatelessWidget {
 
   static const _shortcuts = {
     [
-      ActionTrigger(keyCodes: {glfwKeyTab}),
+      ActionTrigger(keyCodes: {sdlkTab}),
     ]: TraverseFocusIntent(
       FocusTraversalDirection.next,
     ),
     [
-      ActionTrigger(keyCodes: {glfwKeyTab}, keyModifiers: KeyModifiers(glfwModShift)),
+      ActionTrigger(keyCodes: {sdlkTab}, keyModifiers: cc.KeyModifiers(sdlKmodShift)),
     ]: TraverseFocusIntent(
       FocusTraversalDirection.previous,
     ),
     [
-      ActionTrigger(keyCodes: {glfwKeyLeft}, keyModifiers: null),
+      ActionTrigger(keyCodes: {sdlkLeft}, keyModifiers: null),
     ]: TraverseFocusIntent(
       FocusTraversalDirection.left,
     ),
     [
-      ActionTrigger(keyCodes: {glfwKeyRight}, keyModifiers: null),
+      ActionTrigger(keyCodes: {sdlkRight}, keyModifiers: null),
     ]: TraverseFocusIntent(
       FocusTraversalDirection.right,
     ),
     [
-      ActionTrigger(keyCodes: {glfwKeyUp}, keyModifiers: null),
+      ActionTrigger(keyCodes: {sdlkUp}, keyModifiers: null),
     ]: TraverseFocusIntent(
       FocusTraversalDirection.up,
     ),
     [
-      ActionTrigger(keyCodes: {glfwKeyDown}, keyModifiers: null),
+      ActionTrigger(keyCodes: {sdlkDown}, keyModifiers: null),
     ]: TraverseFocusIntent(
       FocusTraversalDirection.down,
     ),
@@ -226,7 +227,7 @@ class _AppBodyState extends WidgetState<AppBody> {
                       Test.intents => const IntentTest(),
                     },
                     Align(
-                      key: Key('buttons'),
+                      key: const Key('buttons'),
                       alignment: Alignment.left,
                       child: Panel(
                         color: BraidTheme.of(context).elevatedColor,
@@ -731,40 +732,40 @@ class CollapsibleTest extends StatelessWidget {
                     [ActionTrigger.click, ActionTrigger.click, ActionTrigger.secondaryClick]: () =>
                         print('triple hi 3'),
                     [
-                      ActionTrigger(keyCodes: {glfwKey1}),
+                      ActionTrigger(keyCodes: {sdlk1}),
                     ]: () =>
                         print('1'),
                     [
-                      ActionTrigger(keyCodes: {glfwKey2}),
+                      ActionTrigger(keyCodes: {sdlk2}),
                     ]: () =>
                         print('2'),
                     [
-                      ActionTrigger(keyCodes: {glfwKey1}),
+                      ActionTrigger(keyCodes: {sdlk1}),
                       ActionTrigger.click,
-                      ActionTrigger(keyCodes: {glfwKey2}),
+                      ActionTrigger(keyCodes: {sdlk2}),
                     ]: () =>
                         print('1 click 2'),
                     [
-                      ActionTrigger(keyCodes: {glfwKeyB}),
+                      ActionTrigger(keyCodes: {sdlkB}),
                     ]: () =>
                         print('b'),
                     [
-                      ActionTrigger(keyCodes: {glfwKeyR}),
+                      ActionTrigger(keyCodes: {sdlkR}),
                     ]: () =>
                         print('r'),
                     [
-                      ActionTrigger(keyCodes: {glfwKeyB}),
-                      ActionTrigger(keyCodes: {glfwKeyR}),
-                      ActionTrigger(keyCodes: {glfwKeyU}),
-                      ActionTrigger(keyCodes: {glfwKeyH}),
+                      ActionTrigger(keyCodes: {sdlkB}),
+                      ActionTrigger(keyCodes: {sdlkR}),
+                      ActionTrigger(keyCodes: {sdlkU}),
+                      ActionTrigger(keyCodes: {sdlkH}),
                     ]: () =>
                         print('bruh'),
                     [
                       ActionTrigger.secondaryClick,
                       ActionTrigger.secondaryClick,
-                      ActionTrigger(keyCodes: {glfwKey1}),
+                      ActionTrigger(keyCodes: {sdlk1}),
                       ActionTrigger.click,
-                      ActionTrigger(keyCodes: {glfwKey2}),
+                      ActionTrigger(keyCodes: {sdlk2}),
                     ]: () =>
                         print('yeah uhh'),
                   },
@@ -1039,7 +1040,7 @@ class _IntentTestState extends WidgetState<IntentTest> {
             shortcuts: const {
               [ActionTrigger.click]: ClickIntent('click'),
               [
-                ActionTrigger(keyCodes: {glfwKeyA}),
+                ActionTrigger(keyCodes: {sdlkA}),
               ]: ClickIntent(
                 'a',
               ),

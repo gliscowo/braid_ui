@@ -17,7 +17,17 @@ class BraidShader {
   BraidShader({required this.source, required this.name, required this.vert, required this.frag});
 
   Future<GlCall<GlProgram>> loadAndCompile() async {
-    final (vertSource, fragSource) = await (source.loadShader('$vert.vert'), source.loadShader('$frag.frag')).wait;
+    final maybeVertSource = source.loadShader('$vert.vert');
+    if (maybeVertSource == null) {
+      throw NoSuchShaderException('$vert (vertex shader)');
+    }
+
+    final maybeFragSource = source.loadShader('$frag.frag');
+    if (maybeFragSource == null) {
+      throw NoSuchShaderException('$frag (fragment shader)');
+    }
+
+    final (vertSource, fragSource) = await (maybeVertSource, maybeFragSource).wait;
 
     return GlCall(() {
       final shaders = [GlShader('$vert.vert', vertSource, .vertex), GlShader('$frag.frag', fragSource, .fragment)];
@@ -25,6 +35,14 @@ class BraidShader {
       return GlProgram(name, shaders);
     });
   }
+}
+
+class NoSuchShaderException implements Exception {
+  final String shaderName;
+  NoSuchShaderException(this.shaderName);
+
+  @override
+  String toString() => 'no such shader found: $shaderName';
 }
 
 typedef ProgramLookup = GlProgram Function(String);

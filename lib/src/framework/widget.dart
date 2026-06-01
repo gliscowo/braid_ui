@@ -12,7 +12,27 @@ abstract interface class BuildContext {
 
 // ---
 
-extension type const Key(String value) {}
+sealed class Key {
+  const Key._();
+
+  @literal
+  const factory Key(Object key) = _ValueKey.new;
+}
+
+final class _ValueKey<T> extends Key {
+  final T key;
+  const _ValueKey(this.key) : super._();
+
+  @override
+  int get hashCode => key.hashCode;
+
+  @override
+  bool operator ==(Object other) => other is _ValueKey && key == other.key;
+}
+
+final class TeleportKey extends Key {
+  TeleportKey() : super._();
+}
 
 // ---
 

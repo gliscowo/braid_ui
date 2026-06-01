@@ -55,20 +55,33 @@ class WidgetTransform {
 class CustomWidgetTransform extends WidgetTransform {
   Matrix4? _toParent;
   Matrix4? _toWidget;
-  bool _applyAtCenter = true;
+  Alignment _originAlignment;
   Matrix4 _matrix = Matrix4.identity();
+
+  CustomWidgetTransform({required this._originAlignment});
 
   set matrix(Matrix4 value) => _setState(() => _matrix = value);
   Matrix4 get matrix => _matrix;
 
-  set applyAtCenter(bool value) => _setState(() => _applyAtCenter = value);
-  bool get applyAtCenter => _applyAtCenter;
+  set originAlignment(Alignment value) => _setState(() => _originAlignment = value);
+  Alignment get originAlignment => _originAlignment;
 
-  Matrix4 get toParent => _toParent ??= _applyAtCenter
-      ? (Matrix4.translationValues(_x + _width / 2, _y + _height / 2, 0)
+  Matrix4 get toParent {
+    if (_toParent == null) {
+      if (!identical(_originAlignment, Alignment.topLeft)) {
+        final originX = _originAlignment.alignHorizontal(width, 0);
+        final originY = _originAlignment.alignVertical(height, 0);
+
+        _toParent = Matrix4.translationValues(_x + originX, _y + originY, 0)
           ..multiply(_matrix)
-          ..translateByDouble(-_width / 2, -_height / 2, 0, 1))
-      : Matrix4.copy(matrix);
+          ..translateByDouble(-originX, -originY, 0, 1);
+      } else {
+        _toParent = Matrix4.copy(matrix);
+      }
+    }
+
+    return _toParent!;
+  }
 
   Matrix4 get toWidget => _toWidget ??= Matrix4.inverted(toParent);
 

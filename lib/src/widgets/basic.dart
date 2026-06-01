@@ -1,17 +1,16 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:collection/collection.dart';
 import 'package:clawclip/clawclip.dart';
 import 'package:clawclip/opengl.dart';
+import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 import 'package:vector_math/vector_math.dart';
 
-import '../../glfw.dart';
+import '../../sdl.dart';
 import '../context.dart';
 import '../core/constraints.dart';
 import '../core/cursors.dart';
-import '../core/key_modifiers.dart';
 import '../core/listenable.dart';
 import '../core/math.dart';
 import '../framework/instance.dart';
@@ -496,15 +495,12 @@ extension type const ActionTrigger._(({Set<int> mouseButtons, Set<int> keyCodes,
   bool isTriggeredByKeyCode(int code, KeyModifiers modifiers) =>
       _value.keyCodes.contains(code) && (_value.keyModifiers == null || _value.keyModifiers == modifiers);
 
-  static const click = ActionTrigger(
-    mouseButtons: {glfwMouseButtonLeft},
-    keyCodes: {glfwKeySpace, glfwKeyEnter, glfwKeyKpEnter},
-  );
+  static const click = ActionTrigger(mouseButtons: {sdlButtonLeft}, keyCodes: {sdlkSpace, sdlkReturn, sdlkKpEnter});
 
   static const secondaryClick = ActionTrigger(
-    mouseButtons: {glfwMouseButtonRight},
-    keyCodes: {glfwKeySpace, glfwKeyEnter, glfwKeyKpEnter},
-    keyModifiers: KeyModifiers(glfwModShift),
+    mouseButtons: {sdlButtonRight},
+    keyCodes: {sdlkSpace, sdlkReturn, sdlkKpEnter},
+    keyModifiers: KeyModifiers(sdlKmodShift),
   );
 }
 
@@ -517,6 +513,7 @@ class Actions extends StatefulWidget {
   final Callback? focusLostCallback;
   final void Function(FocusLevel? level)? focusLevelChangeCallback;
   final bool skipTraversal;
+  final bool autoFocus;
 
   final Map<List<ActionTrigger>, Callback> actions;
 
@@ -531,6 +528,7 @@ class Actions extends StatefulWidget {
     this.focusLostCallback,
     this.focusLevelChangeCallback,
     this.skipTraversal = false,
+    this.autoFocus = false,
     required this.actions,
     required this.child,
   });
@@ -544,6 +542,7 @@ class Actions extends StatefulWidget {
     this.focusLostCallback,
     this.focusLevelChangeCallback,
     this.skipTraversal = false,
+    this.autoFocus = false,
     required Callback? onClick,
     required this.child,
   }) : actions = {
@@ -588,10 +587,11 @@ class ActionsState extends WidgetState<Actions> {
         focusGainedCallback: widget.focusGainedCallback,
         focusLostCallback: widget.focusLostCallback,
         focusLevelChangedCallback: widget.focusLevelChangeCallback,
-        keyDownCallback: (keyCode, modifiers) => _stepActions((trigger) {
-          if (trigger.isTriggeredByKeyCode(keyCode, modifiers)) return _ActionTriggerResult.activated;
+        autoFocus: widget.autoFocus,
+        keyDownCallback: (sdlKey, scancode, modifiers) => _stepActions((trigger) {
+          if (trigger.isTriggeredByKeyCode(sdlKey, modifiers)) return _ActionTriggerResult.activated;
 
-          return KeyModifiers.isModifier(keyCode) ? _ActionTriggerResult.ignored : _ActionTriggerResult.notActivated;
+          return KeyModifiers.isModifier(sdlKey) ? _ActionTriggerResult.ignored : _ActionTriggerResult.notActivated;
         }),
         skipTraversal: widget.skipTraversal,
         child: widget.child,
@@ -780,8 +780,9 @@ class GradientInstance extends OptionalChildWidgetInstance<Gradient> with Option
 
 class Transform extends SingleChildInstanceWidget {
   final Matrix4 matrix;
+  final Alignment originAlignment;
 
-  Transform({super.key, required this.matrix, required super.child});
+  Transform({super.key, required this.matrix, this.originAlignment = .center, required super.child});
 
   @override
   TransformInstance instantiate() => TransformInstance(widget: this);
@@ -794,19 +795,20 @@ class TransformInstance extends SingleChildWidgetInstance<Transform> with Shrink
 
   @override
   set widget(Transform value) {
-    if (widget.matrix == value.matrix) {
+    if (widget.matrix == value.matrix && widget.originAlignment == value.originAlignment) {
       (transform as CustomWidgetTransform).recompute();
       return;
     }
 
     super.widget = value;
     (transform as CustomWidgetTransform).matrix = widget.matrix;
+    (transform as CustomWidgetTransform).originAlignment = widget.originAlignment;
 
     markNeedsLayout();
   }
 
   @override
-  CustomWidgetTransform createTransform() => CustomWidgetTransform();
+  CustomWidgetTransform createTransform() => CustomWidgetTransform(originAlignment: widget.originAlignment);
 }
 
 // ---
@@ -1265,12 +1267,7 @@ class _RotatedLayoutInstance extends SingleChildWidgetInstance<RotatedLayout> {
   _RotatedLayoutInstance({required super.widget}) : _visualIncrements = widget.increments % 4;
 
   @override
-  WidgetTransform createTransform() {
-    final transform = CustomWidgetTransform();
-    transform.applyAtCenter = false;
-
-    return transform;
-  }
+  WidgetTransform createTransform() => CustomWidgetTransform(originAlignment: .topLeft);
 
   int _visualIncrements;
   bool get _isVertical => _visualIncrements % 2 == 1;

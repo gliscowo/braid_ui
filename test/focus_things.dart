@@ -1,7 +1,8 @@
 import 'dart:io';
 
 import 'package:braid_ui/braid_ui.dart';
-import 'package:clawclip/glfw.dart';
+import 'package:clawclip/clawclip.dart';
+import 'package:clawclip/sdl.dart';
 import 'package:logging/logging.dart';
 import 'package:vector_math/vector_math.dart';
 
@@ -33,8 +34,12 @@ class Blod extends StatelessWidget {
     return Stack(
       children: [
         if (show)
-          RawImage(key: Key('blod'), wrap: .mirroredRepeat, provider: FileImageProvider(File('test/assets/blud.png'))),
-        StackBase(key: Key('child'), child: child),
+          RawImage(
+            key: const Key('blod'),
+            wrap: .mirroredRepeat,
+            provider: FileImageProvider(File('test/assets/blud.png')),
+          ),
+        StackBase(key: const Key('child'), child: child),
       ],
     );
   }
@@ -100,32 +105,32 @@ class FocusApp extends StatelessWidget {
 
   static const _shortcuts = {
     [
-      ActionTrigger(keyCodes: {glfwKeyTab}),
+      ActionTrigger(keyCodes: {sdlkTab}),
     ]: TraverseFocusIntent(
       FocusTraversalDirection.next,
     ),
     [
-      ActionTrigger(keyCodes: {glfwKeyTab}, keyModifiers: KeyModifiers(glfwModShift)),
+      ActionTrigger(keyCodes: {sdlkTab}, keyModifiers: KeyModifiers(sdlKmodShift)),
     ]: TraverseFocusIntent(
       FocusTraversalDirection.previous,
     ),
     [
-      ActionTrigger(keyCodes: {glfwKeyLeft}),
+      ActionTrigger(keyCodes: {sdlkLeft}),
     ]: TraverseFocusIntent(
       FocusTraversalDirection.left,
     ),
     [
-      ActionTrigger(keyCodes: {glfwKeyRight}),
+      ActionTrigger(keyCodes: {sdlkRight}),
     ]: TraverseFocusIntent(
       FocusTraversalDirection.right,
     ),
     [
-      ActionTrigger(keyCodes: {glfwKeyUp}),
+      ActionTrigger(keyCodes: {sdlkUp}),
     ]: TraverseFocusIntent(
       FocusTraversalDirection.up,
     ),
     [
-      ActionTrigger(keyCodes: {glfwKeyDown}),
+      ActionTrigger(keyCodes: {sdlkDown}),
     ]: TraverseFocusIntent(
       FocusTraversalDirection.down,
     ),
@@ -270,7 +275,7 @@ class _ResettableState extends WidgetState<Resettable> {
       children: [
         Padding(key: Key('$generation'), insets: const Insets(), child: widget.child),
         Align(
-          key: Key('button'),
+          key: const Key('button'),
           alignment: Alignment.bottomLeft,
           child: Padding(
             insets: const Insets.all(25),
@@ -311,8 +316,8 @@ class VisuallyFocusableState extends WidgetState<VisuallyFocusable> {
         focusLevel = level;
       }),
       keyDownCallback: depth % 2 == 0
-          ? (keyCode, modifiers) {
-              if (keyCode != glfwKeySpace) return false;
+          ? (key, scancode, modifiers) {
+              if (key != sdlkSpace) return false;
 
               print('[$depth] space pressed');
               return true;

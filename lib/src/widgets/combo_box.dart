@@ -1,5 +1,5 @@
 import 'package:clawclip/clawclip.dart';
-import 'package:clawclip/glfw.dart';
+import 'package:clawclip/sdl.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart' as fuzzy;
 
 import '../core/cursors.dart';
@@ -331,13 +331,13 @@ class _ComboBoxState<T> extends WidgetState<ComboBox<T>> {
   // ---
 
   static const _previousOptionTrigger = [
-    ActionTrigger(keyCodes: {glfwKeyUp}),
+    ActionTrigger(keyCodes: {sdlkUp}),
   ];
   static const _nextOptionTrigger = [
-    ActionTrigger(keyCodes: {glfwKeyDown}),
+    ActionTrigger(keyCodes: {sdlkDown}),
   ];
   static const _selectHighlightedOptionTrigger = [
-    ActionTrigger(keyCodes: {glfwKeyEnter, glfwKeyKpEnter}),
+    ActionTrigger(keyCodes: {sdlkReturn, sdlkKpEnter}),
   ];
 }
 

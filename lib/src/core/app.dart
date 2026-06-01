@@ -3,8 +3,8 @@ import 'dart:collection';
 import 'dart:io';
 
 import 'package:clawclip/clawclip.dart' as cc;
-import 'package:clawclip/glfw.dart';
 import 'package:clawclip/opengl.dart';
+import 'package:clawclip/sdl.dart';
 import 'package:image/image.dart';
 import 'package:logging/logging.dart';
 import 'package:vector_math/vector_math.dart';
@@ -291,7 +291,7 @@ class AppState implements InstanceHost, ProxyHost {
 
   final StreamController<KeyDownEvent> keyDownController = StreamController.broadcast(sync: true);
   final StreamController<KeyUpEvent> keyUpController = StreamController.broadcast(sync: true);
-  final StreamController<CharEvent> charController = StreamController.broadcast(sync: true);
+  final StreamController<TextEvent> charController = StreamController.broadcast(sync: true);
 
   final List<StreamSubscription> _subscriptions = [];
   bool _running = true;
@@ -348,6 +348,10 @@ class AppState implements InstanceHost, ProxyHost {
     final ctx = DrawContext(context, primitives, projection, textRenderer, drawBoundingBoxes: debugDrawInstanceBoxes);
 
     gl.enable(glBlend);
+
+    while (_queuedGlCalls.isNotEmpty) {
+      _queuedGlCalls.removeFirst()();
+    }
 
     ctx.transform.scopedTransform(rootInstance.transform.transformToParent, (_) => rootInstance.draw(ctx));
 
@@ -518,8 +522,7 @@ class AppState implements InstanceHost, ProxyHost {
           }
         case MouseScrollEvent(:var xOffset, :var yOffset):
           // whether enforcing this behavoir at the framework level is smart is... questionable
-          if (xOffset == 0 &&
-              (eventsBinding.isKeyPressed(glfwKeyLeftShift) || eventsBinding.isKeyPressed(glfwKeyRightShift))) {
+          if (xOffset == 0 && (eventsBinding.currentModifiers.shift)) {
             xOffset = yOffset;
             yOffset = 0;
           }
@@ -529,8 +532,8 @@ class AppState implements InstanceHost, ProxyHost {
                 hit.instance is MouseListener &&
                 (hit.instance as MouseListener).onMouseScroll(hit.coordinates.x, hit.coordinates.y, xOffset, yOffset),
           );
-        case KeyPressEvent(:final glfwKeycode, :final modifiers):
-          if ((glfwKeycode == glfwKeyI || glfwKeycode == glfwKeyP) && modifiers.alt && modifiers.shift) {
+        case KeyPressEvent(:final sdlKey, :final scancode, :final modifiers):
+          if ((sdlKey == sdlkI || sdlKey == sdlkP) && modifiers.alt && modifiers.shift) {
             final treeFile = File('widget_tree.dot');
             final out = treeFile.openWrite();
             out.writeln('''
@@ -538,7 +541,7 @@ digraph {
 splines=false;
 node [shape="box"];
 ''');
-            glfwKeycode == glfwKeyI ? dumpInstancesGraphviz(rootInstance, out) : dumpProxiesGraphviz(_root, out);
+            sdlKey == sdlkI ? dumpInstancesGraphviz(rootInstance, out) : dumpProxiesGraphviz(_root, out);
             out
               ..writeln('}')
               ..flush().then((value) {
@@ -554,12 +557,12 @@ node [shape="box"];
               });
           }
 
-          if (_inspector != null && glfwKeycode == glfwKeyI && modifiers.ctrl && modifiers.shift) {
+          if (_inspector != null && sdlKey == sdlkI && modifiers.ctrl && modifiers.shift) {
             _inspector.activate();
             continue;
           }
 
-          if (_inspector != null && glfwKeycode == glfwKeyC && modifiers.ctrl && modifiers.shift) {
+          if (_inspector != null && sdlKey == sdlkC && modifiers.ctrl && modifiers.shift) {
             if (_inspector.currentApp == null) {
               _inspector.activate(startInvisible: true);
             }
@@ -569,7 +572,7 @@ node [shape="box"];
             continue;
           }
 
-          if (glfwKeycode == glfwKeyR && modifiers.ctrl && modifiers.shift) {
+          if (sdlKey == sdlkR && modifiers.ctrl && modifiers.shift) {
             context.reloadShaders().then((call) {
               _queuedGlCalls.add(call);
               _queuedGlCalls.add(cc.GlCall(() => primitives.clearShaderCache()));
@@ -577,11 +580,11 @@ node [shape="box"];
             continue;
           }
 
-          keyDownController.add((keyCode: glfwKeycode, modifiers: modifiers));
-        case KeyReleaseEvent(:final glfwKeycode, :final modifiers):
-          keyUpController.add((keyCode: glfwKeycode, modifiers: modifiers));
-        case CharInputEvent(:final codepoint, :final modifiers):
-          charController.add((charCode: codepoint, modifiers: modifiers));
+          keyDownController.add((sdlKey: sdlKey, scancode: scancode, modifiers: modifiers));
+        case KeyReleaseEvent(:final sdlKey, :final scancode, :final modifiers):
+          keyUpController.add((sdlKey: sdlKey, scancode: scancode, modifiers: modifiers));
+        case TextInputEvent(:final text):
+          charController.add((text: text));
         case FilesDroppedEvent(:final paths):
           final dropArea = _hitTest().firstWhere((hit) => hit.instance is FileDropAreaInstance)?.instance.widget;
           if (dropArea != null) {
@@ -609,6 +612,20 @@ node [shape="box"];
 
     rootInstance.clearLayoutCache();
     scheduleLayout(rootInstance);
+  }
+
+  Future<void> loadShader({
+    required String id,
+    required String vertexShaderName,
+    required String fragmentShaderName,
+  }) async {
+    final shader = BraidShader(source: resources, name: id, vert: vertexShaderName, frag: fragmentShaderName);
+    final loadCall = await context.addShader(shader);
+
+    final completer = Completer<void>();
+    _queuedGlCalls.add(loadCall.then((_) => completer.complete()));
+
+    return completer.future;
   }
 
   void dispose() {
